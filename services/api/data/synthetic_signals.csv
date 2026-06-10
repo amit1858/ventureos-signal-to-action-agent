@@ -1,0 +1,93 @@
+signal_id,account_id,signal_type,signal_date,signal_strength,signal_description,source_system,positive_or_negative
+SIG-00001,ACC-0001,renewal_upcoming,2026-06-07,0.7,Contract renewal approaching,CRM,neutral
+SIG-00002,ACC-0001,usage_drop,2026-05-31,0.4,Slight usage softening pre-renewal,Telemetry,negative
+SIG-00003,ACC-0002,renewal_upcoming,2026-06-07,0.7,Contract renewal approaching,CRM,neutral
+SIG-00004,ACC-0002,usage_drop,2026-05-31,0.4,Slight usage softening pre-renewal,Telemetry,negative
+SIG-00005,ACC-0003,support_ticket,2026-06-06,0.9,Severity-1 ticket open for 5 days,Support,negative
+SIG-00006,ACC-0003,support_ticket,2026-05-30,0.7,Repeat tickets on same integration,Support,negative
+SIG-00007,ACC-0003,nps_response,2026-05-27,0.6,Detractor NPS of 4 citing support,CRM,negative
+SIG-00008,ACC-0004,login_drop,2026-05-28,0.3,"Minor login variance, low signal",Telemetry,neutral
+SIG-00009,ACC-0005,support_ticket,2026-06-06,0.9,Severity-1 ticket open for 5 days,Support,negative
+SIG-00010,ACC-0005,support_ticket,2026-05-30,0.7,Repeat tickets on same integration,Support,negative
+SIG-00011,ACC-0005,nps_response,2026-05-27,0.6,Detractor NPS of 4 citing support,CRM,negative
+SIG-00012,ACC-0007,usage_drop,2026-06-01,0.8,Active seats fell sharply month over month,Telemetry,negative
+SIG-00013,ACC-0007,payment_delay,2026-05-23,0.6,Invoice paid 12 days late,Billing,negative
+SIG-00014,ACC-0007,login_drop,2026-06-04,0.7,Weekly logins down ~40%,Telemetry,negative
+SIG-00015,ACC-0008,renewal_upcoming,2026-06-07,0.7,Contract renewal approaching,CRM,neutral
+SIG-00016,ACC-0008,usage_drop,2026-05-31,0.4,Slight usage softening pre-renewal,Telemetry,negative
+SIG-00017,ACC-0009,usage_spike,2026-06-05,0.85,Feature adoption up across 3 new modules,Telemetry,positive
+SIG-00018,ACC-0009,campaign_click,2026-06-02,0.7,Clicked upgrade campaign twice,Marketing,positive
+SIG-00019,ACC-0009,nps_response,2026-05-29,0.8,Submitted NPS of 9 (promoter),CRM,positive
+SIG-00020,ACC-0010,usage_drop,2026-06-01,0.8,Active seats fell sharply month over month,Telemetry,negative
+SIG-00021,ACC-0010,payment_delay,2026-05-23,0.6,Invoice paid 12 days late,Billing,negative
+SIG-00022,ACC-0010,login_drop,2026-06-04,0.7,Weekly logins down ~40%,Telemetry,negative
+SIG-00023,ACC-0011,campaign_click,2026-06-03,0.8,Opened and clicked expansion offer,Marketing,positive
+SIG-00024,ACC-0011,nps_response,2026-05-25,0.6,"Positive survey response, no seller reply logged",CRM,positive
+SIG-00025,ACC-0012,campaign_click,2026-06-03,0.8,Opened and clicked expansion offer,Marketing,positive
+SIG-00026,ACC-0012,nps_response,2026-05-25,0.6,"Positive survey response, no seller reply logged",CRM,positive
+SIG-00027,ACC-0013,campaign_click,2026-06-03,0.8,Opened and clicked expansion offer,Marketing,positive
+SIG-00028,ACC-0013,nps_response,2026-05-25,0.6,"Positive survey response, no seller reply logged",CRM,positive
+SIG-00029,ACC-0014,usage_drop,2026-06-01,0.8,Active seats fell sharply month over month,Telemetry,negative
+SIG-00030,ACC-0014,payment_delay,2026-05-23,0.6,Invoice paid 12 days late,Billing,negative
+SIG-00031,ACC-0014,login_drop,2026-06-04,0.7,Weekly logins down ~40%,Telemetry,negative
+SIG-00032,ACC-0015,renewal_upcoming,2026-06-07,0.7,Contract renewal approaching,CRM,neutral
+SIG-00033,ACC-0015,usage_drop,2026-05-31,0.4,Slight usage softening pre-renewal,Telemetry,negative
+SIG-00034,ACC-0016,usage_spike,2026-06-05,0.85,Feature adoption up across 3 new modules,Telemetry,positive
+SIG-00035,ACC-0016,campaign_click,2026-06-02,0.7,Clicked upgrade campaign twice,Marketing,positive
+SIG-00036,ACC-0016,nps_response,2026-05-29,0.8,Submitted NPS of 9 (promoter),CRM,positive
+SIG-00037,ACC-0017,usage_spike,2026-06-05,0.85,Feature adoption up across 3 new modules,Telemetry,positive
+SIG-00038,ACC-0017,campaign_click,2026-06-02,0.7,Clicked upgrade campaign twice,Marketing,positive
+SIG-00039,ACC-0017,nps_response,2026-05-29,0.8,Submitted NPS of 9 (promoter),CRM,positive
+SIG-00040,ACC-0018,usage_spike,2026-06-05,0.85,Feature adoption up across 3 new modules,Telemetry,positive
+SIG-00041,ACC-0018,campaign_click,2026-06-02,0.7,Clicked upgrade campaign twice,Marketing,positive
+SIG-00042,ACC-0018,nps_response,2026-05-29,0.8,Submitted NPS of 9 (promoter),CRM,positive
+SIG-00043,ACC-0019,usage_spike,2026-06-02,0.4,"Steady, healthy usage",Telemetry,positive
+SIG-00044,ACC-0019,nps_response,2026-05-21,0.5,Neutral survey response,CRM,neutral
+SIG-00045,ACC-0020,usage_spike,2026-06-05,0.85,Feature adoption up across 3 new modules,Telemetry,positive
+SIG-00046,ACC-0020,campaign_click,2026-06-02,0.7,Clicked upgrade campaign twice,Marketing,positive
+SIG-00047,ACC-0020,nps_response,2026-05-29,0.8,Submitted NPS of 9 (promoter),CRM,positive
+SIG-00048,ACC-0021,campaign_click,2026-06-03,0.8,Opened and clicked expansion offer,Marketing,positive
+SIG-00049,ACC-0021,nps_response,2026-05-25,0.6,"Positive survey response, no seller reply logged",CRM,positive
+SIG-00050,ACC-0022,renewal_upcoming,2026-06-07,0.7,Contract renewal approaching,CRM,neutral
+SIG-00051,ACC-0022,usage_drop,2026-05-31,0.4,Slight usage softening pre-renewal,Telemetry,negative
+SIG-00052,ACC-0023,support_ticket,2026-06-06,0.9,Severity-1 ticket open for 5 days,Support,negative
+SIG-00053,ACC-0023,support_ticket,2026-05-30,0.7,Repeat tickets on same integration,Support,negative
+SIG-00054,ACC-0023,nps_response,2026-05-27,0.6,Detractor NPS of 4 citing support,CRM,negative
+SIG-00055,ACC-0024,usage_spike,2026-06-02,0.4,"Steady, healthy usage",Telemetry,positive
+SIG-00056,ACC-0024,nps_response,2026-05-21,0.5,Neutral survey response,CRM,neutral
+SIG-00057,ACC-0025,usage_spike,2026-06-02,0.4,"Steady, healthy usage",Telemetry,positive
+SIG-00058,ACC-0025,nps_response,2026-05-21,0.5,Neutral survey response,CRM,neutral
+SIG-00059,ACC-0026,usage_spike,2026-06-05,0.85,Feature adoption up across 3 new modules,Telemetry,positive
+SIG-00060,ACC-0026,campaign_click,2026-06-02,0.7,Clicked upgrade campaign twice,Marketing,positive
+SIG-00061,ACC-0026,nps_response,2026-05-29,0.8,Submitted NPS of 9 (promoter),CRM,positive
+SIG-00062,ACC-0027,usage_drop,2026-06-01,0.8,Active seats fell sharply month over month,Telemetry,negative
+SIG-00063,ACC-0027,payment_delay,2026-05-23,0.6,Invoice paid 12 days late,Billing,negative
+SIG-00064,ACC-0027,login_drop,2026-06-04,0.7,Weekly logins down ~40%,Telemetry,negative
+SIG-00065,ACC-0028,usage_drop,2026-06-01,0.8,Active seats fell sharply month over month,Telemetry,negative
+SIG-00066,ACC-0028,payment_delay,2026-05-23,0.6,Invoice paid 12 days late,Billing,negative
+SIG-00067,ACC-0028,login_drop,2026-06-04,0.7,Weekly logins down ~40%,Telemetry,negative
+SIG-00068,ACC-0029,campaign_click,2026-06-03,0.8,Opened and clicked expansion offer,Marketing,positive
+SIG-00069,ACC-0029,nps_response,2026-05-25,0.6,"Positive survey response, no seller reply logged",CRM,positive
+SIG-00070,ACC-0030,usage_drop,2026-06-01,0.8,Active seats fell sharply month over month,Telemetry,negative
+SIG-00071,ACC-0030,payment_delay,2026-05-23,0.6,Invoice paid 12 days late,Billing,negative
+SIG-00072,ACC-0030,login_drop,2026-06-04,0.7,Weekly logins down ~40%,Telemetry,negative
+SIG-00073,ACC-0032,support_ticket,2026-06-06,0.9,Severity-1 ticket open for 5 days,Support,negative
+SIG-00074,ACC-0032,support_ticket,2026-05-30,0.7,Repeat tickets on same integration,Support,negative
+SIG-00075,ACC-0032,nps_response,2026-05-27,0.6,Detractor NPS of 4 citing support,CRM,negative
+SIG-00076,ACC-0033,usage_spike,2026-06-02,0.4,"Steady, healthy usage",Telemetry,positive
+SIG-00077,ACC-0033,nps_response,2026-05-21,0.5,Neutral survey response,CRM,neutral
+SIG-00078,ACC-0034,support_ticket,2026-06-06,0.9,Severity-1 ticket open for 5 days,Support,negative
+SIG-00079,ACC-0034,support_ticket,2026-05-30,0.7,Repeat tickets on same integration,Support,negative
+SIG-00080,ACC-0034,nps_response,2026-05-27,0.6,Detractor NPS of 4 citing support,CRM,negative
+SIG-00081,ACC-0035,campaign_click,2026-06-03,0.8,Opened and clicked expansion offer,Marketing,positive
+SIG-00082,ACC-0035,nps_response,2026-05-25,0.6,"Positive survey response, no seller reply logged",CRM,positive
+SIG-00083,ACC-0036,usage_drop,2026-06-01,0.8,Active seats fell sharply month over month,Telemetry,negative
+SIG-00084,ACC-0036,payment_delay,2026-05-23,0.6,Invoice paid 12 days late,Billing,negative
+SIG-00085,ACC-0036,login_drop,2026-06-04,0.7,Weekly logins down ~40%,Telemetry,negative
+SIG-00086,ACC-0038,usage_spike,2026-06-02,0.4,"Steady, healthy usage",Telemetry,positive
+SIG-00087,ACC-0038,nps_response,2026-05-21,0.5,Neutral survey response,CRM,neutral
+SIG-00088,ACC-0039,renewal_upcoming,2026-06-07,0.7,Contract renewal approaching,CRM,neutral
+SIG-00089,ACC-0039,usage_drop,2026-05-31,0.4,Slight usage softening pre-renewal,Telemetry,negative
+SIG-00090,ACC-0040,usage_spike,2026-06-05,0.85,Feature adoption up across 3 new modules,Telemetry,positive
+SIG-00091,ACC-0040,campaign_click,2026-06-02,0.7,Clicked upgrade campaign twice,Marketing,positive
+SIG-00092,ACC-0040,nps_response,2026-05-29,0.8,Submitted NPS of 9 (promoter),CRM,positive

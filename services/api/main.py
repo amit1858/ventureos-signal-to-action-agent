@@ -1,0 +1,405 @@
+"""Signal-to-Action Agent -- FastAPI application.
+
+Run from this directory:
+    python -m uvicorn main:app --reload --port 8000
+
+Endpoints:
+    GET  /api/health
+    GET  /api/meta
+    GET  /api/accounts
+    GET  /api/accounts/{account_id}
+    POST /api/recommendations
+    POST /api/actions/{recommendation_id}/approve
+    POST /api/actions/{recommendation_id}/reject
+    GET  /api/integrations/hubspot/status
+    POST /api/integrations/hubspot/seed
+    POST /api/integrations/hubspot/sync
+    POST /api/actions/{recommendation_id}/hubspot-task
+    POST /api/actions/{recommendation_id}/hubspot-note
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+
+# Make this directory importable no matter how the server is launched.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from typing import Optional
+
+from datetime import datetime, timezone
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+load_dotenv()
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+from model_adapters import get_model_adapter  # noqa: E402
+from schemas.account import AccountDetail, AccountListResponse  # noqa: E402
+from schemas.recommendation import (  # noqa: E402
+    ApprovalStatus,
+    Recommendation,
+    RecommendationRequest,
+    RecommendationResponse,
+)
+from services import data_loader, ledger_service  # noqa: E402
+from services.recommendation_service import generate_recommendations  # noqa: E402
+from agents.orchestrator import AGENT_SEQUENCE  # noqa: E402
+from crm_connectors import (  # noqa: E402
+    ConnectorStatus,
+    CRMError,
+    SyncResult,
+    WritebackResult,
+    get_crm_connector,
+)
+
+API_VERSION = "0.1.0"
+
+SUGGESTED_QUERIES = [
+    "Which SMB accounts need attention this week and why?",
+    "Which accounts have declining spend but high growth potential?",
+    "Which accounts have support risk and should be escalated?",
+    "Which accounts responded to campaigns but have no recent follow-up?",
+    "Which renewal accounts need proactive engagement?",
+    "Which accounts are most likely to grow next month?",
+    "Which accounts should not be contacted yet and why?",
+    "Which accounts need a support-led action instead of sales outreach?",
+    "Which accounts have weak evidence and should be reviewed manually?",
+    "What are the top 5 actions for this week?",
+]
+
+app = FastAPI(
+    title="Signal-to-Action Agent API",
+    description="Sovereign multi-agent workflow for explainable, human-approved next-best actions.",
+    version=API_VERSION,
+)
+
+_origins = os.getenv("CORS_ORIGINS", "*")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"] if _origins.strip() == "*" else [o.strip() for o in _origins.split(",")],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    ledger_service.init_db()
+
+
+# -- request/response helpers --------------------------------------------
+
+
+class RejectRequest(BaseModel):
+    reason: Optional[str] = None
+
+
+class ActionResult(BaseModel):
+    recommendation_id: str
+    approval_status: ApprovalStatus
+    message: str
+    recommendation: Recommendation
+
+
+class HubspotActionRequest(BaseModel):
+    """Optional overrides for a HubSpot task/note write-back."""
+
+    title: Optional[str] = None
+    body: Optional[str] = None
+
+
+# -- endpoints ------------------------------------------------------------
+
+
+@app.get("/")
+def root() -> dict:
+    return {
+        "name": "Signal-to-Action Agent API",
+        "version": API_VERSION,
+        "docs": "/docs",
+        "health": "/api/health",
+    }
+
+
+@app.get("/api/health")
+def health() -> dict:
+    adapter = get_model_adapter()
+    data_ready = True
+    data_error = None
+    try:
+        data_loader.load_accounts()
+    except data_loader.DataNotGeneratedError as exc:
+        data_ready = False
+        data_error = str(exc)
+    return {
+        "status": "ok" if data_ready else "degraded",
+        "version": API_VERSION,
+        "model_provider": adapter.provider,
+        "model": adapter.model,
+        "model_health": adapter.health(),
+        "data_ready": data_ready,
+        "data_error": data_error,
+        "agents": AGENT_SEQUENCE,
+    }
+
+
+@app.get("/api/meta")
+def meta() -> dict:
+    """Powers the UI left panel: dataset summary, providers, suggested queries."""
+    adapter = get_model_adapter()
+    try:
+        summary = data_loader.dataset_summary()
+    except data_loader.DataNotGeneratedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    return {
+        "dataset": summary,
+        "model_provider": adapter.provider,
+        "model": adapter.model,
+        "agents": AGENT_SEQUENCE,
+        "suggested_queries": SUGGESTED_QUERIES,
+        "scoring_weights": {
+            "support_risk": 0.20,
+            "spend_decline": 0.20,
+            "growth_potential": 0.20,
+            "renewal_urgency": 0.15,
+            "campaign_response": 0.10,
+            "engagement_gap": 0.10,
+            "last_contact_gap": 0.05,
+        },
+    }
+
+
+@app.get("/api/accounts", response_model=AccountListResponse)
+def list_accounts(
+    limit: int = Query(20, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+) -> AccountListResponse:
+    try:
+        accounts = data_loader.load_accounts()
+    except data_loader.DataNotGeneratedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    page = accounts[offset : offset + limit]
+    return AccountListResponse(total=len(accounts), limit=limit, offset=offset, accounts=page)
+
+
+@app.get("/api/accounts/{account_id}", response_model=AccountDetail)
+def get_account(account_id: str) -> AccountDetail:
+    try:
+        detail = data_loader.get_account_detail(account_id)
+    except data_loader.DataNotGeneratedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    if detail is None:
+        raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
+    return detail
+
+
+@app.post("/api/recommendations", response_model=RecommendationResponse)
+def post_recommendations(request: RecommendationRequest) -> RecommendationResponse:
+    try:
+        return generate_recommendations(request)
+    except data_loader.DataNotGeneratedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@app.get("/api/recommendations/{recommendation_id}", response_model=Recommendation)
+def get_recommendation(recommendation_id: str) -> Recommendation:
+    rec = ledger_service.get_recommendation(recommendation_id)
+    if rec is None:
+        raise HTTPException(status_code=404, detail=f"Recommendation {recommendation_id} not found")
+    return rec
+
+
+@app.post("/api/actions/{recommendation_id}/approve", response_model=ActionResult)
+def approve_action(recommendation_id: str) -> ActionResult:
+    rec = ledger_service.set_approval(recommendation_id, ApprovalStatus.approved)
+    if rec is None:
+        raise HTTPException(status_code=404, detail=f"Recommendation {recommendation_id} not found")
+    return ActionResult(
+        recommendation_id=recommendation_id,
+        approval_status=rec.approval_status,
+        message=f"Action approved for {rec.account_name}. A human has authorized this next step.",
+        recommendation=rec,
+    )
+
+
+@app.post("/api/actions/{recommendation_id}/reject", response_model=ActionResult)
+def reject_action(recommendation_id: str, body: Optional[RejectRequest] = None) -> ActionResult:
+    reason = body.reason if body else None
+    rec = ledger_service.set_approval(recommendation_id, ApprovalStatus.rejected, reason)
+    if rec is None:
+        raise HTTPException(status_code=404, detail=f"Recommendation {recommendation_id} not found")
+    suffix = f" Reason: {reason}" if reason else ""
+    return ActionResult(
+        recommendation_id=recommendation_id,
+        approval_status=rec.approval_status,
+        message=f"Action rejected for {rec.account_name}.{suffix}",
+        recommendation=rec,
+    )
+
+
+# -- HubSpot test CRM integration (optional) ------------------------------
+
+
+def _compose_writeback_text(rec: Recommendation) -> tuple[str, str]:
+    """Build a seller-ready title + body from an approved recommendation."""
+    title = rec.recommended_action
+    evidence = "; ".join(e.label for e in rec.evidence[:5]) or "See decision ledger"
+    body = (
+        f"Account: {rec.account_name} (priority #{rec.priority_rank}, "
+        f"score {round(rec.priority_score * 100)})\n\n"
+        f"Why now: {rec.priority_reason}\n\n"
+        f"Risk: {rec.risk_summary}\n"
+        f"Opportunity: {rec.opportunity_summary}\n\n"
+        f"Next-best action: {rec.recommended_action}\n"
+        f"Confidence: {round(rec.confidence_score * 100)}%\n"
+        f"Evidence: {evidence}\n\n"
+        "Created by Signal-to-Action Agent after explicit human approval. "
+        "Synthetic demo data — no autonomous execution."
+    )
+    return title, body
+
+
+def _require_approved(recommendation_id: str) -> Recommendation:
+    rec = ledger_service.get_recommendation(recommendation_id)
+    if rec is None:
+        raise HTTPException(status_code=404, detail=f"Recommendation {recommendation_id} not found")
+    if rec.approval_status != ApprovalStatus.approved:
+        raise HTTPException(
+            status_code=409,
+            detail="Approve this recommendation before creating a HubSpot follow-up.",
+        )
+    return rec
+
+
+@app.get("/api/integrations/hubspot/status")
+def hubspot_status(probe: bool = Query(False, description="Make a live connectivity check")) -> dict:
+    """Connector configuration + (optionally) a live connectivity probe.
+
+    Always safe to call. With ``probe=true`` it makes one lightweight read-only
+    call so the UI 'Test connection' button can verify the token.
+    """
+    connector = get_crm_connector()
+    status = connector.status()
+    if probe and status.configured and status.enabled:
+        try:
+            status = connector.test_connection()
+        except CRMError as exc:
+            status = ConnectorStatus(
+                enabled=connector.enabled,
+                configured=connector.configured,
+                connected=False,
+                writeback_enabled=connector.writeback_enabled,
+                portal_id=connector.portal_id,
+                message=exc.message,
+            )
+    meta = data_loader.sync_meta()
+    return {
+        **status.model_dump(),
+        "active_source": meta["source"],
+        "data_source_mode": meta["mode"],
+        "data_source_label": meta["label"],
+        "last_synced_at": meta["synced_at"],
+        "records": meta["counts"],
+    }
+
+
+@app.post("/api/integrations/hubspot/seed", response_model=SyncResult)
+def hubspot_seed() -> SyncResult:
+    """Push the synthetic demo dataset into the HubSpot test portal (write-gated)."""
+    connector = get_crm_connector()
+    try:
+        accounts = data_loader.synthetic_accounts()
+        signals = data_loader.synthetic_signals_by_account()
+        notes = data_loader.synthetic_notes_by_account()
+    except data_loader.DataNotGeneratedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    try:
+        return connector.seed_demo_data(accounts, signals, notes)
+    except CRMError as exc:
+        raise HTTPException(status_code=exc.http_status, detail=exc.message)
+
+
+@app.post("/api/integrations/hubspot/sync", response_model=SyncResult)
+def hubspot_sync(limit: int = Query(0, ge=0, le=500)) -> SyncResult:
+    """Read HubSpot companies and switch the active dataset to the synced records."""
+    connector = get_crm_connector()
+    try:
+        dataset, result = connector.sync_accounts(limit or connector.sync_limit)
+    except CRMError as exc:
+        raise HTTPException(status_code=exc.http_status, detail=exc.message)
+
+    data_loader.set_hubspot_dataset(
+        dataset.accounts,
+        dataset.signals,
+        dataset.notes,
+        synced_at=result.last_synced_at,
+        counts={
+            "companies": result.companies_loaded,
+            "contacts": result.contacts_loaded,
+            "deals": result.deals_loaded,
+            "activities": result.activities_loaded,
+        },
+        portal_id=result.portal_id,
+        message=result.message,
+    )
+    return result
+
+
+@app.post("/api/integrations/hubspot/use-synthetic")
+def hubspot_use_synthetic() -> dict:
+    """Revert the active dataset to the local synthetic data (keeps demo stable)."""
+    data_loader.use_synthetic()
+    return {"active_source": data_loader.active_source(), "label": data_loader.source_label()}
+
+
+@app.post("/api/actions/{recommendation_id}/hubspot-task", response_model=WritebackResult)
+def hubspot_task(recommendation_id: str, body: Optional[HubspotActionRequest] = None) -> WritebackResult:
+    rec = _require_approved(recommendation_id)
+    connector = get_crm_connector()
+    title, default_body = _compose_writeback_text(rec)
+    title = (body.title if body and body.title else title)[:255]
+    text = body.body if body and body.body else default_body
+    try:
+        result = connector.create_task(
+            account_id=rec.account_id, account_name=rec.account_name, title=title, body=text
+        )
+    except CRMError as exc:
+        raise HTTPException(status_code=exc.http_status, detail=exc.message)
+    result.recommendation_id = recommendation_id
+    result.approved_at = _now_iso()
+    ledger_service.save_writeback(result)
+    return result
+
+
+@app.post("/api/actions/{recommendation_id}/hubspot-note", response_model=WritebackResult)
+def hubspot_note(recommendation_id: str, body: Optional[HubspotActionRequest] = None) -> WritebackResult:
+    rec = _require_approved(recommendation_id)
+    connector = get_crm_connector()
+    _, default_body = _compose_writeback_text(rec)
+    text = body.body if body and body.body else default_body
+    try:
+        result = connector.create_note(
+            account_id=rec.account_id, account_name=rec.account_name, body=text
+        )
+    except CRMError as exc:
+        raise HTTPException(status_code=exc.http_status, detail=exc.message)
+    result.recommendation_id = recommendation_id
+    result.approved_at = _now_iso()
+    ledger_service.save_writeback(result)
+    return result
+
+
+@app.get("/api/actions/{recommendation_id}/writebacks")
+def list_writebacks(recommendation_id: str) -> dict:
+    """Return any CRM write-backs already recorded for a recommendation."""
+    return {"recommendation_id": recommendation_id, "writebacks": ledger_service.get_writebacks(recommendation_id)}

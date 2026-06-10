@@ -1,0 +1,41 @@
+account_id,account_name,industry,segment,region,current_month_spend,previous_month_spend,product_usage_score,engagement_score,support_risk_score,campaign_response_score,last_contact_days,renewal_days,growth_potential_score
+ACC-0001,Woodgrove Digital,Hospitality,SMB,West,46257,46257,60.6,40.7,46.3,45.9,25,5,55.0
+ACC-0002,Northwind Supply,Healthcare,SMB,North,47665,43332,55.8,54.7,50.3,51.9,27,19,57.9
+ACC-0003,Fourth Coffee Co,Manufacturing,Startup,West,38289,38289,37.6,45.6,86.0,32.1,13,50,50.7
+ACC-0004,Northwind Retail,Logistics,Startup,West,24160,24160,59.4,55.9,44.1,42.1,16,135,60.0
+ACC-0005,Contoso Group,FinTech,Mid-Market,North,27588,27588,41.5,42.1,86.7,40.7,19,106,51.6
+ACC-0006,Trey Logistics,Healthcare,Mid-Market,South,37762,37762,67.7,40.5,32.8,51.8,12,128,62.1
+ACC-0007,Nod Publishers Digital,Manufacturing,SMB,South,6024,10040,34.5,38.3,57.1,43.8,21,55,63.6
+ACC-0008,Woodgrove Systems,Manufacturing,SMB,West,24541,24541,60.5,65.9,50.8,55.7,16,20,50.6
+ACC-0009,Alpine Retail,SaaS,Mid-Market,North,20290,14493,86.2,85.6,14.1,80.3,9,126,92.5
+ACC-0010,Consolidated Logistics,Hospitality,Mid-Market,Central,18719,26742,43.4,38.6,55.6,34.3,35,78,58.5
+ACC-0011,Proseware Systems,Retail,Startup,North,15189,15189,63.0,55.8,23.4,87.6,55,140,61.7
+ACC-0012,Tailspin Systems,Logistics,Mid-Market,East,45998,45998,67.8,66.9,18.2,86.1,59,116,82.4
+ACC-0013,Lucerne Co,Logistics,SMB,Central,38931,38931,52.0,52.6,23.6,80.5,49,149,80.4
+ACC-0014,City Power Co,FinTech,Mid-Market,Central,19881,33136,39.9,34.9,75.4,45.4,21,40,73.6
+ACC-0015,Best For You Group,Healthcare,Startup,East,17552,15957,54.5,44.4,41.9,52.2,29,9,47.7
+ACC-0016,Trey Systems,SaaS,Startup,East,28041,21570,68.6,81.9,9.9,80.9,8,147,79.1
+ACC-0017,Nod Publishers Group,EdTech,SMB,North,55304,42542,72.9,68.8,13.2,71.6,18,170,94.2
+ACC-0018,Fabrico Supply,Retail,Mid-Market,East,21356,19415,68.3,79.2,19.5,93.4,16,100,92.0
+ACC-0019,Coho Partners,Manufacturing,SMB,North,18131,18131,69.7,73.5,11.8,47.5,13,294,49.5
+ACC-0020,Margie Supply,Retail,Startup,East,45670,32622,72.6,69.3,22.5,89.2,8,98,91.8
+ACC-0021,Relecloud Group,Retail,Mid-Market,Central,40756,40756,74.9,49.1,18.1,75.8,50,95,74.9
+ACC-0022,Best For You Digital,EdTech,SMB,South,27328,27328,55.2,61.7,44.9,58.2,17,20,45.7
+ACC-0023,Relecloud Digital,Manufacturing,SMB,Central,4424,5531,48.5,40.4,94.3,23.5,8,57,48.8
+ACC-0024,Tailspin Partners,FinTech,SMB,Central,24807,24807,77.1,72.6,13.6,41.2,8,293,40.2
+ACC-0025,Wingtip Partners,Logistics,Mid-Market,North,26523,26523,68.7,69.2,16.9,56.2,15,268,36.2
+ACC-0026,Adventure Retail,Healthcare,Startup,East,49777,38290,86.5,77.9,9.7,79.3,13,77,90.9
+ACC-0027,Margie Digital,Manufacturing,SMB,North,5540,6925,29.5,39.1,67.9,39.3,19,105,48.1
+ACC-0028,First Up Retail,Hospitality,Mid-Market,East,29990,42844,24.7,37.5,62.4,28.6,18,89,50.7
+ACC-0029,Best For You Retail,FinTech,SMB,East,16718,15199,50.7,52.9,18.6,75.6,37,115,76.7
+ACC-0030,Fabrico Group,SaaS,SMB,West,12717,18168,35.0,21.2,57.7,29.8,17,49,56.4
+ACC-0031,Fabrikam Co,Manufacturing,SMB,South,11925,11925,47.4,45.8,44.5,57.5,21,81,37.1
+ACC-0032,Fourth Coffee Labs,FinTech,SMB,West,33461,37179,43.1,52.5,89.2,32.3,16,57,39.9
+ACC-0033,Southridge Co,Manufacturing,SMB,Central,29010,29010,70.0,71.3,21.0,48.6,10,150,36.4
+ACC-0034,Northwind Digital,FinTech,Mid-Market,East,17260,21575,59.3,44.0,80.1,27.3,20,116,45.0
+ACC-0035,Margie Retail,EdTech,SMB,North,40060,36419,71.2,68.8,31.7,86.5,40,104,68.8
+ACC-0036,Graphic Design Works,Retail,SMB,South,28440,40629,23.3,29.5,70.3,45.0,39,100,70.5
+ACC-0037,Wide World Labs,Retail,SMB,South,11919,11919,68.3,44.8,43.4,53.7,26,130,53.7
+ACC-0038,Tailspin Logistics,Retail,SMB,West,34373,34373,74.1,74.1,11.3,48.3,13,294,41.8
+ACC-0039,Graphic Design Group,Hospitality,SMB,East,16141,16141,58.9,46.5,53.3,49.1,33,13,53.6
+ACC-0040,Southridge Partners,Manufacturing,SMB,Central,55413,46178,65.6,82.7,13.1,88.9,11,107,82.9

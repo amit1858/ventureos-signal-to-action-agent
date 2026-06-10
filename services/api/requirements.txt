@@ -1,0 +1,7 @@
+# Signal-to-Action Agent -- backend (FastAPI) dependencies
+# Pinned to compatible minor ranges for reproducibility on the MVP.
+
+fastapi>=0.115,<1.0
+uvicorn>=0.30,<1.0
+pydantic>=2.7,<3.0
+python-dotenv>=1.0,<2.0

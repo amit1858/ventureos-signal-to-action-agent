@@ -1,0 +1,38 @@
+# Signal-to-Action Agent - Docker Compose
+# Local development and demo convenience. For production, use proper orchestration.
+
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    container_name: signal-to-action-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Optional: persist the SQLite DB across container restarts
+      - ./services/api:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: signal-to-action-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+    depends_on:
+      - api
+    restart: unless-stopped

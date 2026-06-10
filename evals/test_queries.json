@@ -1,0 +1,62 @@
+[
+  {
+    "id": "q1",
+    "query": "Which SMB accounts need attention this week and why?",
+    "limit": 10,
+    "expect_min_recommendations": 1
+  },
+  {
+    "id": "q2",
+    "query": "Which accounts have declining spend but high growth potential?",
+    "limit": 10,
+    "expect_min_recommendations": 1
+  },
+  {
+    "id": "q3",
+    "query": "Which accounts have support risk and should be escalated?",
+    "limit": 10,
+    "expect_min_recommendations": 1
+  },
+  {
+    "id": "q4",
+    "query": "Which accounts responded to campaigns but have no recent follow-up?",
+    "limit": 10,
+    "expect_min_recommendations": 1
+  },
+  {
+    "id": "q5",
+    "query": "Which renewal accounts need proactive engagement?",
+    "limit": 10,
+    "expect_min_recommendations": 1
+  },
+  {
+    "id": "q6",
+    "query": "Which accounts are most likely to grow next month?",
+    "limit": 10,
+    "expect_min_recommendations": 1
+  },
+  {
+    "id": "q7",
+    "query": "Which accounts should not be contacted yet and why?",
+    "limit": 10,
+    "expect_min_recommendations": 1
+  },
+  {
+    "id": "q8",
+    "query": "Which accounts need a support-led action instead of sales outreach?",
+    "limit": 10,
+    "expect_min_recommendations": 1
+  },
+  {
+    "id": "q9",
+    "query": "Which accounts have weak evidence and should be reviewed manually?",
+    "limit": 10,
+    "expect_min_recommendations": 1
+  },
+  {
+    "id": "q10",
+    "query": "What are the top 5 actions for this week?",
+    "limit": 5,
+    "expect_min_recommendations": 1
+  }
+]

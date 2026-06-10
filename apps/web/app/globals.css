@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: #0b0f0e;
+  background-image:
+    radial-gradient(1100px 560px at 8% -10%, rgba(118, 185, 0, 0.09), transparent 60%),
+    radial-gradient(1000px 620px at 100% -6%, rgba(0, 212, 255, 0.055), transparent 58%),
+    linear-gradient(180deg, #0b0f0e 0%, #0a0d0c 100%);
+  background-attachment: fixed;
+  color: #f4f6f8;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.005em;
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-edge bg-surface shadow-panel;
+  }
+  .card-elevated {
+    @apply rounded-xl border border-edge bg-elevated shadow-elevated;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-md border border-edge bg-surface2 px-2 py-0.5 text-xs font-medium text-muted;
+  }
+  .panel-title {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-faint;
+  }
+  .section-label {
+    @apply flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-faint;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply border-accent/40 bg-accent/15 text-accent hover:bg-accent/25 hover:border-accent/60;
+  }
+  .btn-ghost {
+    @apply border-edge bg-surface2 text-muted hover:border-faint hover:text-ink;
+  }
+  .btn-danger {
+    @apply border-risk/40 bg-risk/10 text-risk hover:bg-risk/20 hover:border-risk/60;
+  }
+  .kbd {
+    @apply inline-flex items-center rounded border border-edge bg-surface2 px-1.5 py-0.5 font-mono text-[10px] text-faint;
+  }
+}
+
+/* Faint dotted "cockpit" grid overlay used behind the center column. */
+.grid-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Premium skeleton shimmer for loading states. */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #151a1e;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.04),
+    transparent
+  );
+  animation: shimmer 1.8s infinite;
+}
+
+/* Thin gradient accent rule used under panel headers. */
+.rule-accent {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(118, 185, 0, 0.45), rgba(118, 185, 0, 0) 70%);
+}
+
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2f35 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2a2f35;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #3a414a;
+}
