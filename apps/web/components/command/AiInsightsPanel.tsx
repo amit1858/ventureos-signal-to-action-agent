@@ -40,7 +40,7 @@ export function AiInsightsPanel({ accounts }: { accounts: Account[] }) {
   const trends = React.useMemo(() => emergingTrends(accounts), [accounts]);
 
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-3">
       <ThemeList
         title="Top Risks"
         accentTone="text-risk"
@@ -59,8 +59,8 @@ export function AiInsightsPanel({ accounts }: { accounts: Account[] }) {
         fallbackIcon={Sparkles}
         empty="No standout expansion signals in the current book."
       />
-      <div className="rounded-lg border border-edge bg-surface2/30 p-3">
-        <div className="section-label mb-2 text-cyan">Emerging Trends</div>
+      <div className="rounded-2xl border border-edge bg-surface2/30 p-4">
+        <div className="section-label mb-2.5 text-cyan">Emerging Trends</div>
         {trends.length === 0 ? (
           <p className="py-3 text-xs text-faint">No emerging trends across the current book.</p>
         ) : (
@@ -105,8 +105,8 @@ function ThemeList({
   empty: string;
 }) {
   return (
-    <div className="rounded-lg border border-edge bg-surface2/30 p-3">
-      <div className={cx("section-label mb-2", accentTone)}>{title}</div>
+    <div className="rounded-2xl border border-edge bg-surface2/30 p-4">
+      <div className={cx("section-label mb-2.5", accentTone)}>{title}</div>
       {themes.length === 0 ? (
         <p className="py-3 text-xs text-faint">{empty}</p>
       ) : (

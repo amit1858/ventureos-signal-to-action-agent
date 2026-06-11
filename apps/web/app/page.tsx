@@ -548,7 +548,7 @@ export default function Page() {
 
                     {/* Why this account + recommended next-best action */}
                     <div>
-                      <PanelTitle>Recommended next-best action</PanelTitle>
+                      <PanelTitle>Why this matters</PanelTitle>
                       <div className="mt-2">
                         <WhyThisAccount rec={selectedRec} account={accounts[selectedRec.account_id]} />
                       </div>

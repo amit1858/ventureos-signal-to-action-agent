@@ -72,14 +72,14 @@ export function PortfolioMatrix({
   const hovered = points.find((p) => p.id === hover) || null;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr,200px]">
+    <div className="grid gap-6 lg:grid-cols-[1fr,220px]">
       <div className="relative">
         <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full select-none">
           <rect x={pad} y={pad} width={plotW} height={plotH} fill="#0B0F0E" stroke="#2A2F35" rx="8" />
           {/* quadrant tints */}
           <rect x={midX} y={pad} width={plotW / 2} height={plotH / 2} fill="#76B900" fillOpacity={0.05} />
           <rect x={pad} y={pad} width={plotW / 2} height={plotH / 2} fill="#EF6B73" fillOpacity={0.05} />
-          <rect x={midX} y={midY} width={plotW / 2} height={plotH / 2} fill="#00D4FF" fillOpacity={0.04} />
+          <rect x={midX} y={midY} width={plotW / 2} height={plotH / 2} fill="#5BB0F5" fillOpacity={0.05} />
 
           <line x1={midX} y1={pad} x2={midX} y2={pad + plotH} stroke="#2A2F35" strokeDasharray="3 3" />
           <line x1={pad} y1={midY} x2={pad + plotW} y2={midY} stroke="#2A2F35" strokeDasharray="3 3" />
@@ -93,7 +93,7 @@ export function PortfolioMatrix({
           <text x={pad + 8} y={pad + plotH - 7} textAnchor="start" className="fill-[#6B7480]" fontSize="9" fontWeight="700">
             MONITOR
           </text>
-          <text x={pad + plotW - 8} y={pad + plotH - 7} textAnchor="end" className="fill-[#00D4FF]" fontSize="9" fontWeight="700">
+          <text x={pad + plotW - 8} y={pad + plotH - 7} textAnchor="end" className="fill-[#5BB0F5]" fontSize="9" fontWeight="700">
             NURTURE
           </text>
 

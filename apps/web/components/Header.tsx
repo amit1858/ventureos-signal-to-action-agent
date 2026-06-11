@@ -23,10 +23,10 @@ export function Header({
     <header className="sticky top-0 z-30 border-b border-edge bg-base/85 backdrop-blur">
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
         <div className="flex items-center gap-3">
-          {/* Mark (NVIDIA-inspired, not NVIDIA-branded) */}
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-accent/40 bg-gradient-to-br from-accent/20 to-cyan/10">
-            <Activity size={18} className="text-accent" />
-            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-accent animate-pulseline" />
+          {/* Mark (VentureOS brand) */}
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-brand/40 bg-gradient-to-br from-brand/25 to-brand/5">
+            <Activity size={18} className="text-brand-bright" />
+            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-brand animate-pulseline" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ function ViewTab({
       aria-pressed={active}
       className={cx(
         "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-        active ? "bg-accent/15 text-accent shadow-glow-soft" : "text-faint hover:text-muted",
+        active ? "bg-brand/15 text-brand-bright shadow-glow-soft" : "text-faint hover:text-muted",
       )}
     >
       {icon}

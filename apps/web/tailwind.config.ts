@@ -22,7 +22,10 @@ const config: Config = {
         accent: "#76B900",
         "accent-dim": "#5C9000",
         "accent-bright": "#8FD400",
-        cyan: "#00D4FF",
+        brand: "#8B7CF6",
+        "brand-bright": "#A89CFB",
+        "brand-dim": "#6D5DE0",
+        cyan: "#5BB0F5",
         amber: "#F5B84B",
         risk: "#EF6B73",
       },
@@ -48,10 +51,10 @@ const config: Config = {
         ],
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(118,185,0,0.25), 0 0 24px -6px rgba(118,185,0,0.35)",
-        "glow-soft": "0 0 0 1px rgba(118,185,0,0.16), 0 0 40px -10px rgba(118,185,0,0.22)",
-        panel: "0 1px 0 0 rgba(255,255,255,0.02) inset, 0 8px 24px -12px rgba(0,0,0,0.6)",
-        elevated: "0 1px 0 0 rgba(255,255,255,0.03) inset, 0 14px 34px -16px rgba(0,0,0,0.75)",
+        glow: "0 0 0 1px rgba(139,124,246,0.22), 0 0 26px -10px rgba(139,124,246,0.30)",
+        "glow-soft": "0 0 0 1px rgba(139,124,246,0.14), 0 0 44px -14px rgba(139,124,246,0.18)",
+        panel: "0 1px 0 0 rgba(255,255,255,0.025) inset, 0 12px 30px -18px rgba(0,0,0,0.65)",
+        elevated: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 22px 50px -24px rgba(0,0,0,0.78)",
       },
       keyframes: {
         "fade-in": {
@@ -63,8 +66,8 @@ const config: Config = {
           "100%": { opacity: "1" },
         },
         pulseline: {
-          "0%, 100%": { opacity: "0.4" },
-          "50%": { opacity: "1" },
+          "0%, 100%": { opacity: "0.55" },
+          "50%": { opacity: "0.9" },
         },
         shimmer: {
           "100%": { transform: "translateX(100%)" },
@@ -77,7 +80,7 @@ const config: Config = {
       animation: {
         "fade-in": "fade-in 0.25s ease-out both",
         "fade-in-fast": "fade-in-fast 0.2s ease-out both",
-        pulseline: "pulseline 1.6s ease-in-out infinite",
+        pulseline: "pulseline 2.6s ease-in-out infinite",
         shimmer: "shimmer 1.8s infinite",
         scan: "scan 2.2s ease-in-out infinite",
       },

@@ -1,15 +1,6 @@
 "use client";
 
 import * as React from "react";
-import {
-  Layers,
-  Sparkles,
-  Activity,
-  Network,
-  BarChart3,
-  Target,
-  Zap,
-} from "lucide-react";
 import type {
   Account,
   MetaResponse,
@@ -18,15 +9,13 @@ import type {
   HubspotWriteback,
 } from "@/lib/types";
 import { businessAction } from "@/lib/actions";
-import { Card, PanelTitle } from "@/components/ui";
 import { ExecutiveMorningBrief } from "@/components/command/ExecutiveMorningBrief";
-import { ExecutiveKpiStrip } from "@/components/command/ExecutiveKpiStrip";
+import { PortfolioHealthCard } from "@/components/command/PortfolioHealthCard";
 import { NextBestActions } from "@/components/command/NextBestActions";
 import { PortfolioMatrix } from "@/components/command/PortfolioMatrix";
 import { PriorityAccountsTable } from "@/components/command/PriorityAccountsTable";
 import { AiInsightsPanel } from "@/components/command/AiInsightsPanel";
 import { LiveWorkflowRail } from "@/components/command/LiveWorkflowRail";
-import { ExecutiveMetrics } from "@/components/command/ExecutiveMetrics";
 
 export function CommandCenter({
   meta,
@@ -79,8 +68,8 @@ export function CommandCenter({
   }, [recs, accountsById]);
 
   return (
-    <div className="space-y-5 animate-fade-in">
-      {/* P1 · Executive morning brief */}
+    <div className="space-y-10 animate-fade-in pb-6 lg:space-y-14">
+      {/* Section 1 · Executive Brief (hero) */}
       <ExecutiveMorningBrief
         accounts={accounts}
         accountsById={accountsById}
@@ -94,15 +83,22 @@ export function CommandCenter({
         onOpenAccount={onOpenAccount}
       />
 
-      {/* Executive portfolio overview */}
-      <section>
-        <SectionHeading icon={Layers} title="Executive Portfolio Overview" hint="Book of business at a glance" />
-        <ExecutiveKpiStrip accounts={accounts} recs={recs} hasResult={hasResult} />
-      </section>
+      {/* Section 2 · Portfolio Health */}
+      <Section
+        eyebrow="Portfolio Health"
+        heading="Your book of business"
+        sub="Overall readiness, the revenue at stake and the expansion headroom across the portfolio."
+      >
+        <PortfolioHealthCard accounts={accounts} recs={recs} latencyMs={latency} hasResult={hasResult} />
+      </Section>
 
-      {/* P2 · Next best actions (premium narrative cards) */}
-      <section>
-        <SectionHeading icon={Zap} title="Next Best Actions" hint="Why each account — and what to do" />
+      {/* Section 3 · Today's Priorities */}
+      <Section
+        id="todays-priorities"
+        eyebrow="Today's Priorities"
+        heading="What to do today"
+        sub="The accounts that deserve your attention now — why they matter and the recommended next move."
+      >
         <NextBestActions
           recs={recs}
           accountsById={accountsById}
@@ -111,16 +107,15 @@ export function CommandCenter({
           onOpenAccount={onOpenAccount}
           onRun={onRun}
         />
-      </section>
+      </Section>
 
-      {/* Portfolio health matrix */}
-      <Card className="p-4">
-        <PanelTitle right={<span className="text-[10px] text-faint">Risk vs Opportunity · {accounts.length} accounts</span>}>
-          <span className="inline-flex items-center gap-2">
-            <Target size={13} className="text-accent" /> Portfolio Health
-          </span>
-        </PanelTitle>
-        <div className="mt-3">
+      {/* Section 4 · Portfolio Map */}
+      <Section
+        eyebrow="Portfolio Map"
+        heading="Risk versus opportunity"
+        sub={`Every account placed by risk and expansion potential — ${accounts.length} in view. Hover for detail, click to open.`}
+      >
+        <div className="card-premium p-5 sm:p-7">
           <PortfolioMatrix
             accounts={accounts}
             selectedId={selectedId}
@@ -129,16 +124,15 @@ export function CommandCenter({
             onOpenAccount={onOpenAccount}
           />
         </div>
-      </Card>
+      </Section>
 
-      {/* Priority accounts */}
-      <Card className="p-4">
-        <PanelTitle right={<span className="text-[10px] text-faint">{hasResult ? "Top 10 · sortable" : "Run to populate"}</span>}>
-          <span className="inline-flex items-center gap-2">
-            <BarChart3 size={13} className="text-accent" /> Priority Accounts
-          </span>
-        </PanelTitle>
-        <div className="mt-3">
+      {/* Section 4b · Priority Accounts (ranked) */}
+      <Section
+        eyebrow="Priority Accounts"
+        heading="The ranked shortlist"
+        sub={hasResult ? "Top accounts by AI priority — sort by any signal." : "Run the analysis to populate the ranked shortlist."}
+      >
+        <div className="card-premium p-3 sm:p-4">
           <PriorityAccountsTable
             recs={recs}
             accountsById={accountsById}
@@ -149,28 +143,26 @@ export function CommandCenter({
             loading={loading}
           />
         </div>
-      </Card>
+      </Section>
 
-      {/* AI insights */}
-      <Card className="p-4">
-        <PanelTitle right={<span className="text-[10px] text-faint">Derived from live signals</span>}>
-          <span className="inline-flex items-center gap-2">
-            <Sparkles size={13} className="text-accent" /> AI Insights
-          </span>
-        </PanelTitle>
-        <div className="mt-3">
+      {/* Section 5 · Executive Briefing */}
+      <Section
+        eyebrow="Executive Briefing"
+        heading="What changed overnight"
+        sub="Top risks, standout opportunities and emerging trends — read from live signals."
+      >
+        <div className="card-premium p-5 sm:p-7">
           <AiInsightsPanel accounts={accounts} />
         </div>
-      </Card>
+      </Section>
 
-      {/* Live workflow */}
-      <Card className="p-4">
-        <PanelTitle right={<span className="text-[10px] text-faint">Governed multi-agent pipeline</span>}>
-          <span className="inline-flex items-center gap-2">
-            <Network size={13} className="text-accent" /> Live Workflow
-          </span>
-        </PanelTitle>
-        <div className="mt-3">
+      {/* Section 6 · Governed pipeline */}
+      <Section
+        eyebrow="Governed Pipeline"
+        heading="How this was decided"
+        sub="A controlled, multi-agent workflow with human approval — never an autonomous black box."
+      >
+        <div className="card-premium p-5 sm:p-7">
           <LiveWorkflowRail
             state={{
               loading,
@@ -181,37 +173,33 @@ export function CommandCenter({
             }}
           />
         </div>
-      </Card>
-
-      {/* Executive metrics */}
-      <Card className="p-4">
-        <PanelTitle right={<span className="text-[10px] text-faint">{isHubspotSource ? "Source: HubSpot Test CRM" : "Source: Synthetic local dataset"}</span>}>
-          <span className="inline-flex items-center gap-2">
-            <Activity size={13} className="text-accent" /> Executive Metrics
-          </span>
-        </PanelTitle>
-        <div className="mt-3">
-          <ExecutiveMetrics accounts={accounts} recs={recs} latencyMs={latency} hasResult={hasResult} />
-        </div>
-      </Card>
+      </Section>
     </div>
   );
 }
 
-function SectionHeading({
-  icon: Icon,
-  title,
-  hint,
+// Executive section header: SMALL LABEL / Large Heading / one-line description.
+function Section({
+  id,
+  eyebrow,
+  heading,
+  sub,
+  children,
 }: {
-  icon: typeof Layers;
-  title: string;
-  hint?: string;
+  id?: string;
+  eyebrow: string;
+  heading: string;
+  sub?: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="mb-2.5 flex items-center gap-2">
-      <Icon size={13} className="text-accent" />
-      <span className="panel-title">{title}</span>
-      {hint ? <span className="text-[10px] text-faint">· {hint}</span> : null}
-    </div>
+    <section id={id} className="scroll-mt-24">
+      <div className="mb-4 max-w-2xl">
+        <div className="eyebrow text-brand-bright/80">{eyebrow}</div>
+        <h2 className="section-h mt-1.5">{heading}</h2>
+        {sub ? <p className="section-sub mt-1">{sub}</p> : null}
+      </div>
+      {children}
+    </section>
   );
 }

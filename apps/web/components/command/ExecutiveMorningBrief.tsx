@@ -60,7 +60,7 @@ export function ExecutiveMorningBrief({
     <div className="card-elevated relative overflow-hidden p-5 animate-fade-in sm:p-6">
       <div className="grid-dots pointer-events-none absolute inset-0 opacity-40" />
       <span
-        className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-accent via-accent/50 to-transparent"
+        className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-brand via-brand/50 to-transparent"
         aria-hidden
       />
 
@@ -69,8 +69,8 @@ export function ExecutiveMorningBrief({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="relative flex h-2.5 w-2.5 items-center justify-center">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent shadow-glow" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand/60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-brand shadow-glow" />
               </span>
               <span className="section-label text-faint">AI Portfolio Brief</span>
               <span
@@ -89,8 +89,10 @@ export function ExecutiveMorningBrief({
               {greeting}
               {name ? ` ${name}` : ""} <span aria-hidden>👋</span>
             </h1>
-            <p className="mt-1 text-sm font-medium text-muted">Your AI portfolio review is ready.</p>
-            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted">
+            <p className="mt-1 text-sm font-medium text-muted">
+              I reviewed your book of business overnight — here&apos;s where it stands.
+            </p>
+            <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
               {brief.analyzed ? (
                 <>
                   <span className="font-semibold text-ink">{brief.analyzed}</span> accounts analyzed ·{" "}
@@ -103,6 +105,20 @@ export function ExecutiveMorningBrief({
                 "Connect a data source and run the analysis to generate today's portfolio briefing."
               )}
             </p>
+
+            {brief.analyzed ? (
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("todays-priorities")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="btn btn-primary mt-4 px-4"
+              >
+                Review today&apos;s priorities <ArrowRight size={14} />
+              </button>
+            ) : null}
           </div>
 
           <div className="flex shrink-0 items-center gap-4">
@@ -150,12 +166,12 @@ export function ExecutiveMorningBrief({
         </div>
 
         {/* Highest-priority callout */}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/25 bg-accent/[0.06] px-4 py-3">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand/25 bg-brand/[0.07] px-4 py-3.5">
           {top && TopIcon ? (
             <>
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent/40 bg-accent/15 text-accent">
-                  <Crown size={15} />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-brand/40 bg-brand/15 text-brand-bright">
+                  <Crown size={16} />
                 </span>
                 <div className="min-w-0">
                   <div className="text-[10px] uppercase tracking-wider text-faint">Your highest priority today</div>

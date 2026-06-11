@@ -39,7 +39,7 @@ export function ApprovalControls({
       {!rejectOpen ? (
         <div className="grid grid-cols-[1.4fr_1fr_0.9fr] gap-2">
           <button
-            className={cx("btn btn-primary py-2.5 font-semibold", status === "approved" && "ring-1 ring-accent/50")}
+            className={cx("btn btn-success py-2.5 font-semibold", status === "approved" && "ring-1 ring-accent/50")}
             onClick={onApprove}
             disabled={busy}
           >

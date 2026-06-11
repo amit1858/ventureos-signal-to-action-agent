@@ -32,8 +32,8 @@ export function NextBestActions({
 }) {
   if (!hasResult) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-edge bg-surface2/30 py-10 text-center">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-edge bg-surface2 text-faint">
+      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-edge bg-surface2/30 py-14 text-center">
+        <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-edge bg-surface2 text-faint">
           <Sparkles size={18} />
         </span>
         <div>
@@ -52,7 +52,7 @@ export function NextBestActions({
   const top = recs.slice(0, 3);
 
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-3">
       {top.map((rec) => {
         const account = accountsById[rec.account_id];
         const reasons = (account ? accountReasons(account) : []).slice(0, 4);
@@ -71,7 +71,7 @@ export function NextBestActions({
             key={rec.recommendation_id}
             type="button"
             onClick={() => onOpenAccount(rec.account_id)}
-            className="hover-lift group flex flex-col rounded-xl border border-edge bg-surface p-4 text-left"
+            className="hover-lift group flex flex-col rounded-2xl border border-edge bg-surface p-5 text-left"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -79,7 +79,7 @@ export function NextBestActions({
                   className={cx(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border font-mono text-xs font-bold",
                     rec.priority_rank === 1
-                      ? "border-accent/40 bg-accent/10 text-accent"
+                      ? "border-brand/45 bg-brand/15 text-brand-bright"
                       : "border-edge bg-surface2 text-muted",
                   )}
                 >
@@ -143,7 +143,7 @@ export function NextBestActions({
                 <FileSearch size={11} /> {rec.evidence.length} evidence · {pct(rec.confidence_score)}{" "}
                 {confidenceLabel(rec.confidence_score).replace(" confidence", "")}
               </span>
-              <span className="inline-flex items-center gap-0.5 text-accent opacity-0 transition-opacity group-hover:opacity-100">
+              <span className="inline-flex items-center gap-0.5 text-brand-bright opacity-0 transition-opacity group-hover:opacity-100">
                 Open <ArrowRight size={12} />
               </span>
             </div>

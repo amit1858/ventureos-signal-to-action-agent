@@ -17,9 +17,9 @@ body {
 body {
   background-color: #0b0f0e;
   background-image:
-    radial-gradient(1100px 560px at 8% -10%, rgba(118, 185, 0, 0.09), transparent 60%),
-    radial-gradient(1000px 620px at 100% -6%, rgba(0, 212, 255, 0.055), transparent 58%),
-    linear-gradient(180deg, #0b0f0e 0%, #0a0d0c 100%);
+    radial-gradient(1150px 620px at 10% -12%, rgba(139, 124, 246, 0.08), transparent 60%),
+    radial-gradient(980px 600px at 100% -8%, rgba(139, 124, 246, 0.045), transparent 60%),
+    linear-gradient(180deg, #0b0f0e 0%, #090c0b 100%);
   background-attachment: fixed;
   color: #f4f6f8;
   font-family: var(--font-sans);
@@ -30,24 +30,41 @@ body {
 
 @layer components {
   .card {
-    @apply rounded-xl border border-edge bg-surface shadow-panel;
+    @apply rounded-2xl border border-edge bg-surface shadow-panel;
   }
   .card-elevated {
-    @apply rounded-xl border border-edge bg-elevated shadow-elevated;
+    @apply rounded-2xl border border-edge bg-elevated shadow-elevated;
+  }
+  /* Large premium "executive" card: gentle top-down gradient + deep elevation. */
+  .card-premium {
+    @apply rounded-2xl border border-edge bg-gradient-to-b from-surface to-panel shadow-elevated;
   }
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-md border border-edge bg-surface2 px-2 py-0.5 text-xs font-medium text-muted;
+    @apply inline-flex items-center gap-1.5 rounded-lg border border-edge bg-surface2 px-2.5 py-1 text-xs font-medium text-muted;
   }
   .panel-title {
-    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-faint;
+    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-faint;
   }
   .section-label {
-    @apply flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-faint;
+    @apply flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-faint;
+  }
+  /* Executive section hierarchy: SMALL LABEL / Large Heading / description. */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-faint;
+  }
+  .section-h {
+    @apply text-[19px] font-semibold leading-tight tracking-tight text-ink;
+  }
+  .section-sub {
+    @apply text-[13px] leading-relaxed text-muted;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
+    @apply border-brand/45 bg-brand/15 text-brand-bright hover:bg-brand/25 hover:border-brand/65;
+  }
+  .btn-success {
     @apply border-accent/40 bg-accent/15 text-accent hover:bg-accent/25 hover:border-accent/60;
   }
   .btn-ghost {
@@ -95,7 +112,7 @@ body {
 /* Thin gradient accent rule used under panel headers. */
 .rule-accent {
   height: 1px;
-  background: linear-gradient(90deg, rgba(118, 185, 0, 0.45), rgba(118, 185, 0, 0) 70%);
+  background: linear-gradient(90deg, rgba(139, 124, 246, 0.5), rgba(139, 124, 246, 0) 72%);
 }
 
 /* Subtle enterprise hover lift for interactive cards (no neon, no bounce). */
@@ -107,8 +124,8 @@ body {
 }
 .hover-lift:hover {
   transform: translateY(-2px);
-  border-color: #2f3a32;
-  box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.85);
+  border-color: #36324a;
+  box-shadow: 0 22px 48px -24px rgba(0, 0, 0, 0.85);
 }
 
 /* Honour reduced-motion: disable counters, lifts and looping animations. */
