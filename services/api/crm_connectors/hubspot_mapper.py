@@ -39,7 +39,7 @@ SCORE_PROPS = [
     "current_month_spend",
     "previous_month_spend",
 ]
-TEXT_PROPS = ["segment", "account_id"]
+TEXT_PROPS = ["segment", "account_id", "industry"]
 
 PROPERTY_GROUP = f"{PREFIX}signal_intelligence"
 
@@ -102,10 +102,16 @@ def property_definitions() -> List[dict]:
 
 
 def account_to_company_properties(account: Account, include_custom: bool = True) -> Dict[str, str]:
-    """Build a HubSpot company `properties` dict from a synthetic account."""
+    """Build a HubSpot company `properties` dict from a synthetic account.
+
+    Note: the synthetic ``industry`` is intentionally NOT written to HubSpot's
+    native ``industry`` property, which is a strict enumeration that rejects
+    free-text values (e.g. "Hospitality"). It is carried in the demo custom
+    property ``s2a_industry`` (and the human-readable description) and read back
+    on sync, so seeding never fails on industry validation.
+    """
     props: Dict[str, str] = {
         "name": account.account_name,
-        "industry": account.industry,
         "city": account.region,
         "annualrevenue": str(int(account.current_month_spend * 12)),
         "description": (
@@ -116,6 +122,7 @@ def account_to_company_properties(account: Account, include_custom: bool = True)
     if include_custom:
         props[prop("account_id")] = account.account_id
         props[prop("segment")] = account.segment
+        props[prop("industry")] = account.industry
         props[prop("product_usage_score")] = str(account.product_usage_score)
         props[prop("engagement_score")] = str(account.engagement_score)
         props[prop("support_risk_score")] = str(account.support_risk_score)
@@ -151,7 +158,7 @@ def company_to_account(company: dict) -> Account:
     props = company.get("properties", {}) or {}
 
     name = props.get("name") or f"Company {cid}"
-    industry = props.get("industry") or _pick(cid, "industry", _FALLBACK_INDUSTRIES)
+    industry = props.get(prop("industry")) or props.get("industry") or _pick(cid, "industry", _FALLBACK_INDUSTRIES)
     region = props.get("city") or props.get("state") or _pick(cid, "region", _FALLBACK_REGIONS)
     segment = props.get(prop("segment")) or _pick(cid, "segment", _FALLBACK_SEGMENTS)
 

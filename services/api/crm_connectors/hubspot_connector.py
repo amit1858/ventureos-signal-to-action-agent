@@ -55,6 +55,10 @@ COMPANY_PROPERTIES = [
     "description",
 ] + [mapper.prop(p) for p in mapper.SCORE_PROPS + mapper.TEXT_PROPS]
 
+# Transient HubSpot/gateway statuses worth retrying with backoff.
+_RETRY_STATUSES = (429, 502, 503, 504)
+_MAX_RETRIES = 4
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -79,6 +83,7 @@ class HubSpotConnector(CRMConnector):
         self.sync_limit = int(os.getenv("HUBSPOT_SYNC_LIMIT", "100"))
         self.base_url = os.getenv("HUBSPOT_BASE_URL", "https://api.hubapi.com").rstrip("/")
         self.timeout = float(os.getenv("HUBSPOT_TIMEOUT", "30"))
+        self._portal_attempted = False
 
     # -- gates ------------------------------------------------------------
 
@@ -114,29 +119,52 @@ class HubSpotConnector(CRMConnector):
         if params:
             url = f"{url}?{urllib.parse.urlencode(params)}"
         data = json.dumps(body).encode("utf-8") if body is not None else None
-        req = urllib.request.Request(
-            url,
-            data=data,
-            method=method,
-            headers={
-                "Authorization": f"Bearer {self.token}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                raw = resp.read().decode("utf-8")
-                return resp.status, (json.loads(raw) if raw else {})
-        except urllib.error.HTTPError as exc:
+        last_status, last_data = 0, {}
+        for attempt in range(_MAX_RETRIES + 1):
+            req = urllib.request.Request(
+                url,
+                data=data,
+                method=method,
+                headers={
+                    "Authorization": f"Bearer {self.token}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                },
+            )
             try:
-                parsed = json.loads(exc.read().decode("utf-8"))
-            except (ValueError, OSError):
-                parsed = {}
-            return exc.code, parsed
-        except (urllib.error.URLError, TimeoutError):
-            # Deliberately generic: never echo the URL/token in the message.
-            raise CRMRequestError("Could not reach HubSpot. Check connectivity and the base URL.")
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    raw = resp.read().decode("utf-8")
+                    return resp.status, (json.loads(raw) if raw else {})
+            except urllib.error.HTTPError as exc:
+                try:
+                    parsed = json.loads(exc.read().decode("utf-8"))
+                except (ValueError, OSError):
+                    parsed = {}
+                if exc.code in _RETRY_STATUSES and attempt < _MAX_RETRIES:
+                    last_status, last_data = exc.code, parsed
+                    self._sleep_backoff(attempt, exc.headers)
+                    continue
+                return exc.code, parsed
+            except (urllib.error.URLError, TimeoutError):
+                # Deliberately generic: never echo the URL/token in the message.
+                if attempt < _MAX_RETRIES:
+                    self._sleep_backoff(attempt, None)
+                    continue
+                raise CRMRequestError("Could not reach HubSpot. Check connectivity and the base URL.")
+        return last_status, last_data
+
+    @staticmethod
+    def _sleep_backoff(attempt: int, headers) -> None:
+        """Exponential backoff (0.5,1,2,4s, capped), honouring Retry-After when present."""
+        delay = min(8.0, 0.5 * (2 ** attempt))
+        if headers is not None:
+            retry_after = headers.get("Retry-After")
+            if retry_after:
+                try:
+                    delay = min(15.0, float(retry_after))
+                except (TypeError, ValueError):
+                    pass
+        time.sleep(delay)
 
     def _checked(
         self,
@@ -184,8 +212,31 @@ class HubSpotConnector(CRMConnector):
         self._require_configured()
         # One tiny, read-only call. 200 => connected.
         self._checked("GET", "/crm/v3/objects/companies", params={"limit": 1})
+        self._resolve_portal_id()
         wb = " Write-back enabled." if self.writeback_enabled else " Write-back disabled (read-only)."
         return self._base_status(True, "Connected to HubSpot test portal." + wb)
+
+    def _resolve_portal_id(self) -> None:
+        """Best-effort: discover the portal id when not provided via env.
+
+        Read-only and strictly non-failing -- if the account-info endpoint is
+        unavailable (scope/plan), portal_id simply stays unset. The token is
+        never exposed; only the numeric portal id (which appears in HubSpot
+        deep-link URLs anyway) is stored.
+        """
+        if self.portal_id or self._portal_attempted:
+            return
+        self._portal_attempted = True
+        try:
+            status, data = self._request("GET", "/account-info/v3/details")
+            if 200 <= status < 300 and isinstance(data, dict):
+                pid = data.get("portalId") or data.get("hubId")
+                if pid:
+                    self.portal_id = str(pid)
+        except CRMError:
+            pass
+        except Exception:
+            pass
 
     # -- sync (read-only) -------------------------------------------------
 
@@ -193,6 +244,7 @@ class HubSpotConnector(CRMConnector):
         self._require_configured()
         cap = max(1, min(limit or self.sync_limit, self.sync_limit))
 
+        self._resolve_portal_id()
         companies = self._list_objects(
             "companies", cap, properties=COMPANY_PROPERTIES
         )
@@ -263,12 +315,22 @@ class HubSpotConnector(CRMConnector):
         contacts = 0
         deals = 0
         activities = 0
+        skipped = 0
 
         for i, account in enumerate(accounts):
             props = mapper.account_to_company_properties(account, include_custom=custom_ok)
-            created = self._checked("POST", "/crm/v3/objects/companies", body={"properties": props})
+            try:
+                created = self._checked("POST", "/crm/v3/objects/companies", body={"properties": props})
+            except (CRMAuthError, CRMScopeError):
+                # Systemic (token/scope) failure: abort fast rather than looping.
+                raise
+            except CRMRequestError:
+                # Per-record / transient failure that survived retries: skip and continue.
+                skipped += 1
+                continue
             company_id = str(created.get("id", "")) if isinstance(created, dict) else ""
             if not company_id:
+                skipped += 1
                 continue
             companies += 1
 
@@ -289,6 +351,7 @@ class HubSpotConnector(CRMConnector):
                     deals += 1
 
         mode = "custom properties" if custom_ok else "standard properties (deterministic scores on sync)"
+        skipped_note = f" Skipped {skipped} on transient errors." if skipped else ""
         return SyncResult(
             companies_loaded=companies,
             contacts_loaded=contacts,
@@ -297,7 +360,7 @@ class HubSpotConnector(CRMConnector):
             last_synced_at=_now_iso(),
             source="HubSpot test CRM",
             portal_id=self.portal_id,
-            message=f"Seeded {companies} companies into HubSpot using {mode}.",
+            message=f"Seeded {companies} companies into HubSpot using {mode}.{skipped_note}",
         )
 
     def _ensure_custom_properties(self) -> bool:
