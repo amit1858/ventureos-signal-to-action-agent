@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { RefreshCw, Play, ArrowRight, Crown, ShieldAlert, TrendingUp, Layers, Target, Clock } from "lucide-react";
+import { RefreshCw, Play, ArrowRight, Crown, Clock } from "lucide-react";
 import type { Account, Recommendation } from "@/lib/types";
 import { cx, inrCompact, timeAgo, titleCase } from "@/lib/format";
 import {
@@ -57,8 +57,8 @@ export function ExecutiveMorningBrief({
   const TopIcon = top?.action.icon;
 
   return (
-    <div className="card-elevated relative overflow-hidden p-5 animate-fade-in sm:p-6">
-      <div className="grid-dots pointer-events-none absolute inset-0 opacity-40" />
+    <div className="card-elevated relative overflow-hidden p-6 animate-fade-in sm:p-8 lg:p-10">
+      <div className="grid-dots pointer-events-none absolute inset-0 opacity-[0.12]" />
       <span
         className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-brand via-brand/50 to-transparent"
         aria-hidden
@@ -72,7 +72,7 @@ export function ExecutiveMorningBrief({
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand/60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-brand shadow-glow" />
               </span>
-              <span className="section-label text-faint">AI Portfolio Brief</span>
+              <span className="section-label text-faint">Executive Brief</span>
               <span
                 className={cx(
                   "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
@@ -149,20 +149,20 @@ export function ExecutiveMorningBrief({
           </div>
         </div>
 
-        {/* Headline tiles */}
-        <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <BannerTile icon={Layers} tone="text-ink" label="Accounts analyzed">
+        {/* Headline stats — calm inline row, not a wall of boxes */}
+        <div className="mt-7 flex flex-wrap gap-x-10 gap-y-5 border-t border-edge pt-6">
+          <BriefStat label="Accounts analyzed" tone="text-ink">
             <Counter value={brief.analyzed} />
-          </BannerTile>
-          <BannerTile icon={Target} tone="text-amber" label="Require attention">
+          </BriefStat>
+          <BriefStat label="Require attention" tone="text-amber">
             <Counter value={brief.attention} />
-          </BannerTile>
-          <BannerTile icon={ShieldAlert} tone="text-risk" label="Revenue at risk">
+          </BriefStat>
+          <BriefStat label="Revenue at risk" tone="text-risk">
             <Counter value={brief.revenueAtRisk} format={inrCompact} />
-          </BannerTile>
-          <BannerTile icon={TrendingUp} tone="text-accent" label="Growth opportunity">
+          </BriefStat>
+          <BriefStat label="Growth opportunity" tone="text-accent">
             <Counter value={brief.growthOpportunity} format={inrCompact} />
-          </BannerTile>
+          </BriefStat>
         </div>
 
         {/* Highest-priority callout */}
@@ -235,24 +235,19 @@ function InsightChip({ insight }: { insight: PortfolioInsight }) {
   );
 }
 
-function BannerTile({
-  icon: Icon,
+function BriefStat({
   label,
   tone,
   children,
 }: {
-  icon: typeof Layers;
   label: string;
   tone: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="hover-lift rounded-xl border border-edge bg-surface2/50 p-3.5">
-      <div className="flex items-center gap-1.5 text-faint">
-        <Icon size={13} className={tone} />
-        <span className="text-[10px] uppercase tracking-wider">{label}</span>
-      </div>
-      <div className={cx("mt-1.5 font-mono text-2xl font-semibold leading-none", tone)}>{children}</div>
+    <div>
+      <div className="text-[10px] uppercase tracking-[0.14em] text-faint">{label}</div>
+      <div className={cx("mt-2 font-mono text-[22px] font-semibold leading-none sm:text-[24px]", tone)}>{children}</div>
     </div>
   );
 }

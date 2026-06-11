@@ -68,7 +68,7 @@ export function CommandCenter({
   }, [recs, accountsById]);
 
   return (
-    <div className="space-y-10 animate-fade-in pb-6 lg:space-y-14">
+    <div className="space-y-14 animate-fade-in pb-8 lg:space-y-20">
       {/* Section 1 · Executive Brief (hero) */}
       <ExecutiveMorningBrief
         accounts={accounts}
@@ -85,6 +85,7 @@ export function CommandCenter({
 
       {/* Section 2 · Portfolio Health */}
       <Section
+        step={1}
         eyebrow="Portfolio Health"
         heading="Your book of business"
         sub="Overall readiness, the revenue at stake and the expansion headroom across the portfolio."
@@ -95,6 +96,7 @@ export function CommandCenter({
       {/* Section 3 · Today's Priorities */}
       <Section
         id="todays-priorities"
+        step={2}
         eyebrow="Today's Priorities"
         heading="What to do today"
         sub="The accounts that deserve your attention now — why they matter and the recommended next move."
@@ -111,6 +113,7 @@ export function CommandCenter({
 
       {/* Section 4 · Portfolio Map */}
       <Section
+        step={3}
         eyebrow="Portfolio Map"
         heading="Risk versus opportunity"
         sub={`Every account placed by risk and expansion potential — ${accounts.length} in view. Hover for detail, click to open.`}
@@ -128,6 +131,7 @@ export function CommandCenter({
 
       {/* Section 4b · Priority Accounts (ranked) */}
       <Section
+        step={4}
         eyebrow="Priority Accounts"
         heading="The ranked shortlist"
         sub={hasResult ? "Top accounts by AI priority — sort by any signal." : "Run the analysis to populate the ranked shortlist."}
@@ -147,6 +151,7 @@ export function CommandCenter({
 
       {/* Section 5 · Executive Briefing */}
       <Section
+        step={5}
         eyebrow="Executive Briefing"
         heading="What changed overnight"
         sub="Top risks, standout opportunities and emerging trends — read from live signals."
@@ -158,6 +163,7 @@ export function CommandCenter({
 
       {/* Section 6 · Governed pipeline */}
       <Section
+        step={6}
         eyebrow="Governed Pipeline"
         heading="How this was decided"
         sub="A controlled, multi-agent workflow with human approval — never an autonomous black box."
@@ -178,15 +184,17 @@ export function CommandCenter({
   );
 }
 
-// Executive section header: SMALL LABEL / Large Heading / one-line description.
+// Executive section header: STEP N · CATEGORY / Large Heading / description.
 function Section({
   id,
+  step,
   eyebrow,
   heading,
   sub,
   children,
 }: {
   id?: string;
+  step?: number;
   eyebrow: string;
   heading: string;
   sub?: string;
@@ -194,10 +202,18 @@ function Section({
 }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <div className="mb-4 max-w-2xl">
-        <div className="eyebrow text-brand-bright/80">{eyebrow}</div>
-        <h2 className="section-h mt-1.5">{heading}</h2>
-        {sub ? <p className="section-sub mt-1">{sub}</p> : null}
+      <div className="mb-6 max-w-2xl">
+        <div className="eyebrow text-faint">
+          {typeof step === "number" ? (
+            <>
+              <span>Step {step}</span>
+              <span className="mx-2 text-faint/40">·</span>
+            </>
+          ) : null}
+          <span>{eyebrow}</span>
+        </div>
+        <h2 className="section-h mt-2.5">{heading}</h2>
+        {sub ? <p className="section-sub mt-2">{sub}</p> : null}
       </div>
       {children}
     </section>

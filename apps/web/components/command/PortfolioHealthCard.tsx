@@ -2,12 +2,8 @@
 
 import * as React from "react";
 import {
-  ShieldCheck,
-  Briefcase,
-  Wallet,
-  ShieldAlert,
-  TrendingUp,
   Target,
+  TrendingUp,
   UserCheck,
   CheckCircle2,
   Gauge,
@@ -29,11 +25,12 @@ import {
 } from "@/lib/portfolio";
 import { Counter } from "@/components/Counter";
 
-// Section 2 · Portfolio Health.
-// A single, calm executive-summary card — overall readiness, the money that
-// matters, a slim performance strip and the risk/opportunity spread. Every
-// value is read straight from the existing portfolio + reasoning helpers; this
-// card only re-presents them. No scoring or ranking happens here.
+// Section · Portfolio Health.
+// A calm executive-summary block: a hero card pairing the signature readiness
+// ring with the money that matters, a row of smaller supporting cards for
+// activity, and the risk/opportunity spread. Every value is read straight from
+// the existing portfolio + reasoning helpers; this card only re-presents them.
+// No scoring or ranking happens here.
 export function PortfolioHealthCard({
   accounts,
   recs,
@@ -61,123 +58,155 @@ export function PortfolioHealthCard({
   const pending = recs.filter((r) => r.approval_status === "pending").length;
   const completed = recs.filter((r) => r.approval_status === "approved").length;
   const reviewQueue = recs.filter((r) => r.governance_status !== "ok").length;
+  const recCount = recs.length || 1;
   const dash = "—";
 
   const readinessLabel =
     readiness >= 75 ? "Healthy" : readiness >= 55 ? "Stable" : readiness >= 40 ? "Needs attention" : "At risk";
   const readinessTone = readiness >= 55 ? "text-accent" : readiness >= 40 ? "text-amber" : "text-risk";
+  const readinessStroke = readiness >= 55 ? "#76B900" : readiness >= 40 ? "#F5B84B" : "#EF6B73";
 
+  // Money that matters — shown as an inline labelled stat row inside the hero.
   const money: MoneyStat[] = [
-    { icon: Briefcase, label: "Book of Business", value: total ? <Counter value={total} /> : dash, desc: "Active relationships", tone: "text-ink" },
-    { icon: Wallet, label: "Annual Value", value: total ? <Counter value={book} format={inrCompact} /> : dash, desc: "Total contract value", tone: "text-ink" },
-    { icon: ShieldAlert, label: "Revenue at Risk", value: total ? <Counter value={atRisk} format={inrCompact} /> : dash, desc: "Exposure if unaddressed", tone: "text-risk" },
-    { icon: TrendingUp, label: "Expansion Potential", value: total ? <Counter value={growth} format={inrCompact} /> : dash, desc: "Upside on high-fit accounts", tone: "text-accent" },
+    { label: "Book of Business", value: total ? <Counter value={total} /> : dash, tone: "text-ink" },
+    { label: "Annual Value", value: total ? <Counter value={book} format={inrCompact} /> : dash, tone: "text-ink" },
+    { label: "Revenue at Risk", value: total ? <Counter value={atRisk} format={inrCompact} /> : dash, tone: "text-risk" },
+    { label: "Expansion Potential", value: total ? <Counter value={growth} format={inrCompact} /> : dash, tone: "text-accent" },
   ];
 
-  const mini: MiniStat[] = [
-    { icon: Target, label: "Immediate actions", value: total ? String(attention) : dash, tone: "text-amber" },
-    { icon: TrendingUp, label: "High opportunity", value: total ? String(highOpp) : dash, tone: "text-accent" },
-    { icon: UserCheck, label: "Pending approvals", value: hasResult ? String(pending) : dash, tone: "text-amber" },
-    { icon: CheckCircle2, label: "Actions completed", value: hasResult ? String(completed) : dash, tone: "text-accent" },
-    { icon: Gauge, label: "Avg confidence", value: hasResult ? pct(stats.avgConfidence) : dash, tone: "text-brand-bright" },
-    { icon: Inbox, label: "Human review queue", value: hasResult ? String(reviewQueue) : dash, tone: "text-amber" },
+  // Activity — smaller supporting cards beneath the hero card.
+  const supporting: MiniStat[] = [
+    { icon: Target, label: "Immediate actions", value: total ? String(attention) : dash, frac: total ? attention / total : 0, tone: "text-amber", bar: "bg-amber" },
+    { icon: TrendingUp, label: "High opportunity", value: total ? String(highOpp) : dash, frac: total ? highOpp / total : 0, tone: "text-accent", bar: "bg-accent" },
+    { icon: UserCheck, label: "Pending approvals", value: hasResult ? String(pending) : dash, frac: hasResult ? pending / recCount : 0, tone: "text-amber", bar: "bg-amber" },
+    { icon: CheckCircle2, label: "Actions completed", value: hasResult ? String(completed) : dash, frac: hasResult ? completed / recCount : 0, tone: "text-accent", bar: "bg-accent" },
+    { icon: Gauge, label: "Avg confidence", value: hasResult ? pct(stats.avgConfidence) : dash, frac: hasResult ? stats.avgConfidence : 0, tone: "text-brand-bright", bar: "bg-brand" },
+    { icon: Inbox, label: "Human review queue", value: hasResult ? String(reviewQueue) : dash, frac: hasResult ? reviewQueue / recCount : 0, tone: "text-amber", bar: "bg-amber" },
   ];
 
   return (
-    <div className="card-premium p-5 sm:p-6 lg:p-7">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,300px),1fr]">
-        {/* Readiness */}
-        <div className="flex flex-col justify-between gap-5 rounded-2xl border border-edge bg-surface2/40 p-5">
-          <div>
-            <div className="flex items-center gap-2 text-faint">
-              <ShieldCheck size={14} className={readinessTone} />
-              <span className="eyebrow">Portfolio readiness</span>
-            </div>
-            <div className="mt-3 flex items-end gap-1">
-              <span className={cx("font-mono text-[52px] font-semibold leading-none tracking-tight", readinessTone)}>
-                <Counter value={readiness} />
-              </span>
-              <span className={cx("mb-1 text-2xl font-semibold", readinessTone)}>%</span>
-            </div>
-            <div className={cx("mt-2 text-sm font-semibold", readinessTone)}>{readinessLabel}</div>
-            <p className="mt-1 text-[13px] leading-relaxed text-muted">
+    <div className="space-y-4">
+      {/* Hero card: readiness ring + the money that matters */}
+      <div className="card-premium p-6 sm:p-8 lg:p-10">
+        <div className="grid items-center gap-8 lg:grid-cols-[1fr,auto] lg:gap-12">
+          <div className="min-w-0">
+            <p className="max-w-md text-[15px] leading-relaxed text-muted">
               {total ? (
                 <>
-                  <span className="font-semibold text-ink">{healthy}</span> of {total} accounts are healthy ·{" "}
-                  <span className="font-semibold text-amber">{attention}</span> need attention now.
+                  <span className="font-semibold text-ink">{healthy}</span> of {total} accounts are healthy.{" "}
+                  <span className="font-semibold text-amber">{attention}</span> need your attention now.
                 </>
               ) : (
-                "Run the analysis to assess portfolio readiness."
+                "Run the analysis to assess portfolio readiness across your book of business."
               )}
             </p>
-          </div>
 
-          <div>
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-surface2">
-              <div className="bg-accent" style={{ width: `${total ? (healthy / total) * 100 : 0}%` }} />
-              <div className="bg-amber" style={{ width: `${total ? (attention / total) * 100 : 0}%` }} />
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[11px] text-faint">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-accent" /> Healthy
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-amber" /> Needs attention
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Money + performance */}
-        <div className="flex flex-col gap-5">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {money.map((m) => (
-              <div key={m.label} className="hover-lift rounded-2xl border border-edge bg-surface/70 p-4">
-                <div className="flex items-center gap-1.5 text-faint">
-                  <m.icon size={13} className={m.tone} />
-                  <span className="text-[10px] uppercase tracking-wider">{m.label}</span>
+            <div className="mt-7 grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
+              {money.map((m) => (
+                <div key={m.label}>
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-faint">{m.label}</div>
+                  <div className={cx("mt-2 font-mono text-[26px] font-semibold leading-none sm:text-[28px]", m.tone)}>
+                    {m.value}
+                  </div>
                 </div>
-                <div className={cx("mt-2.5 font-mono text-[26px] font-semibold leading-none", m.tone)}>{m.value}</div>
-                <div className="mt-1.5 text-[10px] leading-tight text-faint">{m.desc}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-6 gap-y-3.5 rounded-2xl border border-edge bg-surface2/30 p-4 sm:grid-cols-3">
-            {mini.map((s) => (
-              <div key={s.label} className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[11px] text-muted">
-                  <s.icon size={12} className="text-faint" />
-                  {s.label}
-                </span>
-                <span className={cx("font-mono text-sm font-semibold", s.tone)}>{s.value}</span>
+          {/* Signature readiness ring */}
+          <div className="flex flex-col items-center gap-3 justify-self-center lg:justify-self-end">
+            <ReadinessRing value={readiness} tone={readinessTone} stroke={readinessStroke} hasData={total > 0} />
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-faint">Readiness</div>
+              <div className={cx("mt-1 text-sm font-semibold", total ? readinessTone : "text-faint")}>
+                {total ? readinessLabel : "No data"}
               </div>
-            ))}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <DistributionBar
-              title="Risk spread"
-              dist={riskDist}
-              colors={{ high: "bg-risk", med: "bg-amber", low: "bg-faint/50" }}
-            />
-            <DistributionBar
-              title="Opportunity spread"
-              dist={oppDist}
-              colors={{ high: "bg-accent", med: "bg-cyan", low: "bg-faint/50" }}
-            />
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Smaller supporting cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {supporting.map((s) => (
+          <div key={s.label} className="hover-lift rounded-2xl border border-edge bg-surface/60 p-4">
+            <div className="flex items-center gap-1.5 text-faint">
+              <s.icon size={13} className={s.tone} />
+              <span className="text-[10px] uppercase leading-tight tracking-wider">{s.label}</span>
+            </div>
+            <div className={cx("mt-3 font-mono text-2xl font-semibold leading-none", s.tone)}>{s.value}</div>
+            <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-surface2">
+              <div
+                className={cx("h-full rounded-full transition-all duration-700 ease-out", s.bar)}
+                style={{ width: `${Math.round(Math.max(0, Math.min(1, s.frac)) * 100)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Risk / opportunity spread */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <DistributionBar title="Risk spread" dist={riskDist} colors={{ high: "bg-risk", med: "bg-amber", low: "bg-faint/50" }} />
+        <DistributionBar title="Opportunity spread" dist={oppDist} colors={{ high: "bg-accent", med: "bg-cyan", low: "bg-faint/50" }} />
+      </div>
+    </div>
+  );
+}
+
+// Circular readiness ring — the signature portfolio-health visual. The arc
+// animates up from zero on mount (and respects prefers-reduced-motion via the
+// global transition override).
+function ReadinessRing({
+  value,
+  tone,
+  stroke,
+  hasData,
+}: {
+  value: number;
+  tone: string;
+  stroke: string;
+  hasData: boolean;
+}) {
+  const radius = 56;
+  const circ = 2 * Math.PI * radius;
+  const target = Math.max(0, Math.min(100, value));
+  const [draw, setDraw] = React.useState(0);
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setDraw(target));
+    return () => cancelAnimationFrame(id);
+  }, [target]);
+  const dash = hasData ? (draw / 100) * circ : 0;
+
+  return (
+    <div className="relative flex h-[150px] w-[150px] items-center justify-center sm:h-[172px] sm:w-[172px]">
+      <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
+        <circle cx="70" cy="70" r={radius} fill="none" stroke="#1B2127" strokeWidth="9" />
+        <circle
+          cx="70"
+          cy="70"
+          r={radius}
+          fill="none"
+          stroke={hasData ? stroke : "#2A2F35"}
+          strokeWidth="9"
+          strokeLinecap="round"
+          strokeDasharray={`${dash} ${circ}`}
+          style={{ transition: "stroke-dasharray 0.9s ease-out", filter: `drop-shadow(0 0 7px ${stroke}44)` }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className={cx("font-mono text-[46px] font-semibold leading-none tracking-tight", hasData ? tone : "text-faint")}>
+          {hasData ? <Counter value={value} /> : "—"}
+        </div>
+        {hasData ? <div className="mt-1.5 text-xs text-faint">/ 100</div> : null}
       </div>
     </div>
   );
 }
 
 interface MoneyStat {
-  icon: LucideIcon;
   label: string;
   value: React.ReactNode;
-  desc: string;
   tone: string;
 }
 
@@ -185,7 +214,9 @@ interface MiniStat {
   icon: LucideIcon;
   label: string;
   value: string;
+  frac: number;
   tone: string;
+  bar: string;
 }
 
 function DistributionBar({

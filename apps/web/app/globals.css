@@ -53,10 +53,10 @@ body {
     @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-faint;
   }
   .section-h {
-    @apply text-[19px] font-semibold leading-tight tracking-tight text-ink;
+    @apply text-[22px] font-semibold leading-tight tracking-tight text-ink sm:text-[26px];
   }
   .section-sub {
-    @apply text-[13px] leading-relaxed text-muted;
+    @apply text-sm leading-relaxed text-muted;
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50;
