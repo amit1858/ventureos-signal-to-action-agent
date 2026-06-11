@@ -12,6 +12,7 @@ import {
   type PortfolioInsight,
 } from "@/lib/reasoning";
 import { Counter } from "@/components/Counter";
+import { ThinkingSequence } from "@/components/ThinkingSequence";
 
 // P1 · Executive Morning Brief.
 // An executive-assistant style briefing — time-aware greeting, a dynamic
@@ -92,33 +93,36 @@ export function ExecutiveMorningBrief({
             <p className="mt-1 text-sm font-medium text-muted">
               While you were away, I reviewed your portfolio overnight — here&apos;s where it stands.
             </p>
-            <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
-              {brief.analyzed ? (
-                <>
+            {loading && !hasResult ? (
+              <div className="mt-4 max-w-md">
+                <ThinkingSequence caption="Reviewing your portfolio overnight" />
+              </div>
+            ) : brief.analyzed ? (
+              <>
+                <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
                   <span className="font-semibold text-ink">{brief.analyzed}</span> accounts analyzed ·{" "}
                   <span className="font-semibold text-amber">{brief.attention}</span> need immediate attention ·{" "}
                   <span className="font-semibold text-risk">{inrCompact(brief.revenueAtRisk)}</span> may be at risk ·{" "}
                   <span className="font-semibold text-accent">{inrCompact(brief.growthOpportunity)}</span> of growth
                   opportunity identified.
-                </>
-              ) : (
-                "Connect a data source and run the analysis to generate today's portfolio briefing."
-              )}
-            </p>
-
-            {brief.analyzed ? (
-              <button
-                type="button"
-                onClick={() =>
-                  document
-                    .getElementById("todays-priorities")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
-                className="btn btn-primary mt-4 px-4"
-              >
-                Review today&apos;s priorities <ArrowRight size={14} />
-              </button>
-            ) : null}
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    document
+                      .getElementById("todays-priorities")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }
+                  className="btn btn-primary mt-4 px-4"
+                >
+                  Review today&apos;s priorities <ArrowRight size={14} />
+                </button>
+              </>
+            ) : (
+              <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
+                Connect a data source and run the analysis to generate today&apos;s portfolio briefing.
+              </p>
+            )}
           </div>
 
           <div className="flex shrink-0 items-center gap-4">
@@ -149,6 +153,8 @@ export function ExecutiveMorningBrief({
           </div>
         </div>
 
+        {!(loading && !hasResult) ? (
+          <>
         {/* Headline stats — calm inline row, not a wall of boxes */}
         <div className="mt-7 flex flex-wrap gap-x-10 gap-y-5 border-t border-edge pt-6">
           <BriefStat label="Accounts analyzed" tone="text-ink">
@@ -215,6 +221,8 @@ export function ExecutiveMorningBrief({
               <InsightChip key={it.key} insight={it} />
             ))}
           </div>
+        ) : null}
+          </>
         ) : null}
       </div>
     </div>

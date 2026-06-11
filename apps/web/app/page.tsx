@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Loader2, TrendingUp } from "lucide-react";
+import { AlertTriangle, TrendingUp } from "lucide-react";
 import { api } from "@/lib/api";
 import type {
   Account,
@@ -37,6 +37,7 @@ import { CommandCenter } from "@/components/command/CommandCenter";
 import { WhyThisAccount } from "@/components/WhyThisAccount";
 import { LandingView } from "@/components/landing/LandingView";
 import { WorkspaceQuery } from "@/components/WorkspaceQuery";
+import { ThinkingSequence } from "@/components/ThinkingSequence";
 import { Card, PanelTitle } from "@/components/ui";
 
 const DEFAULT_QUERY = "Which SMB accounts need attention this week and why?";
@@ -373,18 +374,20 @@ export default function Page() {
       ) : null}
 
       {view === "landing" ? (
-        <LandingView
-          meta={meta}
-          recommendationCount={result?.recommendations.length ?? limit}
-          isHubspotSource={isHubspotSource}
-          dataSourceLabel={dataSourceLabel}
-          onEnter={() => setView("command")}
-          onOpenWorkspace={() => setView("workspace")}
-        />
+        <div key="landing" className="scene">
+          <LandingView
+            meta={meta}
+            recommendationCount={result?.recommendations.length ?? limit}
+            isHubspotSource={isHubspotSource}
+            dataSourceLabel={dataSourceLabel}
+            onEnter={() => setView("command")}
+            onOpenWorkspace={() => setView("workspace")}
+          />
+        </div>
       ) : null}
 
       {view === "command" ? (
-        <main className="mx-auto w-full max-w-[1840px] flex-1 px-4 py-4">
+        <main key="command" className="scene mx-auto w-full max-w-[1840px] flex-1 px-4 py-4">
           {runError ? (
             <div className="mb-4 flex items-center gap-2 rounded-lg border border-risk/40 bg-risk/10 px-4 py-3 text-sm text-risk">
               <AlertTriangle size={16} />
@@ -409,7 +412,7 @@ export default function Page() {
       ) : null}
 
       {view === "workspace" ? (
-      <main className="mx-auto w-full max-w-[1840px] flex-1 px-4 py-4">
+      <main key="workspace" className="scene mx-auto w-full max-w-[1840px] flex-1 px-4 py-4">
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[336px_minmax(0,1fr)_456px]">
           {/* LEFT */}
           <aside className="xl:sticky xl:top-[68px] xl:max-h-[calc(100vh-92px)] xl:self-start xl:overflow-y-auto xl:pr-1">
@@ -648,28 +651,18 @@ const LOADING_PHASES = [
 ];
 
 function CenterLoading() {
-  const [i, setI] = React.useState(0);
+  const [phase, setPhase] = React.useState(0);
   React.useEffect(() => {
-    const id = setInterval(() => setI((p) => (p + 1) % LOADING_PHASES.length), 1100);
+    const id = setInterval(() => setPhase((p) => (p + 1) % LOADING_PHASES.length), 1100);
     return () => clearInterval(id);
   }, []);
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2.5 rounded-lg border border-accent/30 bg-accent/5 px-4 py-3 text-sm text-ink">
-        <Loader2 size={16} className="animate-spin text-accent" />
-        <span className="font-medium">{LOADING_PHASES[i]}</span>
-        <span className="ml-auto flex gap-1">
-          {LOADING_PHASES.map((_, k) => (
-            <span
-              key={k}
-              className={cx("h-1 w-4 rounded-full transition-colors", k <= i ? "bg-accent" : "bg-surface2")}
-            />
-          ))}
-        </span>
+    <div className="space-y-3 animate-fade-in">
+      <div className="card-elevated p-5">
+        <ThinkingSequence caption={LOADING_PHASES[phase]} />
       </div>
-      {[0, 1, 2].map((k) => (
-        <div key={k} className="skeleton h-40 rounded-xl border border-edge" />
-      ))}
+      <div className="skeleton h-32 rounded-xl border border-edge" />
+      <div className="skeleton h-32 rounded-xl border border-edge" />
     </div>
   );
 }
