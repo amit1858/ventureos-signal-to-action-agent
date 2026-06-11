@@ -325,4 +325,4 @@ jobs:
 
 ---
 
-**Next:** See [Demo Script](./demo-script.md) for the 5-minute hackathon walkthrough and [NVIDIA Integration Plan](./nvidia-integration-plan.md) for production deployment.
+**Next:** See [Demo Script](./DEMO_SCRIPT.md) for the 5-minute hackathon walkthrough and [NVIDIA Integration Plan](./nvidia-integration-plan.md) for production deployment.

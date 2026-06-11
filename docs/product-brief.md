@@ -114,4 +114,4 @@ This is **not** a chatbot or copilot. It is a **controlled orchestration** of sp
 
 ---
 
-**Next:** See [Architecture](./architecture.md) for system design and [Demo Script](./demo-script.md) for the 5-minute walkthrough.
+**Next:** See [Architecture](./ARCHITECTURE.md) for system design and [Demo Script](./DEMO_SCRIPT.md) for the 5-minute walkthrough.

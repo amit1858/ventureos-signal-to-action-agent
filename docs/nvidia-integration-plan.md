@@ -324,4 +324,4 @@ PASS: 10/10 queries (avg latency 1.15s, 0 schema errors)
 
 ---
 
-**Next:** See [Evaluation Plan](./evaluation-plan.md) for test harness details and [Demo Script](./demo-script.md) for hackathon presentation flow.
+**Next:** See [Evaluation Plan](./evaluation-plan.md) for test harness details and [Demo Script](./DEMO_SCRIPT.md) for hackathon presentation flow.

@@ -208,4 +208,4 @@ Written to SQLite `decisions.db` for every workflow invocation. Provides a tampe
 
 ---
 
-**Next:** See [Architecture](./architecture.md) for how this data flows through agents, and [Evaluation Plan](./evaluation-plan.md) for test queries against this schema.
+**Next:** See [Architecture](./ARCHITECTURE.md) for how this data flows through agents, and [Evaluation Plan](./evaluation-plan.md) for test queries against this schema.
