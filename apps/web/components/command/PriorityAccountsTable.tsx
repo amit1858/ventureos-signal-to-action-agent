@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, ArrowDown, ArrowUp, ListOrdered } from "lucide-react";
+import { ArrowRight, ArrowDown, ArrowUp, ListOrdered, type LucideIcon } from "lucide-react";
 import type { Account, Recommendation } from "@/lib/types";
-import { cx, actionLabel, titleCase } from "@/lib/format";
+import { cx, titleCase } from "@/lib/format";
+import { businessAction } from "@/lib/actions";
 import { RENEWAL_SOON } from "@/lib/portfolio";
 
 interface Row {
@@ -16,6 +17,8 @@ interface Row {
   opportunity: number;
   renewal: number;
   action: string;
+  actionIcon: LucideIcon;
+  actionTone: string;
 }
 
 type SortKey = "rank" | "name" | "industry" | "priority" | "risk" | "opportunity" | "renewal";
@@ -63,6 +66,11 @@ export function PriorityAccountsTable({
   const rows = React.useMemo<Row[]>(() => {
     return recs.slice(0, 10).map((r) => {
       const a = accountsById[r.account_id];
+      const ba = businessAction(r.action_type, {
+        governanceStatus: r.governance_status,
+        growthPotential: a?.growth_potential_score,
+        productUsage: a?.product_usage_score,
+      });
       return {
         id: r.account_id,
         rank: r.priority_rank,
@@ -72,7 +80,9 @@ export function PriorityAccountsTable({
         risk: Math.round(a?.support_risk_score ?? 0),
         opportunity: Math.round(a?.growth_potential_score ?? 0),
         renewal: a?.renewal_days ?? 0,
-        action: actionLabel(r.action_type),
+        action: ba.label,
+        actionIcon: ba.icon,
+        actionTone: ba.tone,
       };
     });
   }, [recs, accountsById]);
@@ -176,6 +186,7 @@ export function PriorityAccountsTable({
                 </td>
                 <td className="px-2.5 py-2.5">
                   <span className="inline-flex items-center gap-1.5 text-xs text-muted">
+                    <r.actionIcon size={13} className={cx("shrink-0", r.actionTone)} />
                     {r.action}
                     <ArrowRight size={12} className="text-faint opacity-0 transition-opacity group-hover:opacity-100" />
                   </span>

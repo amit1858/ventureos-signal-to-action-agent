@@ -98,6 +98,33 @@ body {
   background: linear-gradient(90deg, rgba(118, 185, 0, 0.45), rgba(118, 185, 0, 0) 70%);
 }
 
+/* Subtle enterprise hover lift for interactive cards (no neon, no bounce). */
+.hover-lift {
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  border-color: #2f3a32;
+  box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.85);
+}
+
+/* Honour reduced-motion: disable counters, lifts and looping animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .hover-lift:hover {
+    transform: none;
+  }
+}
+
 /* Scrollbars */
 * {
   scrollbar-width: thin;

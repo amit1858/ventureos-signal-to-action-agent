@@ -1,15 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Gauge, Clock, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Gauge, Clock, ShieldCheck, CheckCircle2, ShieldAlert, TrendingUp, Inbox } from "lucide-react";
 import type { Account, Recommendation } from "@/lib/types";
-import { cx, pct } from "@/lib/format";
+import { cx, pct, inrCompact } from "@/lib/format";
 import {
   execStats,
   riskDistribution,
   opportunityDistribution,
+  revenueAtRisk,
+  growthOpportunity,
   type Distribution,
 } from "@/lib/portfolio";
+import { Counter } from "@/components/Counter";
 
 export function ExecutiveMetrics({
   accounts,
@@ -25,6 +28,9 @@ export function ExecutiveMetrics({
   const stats = React.useMemo(() => execStats(recs, latencyMs), [recs, latencyMs]);
   const riskDist = React.useMemo(() => riskDistribution(accounts), [accounts]);
   const oppDist = React.useMemo(() => opportunityDistribution(accounts), [accounts]);
+  const atRisk = revenueAtRisk(accounts);
+  const growth = growthOpportunity(accounts);
+  const reviewQueue = recs.filter((r) => r.governance_status !== "ok").length;
   const dash = "—";
 
   const tiles = [
@@ -52,13 +58,31 @@ export function ExecutiveMetrics({
       value: hasResult ? (stats.approved + stats.rejected ? pct(stats.approvalRate) : "—") : dash,
       tone: "text-accent",
     },
+    {
+      icon: ShieldAlert,
+      label: "Revenue at Risk",
+      value: accounts.length ? <Counter value={atRisk} format={inrCompact} /> : dash,
+      tone: "text-risk",
+    },
+    {
+      icon: TrendingUp,
+      label: "Growth Potential",
+      value: accounts.length ? <Counter value={growth} format={inrCompact} /> : dash,
+      tone: "text-accent",
+    },
+    {
+      icon: Inbox,
+      label: "Human Review Queue",
+      value: hasResult ? <Counter value={reviewQueue} /> : dash,
+      tone: "text-amber",
+    },
   ];
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {tiles.map((t) => (
-          <div key={t.label} className="rounded-lg border border-edge bg-surface2/40 p-3">
+          <div key={t.label} className="hover-lift rounded-lg border border-edge bg-surface2/40 p-3">
             <div className="flex items-center gap-1.5 text-faint">
               <t.icon size={12} />
               <span className="text-[10px] uppercase tracking-wider">{t.label}</span>

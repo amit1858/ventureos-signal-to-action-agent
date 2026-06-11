@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import {
-  Layers,
-  AlertTriangle,
+  Briefcase,
+  Wallet,
   TrendingUp,
-  Sparkles,
+  Target,
   UserCheck,
   CheckCircle2,
   ArrowUpRight,
@@ -14,8 +14,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { Account, Recommendation } from "@/lib/types";
-import { cx } from "@/lib/format";
-import { countHighOpportunity, countHighRisk } from "@/lib/portfolio";
+import { cx, inrCompact } from "@/lib/format";
+import { bookValue, countAttention, countHighOpportunity } from "@/lib/portfolio";
+import { Counter } from "@/components/Counter";
 
 type TrendDir = "up" | "down" | "flat";
 
@@ -45,8 +46,9 @@ export function ExecutiveKpiStrip({
   hasResult: boolean;
 }) {
   const total = accounts.length;
-  const highRisk = countHighRisk(accounts);
+  const book = bookValue(accounts);
   const highOpp = countHighOpportunity(accounts);
+  const attention = countAttention(accounts);
   const generated = recs.length;
   const pending = recs.filter((r) => r.approval_status === "pending").length;
   const completed = recs.filter((r) => r.approval_status === "approved").length;
@@ -54,50 +56,50 @@ export function ExecutiveKpiStrip({
 
   const items: Kpi[] = [
     {
-      icon: Layers,
-      label: "Accounts Analyzed",
-      value: total || dash,
-      desc: "Across the active portfolio",
+      icon: Briefcase,
+      label: "Book of Business",
+      value: total ? <Counter value={total} /> : dash,
+      desc: "Active customer relationships",
       tone: "text-ink",
       trendDir: "flat",
       trendText: "live portfolio",
       trendTone: "text-faint",
     },
     {
-      icon: AlertTriangle,
-      label: "High Risk Accounts",
-      value: total ? highRisk : dash,
-      desc: "Support risk ≥ 60",
-      tone: "text-risk",
-      trendDir: highRisk > 0 ? "up" : "flat",
-      trendText: `${pctOf(highRisk, total)} of book`,
-      trendTone: "text-risk",
+      icon: Wallet,
+      label: "Annual Value",
+      value: total ? <Counter value={book} format={inrCompact} /> : dash,
+      desc: "Total annual contract value",
+      tone: "text-ink",
+      trendDir: "flat",
+      trendText: "ACV",
+      trendTone: "text-faint",
     },
     {
       icon: TrendingUp,
       label: "High Opportunity",
-      value: total ? highOpp : dash,
-      desc: "Growth potential ≥ 65",
+      value: total ? <Counter value={highOpp} /> : dash,
+      desc: "Expansion potential ≥ 65",
       tone: "text-accent",
       trendDir: highOpp > 0 ? "up" : "flat",
       trendText: `${pctOf(highOpp, total)} of book`,
       trendTone: "text-accent",
     },
     {
-      icon: Sparkles,
-      label: "AI Recommendations",
-      value: hasResult ? generated : dash,
-      desc: "Ranked next-best actions",
-      tone: "text-cyan",
-      trendDir: generated > 0 ? "up" : "flat",
-      trendText: hasResult ? "this run" : "run to generate",
-      trendTone: "text-cyan",
+      icon: Target,
+      label: "Immediate Actions",
+      value: total ? <Counter value={attention} /> : dash,
+      desc: "Act-now accounts",
+      tone: "text-amber",
+      trendDir: attention > 0 ? "up" : "flat",
+      trendText: `${pctOf(attention, total)} of book`,
+      trendTone: "text-amber",
     },
     {
       icon: UserCheck,
-      label: "Awaiting Approval",
-      value: hasResult ? pending : dash,
-      desc: "Pending human decision",
+      label: "Pending Approvals",
+      value: hasResult ? <Counter value={pending} /> : dash,
+      desc: "Awaiting human decision",
       tone: "text-amber",
       trendDir: pending > 0 ? "up" : "flat",
       trendText: pending > 0 ? "needs review" : "all clear",
@@ -106,7 +108,7 @@ export function ExecutiveKpiStrip({
     {
       icon: CheckCircle2,
       label: "Actions Completed",
-      value: hasResult ? completed : dash,
+      value: hasResult ? <Counter value={completed} /> : dash,
       desc: "Approved & actioned",
       tone: "text-accent",
       trendDir: completed > 0 ? "up" : "flat",
@@ -120,7 +122,7 @@ export function ExecutiveKpiStrip({
       {items.map((it) => (
         <div
           key={it.label}
-          className="card relative overflow-hidden p-3.5 transition-colors hover:border-edge-soft"
+          className="card hover-lift relative overflow-hidden p-3.5"
         >
           <div className="flex items-center justify-between">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-edge bg-surface2/70 text-faint">

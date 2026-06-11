@@ -32,7 +32,7 @@ function Metric({ label, value, sub }: { label: string; value: React.ReactNode; 
 const DRIVER_LABELS: Record<string, string> = {
   support_risk: "Support risk",
   spend_decline: "Spend decline",
-  growth_potential: "Growth potential",
+  growth_potential: "Expansion potential",
   renewal_urgency: "Renewal urgency",
   campaign_response: "Campaign response",
   engagement_gap: "Engagement gap",
@@ -77,18 +77,18 @@ export function AccountDetailPanel({
       {detail ? (
         <div className="grid grid-cols-3 gap-2">
           <Metric
-            label="Spend (mo)"
+            label="Current Investment"
             value={money(detail.current_month_spend)}
             sub={<MoM cur={detail.current_month_spend} prev={detail.previous_month_spend} />}
           />
-          <Metric label="Usage" value={detail.product_usage_score.toFixed(0)} />
-          <Metric label="Engagement" value={detail.engagement_score.toFixed(0)} />
-          <Metric label="Support risk" value={detail.support_risk_score.toFixed(0)} />
-          <Metric label="Growth" value={detail.growth_potential_score.toFixed(0)} />
-          <Metric label="Campaign" value={detail.campaign_response_score.toFixed(0)} />
-          <Metric label="Last contact" value={`${detail.last_contact_days}d`} />
+          <Metric label="Product Adoption" value={detail.product_usage_score.toFixed(0)} />
+          <Metric label="Customer Engagement" value={detail.engagement_score.toFixed(0)} />
+          <Metric label="Support Risk" value={detail.support_risk_score.toFixed(0)} />
+          <Metric label="Expansion Potential" value={detail.growth_potential_score.toFixed(0)} />
+          <Metric label="Campaign Response" value={detail.campaign_response_score.toFixed(0)} />
+          <Metric label="Last Touch" value={`${detail.last_contact_days}d`} />
           <Metric
-            label="Renewal"
+            label="Renewal Window"
             value={detail.renewal_days < 0 ? `${Math.abs(detail.renewal_days)}d late` : `${detail.renewal_days}d`}
           />
         </div>

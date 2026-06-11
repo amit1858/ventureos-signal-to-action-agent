@@ -12,11 +12,12 @@ import {
   Sparkles,
   Layers,
   Gauge,
+  Flame,
   type LucideIcon,
 } from "lucide-react";
 import type { Account } from "@/lib/types";
 import { cx } from "@/lib/format";
-import { riskThemes, opportunityThemes, type Theme } from "@/lib/portfolio";
+import { riskThemes, opportunityThemes, emergingTrends, type Theme } from "@/lib/portfolio";
 
 const RISK_ICONS: Record<string, LucideIcon> = {
   renewal: Clock,
@@ -36,9 +37,10 @@ const OPP_ICONS: Record<string, LucideIcon> = {
 export function AiInsightsPanel({ accounts }: { accounts: Account[] }) {
   const risks = React.useMemo(() => riskThemes(accounts), [accounts]);
   const opps = React.useMemo(() => opportunityThemes(accounts), [accounts]);
+  const trends = React.useMemo(() => emergingTrends(accounts), [accounts]);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-3 lg:grid-cols-3">
       <ThemeList
         title="Top Risks"
         accentTone="text-risk"
@@ -57,6 +59,30 @@ export function AiInsightsPanel({ accounts }: { accounts: Account[] }) {
         fallbackIcon={Sparkles}
         empty="No standout expansion signals in the current book."
       />
+      <div className="rounded-lg border border-edge bg-surface2/30 p-3">
+        <div className="section-label mb-2 text-cyan">Emerging Trends</div>
+        {trends.length === 0 ? (
+          <p className="py-3 text-xs text-faint">No emerging trends across the current book.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {trends.map((t) => {
+              const Icon = t.tone === "opp" ? Sparkles : Flame;
+              const tone = t.tone === "opp" ? "text-accent" : "text-amber";
+              return (
+                <li
+                  key={t.key}
+                  className="flex items-start gap-2.5 rounded-md border border-edge/60 bg-surface/60 px-2.5 py-2"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-edge bg-surface2 text-faint">
+                    <Icon size={13} className={tone} />
+                  </span>
+                  <span className="text-xs leading-snug text-muted">{t.text}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

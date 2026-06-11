@@ -1,8 +1,10 @@
 "use client";
 
-import { Zap, TrendingUp, AlertTriangle, ChevronRight, Crown, FileSearch } from "lucide-react";
+import { TrendingUp, AlertTriangle, ChevronRight, Crown, FileSearch } from "lucide-react";
 import type { Account, Recommendation } from "@/lib/types";
-import { actionLabel, approvalTone, cx, pct, scoreTone } from "@/lib/format";
+import { approvalTone, confidenceLabel, cx, pct, scoreTone } from "@/lib/format";
+import { businessAction } from "@/lib/actions";
+import { accountReasons } from "@/lib/portfolio";
 import { EvidenceChips } from "./EvidenceChips";
 import { Bar } from "./ui";
 import { GovernanceBadge } from "./GovernanceBadge";
@@ -22,6 +24,13 @@ export function RecommendationCard({
   const conf = scoreTone(rec.confidence_score);
   const appr = approvalTone(rec.approval_status);
   const isTop = rec.priority_rank === 1;
+  const ba = businessAction(rec.action_type, {
+    governanceStatus: rec.governance_status,
+    growthPotential: account?.growth_potential_score,
+    productUsage: account?.product_usage_score,
+  });
+  const Action = ba.icon;
+  const reasons = account ? accountReasons(account).slice(0, 3) : [];
 
   return (
     <button
@@ -97,13 +106,33 @@ export function RecommendationCard({
           </div>
           <Bar value={rec.priority_score} barClass={score.bar} />
         </div>
-        <span className="inline-flex items-center gap-1 rounded-md border border-cyan/30 bg-cyan/10 px-2 py-1 text-[11px] font-medium text-cyan">
-          <Zap size={12} />
-          {actionLabel(rec.action_type)}
+        <span className={cx("inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium", ba.ring, ba.bg, ba.tone)}>
+          <Action size={12} />
+          {ba.label}
         </span>
       </div>
 
-      <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted">{rec.priority_reason}</p>
+      {/* Why this account */}
+      {reasons.length > 0 ? (
+        <div className="mt-3">
+          <div className="text-[10px] uppercase tracking-wider text-faint">Why this account</div>
+          <ul className="mt-1 space-y-1">
+            {reasons.map((r) => (
+              <li key={r.key} className="flex items-start gap-1.5 text-[11px] leading-snug text-muted">
+                <span
+                  className={cx(
+                    "mt-1 h-1 w-1 shrink-0 rounded-full",
+                    r.tone === "risk" ? "bg-risk" : r.tone === "opp" ? "bg-accent" : "bg-faint",
+                  )}
+                />
+                <span className="line-clamp-1">{r.text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted">{rec.priority_reason}</p>
+      )}
 
       {/* Risk / Opportunity tags */}
       <div className="mt-2.5 grid grid-cols-2 gap-2">
@@ -138,6 +167,9 @@ export function RecommendationCard({
           <span className="text-[10px] uppercase tracking-wider text-faint">Conf.</span>
           <span className={cx("font-mono text-xs font-semibold", conf.text)}>
             {pct(rec.confidence_score)}
+          </span>
+          <span className="text-[10px] text-faint">
+            {confidenceLabel(rec.confidence_score).replace(" confidence", "")}
           </span>
         </div>
         <div className="flex items-center gap-1.5">

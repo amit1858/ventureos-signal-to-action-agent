@@ -217,3 +217,112 @@ export function countHighRisk(accounts: Account[]): number {
 export function countHighOpportunity(accounts: Account[]): number {
   return accounts.filter((a) => a.growth_potential_score >= OPP_HIGH).length;
 }
+
+// -- executive money model -------------------------------------------------
+// Annual contract value (ACV) is derived honestly from monthly spend × 12, in
+// rupees. No invented FX. Totals land in the low-crores range — believable for
+// an SMB book and consistent across every executive surface.
+export function annualValue(a: Account): number {
+  return Math.max(0, a.current_month_spend) * 12;
+}
+
+export function bookValue(accounts: Account[]): number {
+  return accounts.reduce((s, a) => s + annualValue(a), 0);
+}
+
+// An account is "at risk" if support risk is high, spend is falling sharply, or
+// a renewal is closing while engagement is weak.
+export function isAtRisk(a: Account): boolean {
+  return (
+    a.support_risk_score >= RISK_HIGH ||
+    spendChangePct(a) <= -0.1 ||
+    (a.renewal_days <= RENEWAL_SOON && a.engagement_score <= ENGAGE_LOW)
+  );
+}
+
+// Revenue exposure = ACV of every at-risk account.
+export function revenueAtRisk(accounts: Account[]): number {
+  return accounts.filter(isAtRisk).reduce((s, a) => s + annualValue(a), 0);
+}
+
+// Growth opportunity = scaled expansion headroom on high-potential accounts.
+export function growthOpportunity(accounts: Account[]): number {
+  return accounts
+    .filter((a) => a.growth_potential_score >= OPP_HIGH)
+    .reduce((s, a) => s + annualValue(a) * (a.growth_potential_score / 100) * 0.5, 0);
+}
+
+// Accounts that need immediate executive attention = the Act-Now quadrant
+// (high risk AND high opportunity), matching the portfolio matrix.
+export function countAttention(accounts: Account[]): number {
+  return accounts.filter((a) => quadrantOf(a.support_risk_score, a.growth_potential_score) === "act_now").length;
+}
+
+// -- narrative helpers -----------------------------------------------------
+export type ReasonTone = "risk" | "opp" | "neutral";
+
+export interface Reason {
+  key: string;
+  text: string;
+  tone: ReasonTone;
+}
+
+// Concrete, business-readable "why this account?" bullets derived from the
+// account's own metrics. Risks first, then opportunities.
+export function accountReasons(a: Account): Reason[] {
+  const r: Reason[] = [];
+  const sp = spendChangePct(a);
+  if (sp <= -0.05) r.push({ key: "spend", tone: "risk", text: `Investment down ${Math.round(Math.abs(sp) * 100)}% month-over-month` });
+  else if (sp >= 0.05) r.push({ key: "spend", tone: "opp", text: `Investment up ${Math.round(sp * 100)}% month-over-month` });
+
+  if (a.renewal_days < 0) r.push({ key: "renewal", tone: "risk", text: `Renewal ${Math.abs(a.renewal_days)} days overdue` });
+  else if (a.renewal_days <= RENEWAL_SOON) r.push({ key: "renewal", tone: "risk", text: `Renewal due in ${a.renewal_days} days` });
+
+  if (a.support_risk_score >= RISK_HIGH) r.push({ key: "support", tone: "risk", text: `Support risk elevated (${Math.round(a.support_risk_score)}/100)` });
+  if (a.engagement_score <= ENGAGE_LOW) r.push({ key: "engage", tone: "risk", text: `Customer engagement low (${Math.round(a.engagement_score)}/100)` });
+  if (a.last_contact_days >= INACTIVE_DAYS) r.push({ key: "contact", tone: "risk", text: `No seller contact in ${a.last_contact_days} days` });
+  if (a.product_usage_score < 40) r.push({ key: "usage-low", tone: "risk", text: `Product adoption lagging (${Math.round(a.product_usage_score)}/100)` });
+
+  if (a.growth_potential_score >= OPP_HIGH) r.push({ key: "growth", tone: "opp", text: `High expansion potential (${Math.round(a.growth_potential_score)}/100)` });
+  if (a.campaign_response_score >= CAMPAIGN_HOT) r.push({ key: "campaign", tone: "opp", text: `Engaged with recent campaign (${Math.round(a.campaign_response_score)}/100)` });
+  if (a.product_usage_score >= USAGE_STRONG) r.push({ key: "usage-high", tone: "opp", text: `Strong product adoption (${Math.round(a.product_usage_score)}/100)` });
+
+  const order = (t: ReasonTone) => (t === "risk" ? 0 : t === "opp" ? 1 : 2);
+  return r.sort((x, y) => order(x.tone) - order(y.tone)).slice(0, 5);
+}
+
+export function businessImpact(a: Account): { text: string; tone: ReasonTone } {
+  const q = quadrantOf(a.support_risk_score, a.growth_potential_score);
+  if (q === "act_now") return { text: "High-value account at risk — protect and expand", tone: "risk" };
+  if (q === "escalate") return { text: "Churn risk — revenue exposure if left unaddressed", tone: "risk" };
+  if (q === "nurture") return { text: "Strong expansion upside — grow the relationship", tone: "opp" };
+  return { text: "Stable relationship — maintain and monitor", tone: "neutral" };
+}
+
+// -- emerging trends (natural-language, for the AI Insights panel) ----------
+export interface Trend {
+  key: string;
+  text: string;
+  tone: ReasonTone;
+}
+
+export function emergingTrends(accounts: Account[]): Trend[] {
+  const out: Trend[] = [];
+  const renewWeek = accounts.filter((a) => a.renewal_days >= 0 && a.renewal_days <= 7).length;
+  const renewMonth = accounts.filter((a) => a.renewal_days > 7 && a.renewal_days <= 30).length;
+  const decliningEngage = accounts.filter((a) => a.engagement_score <= ENGAGE_LOW).length;
+  const risingSupport = accounts.filter((a) => a.support_risk_score >= RISK_HIGH).length;
+  const crossSell = accounts.filter((a) => a.growth_potential_score >= OPP_HIGH && a.support_risk_score < RISK_MID).length;
+  const spendUp = accounts.filter((a) => spendChangePct(a) >= 0.05).length;
+  const spendDown = accounts.filter((a) => spendChangePct(a) <= -0.1).length;
+
+  if (renewWeek) out.push({ key: "renew-week", tone: "risk", text: `${renewWeek} account${renewWeek === 1 ? "" : "s"} renew within 7 days` });
+  else if (renewMonth) out.push({ key: "renew-month", tone: "risk", text: `${renewMonth} account${renewMonth === 1 ? "" : "s"} renew within 30 days` });
+  if (risingSupport) out.push({ key: "support", tone: "risk", text: `${risingSupport} account${risingSupport === 1 ? "" : "s"} with rising support risk` });
+  if (decliningEngage) out.push({ key: "engage", tone: "risk", text: `${decliningEngage} account${decliningEngage === 1 ? "" : "s"} showing declining engagement` });
+  if (crossSell) out.push({ key: "crosssell", tone: "opp", text: `${crossSell} healthy account${crossSell === 1 ? "" : "s"} ready for cross-sell` });
+  if (spendUp) out.push({ key: "spendup", tone: "opp", text: `${spendUp} account${spendUp === 1 ? "" : "s"} expanding investment month-over-month` });
+  else if (spendDown) out.push({ key: "spenddown", tone: "risk", text: `${spendDown} account${spendDown === 1 ? "" : "s"} cutting investment month-over-month` });
+
+  return out.slice(0, 5);
+}

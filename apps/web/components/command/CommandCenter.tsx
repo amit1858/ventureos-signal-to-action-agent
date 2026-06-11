@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import {
-  RefreshCw,
-  Play,
   Layers,
   Sparkles,
   Activity,
   Network,
   BarChart3,
   Target,
+  Zap,
 } from "lucide-react";
 import type {
   Account,
@@ -18,9 +17,11 @@ import type {
   HubspotStatus,
   HubspotWriteback,
 } from "@/lib/types";
-import { cx, timeAgo } from "@/lib/format";
+import { businessAction } from "@/lib/actions";
 import { Card, PanelTitle } from "@/components/ui";
+import { ExecutiveSummaryBanner } from "@/components/command/ExecutiveSummaryBanner";
 import { ExecutiveKpiStrip } from "@/components/command/ExecutiveKpiStrip";
+import { NextBestActions } from "@/components/command/NextBestActions";
 import { PortfolioMatrix } from "@/components/command/PortfolioMatrix";
 import { PriorityAccountsTable } from "@/components/command/PriorityAccountsTable";
 import { AiInsightsPanel } from "@/components/command/AiInsightsPanel";
@@ -63,60 +64,53 @@ export function CommandCenter({
   const lastSync = isHubspotSource ? hubStatus?.last_synced_at ?? null : null;
   const latency = result?.latency_ms ?? result?.decision_ledger?.latency_ms ?? 0;
 
+  // account_id -> business-action label, for the portfolio matrix tooltip.
+  const actionByAccount = React.useMemo(() => {
+    const m: Record<string, string> = {};
+    recs.forEach((r) => {
+      const a = accountsById[r.account_id];
+      m[r.account_id] = businessAction(r.action_type, {
+        governanceStatus: r.governance_status,
+        growthPotential: a?.growth_potential_score,
+        productUsage: a?.product_usage_score,
+      }).label;
+    });
+    return m;
+  }, [recs, accountsById]);
+
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Header band */}
-      <div className="card-elevated relative overflow-hidden p-5">
-        <div className="grid-dots pointer-events-none absolute inset-0 opacity-40" />
-        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="section-label text-faint">Signal-to-Action Agent</div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-ink">
-              Executive Command Center
-            </h1>
-            <p className="mt-1 max-w-xl text-sm text-muted">
-              Live portfolio cockpit — signals, AI prioritization, evidence, and governed write-back in one view.
-            </p>
-          </div>
+      {/* P1 · Executive AI summary banner */}
+      <ExecutiveSummaryBanner
+        accounts={accounts}
+        accountsById={accountsById}
+        recs={recs}
+        hasResult={hasResult}
+        loading={loading}
+        dataSourceLabel={dataSourceLabel}
+        isHubspotSource={isHubspotSource}
+        lastSync={lastSync}
+        onRun={onRun}
+        onOpenAccount={onOpenAccount}
+      />
 
-          <div className="flex flex-wrap items-stretch gap-2.5">
-            <HeaderStat
-              label="Live Data Source"
-              value={dataSourceLabel}
-              dotClass={isHubspotSource ? "bg-accent shadow-glow" : "bg-cyan"}
-              valueClass={isHubspotSource ? "text-accent" : "text-cyan"}
-            />
-            <HeaderStat label="Last Sync" value={lastSync ? timeAgo(lastSync) : "—"} />
-            <HeaderStat label="Accounts" value={accounts.length ? String(accounts.length) : "—"} />
-            <HeaderStat label="Recommendations" value={hasResult ? String(recs.length) : "—"} />
-            <button
-              type="button"
-              onClick={onRun}
-              disabled={loading}
-              className={cx("btn btn-primary self-stretch px-4", loading && "opacity-70")}
-            >
-              {loading ? (
-                <>
-                  <RefreshCw size={14} className="animate-spin" /> Analyzing…
-                </>
-              ) : hasResult ? (
-                <>
-                  <RefreshCw size={14} /> Re-run
-                </>
-              ) : (
-                <>
-                  <Play size={14} /> Run analysis
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Executive KPI strip */}
+      {/* Executive portfolio overview */}
       <section>
-        <SectionHeading icon={Layers} title="Executive Overview" hint="Portfolio at a glance" />
+        <SectionHeading icon={Layers} title="Executive Portfolio Overview" hint="Book of business at a glance" />
         <ExecutiveKpiStrip accounts={accounts} recs={recs} hasResult={hasResult} />
+      </section>
+
+      {/* P2 · Next best actions (premium narrative cards) */}
+      <section>
+        <SectionHeading icon={Zap} title="Next Best Actions" hint="Why each account — and what to do" />
+        <NextBestActions
+          recs={recs}
+          accountsById={accountsById}
+          hasResult={hasResult}
+          loading={loading}
+          onOpenAccount={onOpenAccount}
+          onRun={onRun}
+        />
       </section>
 
       {/* Portfolio health matrix */}
@@ -131,6 +125,7 @@ export function CommandCenter({
             accounts={accounts}
             selectedId={selectedId}
             recommendedIds={recommendedIds}
+            actionByAccount={actionByAccount}
             onOpenAccount={onOpenAccount}
           />
         </div>
@@ -199,28 +194,6 @@ export function CommandCenter({
           <ExecutiveMetrics accounts={accounts} recs={recs} latencyMs={latency} hasResult={hasResult} />
         </div>
       </Card>
-    </div>
-  );
-}
-
-function HeaderStat({
-  label,
-  value,
-  dotClass,
-  valueClass,
-}: {
-  label: string;
-  value: string;
-  dotClass?: string;
-  valueClass?: string;
-}) {
-  return (
-    <div className="min-w-[112px] rounded-lg border border-edge bg-surface2/60 px-3 py-1.5">
-      <div className="text-[9px] uppercase tracking-wider text-faint">{label}</div>
-      <div className={cx("mt-0.5 flex items-center gap-1.5 text-sm font-semibold", valueClass || "text-ink")}>
-        {dotClass ? <span className={cx("inline-block h-2 w-2 shrink-0 rounded-full", dotClass)} /> : null}
-        <span className="truncate">{value}</span>
-      </div>
     </div>
   );
 }

@@ -2,12 +2,15 @@
 
 import * as React from "react";
 import type { Account } from "@/lib/types";
-import { cx } from "@/lib/format";
-import { quadrantOf, QUADRANT_META, type Quadrant } from "@/lib/portfolio";
+import { cx, titleCase } from "@/lib/format";
+import { quadrantOf, QUADRANT_META, RENEWAL_SOON, type Quadrant } from "@/lib/portfolio";
 
 interface Pt {
   id: string;
   name: string;
+  industry: string;
+  renewal: number;
+  action?: string;
   x: number;
   y: number;
   risk: number;
@@ -21,11 +24,13 @@ export function PortfolioMatrix({
   accounts,
   selectedId,
   recommendedIds,
+  actionByAccount,
   onOpenAccount,
 }: {
   accounts: Account[];
   selectedId?: string | null;
   recommendedIds?: Set<string>;
+  actionByAccount?: Record<string, string>;
   onOpenAccount: (accountId: string) => void;
 }) {
   const W = 560;
@@ -45,6 +50,9 @@ export function PortfolioMatrix({
         return {
           id: a.account_id,
           name: a.account_name,
+          industry: a.industry,
+          renewal: a.renewal_days,
+          action: actionByAccount?.[a.account_id],
           x: pad + (opp / 100) * plotW,
           y: pad + (1 - risk / 100) * plotH,
           risk,
@@ -52,7 +60,7 @@ export function PortfolioMatrix({
           quadrant: quadrantOf(risk, opp),
         };
       }),
-    [accounts, plotW, plotH],
+    [accounts, plotW, plotH, actionByAccount],
   );
 
   const counts = React.useMemo(() => {
@@ -129,16 +137,39 @@ export function PortfolioMatrix({
         </svg>
 
         {hovered ? (
-          <div className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-md border border-edge bg-elevated/95 px-3 py-1.5 text-center shadow-elevated">
-            <div className="text-xs font-semibold text-ink">{hovered.name}</div>
-            <div className="text-[10px] text-faint">
-              risk {Math.round(hovered.risk)} · opportunity {Math.round(hovered.opp)} ·{" "}
-              <span className={QUADRANT_META[hovered.quadrant].tone}>{QUADRANT_META[hovered.quadrant].label}</span>
+          <div className="pointer-events-none absolute left-1/2 top-2 w-60 -translate-x-1/2 rounded-lg border border-edge bg-elevated/97 p-2.5 text-left shadow-elevated">
+            <div className="flex items-center justify-between gap-2">
+              <span className="truncate text-xs font-semibold text-ink">{hovered.name}</span>
+              <span
+                className={cx(
+                  "shrink-0 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
+                  QUADRANT_META[hovered.quadrant].ring,
+                  QUADRANT_META[hovered.quadrant].tone,
+                )}
+              >
+                {QUADRANT_META[hovered.quadrant].label}
+              </span>
             </div>
+            <div className="mt-1 text-[10px] text-faint">{titleCase(hovered.industry)}</div>
+            <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
+              <TipStat label="Risk" value={Math.round(hovered.risk)} tone="text-risk" />
+              <TipStat label="Opp." value={Math.round(hovered.opp)} tone="text-accent" />
+              <TipStat
+                label="Renewal"
+                value={`${hovered.renewal}d`}
+                tone={hovered.renewal <= RENEWAL_SOON ? "text-amber" : "text-muted"}
+              />
+            </div>
+            {hovered.action ? (
+              <div className="mt-2 border-t border-edge pt-1.5">
+                <div className="text-[9px] uppercase tracking-wider text-faint">Recommended action</div>
+                <div className="text-[11px] font-medium text-cyan">{hovered.action}</div>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-md border border-edge/60 bg-surface2/70 px-3 py-1 text-[10px] text-faint">
-            Click a dot to open the account
+            Hover for detail · click to open the account
           </div>
         )}
       </div>
@@ -147,7 +178,7 @@ export function PortfolioMatrix({
         {QUADRANT_ORDER.map((q) => {
           const meta = QUADRANT_META[q];
           return (
-            <div key={q} className={cx("rounded-lg border p-2.5", meta.ring, meta.bg)}>
+            <div key={q} className={cx("hover-lift rounded-lg border p-2.5", meta.ring, meta.bg)}>
               <div className="flex items-center justify-between">
                 <span className={cx("text-xs font-semibold", meta.tone)}>{meta.label}</span>
                 <span className={cx("font-mono text-lg font-bold leading-none", meta.tone)}>{counts[q]}</span>
@@ -157,6 +188,15 @@ export function PortfolioMatrix({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function TipStat({ label, value, tone }: { label: string; value: React.ReactNode; tone: string }) {
+  return (
+    <div className="rounded-md border border-edge/70 bg-surface2/60 px-1 py-1">
+      <div className="text-[8px] uppercase tracking-wider text-faint">{label}</div>
+      <div className={cx("font-mono text-xs font-semibold", tone)}>{value}</div>
     </div>
   );
 }

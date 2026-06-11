@@ -1,5 +1,6 @@
 // Presentation helpers: formatting + colour mapping for the console UI.
 import type { Polarity } from "./types";
+import { businessAction, type ActionContext } from "./actions";
 
 export function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
@@ -17,23 +18,27 @@ export function money(value: number): string {
   }).format(value);
 }
 
+// Compact Indian-rupee formatting (Cr / L) for executive money KPIs. The
+// portfolio is India-led and SMB-scale, so crores/lakhs read naturally.
+export function inrCompact(value: number): string {
+  const n = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  if (n >= 1e7) return `${sign}₹${(n / 1e7).toFixed(n / 1e7 >= 10 ? 0 : 1)} Cr`;
+  if (n >= 1e5) return `${sign}₹${(n / 1e5).toFixed(n / 1e5 >= 10 ? 0 : 1)} L`;
+  if (n >= 1e3) return `${sign}₹${Math.round(n / 1e3)}K`;
+  return `${sign}₹${Math.round(n)}`;
+}
+
 export function titleCase(s: string): string {
   return s
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  follow_up: "Schedule follow-up",
-  reactivation: "Reactivation outreach",
-  optimization_review: "Optimization review",
-  support_escalation: "Escalate support",
-  renewal_prep: "Renewal prep",
-  monitor: "Monitor only",
-};
-
-export function actionLabel(actionType: string): string {
-  return ACTION_LABELS[actionType] ?? titleCase(actionType);
+// Executive, business-readable action label. Delegates to the shared
+// business-action mapping so the table, cards and workspace stay consistent.
+export function actionLabel(actionType: string, ctx?: ActionContext): string {
+  return businessAction(actionType, ctx).label;
 }
 
 export function polarityClasses(polarity: Polarity | string): string {

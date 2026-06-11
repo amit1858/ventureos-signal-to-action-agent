@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Zap, AlertTriangle, Loader2, TrendingUp, Database } from "lucide-react";
+import { AlertTriangle, Loader2, TrendingUp, Database } from "lucide-react";
 import { api } from "@/lib/api";
 import type {
   Account,
@@ -13,7 +13,7 @@ import type {
   Recommendation,
   RecommendationResponse,
 } from "@/lib/types";
-import { actionLabel, cx } from "@/lib/format";
+import { cx } from "@/lib/format";
 import { Header, type AppView } from "@/components/Header";
 import { LeftPanel } from "@/components/LeftPanel";
 import { CrmIntegrationCard } from "@/components/CrmIntegrationCard";
@@ -34,6 +34,7 @@ import { DecisionWorkspacePreview } from "@/components/DecisionWorkspacePreview"
 import { NvidiaReadyCard } from "@/components/NvidiaReadyCard";
 import { KpiStrip } from "@/components/KpiStrip";
 import { CommandCenter } from "@/components/command/CommandCenter";
+import { WhyThisAccount } from "@/components/WhyThisAccount";
 import { Card, PanelTitle } from "@/components/ui";
 
 const DEFAULT_QUERY = "Which SMB accounts need attention this week and why?";
@@ -545,19 +546,11 @@ export default function Page() {
                       </div>
                     </div>
 
-                    {/* Recommended next-best action */}
+                    {/* Why this account + recommended next-best action */}
                     <div>
                       <PanelTitle>Recommended next-best action</PanelTitle>
-                      <div className="mt-2 flex items-start gap-2 rounded-lg border border-cyan/30 bg-cyan/5 p-3">
-                        <Zap size={16} className="mt-0.5 shrink-0 text-cyan" />
-                        <div>
-                          <div className="text-sm font-semibold text-ink">
-                            {actionLabel(selectedRec.action_type)}
-                          </div>
-                          <p className="mt-0.5 text-xs leading-relaxed text-muted">
-                            {selectedRec.recommended_action}
-                          </p>
-                        </div>
+                      <div className="mt-2">
+                        <WhyThisAccount rec={selectedRec} account={accounts[selectedRec.account_id]} />
                       </div>
                     </div>
 
