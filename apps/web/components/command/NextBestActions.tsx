@@ -3,6 +3,7 @@
 import { ArrowRight, AlertTriangle, TrendingUp, Minus, FileSearch, Sparkles } from "lucide-react";
 import type { Account, Recommendation } from "@/lib/types";
 import { businessAction } from "@/lib/actions";
+import { whyNow } from "@/lib/reasoning";
 import { accountReasons, businessImpact, type ReasonTone } from "@/lib/portfolio";
 import { cx, confidenceLabel, pct, titleCase } from "@/lib/format";
 
@@ -63,6 +64,7 @@ export function NextBestActions({
           productUsage: account?.product_usage_score,
         });
         const Action = ba.icon;
+        const why = account ? whyNow(account) : null;
 
         return (
           <button
@@ -127,6 +129,13 @@ export function NextBestActions({
                 <span className="text-faint">Impact: </span>
                 <span className={impactTone.text}>{impact.text}</span>
               </div>
+            ) : null}
+
+            {why ? (
+              <p className="mt-2 border-l-2 border-cyan/40 pl-2 text-[11px] italic leading-snug text-faint line-clamp-2">
+                <span className="font-semibold not-italic text-cyan">Why now: </span>
+                {why}
+              </p>
             ) : null}
 
             <div className="mt-3 flex items-center justify-between border-t border-edge pt-2.5 text-[10px] text-faint">

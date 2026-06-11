@@ -1,10 +1,10 @@
 "use client";
 
-import { AlertTriangle, TrendingUp, Minus, Zap } from "lucide-react";
+import { AlertTriangle, TrendingUp, Minus, Zap, Clock, Sparkles, ShieldAlert } from "lucide-react";
 import type { Account, Recommendation } from "@/lib/types";
-import { businessAction } from "@/lib/actions";
-import { accountReasons, businessImpact, type ReasonTone } from "@/lib/portfolio";
-import { cx } from "@/lib/format";
+import { reasonForRecommendation, type ImpactDetail, type Level } from "@/lib/reasoning";
+import { type ReasonTone } from "@/lib/portfolio";
+import { cx, inrCompact } from "@/lib/format";
 
 function toneClasses(tone: ReasonTone): { text: string; Icon: typeof AlertTriangle } {
   if (tone === "risk") return { text: "text-risk", Icon: AlertTriangle };
@@ -12,31 +12,38 @@ function toneClasses(tone: ReasonTone): { text: string; Icon: typeof AlertTriang
   return { text: "text-faint", Icon: Minus };
 }
 
-// Premium "Why this account?" narrative — concrete reasons, business impact,
-// and the recommended business action. Used in the decision workspace.
+// "High is bad" colour ramp (churn risk).
+function riskLevelClass(l: Level): string {
+  return l === "High" ? "text-risk" : l === "Medium" ? "text-amber" : "text-accent";
+}
+// "High is good" colour ramp (expansion).
+function goodLevelClass(l: Level): string {
+  return l === "High" ? "text-accent" : l === "Medium" ? "text-amber" : "text-faint";
+}
+function confidenceClass(l: Level): string {
+  return l === "High" ? "text-accent" : l === "Medium" ? "text-amber" : "text-risk";
+}
+
+// Full deterministic narrative for a recommendation: why this account, the
+// business impact, the recommended action, and the why-now / if-ignored /
+// expected-outcome story. Used in the decision workspace.
 export function WhyThisAccount({ rec, account }: { rec: Recommendation; account?: Account }) {
-  const reasons = account ? accountReasons(account) : [];
-  const impact = account ? businessImpact(account) : null;
-  const ba = businessAction(rec.action_type, {
-    governanceStatus: rec.governance_status,
-    growthPotential: account?.growth_potential_score,
-    productUsage: account?.product_usage_score,
-  });
-  const Action = ba.icon;
-  const impactTone = impact ? toneClasses(impact.tone) : null;
+  const r = reasonForRecommendation(rec, account);
+  const Action = r.action.icon;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3.5">
+      {/* Why this account */}
       <div>
         <div className="section-label text-ink">Why this account?</div>
         <ul className="mt-2 space-y-1.5">
-          {reasons.length > 0 ? (
-            reasons.map((r) => {
-              const tc = toneClasses(r.tone);
+          {r.reasons.length > 0 ? (
+            r.reasons.map((reason) => {
+              const tc = toneClasses(reason.tone);
               return (
-                <li key={r.key} className="flex items-start gap-2 text-xs leading-snug text-muted">
+                <li key={reason.key} className="flex items-start gap-2 text-xs leading-snug text-muted">
                   <tc.Icon size={13} className={cx("mt-0.5 shrink-0", tc.text)} />
-                  <span>{r.text}</span>
+                  <span>{reason.text}</span>
                 </li>
               );
             })
@@ -46,34 +53,100 @@ export function WhyThisAccount({ rec, account }: { rec: Recommendation; account?
         </ul>
       </div>
 
-      {impact && impactTone ? (
-        <div className="flex items-center gap-2 rounded-lg border border-edge bg-surface2/50 px-3 py-2">
-          <span className="text-[10px] uppercase tracking-wider text-faint">Business impact</span>
-          <span className={cx("text-xs font-medium", impactTone.text)}>{impact.text}</span>
-        </div>
-      ) : null}
+      {/* Business impact */}
+      <BusinessImpactCard impact={r.impact} />
 
-      <div className={cx("rounded-lg border p-3", ba.ring, ba.bg)}>
+      {/* Recommended action */}
+      <div className={cx("rounded-lg border p-3", r.action.ring, r.action.bg)}>
         <div className="flex items-start gap-2.5">
-          <Action size={17} className={cx("mt-0.5 shrink-0", ba.tone)} />
+          <Action size={17} className={cx("mt-0.5 shrink-0", r.action.tone)} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-ink">{ba.label}</span>
+              <span className="text-[10px] uppercase tracking-wider text-faint">Recommended action</span>
               <span
                 className={cx(
                   "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
-                  ba.ring,
-                  ba.tone,
+                  r.action.ring,
+                  r.action.tone,
                 )}
               >
-                <Zap size={9} /> {ba.urgencyLabel}
+                <Zap size={9} /> {r.action.urgencyLabel}
               </span>
             </div>
-            <p className="mt-0.5 text-xs leading-relaxed text-muted">{ba.value}</p>
-            <p className="mt-1 text-[11px] leading-relaxed text-faint">{rec.recommended_action}</p>
+            <div className="mt-1 text-sm font-semibold text-ink">{r.action.label}</div>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted">{r.action.value}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-faint">
+              <span className="inline-flex items-center gap-1">
+                <Clock size={11} /> Timing: {r.timing}
+              </span>
+              {r.estimatedMinutes > 0 ? <span>~{r.estimatedMinutes} min</span> : null}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Why now / If ignored / Expected outcome */}
+      <div className="space-y-2">
+        <NarrativeRow icon={Clock} tone="text-cyan" label="Why now" text={r.whyNow} />
+        <NarrativeRow icon={ShieldAlert} tone="text-risk" label="If ignored" text={r.ifIgnored} />
+        <NarrativeRow icon={Sparkles} tone="text-accent" label="Expected outcome" text={r.expectedOutcome} />
+      </div>
+    </div>
+  );
+}
+
+function BusinessImpactCard({ impact }: { impact: ImpactDetail }) {
+  const revenueLabel =
+    impact.revenue.kind === "risk"
+      ? "Revenue at risk"
+      : impact.revenue.kind === "growth"
+        ? "Growth upside"
+        : "Revenue impact";
+  const revenueTone =
+    impact.revenue.kind === "risk" ? "text-risk" : impact.revenue.kind === "growth" ? "text-accent" : "text-faint";
+  const revenueValue = impact.revenue.amount > 0 ? inrCompact(impact.revenue.amount) : "Stable";
+
+  return (
+    <div className="rounded-lg border border-edge bg-surface2/50 p-3">
+      <div className="section-label text-ink">Business impact</div>
+      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <ImpactStat label="Churn risk" value={impact.churnRisk} tone={riskLevelClass(impact.churnRisk)} />
+        <ImpactStat label={revenueLabel} value={revenueValue} tone={revenueTone} />
+        <ImpactStat label="Expansion" value={impact.expansion} tone={goodLevelClass(impact.expansion)} />
+        <ImpactStat label="Confidence" value={impact.confidence} tone={confidenceClass(impact.confidence)} />
+      </div>
+      <p className={cx("mt-2 text-xs font-medium", toneClasses(impact.headlineTone).text)}>{impact.headline}</p>
+    </div>
+  );
+}
+
+function ImpactStat({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-md border border-edge bg-surface px-2.5 py-1.5">
+      <div className="text-[9px] uppercase tracking-wider text-faint">{label}</div>
+      <div className={cx("mt-0.5 text-sm font-semibold", tone)}>{value}</div>
+    </div>
+  );
+}
+
+function NarrativeRow({
+  icon: Icon,
+  tone,
+  label,
+  text,
+}: {
+  icon: typeof Clock;
+  tone: string;
+  label: string;
+  text: string;
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <Icon size={13} className={cx("mt-0.5 shrink-0", tone)} />
+      <p className="text-xs leading-relaxed text-muted">
+        <span className="font-semibold text-ink">{label}: </span>
+        {text}
+      </p>
     </div>
   );
 }

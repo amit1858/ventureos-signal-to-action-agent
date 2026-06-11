@@ -19,7 +19,7 @@ import type {
 } from "@/lib/types";
 import { businessAction } from "@/lib/actions";
 import { Card, PanelTitle } from "@/components/ui";
-import { ExecutiveSummaryBanner } from "@/components/command/ExecutiveSummaryBanner";
+import { ExecutiveMorningBrief } from "@/components/command/ExecutiveMorningBrief";
 import { ExecutiveKpiStrip } from "@/components/command/ExecutiveKpiStrip";
 import { NextBestActions } from "@/components/command/NextBestActions";
 import { PortfolioMatrix } from "@/components/command/PortfolioMatrix";
@@ -80,8 +80,8 @@ export function CommandCenter({
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* P1 · Executive AI summary banner */}
-      <ExecutiveSummaryBanner
+      {/* P1 · Executive morning brief */}
+      <ExecutiveMorningBrief
         accounts={accounts}
         accountsById={accountsById}
         recs={recs}

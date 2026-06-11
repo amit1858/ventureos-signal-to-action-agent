@@ -278,14 +278,14 @@ export function accountReasons(a: Account): Reason[] {
   if (a.renewal_days < 0) r.push({ key: "renewal", tone: "risk", text: `Renewal ${Math.abs(a.renewal_days)} days overdue` });
   else if (a.renewal_days <= RENEWAL_SOON) r.push({ key: "renewal", tone: "risk", text: `Renewal due in ${a.renewal_days} days` });
 
-  if (a.support_risk_score >= RISK_HIGH) r.push({ key: "support", tone: "risk", text: `Support risk elevated (${Math.round(a.support_risk_score)}/100)` });
-  if (a.engagement_score <= ENGAGE_LOW) r.push({ key: "engage", tone: "risk", text: `Customer engagement low (${Math.round(a.engagement_score)}/100)` });
-  if (a.last_contact_days >= INACTIVE_DAYS) r.push({ key: "contact", tone: "risk", text: `No seller contact in ${a.last_contact_days} days` });
-  if (a.product_usage_score < 40) r.push({ key: "usage-low", tone: "risk", text: `Product adoption lagging (${Math.round(a.product_usage_score)}/100)` });
+  if (a.support_risk_score >= RISK_HIGH) r.push({ key: "support", tone: "risk", text: "Support escalations increasing" });
+  if (a.engagement_score <= ENGAGE_LOW) r.push({ key: "engage", tone: "risk", text: "Customer engagement declining" });
+  if (a.last_contact_days >= INACTIVE_DAYS) r.push({ key: "contact", tone: "risk", text: `No seller interaction in ${a.last_contact_days} days` });
+  if (a.product_usage_score < 40) r.push({ key: "usage-low", tone: "risk", text: "Product adoption lagging" });
 
-  if (a.growth_potential_score >= OPP_HIGH) r.push({ key: "growth", tone: "opp", text: `High expansion potential (${Math.round(a.growth_potential_score)}/100)` });
-  if (a.campaign_response_score >= CAMPAIGN_HOT) r.push({ key: "campaign", tone: "opp", text: `Engaged with recent campaign (${Math.round(a.campaign_response_score)}/100)` });
-  if (a.product_usage_score >= USAGE_STRONG) r.push({ key: "usage-high", tone: "opp", text: `Strong product adoption (${Math.round(a.product_usage_score)}/100)` });
+  if (a.growth_potential_score >= OPP_HIGH) r.push({ key: "growth", tone: "opp", text: "Strong expansion potential" });
+  if (a.campaign_response_score >= CAMPAIGN_HOT) r.push({ key: "campaign", tone: "opp", text: "Engaged with the latest campaign" });
+  if (a.product_usage_score >= USAGE_STRONG) r.push({ key: "usage-high", tone: "opp", text: "Strong product adoption" });
 
   const order = (t: ReasonTone) => (t === "risk" ? 0 : t === "opp" ? 1 : 2);
   return r.sort((x, y) => order(x.tone) - order(y.tone)).slice(0, 5);
