@@ -78,7 +78,7 @@ export function ExecutiveMorningBrief({
                   "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
                   isHubspotSource
                     ? "border-accent/40 bg-accent/10 text-accent"
-                    : "border-cyan/40 bg-cyan/10 text-cyan",
+                    : "border-brand/40 bg-brand/10 text-brand-bright",
                 )}
               >
                 {dataSourceLabel}

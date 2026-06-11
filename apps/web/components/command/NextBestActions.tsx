@@ -132,8 +132,8 @@ export function NextBestActions({
             ) : null}
 
             {why ? (
-              <p className="mt-2 border-l-2 border-cyan/40 pl-2 text-[11px] italic leading-snug text-faint line-clamp-2">
-                <span className="font-semibold not-italic text-cyan">Why now: </span>
+              <p className="mt-2 border-l-2 border-brand/40 pl-2 text-[11px] italic leading-snug text-faint line-clamp-2">
+                <span className="font-semibold not-italic text-brand-bright">Why now: </span>
                 {why}
               </p>
             ) : null}

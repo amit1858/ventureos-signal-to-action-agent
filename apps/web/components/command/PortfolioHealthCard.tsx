@@ -148,7 +148,7 @@ export function PortfolioHealthCard({
       {/* Risk / opportunity spread */}
       <div className="grid gap-3 sm:grid-cols-2">
         <DistributionBar title="Risk spread" dist={riskDist} colors={{ high: "bg-risk", med: "bg-amber", low: "bg-faint/50" }} />
-        <DistributionBar title="Opportunity spread" dist={oppDist} colors={{ high: "bg-accent", med: "bg-cyan", low: "bg-faint/50" }} />
+        <DistributionBar title="Opportunity spread" dist={oppDist} colors={{ high: "bg-accent", med: "bg-accent/45", low: "bg-faint/50" }} />
       </div>
     </div>
   );

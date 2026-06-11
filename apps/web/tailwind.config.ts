@@ -25,7 +25,10 @@ const config: Config = {
         brand: "#8B7CF6",
         "brand-bright": "#A89CFB",
         "brand-dim": "#6D5DE0",
-        cyan: "#5BB0F5",
+        // Neutral slate for secondary/informational accents (replaces the old
+        // neon cyan — keeps the palette to purple / green / amber / red / slate).
+        cyan: "#7E8BA3",
+        slate: "#7E8BA3",
         amber: "#F5B84B",
         risk: "#EF6B73",
       },

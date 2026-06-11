@@ -87,7 +87,7 @@ export function WhyThisAccount({ rec, account }: { rec: Recommendation; account?
 
       {/* Why now / If ignored / Expected outcome */}
       <div className="space-y-2">
-        <NarrativeRow icon={Clock} tone="text-cyan" label="Why now" text={r.whyNow} />
+        <NarrativeRow icon={Clock} tone="text-brand-bright" label="Why now" text={r.whyNow} />
         <NarrativeRow icon={ShieldAlert} tone="text-risk" label="If ignored" text={r.ifIgnored} />
         <NarrativeRow icon={Sparkles} tone="text-accent" label="Expected outcome" text={r.expectedOutcome} />
       </div>

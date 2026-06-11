@@ -49,7 +49,7 @@ export function LeftPanel({
         <div className="flex items-center gap-2">
           <Terminal size={14} className="text-accent" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
-            Command Center
+            Workspace controls
           </span>
         </div>
         <label className="flex cursor-pointer items-center gap-1.5" title="Auto-run the default query on load">

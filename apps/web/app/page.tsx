@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Loader2, TrendingUp, Database } from "lucide-react";
+import { AlertTriangle, Loader2, TrendingUp } from "lucide-react";
 import { api } from "@/lib/api";
 import type {
   Account,
@@ -35,6 +35,8 @@ import { NvidiaReadyCard } from "@/components/NvidiaReadyCard";
 import { KpiStrip } from "@/components/KpiStrip";
 import { CommandCenter } from "@/components/command/CommandCenter";
 import { WhyThisAccount } from "@/components/WhyThisAccount";
+import { LandingView } from "@/components/landing/LandingView";
+import { WorkspaceQuery } from "@/components/WorkspaceQuery";
 import { Card, PanelTitle } from "@/components/ui";
 
 const DEFAULT_QUERY = "Which SMB accounts need attention this week and why?";
@@ -61,8 +63,8 @@ export default function Page() {
   const [demoMode, setDemoMode] = React.useState(false);
   const autoRanRef = React.useRef(false);
 
-  // Landing view: Executive Command Center (default) vs detailed Workspace.
-  const [view, setView] = React.useState<AppView>("command");
+  // App journey (P10): Landing → Command Center → detailed Workspace.
+  const [view, setView] = React.useState<AppView>("landing");
   // When opening an account from the cockpit before a run completes, remember
   // which account to select once recommendations arrive.
   const pendingAccountRef = React.useRef<string | null>(null);
@@ -354,11 +356,13 @@ export default function Page() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header
-        modelProvider={modelProvider}
-        model={meta?.model ?? "—"}
         dataReady={dataReady}
         view={view}
         onViewChange={setView}
+        onHome={() => setView("landing")}
+        dataSourceLabel={dataSourceLabel}
+        isHubspotSource={isHubspotSource}
+        accountCount={meta?.dataset.accounts ?? accountsList.length}
       />
 
       {bootError ? (
@@ -366,6 +370,17 @@ export default function Page() {
           <AlertTriangle size={16} />
           Cannot reach the backend API. Start it on port 8000, then reload. ({bootError})
         </div>
+      ) : null}
+
+      {view === "landing" ? (
+        <LandingView
+          meta={meta}
+          recommendationCount={result?.recommendations.length ?? limit}
+          isHubspotSource={isHubspotSource}
+          dataSourceLabel={dataSourceLabel}
+          onEnter={() => setView("command")}
+          onOpenWorkspace={() => setView("workspace")}
+        />
       ) : null}
 
       {view === "command" ? (
@@ -424,36 +439,21 @@ export default function Page() {
 
           {/* CENTER */}
           <section className="min-w-0">
-            <div className="mb-3 rounded-xl border border-edge bg-surface/60 p-3 grid-dots">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="panel-title">Active query</div>
-                  <p className="mt-0.5 truncate text-sm font-medium text-ink">
-                    {result?.query ?? query}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span
-                    className={cx(
-                      "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium",
-                      isHubspotSource
-                        ? "border-cyan/40 bg-cyan/10 text-cyan"
-                        : "border-edge bg-surface2 text-muted",
-                    )}
-                    title="Active data source for this workflow"
-                  >
-                    <Database size={12} />
-                    Source: {isHubspotSource ? "HubSpot test CRM" : "Synthetic local dataset"}
-                  </span>
-                  {result ? (
-                    <span className="rounded-md border border-edge bg-surface2 px-2 py-1 font-mono text-xs text-muted">
-                      {result.recommendations.length} accounts · {result.latency_ms}ms
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-              {agents.length > 0 ? (
-                <div className="mt-3">
+            <div className="mb-4">
+              <WorkspaceQuery
+                query={query}
+                setQuery={setQuery}
+                onRun={runWorkflow}
+                loading={loading}
+                suggestions={meta?.suggested_queries ?? []}
+                limit={limit}
+                setLimit={setLimit}
+                isHubspotSource={isHubspotSource}
+                resultCount={result?.recommendations.length}
+                latencyMs={result?.latency_ms}
+              />
+              {agents.length > 0 && (!!result || loading) ? (
+                <div className="mt-3 rounded-xl border border-edge bg-surface/60 p-3">
                   <AgentPipeline agents={agents} active={!!result} />
                 </div>
               ) : null}
@@ -637,12 +637,14 @@ export default function Page() {
       </main>
       ) : null}
 
-      <RuntimeTrace
-        ledger={result?.decision_ledger ?? null}
-        apiBaseUrl={api.baseUrl}
-        dataSource={dataSourceLabel}
-        lastSyncedAt={hubStatus?.last_synced_at ?? null}
-      />
+      {view !== "landing" ? (
+        <RuntimeTrace
+          ledger={result?.decision_ledger ?? null}
+          apiBaseUrl={api.baseUrl}
+          dataSource={dataSourceLabel}
+          lastSyncedAt={hubStatus?.last_synced_at ?? null}
+        />
+      ) : null}
     </div>
   );
 }
