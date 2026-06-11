@@ -58,8 +58,40 @@ export function LiveWorkflowRail({ state }: { state: WorkflowState }) {
     return "future";
   }
 
+  const statusLabel = state.anyWriteback
+    ? "Synced to CRM"
+    : state.anyApproved
+      ? "Approved · ready to sync"
+      : state.hasResult
+        ? "Awaiting human approval"
+        : state.loading
+          ? "Analyzing portfolio"
+          : "Ready to analyze";
+  const progress = Math.round((active / (stages.length - 1)) * 100);
+
   return (
-    <div className="flex flex-wrap items-stretch gap-1.5">
+    <div>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-[11px] font-medium text-muted">
+          <span className="relative flex h-2 w-2 items-center justify-center">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/50" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+          </span>
+          Every step is logged — nothing touches your CRM without human approval.
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-accent">
+          {statusLabel}
+        </span>
+      </div>
+
+      <div className="mb-4 h-1 w-full overflow-hidden rounded-full bg-surface2">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-accent/70 to-accent transition-all duration-700 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="flex flex-wrap items-stretch gap-1.5">
       {stages.map((st, i) => {
         const ss = stateOf(i);
         const isWritebackDone = i === 6 && state.anyWriteback;
@@ -115,6 +147,7 @@ export function LiveWorkflowRail({ state }: { state: WorkflowState }) {
           </React.Fragment>
         );
       })}
+      </div>
     </div>
   );
 }

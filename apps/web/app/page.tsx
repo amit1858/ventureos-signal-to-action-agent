@@ -413,17 +413,7 @@ export default function Page() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[336px_minmax(0,1fr)_456px]">
           {/* LEFT */}
           <aside className="xl:sticky xl:top-[68px] xl:max-h-[calc(100vh-92px)] xl:self-start xl:overflow-y-auto xl:pr-1">
-            <LeftPanel
-              meta={meta}
-              query={query}
-              setQuery={setQuery}
-              limit={limit}
-              setLimit={setLimit}
-              onRun={runWorkflow}
-              loading={loading}
-              demoMode={demoMode}
-              onToggleDemo={toggleDemo}
-            />
+            <LeftPanel meta={meta} demoMode={demoMode} onToggleDemo={toggleDemo} />
             <div className="mt-4">
               <CrmIntegrationCard
                 status={hubStatus}

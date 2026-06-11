@@ -42,7 +42,7 @@ export function AiInsightsPanel({ accounts }: { accounts: Account[] }) {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <ThemeList
-        title="Top Risks"
+        title="What needs attention"
         accentTone="text-risk"
         chipClass="border-risk/40 bg-risk/10 text-risk"
         themes={risks}
@@ -51,7 +51,7 @@ export function AiInsightsPanel({ accounts }: { accounts: Account[] }) {
         empty="No material risks detected in the current book."
       />
       <ThemeList
-        title="Top Opportunities"
+        title="Where to grow"
         accentTone="text-accent"
         chipClass="border-accent/40 bg-accent/10 text-accent"
         themes={opps}
@@ -60,7 +60,7 @@ export function AiInsightsPanel({ accounts }: { accounts: Account[] }) {
         empty="No standout expansion signals in the current book."
       />
       <div className="rounded-2xl border border-edge bg-surface2/30 p-4">
-        <div className="section-label mb-2.5 text-cyan">Emerging Trends</div>
+        <div className="section-label mb-2.5 text-cyan">What&apos;s shifting</div>
         {trends.length === 0 ? (
           <p className="py-3 text-xs text-faint">No emerging trends across the current book.</p>
         ) : (

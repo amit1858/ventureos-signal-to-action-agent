@@ -1,16 +1,23 @@
 "use client";
 
 import * as React from "react";
+import { ArrowRight } from "lucide-react";
 import type { Account } from "@/lib/types";
 import { cx, titleCase } from "@/lib/format";
 import { quadrantOf, QUADRANT_META, RENEWAL_SOON, type Quadrant } from "@/lib/portfolio";
+import { whyNow } from "@/lib/reasoning";
+
+export interface MatrixStory {
+  actionLabel: string;
+  actionTone: string;
+  outcome: string;
+}
 
 interface Pt {
   id: string;
   name: string;
   industry: string;
   renewal: number;
-  action?: string;
   x: number;
   y: number;
   risk: number;
@@ -20,22 +27,34 @@ interface Pt {
 
 const QUADRANT_ORDER: Quadrant[] = ["act_now", "escalate", "nurture", "monitor"];
 
+// Calm, meaning-only quadrant colours for the SVG (no neon — nurture is slate,
+// not cyan). These mirror QUADRANT_META but keep the plot free of the legacy
+// hex while leaving the frozen portfolio lib untouched.
+const QCOLOR: Record<Quadrant, string> = {
+  act_now: "#76B900",
+  escalate: "#EF6B73",
+  nurture: "#7E8BA3",
+  monitor: "#6B7480",
+};
+
 export function PortfolioMatrix({
   accounts,
+  accountsById,
   selectedId,
   recommendedIds,
-  actionByAccount,
+  storyByAccount,
   onOpenAccount,
 }: {
   accounts: Account[];
+  accountsById?: Record<string, Account>;
   selectedId?: string | null;
   recommendedIds?: Set<string>;
-  actionByAccount?: Record<string, string>;
+  storyByAccount?: Record<string, MatrixStory>;
   onOpenAccount: (accountId: string) => void;
 }) {
   const W = 560;
-  const H = 320;
-  const pad = 34;
+  const H = 340;
+  const pad = 36;
   const plotW = W - pad * 2;
   const plotH = H - pad * 2;
   const midX = pad + plotW / 2;
@@ -52,7 +71,6 @@ export function PortfolioMatrix({
           name: a.account_name,
           industry: a.industry,
           renewal: a.renewal_days,
-          action: actionByAccount?.[a.account_id],
           x: pad + (opp / 100) * plotW,
           y: pad + (1 - risk / 100) * plotH,
           risk,
@@ -60,7 +78,7 @@ export function PortfolioMatrix({
           quadrant: quadrantOf(risk, opp),
         };
       }),
-    [accounts, plotW, plotH, actionByAccount],
+    [accounts, plotW, plotH],
   );
 
   const counts = React.useMemo(() => {
@@ -69,134 +87,183 @@ export function PortfolioMatrix({
     return c;
   }, [points]);
 
-  const hovered = points.find((p) => p.id === hover) || null;
+  const activeId = hover ?? selectedId ?? null;
+  const active = activeId ? points.find((p) => p.id === activeId) ?? null : null;
+  const activeAccount = active && accountsById ? accountsById[active.id] ?? null : null;
+  const activeStory = active ? storyByAccount?.[active.id] ?? null : null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr,220px]">
+    <div className="grid gap-7 lg:grid-cols-[1fr,272px]">
       <div className="relative">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full select-none">
-          <rect x={pad} y={pad} width={plotW} height={plotH} fill="#0B0F0E" stroke="#2A2F35" rx="8" />
-          {/* quadrant tints */}
-          <rect x={midX} y={pad} width={plotW / 2} height={plotH / 2} fill="#76B900" fillOpacity={0.05} />
-          <rect x={pad} y={pad} width={plotW / 2} height={plotH / 2} fill="#EF6B73" fillOpacity={0.05} />
-          <rect x={midX} y={midY} width={plotW / 2} height={plotH / 2} fill="#5BB0F5" fillOpacity={0.05} />
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="h-auto w-full select-none"
+          onMouseLeave={() => setHover(null)}
+        >
+          <rect x={pad} y={pad} width={plotW} height={plotH} fill="#0B0F0E" stroke="#242A30" rx="10" />
+          {/* quadrant tints — meaning-only, no neon */}
+          <rect x={midX} y={pad} width={plotW / 2} height={plotH / 2} fill={QCOLOR.act_now} fillOpacity={0.06} />
+          <rect x={pad} y={pad} width={plotW / 2} height={plotH / 2} fill={QCOLOR.escalate} fillOpacity={0.06} />
+          <rect x={midX} y={midY} width={plotW / 2} height={plotH / 2} fill={QCOLOR.nurture} fillOpacity={0.05} />
 
-          <line x1={midX} y1={pad} x2={midX} y2={pad + plotH} stroke="#2A2F35" strokeDasharray="3 3" />
-          <line x1={pad} y1={midY} x2={pad + plotW} y2={midY} stroke="#2A2F35" strokeDasharray="3 3" />
+          <line x1={midX} y1={pad} x2={midX} y2={pad + plotH} stroke="#242A30" strokeDasharray="3 4" />
+          <line x1={pad} y1={midY} x2={pad + plotW} y2={midY} stroke="#242A30" strokeDasharray="3 4" />
 
-          <text x={pad + plotW - 8} y={pad + 14} textAnchor="end" className="fill-[#76B900]" fontSize="9" fontWeight="700">
+          <text x={pad + plotW - 8} y={pad + 15} textAnchor="end" fill={QCOLOR.act_now} fontSize="9" fontWeight="700" letterSpacing="0.08em">
             ACT NOW
           </text>
-          <text x={pad + 8} y={pad + 14} textAnchor="start" className="fill-[#EF6B73]" fontSize="9" fontWeight="700">
+          <text x={pad + 8} y={pad + 15} textAnchor="start" fill={QCOLOR.escalate} fontSize="9" fontWeight="700" letterSpacing="0.08em">
             ESCALATE
           </text>
-          <text x={pad + 8} y={pad + plotH - 7} textAnchor="start" className="fill-[#6B7480]" fontSize="9" fontWeight="700">
+          <text x={pad + 8} y={pad + plotH - 8} textAnchor="start" fill="#6B7480" fontSize="9" fontWeight="700" letterSpacing="0.08em">
             MONITOR
           </text>
-          <text x={pad + plotW - 8} y={pad + plotH - 7} textAnchor="end" className="fill-[#5BB0F5]" fontSize="9" fontWeight="700">
+          <text x={pad + plotW - 8} y={pad + plotH - 8} textAnchor="end" fill={QCOLOR.nurture} fontSize="9" fontWeight="700" letterSpacing="0.08em">
             NURTURE
           </text>
 
           {points.map((p) => {
-            const isSel = p.id === selectedId;
+            const isSel = p.id === activeId;
             const isRec = recommendedIds?.has(p.id);
-            const isHover = p.id === hover;
-            const c = QUADRANT_META[p.quadrant].color;
-            const r = isSel ? 7 : isHover ? 6 : isRec ? 5 : 4;
+            const dim = activeId != null && !isSel;
+            const c = QCOLOR[p.quadrant];
+            const r = isSel ? 7 : isRec ? 5 : 4;
             return (
-              <g key={p.id} className="cursor-pointer" onMouseEnter={() => setHover(p.id)} onMouseLeave={() => setHover((h) => (h === p.id ? null : h))} onClick={() => onOpenAccount(p.id)}>
+              <g
+                key={p.id}
+                className="cursor-pointer"
+                onMouseEnter={() => setHover(p.id)}
+                onClick={() => onOpenAccount(p.id)}
+              >
                 {(isSel || isRec) && (
-                  <circle cx={p.x} cy={p.y} r={r + 3} fill="none" stroke={c} strokeOpacity={isSel ? 0.9 : 0.4} className={isSel ? "animate-pulseline" : undefined} />
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={r + 3}
+                    fill="none"
+                    stroke={c}
+                    strokeOpacity={isSel ? 0.9 : 0.35}
+                    className={isSel ? "animate-pulseline" : undefined}
+                  />
                 )}
                 <circle
                   cx={p.x}
                   cy={p.y}
                   r={r}
                   fill={c}
-                  fillOpacity={isSel || isHover || isRec ? 1 : 0.6}
-                  stroke={isSel ? "#F4F6F8" : isHover ? "#F4F6F8" : "none"}
-                  strokeWidth={isSel || isHover ? 1.25 : 0}
+                  fillOpacity={isSel ? 1 : dim ? 0.3 : isRec ? 0.95 : 0.6}
+                  stroke={isSel ? "#F4F6F8" : "none"}
+                  strokeWidth={isSel ? 1.25 : 0}
+                  style={{ transition: "fill-opacity 0.18s ease" }}
                 />
               </g>
             );
           })}
 
-          <text x={pad + plotW / 2} y={H - 8} textAnchor="middle" className="fill-[#6B7480]" fontSize="10">
+          <text x={pad + plotW / 2} y={H - 8} textAnchor="middle" fill="#6B7480" fontSize="10">
             Opportunity →
           </text>
           <text
             x={14}
             y={pad + plotH / 2}
             textAnchor="middle"
-            className="fill-[#6B7480]"
+            fill="#6B7480"
             fontSize="10"
             transform={`rotate(-90 14 ${pad + plotH / 2})`}
           >
             Risk →
           </text>
         </svg>
+      </div>
 
-        {hovered ? (
-          <div className="pointer-events-none absolute left-1/2 top-2 w-60 -translate-x-1/2 rounded-lg border border-edge bg-elevated/97 p-2.5 text-left shadow-elevated">
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-xs font-semibold text-ink">{hovered.name}</span>
+      {/* Dynamic detail rail — the bubble's story (Bloomberg-meets-Apple). */}
+      <div>
+        {active ? (
+          <div className="flex h-full flex-col rounded-2xl border border-edge bg-surface/70 p-4 animate-fade-in-fast">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-ink">{active.name}</div>
+                <div className="truncate text-[10px] text-faint">{titleCase(active.industry)}</div>
+              </div>
               <span
                 className={cx(
                   "shrink-0 rounded-md border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
-                  QUADRANT_META[hovered.quadrant].ring,
-                  QUADRANT_META[hovered.quadrant].tone,
+                  QUADRANT_META[active.quadrant].ring,
+                  QUADRANT_META[active.quadrant].tone,
                 )}
               >
-                {QUADRANT_META[hovered.quadrant].label}
+                {QUADRANT_META[active.quadrant].label}
               </span>
             </div>
-            <div className="mt-1 text-[10px] text-faint">{titleCase(hovered.industry)}</div>
-            <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">
-              <TipStat label="Risk" value={Math.round(hovered.risk)} tone="text-risk" />
-              <TipStat label="Opp." value={Math.round(hovered.opp)} tone="text-accent" />
-              <TipStat
+
+            <div className="mt-3 grid grid-cols-3 gap-1.5 text-center">
+              <RailStat label="Risk" value={Math.round(active.risk)} tone="text-risk" />
+              <RailStat label="Opp." value={Math.round(active.opp)} tone="text-accent" />
+              <RailStat
                 label="Renewal"
-                value={`${hovered.renewal}d`}
-                tone={hovered.renewal <= RENEWAL_SOON ? "text-amber" : "text-muted"}
+                value={`${active.renewal}d`}
+                tone={active.renewal >= 0 && active.renewal <= RENEWAL_SOON ? "text-amber" : "text-muted"}
               />
             </div>
-            {hovered.action ? (
-              <div className="mt-2 border-t border-edge pt-1.5">
+
+            {activeStory ? (
+              <div className="mt-3 rounded-lg border border-brand/25 bg-brand/[0.06] px-2.5 py-2">
                 <div className="text-[9px] uppercase tracking-wider text-faint">Recommended action</div>
-                <div className="text-[11px] font-medium text-cyan">{hovered.action}</div>
+                <div className={cx("text-[12px] font-semibold", activeStory.actionTone)}>{activeStory.actionLabel}</div>
               </div>
             ) : null}
+
+            {activeAccount ? (
+              <div className="mt-3">
+                <div className="text-[9px] uppercase tracking-wider text-faint">Why now</div>
+                <p className="mt-0.5 text-[11px] leading-snug text-muted">{whyNow(activeAccount)}</p>
+              </div>
+            ) : null}
+
+            {activeStory ? (
+              <div className="mt-2.5">
+                <div className="text-[9px] uppercase tracking-wider text-faint">Expected outcome</div>
+                <p className="mt-0.5 text-[11px] leading-snug text-muted">{activeStory.outcome}</p>
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => onOpenAccount(active.id)}
+              className="btn btn-ghost mt-auto w-full justify-center px-3 py-1.5 text-[11px]"
+            >
+              Open account <ArrowRight size={12} />
+            </button>
           </div>
         ) : (
-          <div className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-md border border-edge/60 bg-surface2/70 px-3 py-1 text-[10px] text-faint">
-            Hover for detail · click to open the account
+          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-1">
+            {QUADRANT_ORDER.map((q) => {
+              const meta = QUADRANT_META[q];
+              return (
+                <div key={q} className={cx("hover-lift rounded-xl border p-3", meta.ring, meta.bg)}>
+                  <div className="flex items-center justify-between">
+                    <span className={cx("text-xs font-semibold", meta.tone)}>{meta.label}</span>
+                    <span className={cx("font-mono text-lg font-bold leading-none", meta.tone)}>{counts[q]}</span>
+                  </div>
+                  <div className="mt-0.5 text-[10px] leading-tight text-faint">{meta.hint}</div>
+                </div>
+              );
+            })}
+            <p className="col-span-2 mt-1 text-[10px] leading-snug text-faint lg:col-span-1">
+              Hover a bubble to see why it matters and the recommended move.
+            </p>
           </div>
         )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-1">
-        {QUADRANT_ORDER.map((q) => {
-          const meta = QUADRANT_META[q];
-          return (
-            <div key={q} className={cx("hover-lift rounded-lg border p-2.5", meta.ring, meta.bg)}>
-              <div className="flex items-center justify-between">
-                <span className={cx("text-xs font-semibold", meta.tone)}>{meta.label}</span>
-                <span className={cx("font-mono text-lg font-bold leading-none", meta.tone)}>{counts[q]}</span>
-              </div>
-              <div className="mt-0.5 text-[10px] leading-tight text-faint">{meta.hint}</div>
-            </div>
-          );
-        })}
       </div>
     </div>
   );
 }
 
-function TipStat({ label, value, tone }: { label: string; value: React.ReactNode; tone: string }) {
+function RailStat({ label, value, tone }: { label: string; value: React.ReactNode; tone: string }) {
   return (
-    <div className="rounded-md border border-edge/70 bg-surface2/60 px-1 py-1">
+    <div className="rounded-md border border-edge/70 bg-surface2/60 px-1 py-1.5">
       <div className="text-[8px] uppercase tracking-wider text-faint">{label}</div>
-      <div className={cx("font-mono text-xs font-semibold", tone)}>{value}</div>
+      <div className={cx("font-mono text-sm font-semibold", tone)}>{value}</div>
     </div>
   );
 }

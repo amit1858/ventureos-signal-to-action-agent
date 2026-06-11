@@ -90,7 +90,7 @@ export function ExecutiveMorningBrief({
               {name ? ` ${name}` : ""} <span aria-hidden>👋</span>
             </h1>
             <p className="mt-1 text-sm font-medium text-muted">
-              I reviewed your book of business overnight — here&apos;s where it stands.
+              While you were away, I reviewed your portfolio overnight — here&apos;s where it stands.
             </p>
             <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted">
               {brief.analyzed ? (
@@ -174,7 +174,7 @@ export function ExecutiveMorningBrief({
                   <Crown size={16} />
                 </span>
                 <div className="min-w-0">
-                  <div className="text-[10px] uppercase tracking-wider text-faint">Your highest priority today</div>
+                  <div className="text-[10px] uppercase tracking-wider text-faint">Here&apos;s where I&apos;d start today</div>
                   <div className="truncate text-sm font-semibold text-ink">
                     {top.accountName}
                     {top.industry ? <span className="font-normal text-faint"> · {titleCase(top.industry)}</span> : null}

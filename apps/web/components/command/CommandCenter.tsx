@@ -9,6 +9,9 @@ import type {
   HubspotWriteback,
 } from "@/lib/types";
 import { businessAction } from "@/lib/actions";
+import { expectedOutcome } from "@/lib/reasoning";
+import { cx } from "@/lib/format";
+import { useReveal } from "@/lib/useReveal";
 import { ExecutiveMorningBrief } from "@/components/command/ExecutiveMorningBrief";
 import { PortfolioHealthCard } from "@/components/command/PortfolioHealthCard";
 import { NextBestActions } from "@/components/command/NextBestActions";
@@ -53,16 +56,18 @@ export function CommandCenter({
   const lastSync = isHubspotSource ? hubStatus?.last_synced_at ?? null : null;
   const latency = result?.latency_ms ?? result?.decision_ledger?.latency_ms ?? 0;
 
-  // account_id -> business-action label, for the portfolio matrix tooltip.
-  const actionByAccount = React.useMemo(() => {
-    const m: Record<string, string> = {};
+  // account_id -> the bubble's story (action + expected outcome) for the
+  // portfolio map detail rail. Derived from the frozen reasoning helpers.
+  const storyByAccount = React.useMemo(() => {
+    const m: Record<string, { actionLabel: string; actionTone: string; outcome: string }> = {};
     recs.forEach((r) => {
       const a = accountsById[r.account_id];
-      m[r.account_id] = businessAction(r.action_type, {
+      const ba = businessAction(r.action_type, {
         governanceStatus: r.governance_status,
         growthPotential: a?.growth_potential_score,
         productUsage: a?.product_usage_score,
-      }).label;
+      });
+      m[r.account_id] = { actionLabel: ba.label, actionTone: ba.tone, outcome: expectedOutcome(ba.key) };
     });
     return m;
   }, [recs, accountsById]);
@@ -118,9 +123,10 @@ export function CommandCenter({
         <div className="card-premium p-5 sm:p-7">
           <PortfolioMatrix
             accounts={accounts}
+            accountsById={accountsById}
             selectedId={selectedId}
             recommendedIds={recommendedIds}
-            actionByAccount={actionByAccount}
+            storyByAccount={storyByAccount}
             onOpenAccount={onOpenAccount}
           />
         </div>
@@ -192,8 +198,9 @@ function Section({
   sub?: string;
   children: React.ReactNode;
 }) {
+  const { ref, shown } = useReveal<HTMLElement>();
   return (
-    <section id={id} className="scroll-mt-24">
+    <section ref={ref} id={id} className={cx("scroll-mt-24 reveal", shown && "reveal-visible")}>
       <div className="mb-6 max-w-2xl">
         <div className="eyebrow text-faint">{eyebrow}</div>
         <h2 className="section-h mt-2.5">{heading}</h2>
