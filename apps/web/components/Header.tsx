@@ -1,15 +1,22 @@
-import { Activity, Cpu, ShieldCheck, FlaskConical } from "lucide-react";
+import * as React from "react";
+import { Activity, Cpu, ShieldCheck, FlaskConical, LayoutDashboard, Columns3 } from "lucide-react";
 import { cx } from "@/lib/format";
 import { Dot, Pill } from "./ui";
+
+export type AppView = "command" | "workspace";
 
 export function Header({
   modelProvider,
   model,
   dataReady,
+  view,
+  onViewChange,
 }: {
   modelProvider: string;
   model: string;
   dataReady: boolean;
+  view: AppView;
+  onViewChange: (v: AppView) => void;
 }) {
   const isMock = modelProvider.toLowerCase().includes("mock");
   return (
@@ -34,6 +41,22 @@ export function Header({
               Sovereign multi-agent workflow for enterprise next-best actions
             </p>
           </div>
+        </div>
+
+        {/* View switch: Executive Command Center vs detailed Workspace */}
+        <div className="flex items-center rounded-lg border border-edge bg-surface2/60 p-0.5">
+          <ViewTab
+            active={view === "command"}
+            onClick={() => onViewChange("command")}
+            icon={<LayoutDashboard size={13} />}
+            label="Command Center"
+          />
+          <ViewTab
+            active={view === "workspace"}
+            onClick={() => onViewChange("workspace")}
+            icon={<Columns3 size={13} />}
+            label="Workspace"
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -70,5 +93,32 @@ export function Header({
         </div>
       </div>
     </header>
+  );
+}
+
+function ViewTab({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cx(
+        "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+        active ? "bg-accent/15 text-accent shadow-glow-soft" : "text-faint hover:text-muted",
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }

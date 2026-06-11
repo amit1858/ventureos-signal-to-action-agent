@@ -14,7 +14,7 @@ import type {
   RecommendationResponse,
 } from "@/lib/types";
 import { actionLabel, cx } from "@/lib/format";
-import { Header } from "@/components/Header";
+import { Header, type AppView } from "@/components/Header";
 import { LeftPanel } from "@/components/LeftPanel";
 import { CrmIntegrationCard } from "@/components/CrmIntegrationCard";
 import { HubspotWriteback } from "@/components/HubspotWriteback";
@@ -33,6 +33,7 @@ import { RiskOpportunityMatrix } from "@/components/RiskOpportunityMatrix";
 import { DecisionWorkspacePreview } from "@/components/DecisionWorkspacePreview";
 import { NvidiaReadyCard } from "@/components/NvidiaReadyCard";
 import { KpiStrip } from "@/components/KpiStrip";
+import { CommandCenter } from "@/components/command/CommandCenter";
 import { Card, PanelTitle } from "@/components/ui";
 
 const DEFAULT_QUERY = "Which SMB accounts need attention this week and why?";
@@ -58,6 +59,12 @@ export default function Page() {
 
   const [demoMode, setDemoMode] = React.useState(false);
   const autoRanRef = React.useRef(false);
+
+  // Landing view: Executive Command Center (default) vs detailed Workspace.
+  const [view, setView] = React.useState<AppView>("command");
+  // When opening an account from the cockpit before a run completes, remember
+  // which account to select once recommendations arrive.
+  const pendingAccountRef = React.useRef<string | null>(null);
 
   // -- HubSpot test CRM integration state ---------------------------------
   const [hubStatus, setHubStatus] = React.useState<HubspotStatus | null>(null);
@@ -170,14 +177,44 @@ export default function Page() {
     }
   }
 
-  // Demo mode: auto-run the default query once after data is ready.
+  // Auto-run the default query once after data is ready, either in demo mode or
+  // when the Executive Command Center is the landing view (so the cockpit shows
+  // live recommendations on load). Read-only generation against the local API.
   React.useEffect(() => {
-    if (!demoMode || autoRanRef.current) return;
+    if (autoRanRef.current) return;
+    if (!demoMode && view !== "command") return;
     if (!meta || result || loading) return;
     autoRanRef.current = true;
     runWorkflow();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demoMode, meta, result, loading]);
+  }, [demoMode, view, meta, result, loading]);
+
+  // Resolve a pending "open account" intent once recommendations are available.
+  React.useEffect(() => {
+    if (!result) return;
+    const acc = pendingAccountRef.current;
+    if (!acc) return;
+    const rec = result.recommendations.find((r) => r.account_id === acc);
+    if (rec) {
+      setSelectedId(rec.recommendation_id);
+      setEditing(false);
+    }
+    pendingAccountRef.current = null;
+  }, [result]);
+
+  // Open an account in the detailed workspace from the cockpit (matrix dot / row).
+  function openAccount(accountId: string) {
+    setView("workspace");
+    const rec = result?.recommendations.find((r) => r.account_id === accountId);
+    if (rec) {
+      setSelectedId(rec.recommendation_id);
+      setEditing(false);
+      pendingAccountRef.current = null;
+    } else {
+      pendingAccountRef.current = accountId;
+      if (!loading) runWorkflow();
+    }
+  }
 
   function patchRec(updated: Recommendation) {
     setResult((prev) =>
@@ -257,6 +294,7 @@ export default function Page() {
       setResult(null);
       setSelectedId(null);
       setDetails({});
+      autoRanRef.current = false;
     } catch (e) {
       setHubError((e as Error).message);
     } finally {
@@ -273,6 +311,7 @@ export default function Page() {
       setResult(null);
       setSelectedId(null);
       setDetails({});
+      autoRanRef.current = false;
     } catch (e) {
       setHubError((e as Error).message);
     } finally {
@@ -303,6 +342,7 @@ export default function Page() {
   const dataReady = health?.data_ready ?? !!meta;
   const modelProvider = result?.model_provider ?? meta?.model_provider ?? "mock";
   const agents = meta?.agents ?? [];
+  const accountsList = React.useMemo(() => Object.values(accounts), [accounts]);
   const dataSourceLabel =
     result?.data_source ??
     hubStatus?.data_source_label ??
@@ -312,7 +352,13 @@ export default function Page() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header modelProvider={modelProvider} model={meta?.model ?? "—"} dataReady={dataReady} />
+      <Header
+        modelProvider={modelProvider}
+        model={meta?.model ?? "—"}
+        dataReady={dataReady}
+        view={view}
+        onViewChange={setView}
+      />
 
       {bootError ? (
         <div className="mx-5 mt-4 flex items-center gap-2 rounded-lg border border-risk/40 bg-risk/10 px-4 py-3 text-sm text-risk">
@@ -321,6 +367,32 @@ export default function Page() {
         </div>
       ) : null}
 
+      {view === "command" ? (
+        <main className="mx-auto w-full max-w-[1840px] flex-1 px-4 py-4">
+          {runError ? (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-risk/40 bg-risk/10 px-4 py-3 text-sm text-risk">
+              <AlertTriangle size={16} />
+              {runError}
+            </div>
+          ) : null}
+          <CommandCenter
+            meta={meta}
+            accounts={accountsList}
+            accountsById={accounts}
+            result={result}
+            loading={loading}
+            hubStatus={hubStatus}
+            writebacks={writebacks}
+            selectedId={selectedRec?.account_id ?? null}
+            dataSourceLabel={dataSourceLabel}
+            isHubspotSource={isHubspotSource}
+            onRun={runWorkflow}
+            onOpenAccount={openAccount}
+          />
+        </main>
+      ) : null}
+
+      {view === "workspace" ? (
       <main className="mx-auto w-full max-w-[1840px] flex-1 px-4 py-4">
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[336px_minmax(0,1fr)_456px]">
           {/* LEFT */}
@@ -570,6 +642,7 @@ export default function Page() {
           </aside>
         </div>
       </main>
+      ) : null}
 
       <RuntimeTrace
         ledger={result?.decision_ledger ?? null}
