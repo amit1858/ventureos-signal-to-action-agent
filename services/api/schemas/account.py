@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -21,6 +21,7 @@ class Account(BaseModel):
     industry: str = Field(..., description="e.g. Retail, SaaS, Logistics, Healthcare")
     segment: str = Field(..., description="e.g. SMB, Mid-Market, Startup")
     region: str = Field(..., description="e.g. North, South, East, West, Central")
+    country: Optional[str] = Field(default=None, description="Country for CRM realism, e.g. India, US")
 
     current_month_spend: float = Field(..., ge=0, description="This month spend (units)")
     previous_month_spend: float = Field(..., ge=0, description="Prior month spend (units)")

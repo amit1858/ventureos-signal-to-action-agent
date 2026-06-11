@@ -1,41 +1,41 @@
-account_id,account_name,industry,segment,region,current_month_spend,previous_month_spend,product_usage_score,engagement_score,support_risk_score,campaign_response_score,last_contact_days,renewal_days,growth_potential_score
-ACC-0001,Woodgrove Digital,Hospitality,SMB,West,46257,46257,60.6,40.7,46.3,45.9,25,5,55.0
-ACC-0002,Northwind Supply,Healthcare,SMB,North,47665,43332,55.8,54.7,50.3,51.9,27,19,57.9
-ACC-0003,Fourth Coffee Co,Manufacturing,Startup,West,38289,38289,37.6,45.6,86.0,32.1,13,50,50.7
-ACC-0004,Northwind Retail,Logistics,Startup,West,24160,24160,59.4,55.9,44.1,42.1,16,135,60.0
-ACC-0005,Contoso Group,FinTech,Mid-Market,North,27588,27588,41.5,42.1,86.7,40.7,19,106,51.6
-ACC-0006,Trey Logistics,Healthcare,Mid-Market,South,37762,37762,67.7,40.5,32.8,51.8,12,128,62.1
-ACC-0007,Nod Publishers Digital,Manufacturing,SMB,South,6024,10040,34.5,38.3,57.1,43.8,21,55,63.6
-ACC-0008,Woodgrove Systems,Manufacturing,SMB,West,24541,24541,60.5,65.9,50.8,55.7,16,20,50.6
-ACC-0009,Alpine Retail,SaaS,Mid-Market,North,20290,14493,86.2,85.6,14.1,80.3,9,126,92.5
-ACC-0010,Consolidated Logistics,Hospitality,Mid-Market,Central,18719,26742,43.4,38.6,55.6,34.3,35,78,58.5
-ACC-0011,Proseware Systems,Retail,Startup,North,15189,15189,63.0,55.8,23.4,87.6,55,140,61.7
-ACC-0012,Tailspin Systems,Logistics,Mid-Market,East,45998,45998,67.8,66.9,18.2,86.1,59,116,82.4
-ACC-0013,Lucerne Co,Logistics,SMB,Central,38931,38931,52.0,52.6,23.6,80.5,49,149,80.4
-ACC-0014,City Power Co,FinTech,Mid-Market,Central,19881,33136,39.9,34.9,75.4,45.4,21,40,73.6
-ACC-0015,Best For You Group,Healthcare,Startup,East,17552,15957,54.5,44.4,41.9,52.2,29,9,47.7
-ACC-0016,Trey Systems,SaaS,Startup,East,28041,21570,68.6,81.9,9.9,80.9,8,147,79.1
-ACC-0017,Nod Publishers Group,EdTech,SMB,North,55304,42542,72.9,68.8,13.2,71.6,18,170,94.2
-ACC-0018,Fabrico Supply,Retail,Mid-Market,East,21356,19415,68.3,79.2,19.5,93.4,16,100,92.0
-ACC-0019,Coho Partners,Manufacturing,SMB,North,18131,18131,69.7,73.5,11.8,47.5,13,294,49.5
-ACC-0020,Margie Supply,Retail,Startup,East,45670,32622,72.6,69.3,22.5,89.2,8,98,91.8
-ACC-0021,Relecloud Group,Retail,Mid-Market,Central,40756,40756,74.9,49.1,18.1,75.8,50,95,74.9
-ACC-0022,Best For You Digital,EdTech,SMB,South,27328,27328,55.2,61.7,44.9,58.2,17,20,45.7
-ACC-0023,Relecloud Digital,Manufacturing,SMB,Central,4424,5531,48.5,40.4,94.3,23.5,8,57,48.8
-ACC-0024,Tailspin Partners,FinTech,SMB,Central,24807,24807,77.1,72.6,13.6,41.2,8,293,40.2
-ACC-0025,Wingtip Partners,Logistics,Mid-Market,North,26523,26523,68.7,69.2,16.9,56.2,15,268,36.2
-ACC-0026,Adventure Retail,Healthcare,Startup,East,49777,38290,86.5,77.9,9.7,79.3,13,77,90.9
-ACC-0027,Margie Digital,Manufacturing,SMB,North,5540,6925,29.5,39.1,67.9,39.3,19,105,48.1
-ACC-0028,First Up Retail,Hospitality,Mid-Market,East,29990,42844,24.7,37.5,62.4,28.6,18,89,50.7
-ACC-0029,Best For You Retail,FinTech,SMB,East,16718,15199,50.7,52.9,18.6,75.6,37,115,76.7
-ACC-0030,Fabrico Group,SaaS,SMB,West,12717,18168,35.0,21.2,57.7,29.8,17,49,56.4
-ACC-0031,Fabrikam Co,Manufacturing,SMB,South,11925,11925,47.4,45.8,44.5,57.5,21,81,37.1
-ACC-0032,Fourth Coffee Labs,FinTech,SMB,West,33461,37179,43.1,52.5,89.2,32.3,16,57,39.9
-ACC-0033,Southridge Co,Manufacturing,SMB,Central,29010,29010,70.0,71.3,21.0,48.6,10,150,36.4
-ACC-0034,Northwind Digital,FinTech,Mid-Market,East,17260,21575,59.3,44.0,80.1,27.3,20,116,45.0
-ACC-0035,Margie Retail,EdTech,SMB,North,40060,36419,71.2,68.8,31.7,86.5,40,104,68.8
-ACC-0036,Graphic Design Works,Retail,SMB,South,28440,40629,23.3,29.5,70.3,45.0,39,100,70.5
-ACC-0037,Wide World Labs,Retail,SMB,South,11919,11919,68.3,44.8,43.4,53.7,26,130,53.7
-ACC-0038,Tailspin Logistics,Retail,SMB,West,34373,34373,74.1,74.1,11.3,48.3,13,294,41.8
-ACC-0039,Graphic Design Group,Hospitality,SMB,East,16141,16141,58.9,46.5,53.3,49.1,33,13,53.6
-ACC-0040,Southridge Partners,Manufacturing,SMB,Central,55413,46178,65.6,82.7,13.1,88.9,11,107,82.9
+account_id,account_name,industry,segment,region,country,current_month_spend,previous_month_spend,product_usage_score,engagement_score,support_risk_score,campaign_response_score,last_contact_days,renewal_days,growth_potential_score
+ACC-0001,Swiggy,Food Delivery,Enterprise,Bengaluru,India,14167,11806,90.7,78.1,27.1,92.1,18,160,88.3
+ACC-0002,Zepto,Quick Commerce,Mid-Market,Mumbai,India,47022,36171,80.8,66.7,20.3,72.8,8,117,78.2
+ACC-0003,Razorpay,FinTech,Mid-Market,Bengaluru,India,46970,36131,70.7,67.0,27.6,93.2,17,155,87.2
+ACC-0004,CRED,FinTech,Mid-Market,Bengaluru,India,26308,26308,63.5,52.2,18.5,88.5,56,123,67.7
+ACC-0005,Meesho,E-commerce,Mid-Market,Bengaluru,India,16903,28172,30.6,25.0,69.6,35.0,17,94,60.2
+ACC-0006,Lenskart,Retail,Mid-Market,Faridabad,India,43416,36180,79.2,83.6,19.3,94.6,5,133,82.0
+ACC-0007,Urban Company,Home Services,Mid-Market,Gurugram,India,7923,7203,59.1,58.8,46.5,47.9,16,18,67.1
+ACC-0008,Delhivery,Logistics,Enterprise,Gurugram,India,40562,45069,51.9,47.9,94.3,44.5,14,106,45.1
+ACC-0009,Nykaa,Retail,Mid-Market,Mumbai,India,51899,39923,78.6,73.4,25.7,80.8,14,166,82.8
+ACC-0010,Pine Labs,FinTech,Mid-Market,Noida,India,13820,13820,61.1,52.8,40.7,49.7,18,11,62.3
+ACC-0011,Freshworks,SaaS,Enterprise,Chennai,India,48757,37506,78.4,72.2,21.3,70.8,14,100,86.2
+ACC-0012,BrowserStack,SaaS,Mid-Market,Mumbai,India,32734,32734,76.1,70.3,16.8,59.3,11,306,39.6
+ACC-0013,Chargebee,SaaS,Mid-Market,Chennai,India,46503,46503,62.5,47.4,33.7,83.6,48,51,62.3
+ACC-0014,Postman,SaaS,Mid-Market,Bengaluru,India,54667,42052,87.6,77.1,12.0,73.0,6,156,87.8
+ACC-0015,Unacademy,EdTech,Mid-Market,Bengaluru,India,38247,47809,28.9,15.1,71.6,37.2,29,57,61.4
+ACC-0016,Curefoods,Food Delivery,SMB,Bengaluru,India,25518,42530,35.0,32.3,62.3,32.5,19,57,68.5
+ACC-0017,Porter,Logistics,SMB,Bengaluru,India,24054,24054,55.5,44.2,49.2,46.3,15,15,67.2
+ACC-0018,Groww,FinTech,Mid-Market,Bengaluru,India,34764,26742,90.2,86.5,8.5,81.9,14,117,83.9
+ACC-0019,MPL,Gaming,SMB,Bengaluru,India,29286,36608,34.3,35.1,58.8,35.6,27,119,55.1
+ACC-0020,boAt,Consumer Electronics,Mid-Market,Mumbai,India,21220,19291,51.7,55.0,19.9,94.4,35,132,73.6
+ACC-0021,Tata 1mg,HealthTech,Mid-Market,Gurugram,India,36971,33610,62.3,53.5,45.4,35.6,32,19,50.5
+ACC-0022,BigBasket,E-grocery,Enterprise,Bengaluru,India,10420,13025,56.1,39.7,85.2,30.4,8,84,42.6
+ACC-0023,Livspace,Home Interiors,SMB,Bengaluru,India,15448,15448,62.4,64.5,25.4,84.8,44,116,72.1
+ACC-0024,Simpl,FinTech,Startup,Bengaluru,India,38553,38553,63.9,59.5,45.4,36.9,12,176,54.4
+ACC-0025,Cashfree,FinTech,SMB,Bengaluru,India,17552,15957,54.5,44.4,41.9,52.2,29,9,47.7
+ACC-0026,City Power Co,Energy & Utilities,Enterprise,Columbus,United States,20142,22381,49.2,35.4,83.0,26.7,10,47,54.5
+ACC-0027,GreenLeaf Healthcare,Healthcare,Mid-Market,Austin,United States,29319,32577,63.5,61.3,46.7,40.6,32,6,57.7
+ACC-0028,Vertex Manufacturing,Manufacturing,Mid-Market,Detroit,United States,34033,42542,27.3,22.9,61.5,21.9,27,72,57.4
+ACC-0029,Nova Logistics,Logistics,Mid-Market,Singapore,Singapore,8530,7755,65.6,63.4,21.7,84.4,16,100,92.0
+ACC-0030,BrightFoods India,FMCG,Mid-Market,Pune,India,45007,45007,73.1,78.5,14.7,44.3,12,229,49.6
+ACC-0031,Alpha Digital Solutions,Marketing & Agency,SMB,London,United Kingdom,31372,28520,67.0,68.1,24.7,94.9,45,57,78.4
+ACC-0032,Horizon Tech Services,IT Services,Mid-Market,Dubai,United Arab Emirates,6660,5550,73.9,80.4,23.4,92.9,14,158,85.5
+ACC-0033,Alpine Retail,Retail,SMB,Denver,United States,3729,5328,28.6,29.0,73.0,23.4,33,55,48.5
+ACC-0034,Consolidated Logistics,Logistics,Enterprise,Chicago,United States,34423,38248,51.2,46.4,78.5,34.5,17,88,44.6
+ACC-0035,Woodgrove Systems,FinTech,Mid-Market,Manchester,United Kingdom,31589,31589,65.9,45.1,25.9,56.5,29,24,58.9
+ACC-0036,Fabrico Supply,Manufacturing,SMB,Cleveland,United States,13678,13678,62.3,70.8,16.3,59.2,7,280,41.9
+ACC-0037,Coho Partners,Professional Services,SMB,Boston,United States,36216,40240,66.0,59.7,44.6,40.2,26,141,36.7
+ACC-0038,Relecloud Digital,SaaS,Mid-Market,Seattle,United States,23894,19912,91.2,79.0,25.2,93.2,17,150,95.6
+ACC-0039,Trey Systems,SaaS,Mid-Market,San Jose,United States,40804,40804,43.6,35.0,84.1,35.9,21,135,51.8
+ACC-0040,Margie Supply,Wholesale,SMB,Dallas,United States,14682,16314,52.3,49.5,20.2,40.6,26,164,58.9

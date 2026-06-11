@@ -51,6 +51,7 @@ COMPANY_PROPERTIES = [
     "industry",
     "city",
     "state",
+    "country",
     "annualrevenue",
     "description",
 ] + [mapper.prop(p) for p in mapper.SCORE_PROPS + mapper.TEXT_PROPS]
@@ -249,10 +250,19 @@ class HubSpotConnector(CRMConnector):
             "companies", cap, properties=COMPANY_PROPERTIES
         )
 
+        key = mapper.prop("account_id")
         accounts: List[Account] = []
         signals: List[Signal] = []
         notes: List[Note] = []
         for company in companies:
+            props = company.get("properties", {}) or {}
+            name = (props.get("name") or "").strip().lower()
+            # Skip portal/system companies that are not our demo data: the default
+            # "HubSpot" sample company, or any blank-named company. Demo companies
+            # always carry our s2a_account_id marker, so an unmarked blank/system
+            # record is never part of the seeded portfolio.
+            if not props.get(key) and name in ("", "hubspot"):
+                continue
             account = mapper.company_to_account(company)
             accounts.append(account)
             sigs, nts = mapper.derive_context(account)
@@ -299,6 +309,13 @@ class HubSpotConnector(CRMConnector):
         except Exception:
             return 0
 
+    def _existing_companies(self) -> List[dict]:
+        """All companies in the portal (capped), with ``name`` and our demo marker
+        ``s2a_account_id`` -- used for name-based upsert and scoped cleanup."""
+        return self._list_objects(
+            "companies", self.sync_limit, properties=["name", mapper.prop("account_id")]
+        )
+
     # -- seeding (write) --------------------------------------------------
 
     def seed_demo_data(
@@ -311,16 +328,54 @@ class HubSpotConnector(CRMConnector):
 
         custom_ok = self._ensure_custom_properties()
 
-        companies = 0
+        # Build name->id (upsert key) and the set of companies we previously seeded
+        # (they carry the s2a_account_id marker) so re-seeding updates in place and
+        # never creates duplicates. Falls back to create-only on a non-auth read error.
+        by_name: Dict[str, str] = {}
+        demo_ids: Dict[str, str] = {}
+        marker = mapper.prop("account_id")
+        if custom_ok:
+            try:
+                for c in self._existing_companies():
+                    p = c.get("properties", {}) or {}
+                    cid = str(c.get("id", ""))
+                    nm = (p.get("name") or "").strip().lower()
+                    if nm and nm not in by_name:
+                        by_name[nm] = cid
+                    if cid and p.get(marker):
+                        demo_ids[cid] = nm
+            except (CRMAuthError, CRMScopeError):
+                raise
+            except CRMError:
+                by_name, demo_ids = {}, {}
+
+        created = 0
+        updated = 0
         contacts = 0
         deals = 0
         activities = 0
         skipped = 0
+        kept_ids: set = set()
 
         for i, account in enumerate(accounts):
             props = mapper.account_to_company_properties(account, include_custom=custom_ok)
+            nm = account.account_name.strip().lower()
+            existing_id = by_name.get(nm)
+
+            # Update an existing same-named company in place (no duplicate).
+            if existing_id:
+                try:
+                    self._checked("PATCH", f"/crm/v3/objects/companies/{existing_id}", body={"properties": props})
+                    updated += 1
+                    kept_ids.add(existing_id)
+                except (CRMAuthError, CRMScopeError):
+                    raise
+                except CRMRequestError:
+                    skipped += 1
+                continue
+
             try:
-                created = self._checked("POST", "/crm/v3/objects/companies", body={"properties": props})
+                result = self._checked("POST", "/crm/v3/objects/companies", body={"properties": props})
             except (CRMAuthError, CRMScopeError):
                 # Systemic (token/scope) failure: abort fast rather than looping.
                 raise
@@ -328,39 +383,64 @@ class HubSpotConnector(CRMConnector):
                 # Per-record / transient failure that survived retries: skip and continue.
                 skipped += 1
                 continue
-            company_id = str(created.get("id", "")) if isinstance(created, dict) else ""
+            company_id = str(result.get("id", "")) if isinstance(result, dict) else ""
             if not company_id:
                 skipped += 1
                 continue
-            companies += 1
+            created += 1
+            by_name[nm] = company_id
+            kept_ids.add(company_id)
 
-            # One contact per company.
+            # One realistic contact per new company.
             if self._seed_contact(account, company_id):
                 contacts += 1
 
-            # A note carrying the strongest signal text for ~every other account.
-            sigs = signals_by_account.get(account.account_id, [])
-            if sigs:
-                body = sigs[0].signal_description
+            # Up to 3 notes carrying signal text -> HubSpot-side signal richness.
+            for sig in signals_by_account.get(account.account_id, [])[:3]:
+                body = f"[{sig.signal_type}] {sig.signal_description}"
                 if self._seed_engagement("notes", {"hs_note_body": body, "hs_timestamp": _now_ms()}, company_id):
                     activities += 1
 
-            # A deal for higher-growth accounts.
-            if account.growth_potential_score >= 60 and i % 2 == 0:
+            # A deal for ~a third of companies (deterministic), favouring opportunity.
+            if i % 3 == 0 or account.growth_potential_score >= 78:
                 if self._seed_deal(account, company_id):
                     deals += 1
 
+        # Scoped cleanup: archive previously-seeded demo companies (our marker) that
+        # are no longer part of the target portfolio. Only runs when seeding mostly
+        # succeeded, and never touches companies without our marker (e.g. the portal's
+        # default sample company or any real record).
+        total = created + updated
+        archived = 0
+        if total >= int(len(accounts) * 0.75):
+            for cid in demo_ids:
+                if cid in kept_ids:
+                    continue
+                try:
+                    self._checked("DELETE", f"/crm/v3/objects/companies/{cid}")
+                    archived += 1
+                except CRMError:
+                    pass
+
         mode = "custom properties" if custom_ok else "standard properties (deterministic scores on sync)"
+        parts = []
+        if created:
+            parts.append(f"created {created}")
+        if updated:
+            parts.append(f"updated {updated}")
+        if archived:
+            parts.append(f"archived {archived} stale")
+        detail = ", ".join(parts) if parts else "made no changes to"
         skipped_note = f" Skipped {skipped} on transient errors." if skipped else ""
         return SyncResult(
-            companies_loaded=companies,
+            companies_loaded=total,
             contacts_loaded=contacts,
             deals_loaded=deals,
             activities_loaded=activities,
             last_synced_at=_now_iso(),
             source="HubSpot test CRM",
             portal_id=self.portal_id,
-            message=f"Seeded {companies} companies into HubSpot using {mode}.{skipped_note}",
+            message=f"HubSpot demo portfolio reconciled by name: {detail} ({total} companies) using {mode}.{skipped_note}",
         )
 
     def _ensure_custom_properties(self) -> bool:
@@ -387,14 +467,8 @@ class HubSpotConnector(CRMConnector):
             return False
 
     def _seed_contact(self, account: Account, company_id: str) -> bool:
-        slug = "".join(c for c in account.account_name.lower() if c.isalnum())[:24] or "contact"
-        props = {
-            "email": f"{slug}@example-test.invalid",
-            "firstname": "Demo",
-            "lastname": account.account_name,
-            "company": account.account_name,
-        }
-        status, created = self._request("POST", "/crm/v3/objects/contacts", body=props)
+        props = mapper.contact_for(account)
+        status, created = self._request("POST", "/crm/v3/objects/contacts", body={"properties": props})
         if status not in (200, 201) or not isinstance(created, dict):
             return False
         contact_id = str(created.get("id", ""))
@@ -403,13 +477,8 @@ class HubSpotConnector(CRMConnector):
         return True
 
     def _seed_deal(self, account: Account, company_id: str) -> bool:
-        props = {
-            "dealname": f"{account.account_name} — expansion (demo)",
-            "amount": str(int(account.current_month_spend)),
-            "pipeline": "default",
-            "dealstage": "appointmentscheduled",
-        }
-        status, created = self._request("POST", "/crm/v3/objects/deals", body=props)
+        props = mapper.deal_for(account)
+        status, created = self._request("POST", "/crm/v3/objects/deals", body={"properties": props})
         if status not in (200, 201) or not isinstance(created, dict):
             return False
         deal_id = str(created.get("id", ""))

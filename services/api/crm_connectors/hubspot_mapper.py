@@ -41,6 +41,10 @@ SCORE_PROPS = [
 ]
 TEXT_PROPS = ["segment", "account_id", "industry"]
 
+# Seed-only descriptive props: written to HubSpot for CRM realism, not read back
+# into the internal Account (so they never affect scoring).
+EXTRA_TEXT_PROPS = ["account_status", "ai_signal_summary"]
+
 PROPERTY_GROUP = f"{PREFIX}signal_intelligence"
 
 _FALLBACK_INDUSTRIES = ["Retail", "SaaS", "Logistics", "Healthcare", "Manufacturing", "FinTech"]
@@ -95,7 +99,119 @@ def property_definitions() -> List[dict]:
                 "groupName": PROPERTY_GROUP,
             }
         )
+    for name in EXTRA_TEXT_PROPS:
+        defs.append(
+            {
+                "name": prop(name),
+                "label": f"S2A {name.replace('_', ' ').title()}",
+                "type": "string",
+                "fieldType": "textarea" if name == "ai_signal_summary" else "text",
+                "groupName": PROPERTY_GROUP,
+            }
+        )
     return defs
+
+
+# -- derived CRM attributes (seed-side) -----------------------------------
+
+
+def _spend_change_pct(account: Account) -> float:
+    prev = account.previous_month_spend or 0.0
+    if prev <= 0:
+        return 0.0
+    return round((account.current_month_spend - prev) / prev * 100.0, 1)
+
+
+def account_status_for(account: Account) -> str:
+    """A human-readable lifecycle/health status derived from the account metrics."""
+    if account.support_risk_score >= 70:
+        return "Support Escalation"
+    if account.renewal_days <= 30:
+        return "Renewal Due"
+    if _spend_change_pct(account) <= -15:
+        return "At Risk"
+    if account.growth_potential_score >= 75 and account.support_risk_score < 40:
+        return "Expansion Ready"
+    if account.engagement_score < 40:
+        return "Low Engagement"
+    return "Active"
+
+
+def ai_signal_summary_for(account: Account) -> str:
+    """One-line, evidence-style summary of the dominant signals on the account."""
+    bits: List[str] = []
+    pct = _spend_change_pct(account)
+    if pct <= -15:
+        bits.append(f"spend down {abs(pct):.0f}% MoM")
+    elif pct >= 10:
+        bits.append(f"spend up {pct:.0f}% MoM")
+    if account.support_risk_score >= 60:
+        bits.append("elevated support risk")
+    if account.engagement_score < 40:
+        bits.append("low engagement")
+    if account.campaign_response_score >= 70 and account.last_contact_days > 30:
+        bits.append("campaign-engaged, no recent follow-up")
+    if 0 <= account.renewal_days <= 45:
+        bits.append(f"renewal in {account.renewal_days}d")
+    if account.growth_potential_score >= 75:
+        bits.append("high growth potential")
+    if not bits:
+        bits.append("stable; no strong signals")
+    head = bits[0][0].upper() + bits[0][1:]
+    return "; ".join([head] + bits[1:]) + "."
+
+
+_FIRST_NAMES = [
+    "Aarav", "Priya", "Rohan", "Neha", "Vikram", "Ananya", "Karan", "Diya", "Arjun", "Isha",
+    "Sanjay", "Meera", "Rahul", "Pooja", "Aditya", "Sneha", "Nikhil", "Tara", "Varun", "Kavya",
+    "Daniel", "Sophia", "James", "Olivia", "Liam", "Emma", "Noah", "Maya",
+]
+_LAST_NAMES = [
+    "Sharma", "Verma", "Iyer", "Nair", "Reddy", "Gupta", "Mehta", "Rao", "Kapoor", "Bose",
+    "Pillai", "Sengupta", "Chopra", "Desai", "Joshi", "Malhotra", "Bhat", "Anderson", "Walker",
+    "Carter", "Bennett", "Foster", "Hughes", "Morgan",
+]
+_TITLES = [
+    "VP Customer Success", "Head of Growth", "Director of Operations", "Procurement Lead",
+    "Chief Revenue Officer", "Customer Success Manager", "VP Marketing", "Head of Partnerships",
+    "Director of Finance", "COO",
+]
+
+
+def contact_for(account: Account) -> Dict[str, str]:
+    """A deterministic, realistic-looking synthetic primary contact.
+
+    Email uses the safe, non-routable ``example.com`` domain.
+    """
+    first = _pick(account.account_id, "first", _FIRST_NAMES)
+    last = _pick(account.account_id, "last", _LAST_NAMES)
+    title = _pick(account.account_id, "title", _TITLES)
+    return {
+        "firstname": first,
+        "lastname": last,
+        "jobtitle": title,
+        "email": f"{first.lower()}.{last.lower()}@example.com",
+        "company": account.account_name,
+    }
+
+
+def deal_for(account: Account) -> Dict[str, str]:
+    """A deterministic demo deal whose name/stage reflect the account context."""
+    amount = max(1000, int(round(account.current_month_spend * 6, -2)))
+    if 0 <= account.renewal_days <= 45:
+        name, stage = f"{account.account_name} — renewal", "contractsent"
+    elif account.growth_potential_score >= 70:
+        name, stage = f"{account.account_name} — expansion", "qualifiedtobuy"
+    else:
+        name, stage = f"{account.account_name} — opportunity", "appointmentscheduled"
+    close = (TODAY + timedelta(days=max(15, account.renewal_days))).isoformat()
+    return {
+        "dealname": name,
+        "amount": str(amount),
+        "pipeline": "default",
+        "dealstage": stage,
+        "closedate": close,
+    }
 
 
 # -- internal -> HubSpot (seeding) ----------------------------------------
@@ -119,10 +235,14 @@ def account_to_company_properties(account: Account, include_custom: bool = True)
             f"({account.segment}, {account.industry}, {account.region}). No real data."
         ),
     }
+    if account.country:
+        props["country"] = account.country
     if include_custom:
         props[prop("account_id")] = account.account_id
         props[prop("segment")] = account.segment
         props[prop("industry")] = account.industry
+        props[prop("account_status")] = account_status_for(account)
+        props[prop("ai_signal_summary")] = ai_signal_summary_for(account)
         props[prop("product_usage_score")] = str(account.product_usage_score)
         props[prop("engagement_score")] = str(account.engagement_score)
         props[prop("support_risk_score")] = str(account.support_risk_score)
@@ -188,6 +308,7 @@ def company_to_account(company: dict) -> Account:
         industry=industry,
         segment=segment,
         region=region,
+        country=props.get("country") or None,
         current_month_spend=max(0.0, round(cur, 2)),
         previous_month_spend=max(0.0, round(prev, 2)),
         product_usage_score=score("product_usage_score", 35, 85),

@@ -27,29 +27,54 @@ random.seed(SEED)
 HERE = os.path.dirname(os.path.abspath(__file__))
 TODAY = date.today()
 
-# Clearly-fictional name parts (Contoso/Northwind/Fabrikam are standard fictitious brands).
-PREFIXES = [
-    "Northwind", "Contoso", "Fabrikam", "Adventure", "Tailspin", "Wingtip", "Proseware",
-    "Litware", "Coho", "Lucerne", "Margie", "Trey", "Alpine", "Blue Yonder", "Fourth Coffee",
-    "Graphic Design", "Humongous", "Wide World", "Woodgrove", "Fabrico", "Relecloud",
-    "VanArsdel", "Best For You", "First Up", "Nod Publishers", "School of Fine Art",
-    "Southridge", "Tasty", "City Power", "Consolidated",
+# Curated, intentionally-varied portfolio. Names are well-known brands used here
+# as *synthetic demo labels only* — every metric, signal and note below is fully
+# fabricated and seeded for reproducibility. No real, confidential, or customer
+# data is used. Archetypes drive score bands so each demo/eval query has clear,
+# explainable matches and the Risk x Opportunity matrix is well spread.
+# Fields: (name, industry, segment, city, country, archetype)
+COMPANIES = [
+    ("Swiggy", "Food Delivery", "Enterprise", "Bengaluru", "India", "growth_ready"),
+    ("Zepto", "Quick Commerce", "Mid-Market", "Mumbai", "India", "growth_ready"),
+    ("Razorpay", "FinTech", "Mid-Market", "Bengaluru", "India", "growth_ready"),
+    ("CRED", "FinTech", "Mid-Market", "Bengaluru", "India", "campaign_responder_no_followup"),
+    ("Meesho", "E-commerce", "Mid-Market", "Bengaluru", "India", "at_risk_declining"),
+    ("Lenskart", "Retail", "Mid-Market", "Faridabad", "India", "growth_ready"),
+    ("Urban Company", "Home Services", "Mid-Market", "Gurugram", "India", "renewal_due"),
+    ("Delhivery", "Logistics", "Enterprise", "Gurugram", "India", "support_escalation"),
+    ("Nykaa", "Retail", "Mid-Market", "Mumbai", "India", "growth_ready"),
+    ("Pine Labs", "FinTech", "Mid-Market", "Noida", "India", "renewal_due"),
+    ("Freshworks", "SaaS", "Enterprise", "Chennai", "India", "growth_ready"),
+    ("BrowserStack", "SaaS", "Mid-Market", "Mumbai", "India", "stable_monitor"),
+    ("Chargebee", "SaaS", "Mid-Market", "Chennai", "India", "campaign_responder_no_followup"),
+    ("Postman", "SaaS", "Mid-Market", "Bengaluru", "India", "growth_ready"),
+    ("Unacademy", "EdTech", "Mid-Market", "Bengaluru", "India", "at_risk_declining"),
+    ("Curefoods", "Food Delivery", "SMB", "Bengaluru", "India", "at_risk_declining"),
+    ("Porter", "Logistics", "SMB", "Bengaluru", "India", "renewal_due"),
+    ("Groww", "FinTech", "Mid-Market", "Bengaluru", "India", "growth_ready"),
+    ("MPL", "Gaming", "SMB", "Bengaluru", "India", "at_risk_declining"),
+    ("boAt", "Consumer Electronics", "Mid-Market", "Mumbai", "India", "campaign_responder_no_followup"),
+    ("Tata 1mg", "HealthTech", "Mid-Market", "Gurugram", "India", "renewal_due"),
+    ("BigBasket", "E-grocery", "Enterprise", "Bengaluru", "India", "support_escalation"),
+    ("Livspace", "Home Interiors", "SMB", "Bengaluru", "India", "campaign_responder_no_followup"),
+    ("Simpl", "FinTech", "Startup", "Bengaluru", "India", "weak_evidence"),
+    ("Cashfree", "FinTech", "SMB", "Bengaluru", "India", "renewal_due"),
+    ("City Power Co", "Energy & Utilities", "Enterprise", "Columbus", "United States", "support_escalation"),
+    ("GreenLeaf Healthcare", "Healthcare", "Mid-Market", "Austin", "United States", "renewal_due"),
+    ("Vertex Manufacturing", "Manufacturing", "Mid-Market", "Detroit", "United States", "at_risk_declining"),
+    ("Nova Logistics", "Logistics", "Mid-Market", "Singapore", "Singapore", "growth_ready"),
+    ("BrightFoods India", "FMCG", "Mid-Market", "Pune", "India", "stable_monitor"),
+    ("Alpha Digital Solutions", "Marketing & Agency", "SMB", "London", "United Kingdom", "campaign_responder_no_followup"),
+    ("Horizon Tech Services", "IT Services", "Mid-Market", "Dubai", "United Arab Emirates", "growth_ready"),
+    ("Alpine Retail", "Retail", "SMB", "Denver", "United States", "at_risk_declining"),
+    ("Consolidated Logistics", "Logistics", "Enterprise", "Chicago", "United States", "support_escalation"),
+    ("Woodgrove Systems", "FinTech", "Mid-Market", "Manchester", "United Kingdom", "renewal_due"),
+    ("Fabrico Supply", "Manufacturing", "SMB", "Cleveland", "United States", "stable_monitor"),
+    ("Coho Partners", "Professional Services", "SMB", "Boston", "United States", "weak_evidence"),
+    ("Relecloud Digital", "SaaS", "Mid-Market", "Seattle", "United States", "growth_ready"),
+    ("Trey Systems", "SaaS", "Mid-Market", "San Jose", "United States", "support_escalation"),
+    ("Margie Supply", "Wholesale", "SMB", "Dallas", "United States", "weak_evidence"),
 ]
-SUFFIXES = ["Retail", "Logistics", "Systems", "Labs", "Group", "Works", "Partners", "Co", "Digital", "Supply"]
-INDUSTRIES = ["Retail", "SaaS", "Logistics", "Healthcare", "Manufacturing", "FinTech", "EdTech", "Hospitality"]
-SEGMENTS = ["SMB", "SMB", "SMB", "Mid-Market", "Startup"]  # weighted toward SMB
-REGIONS = ["North", "South", "East", "West", "Central"]
-
-# Archetype -> how many accounts to create with that profile.
-ARCHETYPES = {
-    "at_risk_declining": 7,
-    "growth_ready": 7,
-    "campaign_responder_no_followup": 6,
-    "renewal_due": 6,
-    "support_escalation": 5,
-    "stable_monitor": 5,
-    "weak_evidence": 4,
-}
 
 
 def _rint(lo: int, hi: int) -> int:
@@ -58,14 +83,6 @@ def _rint(lo: int, hi: int) -> int:
 
 def _rfloat(lo: float, hi: float) -> float:
     return round(random.uniform(lo, hi), 1)
-
-
-def _name(used: set) -> str:
-    while True:
-        name = f"{random.choice(PREFIXES)} {random.choice(SUFFIXES)}"
-        if name not in used:
-            used.add(name)
-            return name
 
 
 def _profile(archetype: str) -> dict:
@@ -157,24 +174,29 @@ def _signals_for(account_id: str, archetype: str, start_sig: int) -> list:
             ("usage_drop", 0.8, "Active seats fell sharply month over month", "Telemetry", "negative", 9),
             ("payment_delay", 0.6, "Invoice paid 12 days late", "Billing", "negative", 18),
             ("login_drop", 0.7, "Weekly logins down ~40%", "Telemetry", "negative", 6),
+            ("competitor_mention", 0.6, "Mentioned evaluating a competitor on last call", "CRM", "negative", 15),
         ],
         "growth_ready": [
             ("usage_spike", 0.85, "Feature adoption up across 3 new modules", "Telemetry", "positive", 5),
             ("campaign_click", 0.7, "Clicked upgrade campaign twice", "Marketing", "positive", 8),
             ("nps_response", 0.8, "Submitted NPS of 9 (promoter)", "CRM", "positive", 12),
+            ("expansion_inquiry", 0.8, "Asked about enterprise tier and volume pricing", "Sales", "positive", 6),
         ],
         "campaign_responder_no_followup": [
             ("campaign_click", 0.8, "Opened and clicked expansion offer", "Marketing", "positive", 7),
             ("nps_response", 0.6, "Positive survey response, no seller reply logged", "CRM", "positive", 16),
+            ("email_open", 0.5, "Opened 3 of the last 4 nurture emails", "Marketing", "positive", 9),
         ],
         "renewal_due": [
             ("renewal_upcoming", 0.7, "Contract renewal approaching", "CRM", "neutral", 3),
             ("usage_drop", 0.4, "Slight usage softening pre-renewal", "Telemetry", "negative", 10),
+            ("exec_sponsor", 0.5, "New economic buyer introduced ahead of renewal", "CRM", "neutral", 8),
         ],
         "support_escalation": [
             ("support_ticket", 0.9, "Severity-1 ticket open for 5 days", "Support", "negative", 4),
             ("support_ticket", 0.7, "Repeat tickets on same integration", "Support", "negative", 11),
             ("nps_response", 0.6, "Detractor NPS of 4 citing support", "CRM", "negative", 14),
+            ("csat_drop", 0.7, "CSAT dropped to 2/5 after last interaction", "Support", "negative", 7),
         ],
         "stable_monitor": [
             ("usage_spike", 0.4, "Steady, healthy usage", "Telemetry", "positive", 8),
@@ -217,25 +239,20 @@ def generate() -> dict:
     accounts: list = []
     signals: list = []
     notes: list = []
-    used_names: set = set()
-
-    archetype_plan = []
-    for archetype, count in ARCHETYPES.items():
-        archetype_plan.extend([archetype] * count)
-    random.shuffle(archetype_plan)
 
     sig_counter = 1
-    for idx, archetype in enumerate(archetype_plan, start=1):
+    for idx, spec in enumerate(COMPANIES, start=1):
+        name, industry, segment, city, country, archetype = spec
         account_id = f"ACC-{idx:04d}"
         prof = _profile(archetype)
         account = {
             "account_id": account_id,
-            "account_name": _name(used_names),
-            "industry": random.choice(INDUSTRIES),
-            "segment": random.choice(SEGMENTS),
-            "region": random.choice(REGIONS),
+            "account_name": name,
+            "industry": industry,
+            "segment": segment,
+            "region": city,
+            "country": country,
             **prof,
-            "_archetype": archetype,  # kept only for traceability in CSV comment column
         }
         accounts.append(account)
 
@@ -252,7 +269,7 @@ def generate() -> dict:
 
 
 ACCOUNT_FIELDS = [
-    "account_id", "account_name", "industry", "segment", "region",
+    "account_id", "account_name", "industry", "segment", "region", "country",
     "current_month_spend", "previous_month_spend", "product_usage_score",
     "engagement_score", "support_risk_score", "campaign_response_score",
     "last_contact_days", "renewal_days", "growth_potential_score",
