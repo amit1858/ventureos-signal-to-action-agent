@@ -19,7 +19,6 @@ Safety:
 from __future__ import annotations
 
 import json
-import os
 import time
 import urllib.error
 import urllib.parse
@@ -27,6 +26,7 @@ import urllib.request
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
+from config import get_settings
 from schemas.account import Account, Note
 from schemas.signal import Signal
 
@@ -73,17 +73,14 @@ class HubSpotConnector(CRMConnector):
     name = "hubspot"
 
     def __init__(self) -> None:
-        self.enabled = os.getenv("HUBSPOT_ENABLED", "false").strip().lower() in ("1", "true", "yes")
-        self.token = os.getenv("HUBSPOT_ACCESS_TOKEN", "").strip()
-        self.portal_id = os.getenv("HUBSPOT_PORTAL_ID", "").strip() or None
-        self.writeback_enabled = os.getenv("HUBSPOT_WRITEBACK_ENABLED", "false").strip().lower() in (
-            "1",
-            "true",
-            "yes",
-        )
-        self.sync_limit = int(os.getenv("HUBSPOT_SYNC_LIMIT", "100"))
-        self.base_url = os.getenv("HUBSPOT_BASE_URL", "https://api.hubapi.com").rstrip("/")
-        self.timeout = float(os.getenv("HUBSPOT_TIMEOUT", "30"))
+        s = get_settings()
+        self.enabled = s.hubspot_enabled
+        self.token = s.hubspot_token
+        self.portal_id = s.hubspot_portal_id or None
+        self.writeback_enabled = s.hubspot_writeback_enabled
+        self.sync_limit = s.hubspot_sync_limit
+        self.base_url = s.hubspot_base_url
+        self.timeout = s.hubspot_timeout
         self._portal_attempted = False
 
     # -- gates ------------------------------------------------------------

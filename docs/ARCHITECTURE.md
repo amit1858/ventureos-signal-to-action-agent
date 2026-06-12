@@ -133,15 +133,25 @@ Location: `services/api` (FastAPI, Pydantic).
 6. **Communication** — use the model adapter to write the priority reason, risk/opportunity summary, draft email, and call script.
 
 **Supporting services** (`services/`):
-- `data_loader.py` — loads the active dataset (synthetic or HubSpot) into memory.
+- `data_loader.py` — loads the active dataset (synthetic or HubSpot) into memory. Thread-safe: the
+  active source is swapped **atomically** so a background sync can never expose a half-updated
+  dataset, and it keeps a **last-good HubSpot cache** for graceful degradation.
 - `scoring_service.py` — computes the deterministic priority score from quantitative features.
 - `recommendation_service.py` — assembles the final ranked recommendations.
 - `ledger_service.py` — persists each run to the SQLite decision ledger.
+- `refresh_scheduler.py` — optional, **single** background thread that keeps the HubSpot data fresh
+  on a configurable interval (opt-in; off by default). Never downgrades on failure.
+
+**Configuration** (`config.py`): one validated settings object is the single place every environment
+variable is read. Missing configuration produces startup *warnings*, never crashes. See
+[`OPERATIONS.md`](OPERATIONS.md).
 
 **Model adapters** (`model_adapters/`):
 - `base.py` — the provider-neutral interface.
 - `mock_adapter.py` — deterministic placeholder text (no API key, used for the demo).
 - `nvidia_nim_adapter.py` — stub for NVIDIA NIM / Nemotron.
+- `openai_adapter.py`, `claude_adapter.py` — provider **placeholders** (not wired yet; selecting them
+  safely falls back to the mock adapter with a logged warning).
 
 **CRM connectors** (`crm_connectors/`):
 - `base.py` — the vendor-neutral `CRMConnector` interface.
@@ -152,8 +162,11 @@ Location: `services/api` (FastAPI, Pydantic).
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| `GET`  | `/api/health` | Service health + active model provider |
+| `GET`  | `/api/health` | Service health + active model provider + active source |
 | `GET`  | `/api/meta` | Build/runtime metadata |
+| `GET`  | `/api/system/status` | One-stop diagnostics: version, uptime, source, provider, counts |
+| `GET`  | `/api/system/config` | Active configuration (secrets redacted) + validation warnings |
+| `GET`  | `/api/system/threads` | Live threads + background-refresh scheduler status |
 | `GET`  | `/api/accounts` | List accounts (active source) |
 | `GET`  | `/api/accounts/{id}` | Account detail |
 | `POST` | `/api/recommendations` | Run the workflow → ranked recommendations + ledger |
@@ -301,3 +314,62 @@ Full step-by-step instructions are in [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 Swapping providers changes **only the narrative generation**. The ranking, scoring, governance,
 contracts, and UI stay exactly the same. See [`nvidia-integration-plan.md`](nvidia-integration-plan.md).
+
+---
+
+## 11. Reliability & operations
+
+The backend is designed to be left running for months and demoed repeatedly. The operational details
+(startup lifecycle, sync lifecycle, failure handling, debug endpoints, configuration reference) live
+in [`OPERATIONS.md`](OPERATIONS.md). The essentials:
+
+- **One place for configuration.** `config.py` reads and validates every environment variable once,
+  and logs warnings for anything questionable at startup. Nothing crashes on missing config.
+- **Structured startup logs.** Boot narrates each step: load config → load provider → check HubSpot →
+  synchronize → "Loaded N companies / contacts / deals" → "Backend ready".
+- **Self-healing (graceful degradation).** Serve HubSpot when available → otherwise the last-good
+  HubSpot cache → otherwise the synthetic dataset. The app never crashes because a data source is
+  down, and startup is never blocked by a slow CRM.
+- **Single, safe background refresh.** When enabled, exactly one daemon thread refreshes the data on a
+  schedule. On any failure it keeps the last-good data (it never downgrades a live demo) and it
+  respects a manual switch to synthetic.
+- **Observability.** `/api/system/status`, `/api/system/config` (secrets redacted) and
+  `/api/system/threads` are the single source of truth when debugging a running instance.
+
+### Future data-source adapters (Phase G)
+
+Today there are two sources (synthetic, HubSpot) behind one vendor-neutral `CRMConnector` interface.
+The same adapter pattern is the seam for future sources — **no engine or UI changes required**:
+
+```
+            ┌──────────────────────────────┐
+            │     Data Source Interface    │   (CRMConnector / loader)
+            └───────────────┬──────────────┘
+        ┌──────────┬────────┼────────┬──────────┬───────────┐
+        ▼          ▼        ▼        ▼          ▼           ▼
+   Synthetic   HubSpot   Salesforce Dynamics   CSV     Database / Lakehouse
+   (today)     (today)   (future)   (future)  (future)      (future)
+```
+
+### Future reasoning orchestrator (Phase J)
+
+The frontend is, and will remain, **unaware of which model provider is active**. When a real LLM is
+introduced, it slots behind a reasoning orchestrator and the provider interface — the deterministic
+engine still owns ranking, evidence and governance:
+
+```
+   TODAY                              FUTURE
+   ─────                              ──────
+   UI                                 UI                         (unchanged)
+    ↓                                  ↓
+   Backend                            Backend                    (unchanged contracts)
+    ↓                                  ↓
+   Deterministic Engine               Reasoning Orchestrator
+    ↓                                  ↓
+   (mock narrative)                   Provider Interface
+                                       ↓
+                                      LLM (OpenAI / NVIDIA / Claude)
+                                       ↓
+                                      Narrative only → same Recommendation shape
+```
+

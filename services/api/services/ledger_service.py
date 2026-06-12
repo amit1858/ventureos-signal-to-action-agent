@@ -8,16 +8,15 @@ as JSON, with a few hot columns promoted for querying).
 
 from __future__ import annotations
 
-import os
 import sqlite3
 from datetime import datetime, timezone
 from typing import List, Optional
 
+from config import get_settings
 from schemas.ledger import DecisionLedger
 from schemas.recommendation import ApprovalStatus, Recommendation
 
-API_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.getenv("DB_PATH", os.path.join(API_DIR, "signal_to_action.db"))
+DB_PATH = get_settings().db_path
 
 
 def _connect() -> sqlite3.Connection:

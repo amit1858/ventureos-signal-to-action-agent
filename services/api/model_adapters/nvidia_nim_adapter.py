@@ -26,11 +26,11 @@ surface stays small for the MVP.
 from __future__ import annotations
 
 import json
-import os
 import time
 import urllib.error
 import urllib.request
 
+from config import get_settings
 from model_adapters.base import (
     GenerationRequest,
     GenerationTask,
@@ -75,11 +75,11 @@ class NvidiaNimAdapter(ModelAdapter):
     provider = "nvidia-nim"
 
     def __init__(self) -> None:
-        # TODO(nvidia): provide these via .env once hackathon access is granted.
-        self.api_key = os.getenv("NVIDIA_API_KEY", "")
-        self.base_url = os.getenv("NVIDIA_NIM_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
-        self.model = os.getenv("NVIDIA_NIM_MODEL", DEFAULT_MODEL)
-        self.timeout = float(os.getenv("NVIDIA_NIM_TIMEOUT", "30"))
+        s = get_settings()
+        self.api_key = s.nvidia_api_key
+        self.base_url = s.nvidia_base_url
+        self.model = s.nvidia_model
+        self.timeout = s.nvidia_timeout
 
     # -- interface --------------------------------------------------------
 

@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import csv
 import json
+import logging
 import os
+import threading
 from functools import lru_cache
 from typing import Dict, List, Optional
 
@@ -27,12 +29,23 @@ NOTES_JSON = os.path.join(DATA_DIR, "synthetic_notes.json")
 SYNTHETIC_LABEL = "Synthetic local dataset"
 HUBSPOT_LABEL = "HubSpot test CRM"
 
+logger = logging.getLogger("signal_to_action.data")
+
 
 class DataNotGeneratedError(RuntimeError):
     """Raised when the synthetic data files are missing."""
 
 
 # -- active-source state --------------------------------------------------
+#
+# Reads and writes go through ``_LOCK`` so the background auto-sync / refresh
+# thread can swap in a new dataset without a request thread ever observing a
+# half-updated state. ``_HS`` (the HubSpot-synced dataset) is replaced
+# atomically as one new dict reference, and every reader copies the list it
+# needs while holding the lock, so each call returns an internally-consistent
+# snapshot. (Synthetic disk reads happen outside the lock; they are cached.)
+
+_LOCK = threading.RLock()
 
 _SOURCE: Dict[str, object] = {
     "name": "synthetic",  # "synthetic" | "hubspot"
@@ -83,21 +96,45 @@ def _synthetic_notes() -> List[Note]:
 
 
 def load_accounts() -> List[Account]:
-    if _SOURCE["name"] == "hubspot":
-        return list(_HS["accounts"])
-    return _synthetic_accounts()
+    with _LOCK:
+        if _SOURCE["name"] == "hubspot":
+            return list(_HS["accounts"])
+    try:
+        return _synthetic_accounts()
+    except DataNotGeneratedError:
+        with _LOCK:
+            if _HS["accounts"]:
+                logger.warning("Synthetic accounts unavailable; serving last-good HubSpot cache.")
+                return list(_HS["accounts"])
+        raise
 
 
 def load_signals() -> List[Signal]:
-    if _SOURCE["name"] == "hubspot":
-        return list(_HS["signals"])
-    return _synthetic_signals()
+    with _LOCK:
+        if _SOURCE["name"] == "hubspot":
+            return list(_HS["signals"])
+    try:
+        return _synthetic_signals()
+    except DataNotGeneratedError:
+        with _LOCK:
+            if _HS["accounts"]:
+                logger.warning("Synthetic signals unavailable; serving last-good HubSpot cache.")
+                return list(_HS["signals"])
+        raise
 
 
 def load_notes() -> List[Note]:
-    if _SOURCE["name"] == "hubspot":
-        return list(_HS["notes"])
-    return _synthetic_notes()
+    with _LOCK:
+        if _SOURCE["name"] == "hubspot":
+            return list(_HS["notes"])
+    try:
+        return _synthetic_notes()
+    except DataNotGeneratedError:
+        with _LOCK:
+            if _HS["accounts"]:
+                logger.warning("Synthetic notes unavailable; serving last-good HubSpot cache.")
+                return list(_HS["notes"])
+        raise
 
 
 def signals_by_account() -> Dict[str, List[Signal]]:
@@ -134,19 +171,26 @@ def dataset_summary() -> dict:
     """Lightweight stats for the UI dataset panel (reflects the active source)."""
     accounts = load_accounts()
     signals = load_signals()
+    notes = load_notes()
     industries = sorted({a.industry for a in accounts})
     regions = sorted({a.region for a in accounts})
+    with _LOCK:
+        src_name = _SOURCE["name"]
+        src_label = _SOURCE["label"]
+        src_mode = _SOURCE["mode"]
+        synced_at = _SOURCE["synced_at"]
+        portal_id = _SOURCE["portal_id"]
     return {
         "accounts": len(accounts),
         "signals": len(signals),
-        "notes": len(load_notes()),
+        "notes": len(notes),
         "industries": industries,
         "regions": regions,
-        "source": _SOURCE["name"],
-        "source_label": _SOURCE["label"],
-        "data_source_mode": _SOURCE["mode"],
-        "last_synced_at": _SOURCE["synced_at"],
-        "portal_id": _SOURCE["portal_id"],
+        "source": src_name,
+        "source_label": src_label,
+        "data_source_mode": src_mode,
+        "last_synced_at": synced_at,
+        "portal_id": portal_id,
     }
 
 
@@ -164,56 +208,81 @@ def set_hubspot_dataset(
     connector: str = "hubspot",
     message: str = "",
 ) -> None:
-    """Switch the active source to a HubSpot-synced dataset."""
-    _HS["accounts"] = list(accounts)
-    _HS["signals"] = list(signals)
-    _HS["notes"] = list(notes)
-    _SOURCE.update(
-        name="hubspot",
-        label=HUBSPOT_LABEL,
-        mode="hubspot",
-        synced_at=synced_at,
-        counts=counts or {},
-        portal_id=portal_id,
-        connector=connector,
-        message=message,
-    )
+    """Switch the active source to a HubSpot-synced dataset (atomic swap)."""
+    new_hs: Dict[str, list] = {
+        "accounts": list(accounts),
+        "signals": list(signals),
+        "notes": list(notes),
+    }
+    global _HS
+    with _LOCK:
+        _HS = new_hs
+        _SOURCE.update(
+            name="hubspot",
+            label=HUBSPOT_LABEL,
+            mode="hubspot",
+            synced_at=synced_at,
+            counts=counts or {},
+            portal_id=portal_id,
+            connector=connector,
+            message=message,
+        )
 
 
 def use_synthetic() -> None:
     """Revert the active source to the local synthetic dataset."""
-    _SOURCE.update(
-        name="synthetic",
-        label=SYNTHETIC_LABEL,
-        mode="synthetic",
-        synced_at=None,
-        counts={},
-        portal_id=None,
-        connector=None,
-        message="",
-    )
+    with _LOCK:
+        _SOURCE.update(
+            name="synthetic",
+            label=SYNTHETIC_LABEL,
+            mode="synthetic",
+            synced_at=None,
+            counts={},
+            portal_id=None,
+            connector=None,
+            message="",
+        )
 
 
 def active_source() -> str:
-    return str(_SOURCE["name"])
+    with _LOCK:
+        return str(_SOURCE["name"])
 
 
 def source_label() -> str:
-    return str(_SOURCE["label"])
+    with _LOCK:
+        return str(_SOURCE["label"])
 
 
 def sync_meta() -> dict:
     """Source metadata for the UI runtime card and the decision ledger."""
-    return {
-        "source": _SOURCE["name"],
-        "label": _SOURCE["label"],
-        "mode": _SOURCE["mode"],
-        "synced_at": _SOURCE["synced_at"],
-        "counts": _SOURCE["counts"],
-        "portal_id": _SOURCE["portal_id"],
-        "connector": _SOURCE["connector"],
-        "message": _SOURCE["message"],
-    }
+    with _LOCK:
+        return {
+            "source": _SOURCE["name"],
+            "label": _SOURCE["label"],
+            "mode": _SOURCE["mode"],
+            "synced_at": _SOURCE["synced_at"],
+            "counts": dict(_SOURCE["counts"]) if isinstance(_SOURCE["counts"], dict) else {},
+            "portal_id": _SOURCE["portal_id"],
+            "connector": _SOURCE["connector"],
+            "message": _SOURCE["message"],
+        }
+
+
+def runtime_state() -> dict:
+    """Consistent snapshot of the active-source state for /api/system/status."""
+    with _LOCK:
+        counts = dict(_SOURCE["counts"]) if isinstance(_SOURCE["counts"], dict) else {}
+        return {
+            "source": str(_SOURCE["name"]),
+            "source_label": str(_SOURCE["label"]),
+            "data_source_mode": str(_SOURCE["mode"]),
+            "last_synced_at": _SOURCE["synced_at"],
+            "portal_id": _SOURCE["portal_id"],
+            "connector": _SOURCE["connector"],
+            "counts": counts,
+            "hubspot_cache_ready": bool(_HS["accounts"]),
+        }
 
 
 # -- synthetic accessors (always synthetic, for the seed script) ----------

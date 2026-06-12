@@ -214,6 +214,7 @@ signal-to-action-agent/
 | Document | What it covers |
 |----------|----------------|
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System overview, frontend & backend architecture, reasoning model, data sources, governance |
+| [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Running the backend: startup & sync lifecycle, self-healing, background refresh, debugging endpoints, configuration reference |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Local dev, environment variables, HubSpot setup, Vercel + backend deployment |
 | [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) | A 5-minute demo script with a backup plan |
 | [`docs/TESTING.md`](docs/TESTING.md) | What external testers should try and what feedback to collect |

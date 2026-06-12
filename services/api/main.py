@@ -6,6 +6,9 @@ Run from this directory:
 Endpoints:
     GET  /api/health
     GET  /api/meta
+    GET  /api/system/status        (diagnostics: version, uptime, source, provider)
+    GET  /api/system/config        (active configuration, secrets redacted)
+    GET  /api/system/threads        (live threads + refresh-scheduler status)
     GET  /api/accounts
     GET  /api/accounts/{account_id}
     POST /api/recommendations
@@ -19,12 +22,15 @@ Endpoints:
     POST /api/actions/{recommendation_id}/hubspot-note
     GET  /api/actions/{recommendation_id}/writebacks
 
-Startup:
-    If HUBSPOT_AUTO_SYNC_ON_STARTUP=true and the HubSpot connector is enabled and
-    configured, a best-effort, read-only sync runs in a background thread so a
-    cold-started backend serves live CRM data without a manual sync. It never
-    blocks startup, never seeds, never writes back, and falls back to synthetic
-    data on any failure.
+Startup / lifecycle:
+    Configuration is centralised in ``config.py`` and validated at startup (missing
+    config produces warnings, never crashes). If HUBSPOT_AUTO_SYNC_ON_STARTUP=true
+    and the connector is enabled and configured, a best-effort, read-only sync runs
+    in a background thread so a cold-started backend serves live CRM data without a
+    manual sync. It never blocks startup, never seeds, never writes back, and falls
+    back to synthetic data on any failure. When HUBSPOT_REFRESH_INTERVAL_SECONDS > 0
+    a single background scheduler keeps the data fresh, keeping last-good data on any
+    refresh failure (it never downgrades a live demo). See docs/OPERATIONS.md.
 """
 
 from __future__ import annotations
@@ -33,6 +39,7 @@ import logging
 import os
 import sys
 import threading
+import time
 
 # Make this directory importable no matter how the server is launched.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -48,11 +55,21 @@ from pydantic import BaseModel
 
 load_dotenv()
 
+from config import configure_logging, get_settings  # noqa: E402
+
+_settings = get_settings()
+configure_logging(_settings.log_level)
 logger = logging.getLogger("signal_to_action.api")
+
+# Process start marker for uptime reporting (see /api/system/status).
+_PROCESS_START = time.monotonic()
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+_STARTED_AT_ISO = _now_iso()
 
 
 from model_adapters import get_model_adapter  # noqa: E402
@@ -65,6 +82,7 @@ from schemas.recommendation import (  # noqa: E402
 )
 from services import data_loader, ledger_service  # noqa: E402
 from services.recommendation_service import generate_recommendations  # noqa: E402
+from services.refresh_scheduler import RefreshScheduler  # noqa: E402
 from agents.orchestrator import AGENT_SEQUENCE  # noqa: E402
 from crm_connectors import (  # noqa: E402
     ConnectorStatus,
@@ -74,7 +92,7 @@ from crm_connectors import (  # noqa: E402
     get_crm_connector,
 )
 
-API_VERSION = "0.1.0"
+API_VERSION = _settings.api_version
 
 SUGGESTED_QUERIES = [
     "Which SMB accounts need attention this week and why?",
@@ -95,21 +113,28 @@ app = FastAPI(
     version=API_VERSION,
 )
 
-_origins = os.getenv("CORS_ORIGINS", "*")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if _origins.strip() == "*" else [o.strip() for o in _origins.split(",")],
+    allow_origins=_settings.cors_allow_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-def _env_flag(name: str, default: bool = False) -> bool:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
+_scheduler: Optional[RefreshScheduler] = None
+
+
+def _scheduled_refresh():
+    """Refresh callable for the background scheduler.
+
+    Respects a manual switch to synthetic: if an operator toggled the source to
+    synthetic (e.g. to demo offline mode), the scheduler will not yank them back
+    to HubSpot. Returns the SyncResult on a real refresh, or ``None`` when skipped.
+    """
+    if data_loader.active_source() != "hubspot":
+        return None
+    return _perform_hubspot_sync()
 
 
 def _perform_hubspot_sync(limit: int = 0) -> SyncResult:
@@ -154,12 +179,17 @@ def _auto_sync_hubspot_on_startup() -> None:
     if not connector.configured:
         logger.info("HubSpot auto-sync skipped: no access token configured; staying on synthetic data.")
         return
+    logger.info("HubSpot connection configured; synchronizing companies, contacts and deals...")
     try:
         result = _perform_hubspot_sync()
         logger.info(
-            "HubSpot auto-sync complete: %s companies loaded; active source is now the HubSpot test CRM.",
+            "Loaded %s companies, %s contacts, %s deals, %s activities from HubSpot.",
             result.companies_loaded,
+            result.contacts_loaded,
+            result.deals_loaded,
+            result.activities_loaded,
         )
+        logger.info("Active source is now the HubSpot test CRM.")
     except CRMError as exc:
         logger.warning("HubSpot auto-sync failed (%s). Staying on synthetic data.", exc.message)
     except Exception as exc:  # noqa: BLE001 -- startup must never crash on connector issues
@@ -168,21 +198,57 @@ def _auto_sync_hubspot_on_startup() -> None:
 
 @app.on_event("startup")
 def _startup() -> None:
+    logger.info("Application starting (version %s)...", API_VERSION)
+    logger.info("Loading configuration...")
+    for warning in _settings.warnings():
+        logger.warning("Config: %s", warning)
+
+    adapter = get_model_adapter()
+    logger.info("Model provider ready: %s (%s).", adapter.provider, adapter.model)
+
     ledger_service.init_db()
-    if _env_flag("HUBSPOT_AUTO_SYNC_ON_STARTUP", default=False):
+    logger.info("Decision ledger ready (sqlite: %s).", os.path.basename(ledger_service.DB_PATH))
+
+    logger.info("Checking HubSpot configuration...")
+    if _settings.hubspot_auto_sync_on_startup and _settings.hubspot_ready:
         # Run off the startup path in a daemon thread so the server binds
         # immediately and the platform health check always succeeds, even if
         # HubSpot is slow. The active source flips to HubSpot once the read
         # completes (a few seconds later); until then it serves synthetic data.
+        logger.info("HubSpot auto-sync enabled; starting background sync thread.")
         threading.Thread(
             target=_auto_sync_hubspot_on_startup,
             name="hubspot-auto-sync",
             daemon=True,
         ).start()
+    elif _settings.hubspot_auto_sync_on_startup:
+        logger.info(
+            "HubSpot auto-sync requested but HubSpot is not enabled+configured; starting on synthetic data."
+        )
     else:
         logger.info(
             "HubSpot auto-sync disabled (HUBSPOT_AUTO_SYNC_ON_STARTUP not true); starting on synthetic data."
         )
+
+    global _scheduler
+    _scheduler = RefreshScheduler(
+        _scheduled_refresh, _settings.hubspot_refresh_interval_seconds, logger
+    )
+    if _settings.hubspot_refresh_interval_seconds > 0 and _settings.hubspot_ready:
+        _scheduler.start()
+    elif _settings.hubspot_refresh_interval_seconds > 0:
+        logger.info(
+            "Background refresh configured but HubSpot is not enabled+configured; refresh will not start."
+        )
+
+    logger.info("Backend ready.")
+
+
+@app.on_event("shutdown")
+def _shutdown() -> None:
+    logger.info("Application shutting down...")
+    if _scheduler is not None:
+        _scheduler.stop()
 
 
 # -- request/response helpers --------------------------------------------
@@ -275,6 +341,97 @@ def meta() -> dict:
             "last_contact_gap": 0.05,
         },
     }
+
+
+# -- system diagnostics (additive, read-only) -----------------------------
+
+
+@app.get("/api/system/status")
+def system_status(
+    probe: bool = Query(False, description="Make one live HubSpot connectivity check"),
+) -> dict:
+    """Single source of truth for debugging the running backend.
+
+    Aggregates version, uptime, active data source, HubSpot state, model provider
+    and dataset counts. Non-blocking by default; pass ``?probe=true`` to make one
+    live HubSpot read to confirm the token end-to-end.
+    """
+    adapter = get_model_adapter()
+    connector = get_crm_connector()
+    state = data_loader.runtime_state()
+
+    data_ready = True
+    data_error = None
+    try:
+        data_loader.load_accounts()
+    except data_loader.DataNotGeneratedError as exc:
+        data_ready = False
+        data_error = str(exc)
+
+    summary: dict = {}
+    try:
+        summary = data_loader.dataset_summary()
+    except data_loader.DataNotGeneratedError:
+        summary = {}
+
+    # By default reflect the last successful sync (no network call). With probe,
+    # confirm connectivity live but never let a failure raise.
+    hubspot_connected = state["source"] == "hubspot"
+    if probe and connector.configured and connector.enabled:
+        try:
+            hubspot_connected = connector.test_connection().connected
+        except CRMError:
+            hubspot_connected = False
+
+    return {
+        "backend": "Signal-to-Action Agent API",
+        "version": API_VERSION,
+        "status": "ok" if data_ready else "degraded",
+        "health": "ok" if data_ready else "degraded",
+        "uptime_seconds": round(time.monotonic() - _PROCESS_START, 1),
+        "startup_time": _STARTED_AT_ISO,
+        "source": state["source"],
+        "source_mode": state["data_source_mode"],
+        "source_label": state["source_label"],
+        "hubspot_connected": hubspot_connected,
+        "portal_id": state["portal_id"],
+        "auto_sync_enabled": _settings.hubspot_auto_sync_on_startup,
+        "refresh_interval_seconds": _settings.hubspot_refresh_interval_seconds,
+        "provider": adapter.provider,
+        "model": adapter.model,
+        "last_sync": state["last_synced_at"],
+        "dataset_counts": {
+            "accounts": summary.get("accounts"),
+            "signals": summary.get("signals"),
+            "notes": summary.get("notes"),
+            "synced": state["counts"],
+        },
+        "data_ready": data_ready,
+        "data_error": data_error,
+        "agents": AGENT_SEQUENCE,
+    }
+
+
+@app.get("/api/system/config")
+def system_config() -> dict:
+    """Active configuration with secrets redacted, plus validation warnings.
+
+    Token values are never returned -- only booleans indicating whether each
+    credential is present.
+    """
+    s = get_settings()
+    return {"config": s.sanitized(), "warnings": s.warnings()}
+
+
+@app.get("/api/system/threads")
+def system_threads() -> dict:
+    """Live thread inventory and background-refresh scheduler status."""
+    threads = [
+        {"name": t.name, "alive": t.is_alive(), "daemon": t.daemon}
+        for t in threading.enumerate()
+    ]
+    scheduler = _scheduler.status() if _scheduler is not None else {"enabled": False, "running": False}
+    return {"threads": threads, "thread_count": len(threads), "refresh_scheduler": scheduler}
 
 
 @app.get("/api/accounts", response_model=AccountListResponse)
