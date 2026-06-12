@@ -14,14 +14,25 @@ Endpoints:
     GET  /api/integrations/hubspot/status
     POST /api/integrations/hubspot/seed
     POST /api/integrations/hubspot/sync
+    POST /api/integrations/hubspot/use-synthetic
     POST /api/actions/{recommendation_id}/hubspot-task
     POST /api/actions/{recommendation_id}/hubspot-note
+    GET  /api/actions/{recommendation_id}/writebacks
+
+Startup:
+    If HUBSPOT_AUTO_SYNC_ON_STARTUP=true and the HubSpot connector is enabled and
+    configured, a best-effort, read-only sync runs in a background thread so a
+    cold-started backend serves live CRM data without a manual sync. It never
+    blocks startup, never seeds, never writes back, and falls back to synthetic
+    data on any failure.
 """
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
+import threading
 
 # Make this directory importable no matter how the server is launched.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -36,6 +47,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 load_dotenv()
+
+logger = logging.getLogger("signal_to_action.api")
 
 
 def _now_iso() -> str:
@@ -92,9 +105,84 @@ app.add_middleware(
 )
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _perform_hubspot_sync(limit: int = 0) -> SyncResult:
+    """Read HubSpot companies and switch the active dataset to the synced records.
+
+    Shared by the manual ``/sync`` endpoint and the optional startup auto-sync so
+    the two paths can never drift. Read-only against HubSpot: it never seeds and
+    never writes back tasks/notes.
+    """
+    connector = get_crm_connector()
+    dataset, result = connector.sync_accounts(limit or connector.sync_limit)
+    data_loader.set_hubspot_dataset(
+        dataset.accounts,
+        dataset.signals,
+        dataset.notes,
+        synced_at=result.last_synced_at,
+        counts={
+            "companies": result.companies_loaded,
+            "contacts": result.contacts_loaded,
+            "deals": result.deals_loaded,
+            "activities": result.activities_loaded,
+        },
+        portal_id=result.portal_id,
+        message=result.message,
+    )
+    return result
+
+
+def _auto_sync_hubspot_on_startup() -> None:
+    """Best-effort: switch the active source to HubSpot at boot.
+
+    Lets a cold-started backend (e.g. Render free tier, which resets to synthetic
+    on every restart) serve live CRM data without a manual sync. Safety contract:
+    read-only (never seeds, never writes back), never raises, never blocks request
+    serving, and never logs the token. On any failure the backend simply stays on
+    the synthetic dataset.
+    """
+    connector = get_crm_connector()
+    if not connector.enabled:
+        logger.info("HubSpot auto-sync skipped: HUBSPOT_ENABLED is false; staying on synthetic data.")
+        return
+    if not connector.configured:
+        logger.info("HubSpot auto-sync skipped: no access token configured; staying on synthetic data.")
+        return
+    try:
+        result = _perform_hubspot_sync()
+        logger.info(
+            "HubSpot auto-sync complete: %s companies loaded; active source is now the HubSpot test CRM.",
+            result.companies_loaded,
+        )
+    except CRMError as exc:
+        logger.warning("HubSpot auto-sync failed (%s). Staying on synthetic data.", exc.message)
+    except Exception as exc:  # noqa: BLE001 -- startup must never crash on connector issues
+        logger.warning("HubSpot auto-sync error (%s). Staying on synthetic data.", exc)
+
+
 @app.on_event("startup")
 def _startup() -> None:
     ledger_service.init_db()
+    if _env_flag("HUBSPOT_AUTO_SYNC_ON_STARTUP", default=False):
+        # Run off the startup path in a daemon thread so the server binds
+        # immediately and the platform health check always succeeds, even if
+        # HubSpot is slow. The active source flips to HubSpot once the read
+        # completes (a few seconds later); until then it serves synthetic data.
+        threading.Thread(
+            target=_auto_sync_hubspot_on_startup,
+            name="hubspot-auto-sync",
+            daemon=True,
+        ).start()
+    else:
+        logger.info(
+            "HubSpot auto-sync disabled (HUBSPOT_AUTO_SYNC_ON_STARTUP not true); starting on synthetic data."
+        )
 
 
 # -- request/response helpers --------------------------------------------
@@ -149,6 +237,7 @@ def health() -> dict:
         "model_health": adapter.health(),
         "data_ready": data_ready,
         "data_error": data_error,
+        "active_source": data_loader.active_source(),
         "agents": AGENT_SEQUENCE,
     }
 
@@ -161,8 +250,17 @@ def meta() -> dict:
         summary = data_loader.dataset_summary()
     except data_loader.DataNotGeneratedError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
+    sync = data_loader.sync_meta()
     return {
         "dataset": summary,
+        "data_source": {
+            "source": sync["source"],
+            "source_label": sync["label"],
+            "data_source_mode": sync["mode"],
+            "last_synced_at": sync["synced_at"],
+            "portal_id": sync["portal_id"],
+            "counts": sync["counts"],
+        },
         "model_provider": adapter.provider,
         "model": adapter.model,
         "agents": AGENT_SEQUENCE,
@@ -332,27 +430,10 @@ def hubspot_seed() -> SyncResult:
 @app.post("/api/integrations/hubspot/sync", response_model=SyncResult)
 def hubspot_sync(limit: int = Query(0, ge=0, le=500)) -> SyncResult:
     """Read HubSpot companies and switch the active dataset to the synced records."""
-    connector = get_crm_connector()
     try:
-        dataset, result = connector.sync_accounts(limit or connector.sync_limit)
+        return _perform_hubspot_sync(limit)
     except CRMError as exc:
         raise HTTPException(status_code=exc.http_status, detail=exc.message)
-
-    data_loader.set_hubspot_dataset(
-        dataset.accounts,
-        dataset.signals,
-        dataset.notes,
-        synced_at=result.last_synced_at,
-        counts={
-            "companies": result.companies_loaded,
-            "contacts": result.contacts_loaded,
-            "deals": result.deals_loaded,
-            "activities": result.activities_loaded,
-        },
-        portal_id=result.portal_id,
-        message=result.message,
-    )
-    return result
 
 
 @app.post("/api/integrations/hubspot/use-synthetic")
