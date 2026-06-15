@@ -48,7 +48,9 @@ class SearchApiProvider(ExternalSignalsProvider):
         self.max_results = max_results
         self._fallback = MockProvider()
         # live | fallback | mock -- what the most recent call actually used.
-        self.last_mode = "fallback" if self.api_key else "mock"
+        # Pre-call sentinel: nothing live has been served yet. Set per call to
+        # "live" (real results) or "fallback" (degraded to mock) by each search.
+        self.last_mode = "mock"
 
     @property
     def configured(self) -> bool:
