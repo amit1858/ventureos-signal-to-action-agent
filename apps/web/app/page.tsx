@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import type {
   Account,
   AccountDetail,
+  ExternalSignalsResult,
   HealthResponse,
   HubspotStatus,
   HubspotWriteback as Writeback,
@@ -21,6 +22,7 @@ import { HubspotWriteback } from "@/components/HubspotWriteback";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { AgentPipeline } from "@/components/AgentTrace";
 import { AccountDetailPanel } from "@/components/AccountDetailPanel";
+import { OutsideInSignals } from "@/components/OutsideInSignals";
 import { EvidenceLedger } from "@/components/EvidenceChips";
 import { ConfidenceRing } from "@/components/ConfidenceMeter";
 import { GovernanceBadge, GovernanceAssurance } from "@/components/GovernanceBadge";
@@ -58,6 +60,8 @@ export default function Page() {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [details, setDetails] = React.useState<Record<string, AccountDetail>>({});
   const [detailLoading, setDetailLoading] = React.useState(false);
+  const [externalSignals, setExternalSignals] = React.useState<Record<string, ExternalSignalsResult>>({});
+  const [esLoading, setEsLoading] = React.useState(false);
   const [approvalBusy, setApprovalBusy] = React.useState(false);
   const [editing, setEditing] = React.useState(false);
 
@@ -142,6 +146,10 @@ export default function Page() {
     [result, selectedId],
   );
 
+  // Whether the optional outside-in (external) signal layer is enabled on the
+  // backend. Defaults to false (the layer is additive and off by default).
+  const externalSignalsEnabled = meta?.external_signals?.enabled ?? false;
+
   // Fetch account detail when selection changes.
   React.useEffect(() => {
     if (!selectedRec) return;
@@ -162,6 +170,29 @@ export default function Page() {
       cancelled = true;
     };
   }, [selectedRec, details]);
+
+  // Fetch outside-in (external) signals for the selected account when the layer
+  // is enabled. Fully decoupled from the recommendation contract; any failure is
+  // silent so the workspace is unaffected when external signals are off.
+  React.useEffect(() => {
+    if (!selectedRec || !externalSignalsEnabled) return;
+    const accId = selectedRec.account_id;
+    if (externalSignals[accId]) return;
+    let cancelled = false;
+    setEsLoading(true);
+    api
+      .externalSignals(accId)
+      .then((d) => {
+        if (!cancelled) setExternalSignals((prev) => ({ ...prev, [accId]: d }));
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setEsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRec, externalSignals, externalSignalsEnabled]);
 
   async function runWorkflow() {
     if (!query.trim() || loading) return;
@@ -405,6 +436,7 @@ export default function Page() {
             selectedId={selectedRec?.account_id ?? null}
             dataSourceLabel={dataSourceLabel}
             isHubspotSource={isHubspotSource}
+            externalSignalsEnabled={externalSignalsEnabled}
             onRun={runWorkflow}
             onOpenAccount={openAccount}
           />
@@ -577,6 +609,13 @@ export default function Page() {
                         <EvidenceLedger evidence={selectedRec.evidence} />
                       </div>
                     </div>
+
+                    {/* Outside-In signals: external supporting context, secondary
+                        to the internal evidence above. Hidden when disabled/empty. */}
+                    <OutsideInSignals
+                      data={externalSignals[selectedRec.account_id] ?? null}
+                      loading={esLoading && !externalSignals[selectedRec.account_id]}
+                    />
 
                     <div className="border-t border-edge pt-3">
                       <ApprovalControls

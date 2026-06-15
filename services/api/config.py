@@ -36,6 +36,9 @@ PLACEHOLDER_PROVIDERS = {"openai", "claude", "anthropic"}
 #: Everything the factory understands today (anything else -> mock + warning).
 KNOWN_PROVIDERS = {"mock"} | NVIDIA_PROVIDERS | PLACEHOLDER_PROVIDERS
 
+#: External (outside-in) signal providers the factory understands.
+EXTERNAL_SIGNAL_PROVIDERS = {"mock", "serper"}
+
 _API_DIR = os.path.dirname(os.path.abspath(__file__))
 _TRUE = {"1", "true", "yes", "on"}
 
@@ -95,6 +98,13 @@ class Settings:
     hubspot_auto_sync_on_startup: bool = False
     hubspot_refresh_interval_seconds: int = 0
 
+    # -- external (outside-in) signals -------------------------------------
+    external_signals_enabled: bool = False
+    external_signals_provider: str = "mock"
+    serper_api_key: str = ""
+    external_signals_cache_ttl_minutes: int = 1440
+    external_signals_refresh_limit: int = 10
+
     # -- derived -----------------------------------------------------------
 
     @classmethod
@@ -120,6 +130,11 @@ class Settings:
             hubspot_timeout=_float("HUBSPOT_TIMEOUT", 30.0),
             hubspot_auto_sync_on_startup=_flag("HUBSPOT_AUTO_SYNC_ON_STARTUP", False),
             hubspot_refresh_interval_seconds=_int("HUBSPOT_REFRESH_INTERVAL_SECONDS", 0),
+            external_signals_enabled=_flag("EXTERNAL_SIGNALS_ENABLED", False),
+            external_signals_provider=(_str("EXTERNAL_SIGNALS_PROVIDER", "mock") or "mock").lower(),
+            serper_api_key=_str("SERPER_API_KEY"),
+            external_signals_cache_ttl_minutes=_int("EXTERNAL_SIGNALS_CACHE_TTL_MINUTES", 1440),
+            external_signals_refresh_limit=_int("EXTERNAL_SIGNALS_REFRESH_LIMIT", 10),
         )
 
     @property
@@ -170,6 +185,16 @@ class Settings:
             w.append("HUBSPOT_REFRESH_INTERVAL_SECONDS is set but HubSpot is not enabled+configured; background refresh will not run.")
         if 0 < self.hubspot_refresh_interval_seconds < 60:
             w.append("HUBSPOT_REFRESH_INTERVAL_SECONDS is below 60s; this may hit HubSpot rate limits.")
+
+        if self.external_signals_enabled:
+            ep = self.external_signals_provider
+            if ep not in EXTERNAL_SIGNAL_PROVIDERS:
+                w.append(f"Unknown EXTERNAL_SIGNALS_PROVIDER '{ep}'; the mock external-signal provider will be used.")
+            elif ep == "serper" and not self.serper_api_key:
+                w.append("EXTERNAL_SIGNALS_PROVIDER=serper but SERPER_API_KEY is empty; falling back to mock external signals.")
+        if self.serper_api_key and not self.external_signals_enabled:
+            w.append("SERPER_API_KEY is set but EXTERNAL_SIGNALS_ENABLED is false; the external-signal layer stays off.")
+
         if self.cors_origins.strip() == "*":
             w.append("CORS_ORIGINS=* allows any browser origin (fine for the demo; set your Vercel domain for production).")
         return w
@@ -196,6 +221,11 @@ class Settings:
             "hubspot_base_url": self.hubspot_base_url,
             "hubspot_auto_sync_on_startup": self.hubspot_auto_sync_on_startup,
             "hubspot_refresh_interval_seconds": self.hubspot_refresh_interval_seconds,
+            "external_signals_enabled": self.external_signals_enabled,
+            "external_signals_provider": self.external_signals_provider,
+            "serper_configured": bool(self.serper_api_key),
+            "external_signals_cache_ttl_minutes": self.external_signals_cache_ttl_minutes,
+            "external_signals_refresh_limit": self.external_signals_refresh_limit,
         }
 
 

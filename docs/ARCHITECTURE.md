@@ -373,3 +373,62 @@ engine still owns ranking, evidence and governance:
                                       Narrative only → same Recommendation shape
 ```
 
+---
+
+## 12. Outside-In external signals (supporting context)
+
+An **additive enrichment layer** that attaches *public, external* context to an account — company
+news, market trends, funding, layoffs, leadership changes, regulatory pressure, competitive and
+macroeconomic shifts. It helps a seller understand **why an account may be more urgent** and **what
+to consider before outreach**.
+
+**External signals are never the source of truth.** This is the most important rule of the layer:
+
+```
+HubSpot CRM  →  internal signals  →  deterministic engine  →  recommendation  →  human approval  →  CRM writeback
+                                                 ▲
+                                   (ranking · scoring · governance · confidence · writeback
+                                    are 100% internal and deterministic — unchanged)
+
+External signals ─────────────────────────────────┘  supporting context only
+                                                     (cited · caveated · never override anything)
+```
+
+The layer is **fully decoupled** from the recommendation pipeline:
+
+- It is a **separate package** (`services/api/external_signals/`) and a **separate endpoint**
+  (`GET /api/external-signals/{account_id}`). External data is **never** added to the
+  `Recommendation` contract, so ranking, scoring, governance, confidence and CRM write-back are
+  provably unaffected.
+- The frontend fetches it **lazily, per account**, only when the layer is enabled. When disabled
+  (the default), the endpoints return an empty result with a note and the UI section is hidden — the
+  product behaves exactly as before.
+
+**Provider abstraction** (mirrors the model-provider pattern):
+
+```
+            ┌──────────────────────────────────┐
+            │  ExternalSignalsProvider (base)  │
+            └─────────────────┬────────────────┘
+                    ┌─────────┴──────────┐
+                    ▼                    ▼
+              MockProvider          SerperProvider
+          (curated demo context)   (live Google News via serper.dev;
+           deterministic, no key    falls back to MockProvider on any
+           — DEFAULT)               error or missing key — never raises)
+```
+
+- **Caching.** Results are cached in-process by `company_name + industry + region` with a TTL
+  (`EXTERNAL_SIGNALS_CACHE_TTL_MINUTES`, default 1440 = once per day) so page loads never trigger
+  repeated external lookups.
+- **Safety / trust.** Every signal carries a source, timestamp, confidence and relevance, and a
+  standing caveat: *"External signals are supporting context only and should be verified by the
+  seller before action."* External claims are **never** written back to CRM unless the user approves
+  a note/task through the existing, unchanged approval gate.
+- **Resilience.** The provider never raises; a missing `SERPER_API_KEY` or any network error falls
+  back to deterministic mock context. The app cannot be destabilised by external search.
+
+Endpoints: `GET /api/external-signals/{account_id}` (one account) and
+`POST /api/external-signals/refresh` (priority accounts only, capped by
+`EXTERNAL_SIGNALS_REFRESH_LIMIT`). Status is reported in `/api/meta` and `/api/system/status`.
+

@@ -102,6 +102,43 @@ export interface MetaResponse {
   agents: string[];
   suggested_queries: string[];
   scoring_weights: Record<string, number>;
+  external_signals?: ExternalSignalsMeta;
+}
+
+// -- External (outside-in) signal layer -----------------------------------
+// Supporting public context only. NEVER the source of truth: ranking, scoring,
+// governance and CRM write-back stay fully deterministic and internal.
+
+export interface ExternalSignalsMeta {
+  enabled: boolean;
+  provider: string;
+}
+
+export interface ExternalSignal {
+  signal_type: string;
+  title: string;
+  summary: string;
+  source: string;
+  url?: string | null;
+  published_at?: string | null;
+  confidence: string;
+  relevance: string;
+  impact: "positive" | "negative" | "neutral" | string;
+  seller_takeaway?: string | null;
+}
+
+export interface ExternalSignalsResult {
+  account_id: string;
+  account_name: string;
+  enabled: boolean;
+  provider: string;
+  signals: ExternalSignal[];
+  summary: string;
+  seller_takeaway: string;
+  caveat: string;
+  generated_at?: string | null;
+  cached: boolean;
+  note?: string | null;
 }
 
 export interface Signal {

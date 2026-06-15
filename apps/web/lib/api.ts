@@ -3,6 +3,7 @@ import type {
   AccountDetail,
   AccountListResponse,
   ActionResult,
+  ExternalSignalsResult,
   HealthResponse,
   HubspotStatus,
   HubspotSyncResult,
@@ -47,6 +48,15 @@ export const api = {
   meta: () => jfetch<MetaResponse>("/api/meta"),
   accounts: (limit = 200) => jfetch<AccountListResponse>(`/api/accounts?limit=${limit}`),
   account: (accountId: string) => jfetch<AccountDetail>(`/api/accounts/${accountId}`),
+  externalSignals: (accountId: string) =>
+    jfetch<ExternalSignalsResult>(`/api/external-signals/${accountId}`),
+  refreshExternalSignals: () =>
+    jfetch<{
+      enabled: boolean;
+      provider: string;
+      refreshed_accounts: number;
+      total_signals: number;
+    }>("/api/external-signals/refresh", { method: "POST" }),
   recommendations: (query: string, limit: number) =>
     jfetch<RecommendationResponse>("/api/recommendations", {
       method: "POST",

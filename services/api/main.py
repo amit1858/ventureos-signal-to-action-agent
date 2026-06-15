@@ -11,6 +11,8 @@ Endpoints:
     GET  /api/system/threads        (live threads + refresh-scheduler status)
     GET  /api/accounts
     GET  /api/accounts/{account_id}
+    GET  /api/external-signals/{account_id}   (outside-in context for one account)
+    POST /api/external-signals/refresh        (refresh priority accounts only)
     POST /api/recommendations
     POST /api/actions/{recommendation_id}/approve
     POST /api/actions/{recommendation_id}/reject
@@ -81,8 +83,11 @@ from schemas.recommendation import (  # noqa: E402
     RecommendationResponse,
 )
 from services import data_loader, ledger_service  # noqa: E402
+from services import scoring_service  # noqa: E402
 from services.recommendation_service import generate_recommendations  # noqa: E402
 from services.refresh_scheduler import RefreshScheduler  # noqa: E402
+import external_signals  # noqa: E402
+from external_signals import ExternalSignalsResult  # noqa: E402
 from agents.orchestrator import AGENT_SEQUENCE  # noqa: E402
 from crm_connectors import (  # noqa: E402
     ConnectorStatus,
@@ -331,6 +336,7 @@ def meta() -> dict:
         "model": adapter.model,
         "agents": AGENT_SEQUENCE,
         "suggested_queries": SUGGESTED_QUERIES,
+        "external_signals": external_signals.meta_block(),
         "scoring_weights": {
             "support_risk": 0.20,
             "spend_decline": 0.20,
@@ -408,6 +414,7 @@ def system_status(
         },
         "data_ready": data_ready,
         "data_error": data_error,
+        "external_signals": external_signals.status_block(),
         "agents": AGENT_SEQUENCE,
     }
 
@@ -456,6 +463,43 @@ def get_account(account_id: str) -> AccountDetail:
     if detail is None:
         raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
     return detail
+
+
+# -- external (outside-in) signals (additive, decoupled, optional) --------
+
+
+@app.get("/api/external-signals/{account_id}", response_model=ExternalSignalsResult)
+def get_external_signals(account_id: str) -> ExternalSignalsResult:
+    """Outside-in public context for one account (supporting context only).
+
+    Fully decoupled from the recommendation contract: the deterministic ranking,
+    scoring, governance and CRM write-back never read this. When the layer is
+    disabled (the default) a well-formed *disabled* result is returned and no
+    external work is done. Never raises on provider/network errors.
+    """
+    try:
+        account = data_loader.get_account(account_id)
+    except data_loader.DataNotGeneratedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    if account is None:
+        raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
+    return external_signals.get_account_signals(account)
+
+
+@app.post("/api/external-signals/refresh")
+def refresh_external_signals() -> dict:
+    """Refresh external signals for the highest-priority accounts only.
+
+    Priority is the existing deterministic ranking; the number refreshed is
+    capped by EXTERNAL_SIGNALS_REFRESH_LIMIT. No-ops safely when the layer is
+    disabled, and never raises on provider errors.
+    """
+    try:
+        accounts = data_loader.load_accounts()
+    except data_loader.DataNotGeneratedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    priority = [account for account, _ in scoring_service.rank_accounts(accounts)]
+    return external_signals.refresh_accounts(priority)
 
 
 @app.post("/api/recommendations", response_model=RecommendationResponse)

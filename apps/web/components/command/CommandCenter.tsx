@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Globe } from "lucide-react";
 import type {
   Account,
   MetaResponse,
@@ -31,6 +32,7 @@ export function CommandCenter({
   selectedId,
   dataSourceLabel,
   isHubspotSource,
+  externalSignalsEnabled = false,
   onRun,
   onOpenAccount,
 }: {
@@ -44,6 +46,7 @@ export function CommandCenter({
   selectedId: string | null;
   dataSourceLabel: string;
   isHubspotSource: boolean;
+  externalSignalsEnabled?: boolean;
   onRun: () => void;
   onOpenAccount: (accountId: string) => void;
 }) {
@@ -103,6 +106,16 @@ export function CommandCenter({
         eyebrow="Today's Priorities"
         heading="What to do today"
         sub="The accounts that deserve your attention now — why they matter and the recommended next move."
+        aside={
+          externalSignalsEnabled && hasResult ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/5 px-2.5 py-1 text-[10px] font-medium text-brand-bright"
+              title="Outside-in external context is available on priority accounts. Open an account to view it."
+            >
+              <Globe size={11} /> External context available
+            </span>
+          ) : null
+        }
       >
         <NextBestActions
           recs={recs}
@@ -190,21 +203,26 @@ function Section({
   eyebrow,
   heading,
   sub,
+  aside,
   children,
 }: {
   id?: string;
   eyebrow: string;
   heading: string;
   sub?: string;
+  aside?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const { ref, shown } = useReveal<HTMLElement>();
   return (
     <section ref={ref} id={id} className={cx("scroll-mt-24 reveal", shown && "reveal-visible")}>
-      <div className="mb-6 max-w-2xl">
-        <div className="eyebrow text-faint">{eyebrow}</div>
-        <h2 className="section-h mt-2.5">{heading}</h2>
-        {sub ? <p className="section-sub mt-2">{sub}</p> : null}
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="max-w-2xl">
+          <div className="eyebrow text-faint">{eyebrow}</div>
+          <h2 className="section-h mt-2.5">{heading}</h2>
+          {sub ? <p className="section-sub mt-2">{sub}</p> : null}
+        </div>
+        {aside ? <div className="mt-1 shrink-0">{aside}</div> : null}
       </div>
       {children}
     </section>

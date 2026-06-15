@@ -158,6 +158,27 @@ delegated to an LLM. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for deta
 
 ---
 
+## Outside-In external signals (supporting context, optional)
+
+An **additive enrichment layer** can attach *public* external context to an account — company news,
+market trends, funding, layoffs, leadership changes, regulatory and competitive/macro pressure — so a
+seller understands **why an account may be more urgent** before reaching out.
+
+- **Not the source of truth.** Internal HubSpot signals and the deterministic engine remain
+  authoritative. External signals **never** change ranking, scoring, governance, confidence or CRM
+  write-back. They are **cited, caveated, supporting context only** and are rendered *secondary* to
+  internal evidence.
+- **Decoupled & safe.** Served from a separate endpoint (`GET /api/external-signals/{account_id}`),
+  fetched lazily per account, cached daily, and **off by default** (`EXTERNAL_SIGNALS_ENABLED=false`)
+  — when off, the product behaves exactly as before.
+- **Pluggable provider.** `mock` (curated demo context, no key — default) or `serper` (live Google
+  News via serper.dev). A missing key or any error falls back to mock — external search can never
+  destabilise the app.
+
+See [`docs/ARCHITECTURE.md` §12](docs/ARCHITECTURE.md) for the full design.
+
+---
+
 ## Quick start
 
 ```bash
@@ -235,5 +256,6 @@ signal-to-action-agent/
 
 ## Status
 
-Feature-frozen for the current demo build. This sprint hardened **documentation and deployment
-readiness** only — no product functionality, UI, API, reasoning, or HubSpot logic was changed.
+Feature-frozen for the current demo build. The latest sprint added an **optional, additive Outside-In
+external-signals layer** (off by default) — no change to recommendation ranking, scoring, governance,
+the reasoning core, CRM write-back, or any existing API contract or UI journey.
