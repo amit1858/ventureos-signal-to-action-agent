@@ -4,6 +4,12 @@
 
 [![Team](https://img.shields.io/badge/Team-VentureOS-blue)](.) [![Hackathon](https://img.shields.io/badge/Hackathon-India%20Agentic%20AI%202026-orange)](.) [![Track](https://img.shields.io/badge/Track-A%3A%20Agentic%20Workflows-green)](.)
 
+> 🚀 **Live demo:** **https://ventureos-signal-to-action-agent.vercel.app**
+> &nbsp;·&nbsp; **API:** https://signal-to-action-api.onrender.com
+>
+> _The backend runs on Render's free tier, so the first request after a period of inactivity can take
+> ~50 seconds to wake up. Just give it a moment and refresh._
+
 ---
 
 ## Executive summary
