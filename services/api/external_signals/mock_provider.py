@@ -387,6 +387,8 @@ class MockProvider(ExternalSignalsProvider):
     """Deterministic, network-free external signals for the demo portfolio."""
 
     name = "mock"
+    #: Mock data is never "live" external intelligence; surfaced in diagnostics.
+    last_mode = "mock"
 
     def _materialize(
         self, company_name: str, templates: List[_T], *, base_relevance: str

@@ -375,12 +375,13 @@ engine still owns ranking, evidence and governance:
 
 ---
 
-## 12. Outside-In external signals (supporting context)
+## 12. Outside-In intelligence (supporting context)
 
 An **additive enrichment layer** that attaches *public, external* context to an account — company
 news, market trends, funding, layoffs, leadership changes, regulatory pressure, competitive and
-macroeconomic shifts. It helps a seller understand **why an account may be more urgent** and **what
-to consider before outreach**.
+macroeconomic shifts — and **fuses it with the account's internal CRM trajectory** into a short
+executive brief. It helps a seller understand **what changed outside the CRM, why it matters, and
+how it changes the conversation** before outreach.
 
 **External signals are never the source of truth.** This is the most important rule of the layer:
 
@@ -410,12 +411,17 @@ The layer is **fully decoupled** from the recommendation pipeline:
             ┌──────────────────────────────────┐
             │  ExternalSignalsProvider (base)  │
             └─────────────────┬────────────────┘
-                    ┌─────────┴──────────┐
-                    ▼                    ▼
-              MockProvider          SerperProvider
-          (curated demo context)   (live Google News via serper.dev;
-           deterministic, no key    falls back to MockProvider on any
-           — DEFAULT)               error or missing key — never raises)
+              ┌───────────────┼────────────────┐
+              ▼               ▼                ▼
+        MockProvider   SerperProvider    SearchApiProvider
+     (curated demo    (live Google      (live Google News via
+      context,         News via          SearchAPI.io; GET, header
+      deterministic,   serper.dev;       Authorization: Bearer)
+      no key —         POST, header
+      DEFAULT)         X-API-KEY)
+                          │                    │
+                          └──── both fall back to MockProvider on any
+                                error / empty result / missing key — never raise
 ```
 
 - **Caching.** Results are cached in-process by `company_name + industry + region` with a TTL
@@ -425,10 +431,48 @@ The layer is **fully decoupled** from the recommendation pipeline:
   standing caveat: *"External signals are supporting context only and should be verified by the
   seller before action."* External claims are **never** written back to CRM unless the user approves
   a note/task through the existing, unchanged approval gate.
-- **Resilience.** The provider never raises; a missing `SERPER_API_KEY` or any network error falls
-  back to deterministic mock context. The app cannot be destabilised by external search.
+- **Resilience.** The provider never raises; a missing key or any network error falls back to
+  deterministic mock context and the response reports `provider_mode` (`live` | `fallback` | `mock`)
+  so the UI can label the source honestly. The app cannot be destabilised by external search.
+- **Security.** Live-search keys live ONLY in `services/api/.env` (git-ignored). The key is sent in
+  a request **header** (never a logged URL or query string), is never printed or logged, and never
+  appears in any tracked file.
 
-Endpoints: `GET /api/external-signals/{account_id}` (one account) and
-`POST /api/external-signals/refresh` (priority accounts only, capped by
-`EXTERNAL_SIGNALS_REFRESH_LIMIT`). Status is reported in `/api/meta` and `/api/system/status`.
+### 12.1 Executive Intelligence Fusion
+
+On top of the raw signals, the layer builds a short **executive brief** (`external_signals/fusion.py`,
+`build_brief(account, signals) -> ExecutiveBrief`) that **fuses the account's internal CRM trajectory
+with the external context**. It is deterministic, read-only on the account, and explanatory only —
+**it does not touch ranking, scoring, governance, confidence or write-back.**
+
+```
+Internal CRM signals                     External signals
+(spend change, support risk,             (market trend, funding, expansion,
+ engagement, renewal window,    ──┐  ┌── competition, regulatory, layoffs,
+ growth potential, campaign       ▼  ▼    leadership change, industry trend)
+ response, last touch)         ┌──────────────┐
+                               │   Fusion     │  → ExecutiveBrief
+                               └──────────────┘
+```
+
+The `ExecutiveBrief` contains: `internal_summary`, `external_summary`, `fused_insight`,
+`business_implication`, `seller_implication`, `recommended_conversation_strategy`,
+`suggested_opening_line`, `confidence`, `caveats[]`, `sources[]`. Confidence is **conservative**:
+external context alone never earns "high" — "high" requires multiple strong, credible external
+signals **and** internal corroboration (e.g. negative external context alongside declining spend, or
+positive external context alongside rising spend / high growth). The language is deliberately hedged
+("External signals suggest…", "Public context indicates…", "this may increase urgency because…") and
+every brief carries the standing external-context caveat.
+
+In the UI this renders as the **"Outside-In Intelligence"** section in the workspace account panel,
+visually secondary to internal evidence: *what this means* (fused insight + confidence), *what changed
+outside the CRM*, *why it matters*, *seller implication*, *suggested conversation strategy*, a
+*suggested opening line*, *sources*, and the caveat. Raw signals are tucked behind a "show supporting
+signals" toggle to keep the panel calm.
+
+Endpoints: `GET /api/external-signals/{account_id}` (one account; the response embeds the brief plus
+`provider_mode` and `sources`), `GET /api/external-signals/{account_id}/brief` (the fusion brief on
+its own — additive, never breaks existing clients), and `POST /api/external-signals/refresh` (priority
+accounts only, capped by `EXTERNAL_SIGNALS_REFRESH_LIMIT`). Status (including `provider_mode`,
+`searchapi_configured` and `live_ready`) is reported in `/api/meta` and `/api/system/status`.
 

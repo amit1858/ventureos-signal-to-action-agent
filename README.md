@@ -158,22 +158,30 @@ delegated to an LLM. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for deta
 
 ---
 
-## Outside-In external signals (supporting context, optional)
+## Outside-In intelligence (executive context, optional)
 
 An **additive enrichment layer** can attach *public* external context to an account — company news,
-market trends, funding, layoffs, leadership changes, regulatory and competitive/macro pressure — so a
-seller understands **why an account may be more urgent** before reaching out.
+market trends, funding, layoffs, leadership changes, regulatory and competitive/macro pressure — and
+**fuse it with the account's internal CRM trajectory** into a short executive brief, so a seller
+understands **what changed outside the CRM, why it matters, and how it changes the conversation**
+before reaching out.
 
 - **Not the source of truth.** Internal HubSpot signals and the deterministic engine remain
   authoritative. External signals **never** change ranking, scoring, governance, confidence or CRM
   write-back. They are **cited, caveated, supporting context only** and are rendered *secondary* to
-  internal evidence.
-- **Decoupled & safe.** Served from a separate endpoint (`GET /api/external-signals/{account_id}`),
-  fetched lazily per account, cached daily, and **off by default** (`EXTERNAL_SIGNALS_ENABLED=false`)
-  — when off, the product behaves exactly as before.
-- **Pluggable provider.** `mock` (curated demo context, no key — default) or `serper` (live Google
-  News via serper.dev). A missing key or any error falls back to mock — external search can never
-  destabilise the app.
+  internal evidence in a workspace section titled **"Outside-In Intelligence."**
+- **Executive Intelligence Fusion.** Each brief combines internal signals (spend change, support
+  risk, engagement, renewal window, growth, campaign response, last touch) with external signals into
+  a hedged narrative: *what this means*, *what changed outside the CRM*, *why it matters*, *seller
+  implication*, *suggested conversation strategy*, a *suggested opening line*, a conservative
+  confidence, caveats, and cited sources. External context alone **never** earns "high" confidence —
+  it must corroborate the internal trajectory.
+- **Decoupled & safe.** Served from a separate endpoint (`GET /api/external-signals/{account_id}`,
+  with a convenience `…/brief` view), fetched lazily per account, cached daily, and **off by default**
+  (`EXTERNAL_SIGNALS_ENABLED=false`) — when off, the product behaves exactly as before.
+- **Pluggable provider.** `mock` (curated demo context, no key — default), `serper` (live Google News
+  via serper.dev), or `searchapi` (live Google News via SearchAPI.io). A missing key or any error
+  falls back to mock with a visible caveat — external search can never destabilise the app.
 
 See [`docs/ARCHITECTURE.md` §12](docs/ARCHITECTURE.md) for the full design.
 
@@ -256,6 +264,8 @@ signal-to-action-agent/
 
 ## Status
 
-Feature-frozen for the current demo build. The latest sprint added an **optional, additive Outside-In
-external-signals layer** (off by default) — no change to recommendation ranking, scoring, governance,
-the reasoning core, CRM write-back, or any existing API contract or UI journey.
+Feature-frozen for the current demo build. The latest sprint added **Executive Intelligence Fusion**
+to the optional, additive Outside-In intelligence layer (off by default): external context is now
+fused with internal CRM signals into a hedged, cited executive brief. As always, no change to
+recommendation ranking, scoring, governance, the reasoning core, CRM write-back, or any existing API
+contract or UI journey — external context remains supporting-only and never the source of truth.

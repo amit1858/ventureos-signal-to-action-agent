@@ -29,11 +29,14 @@ from config import get_settings
 from external_signals.base import (
     EXTERNAL_CONTEXT_CAVEAT,
     SIGNAL_TYPES,
+    ExecutiveBrief,
     ExternalSignal,
     ExternalSignalsProvider,
     ExternalSignalsResult,
+    ExternalSource,
     ExternalSummary,
 )
+from external_signals import fusion
 
 logger = logging.getLogger("signal_to_action.external_signals")
 
@@ -42,6 +45,8 @@ __all__ = [
     "ExternalSignal",
     "ExternalSignalsResult",
     "ExternalSignalsProvider",
+    "ExecutiveBrief",
+    "ExternalSource",
     "get_external_signals_provider",
     "get_account_signals",
     "refresh_accounts",
@@ -51,7 +56,7 @@ __all__ = [
 ]
 
 #: Provider ids the factory understands (anything else -> mock + warning).
-KNOWN_PROVIDERS = {"mock", "serper"}
+KNOWN_PROVIDERS = {"mock", "serper", "searchapi"}
 
 # -- module state (thread-safe) -------------------------------------------
 
@@ -76,19 +81,31 @@ def _cache_key(company_name: str, industry: str, region: str) -> str:
 def get_external_signals_provider() -> ExternalSignalsProvider:
     """Return the configured external-signals provider (read once, cached).
 
-    ``serper`` is selected only when a key is present; otherwise (and for any
-    unknown value) we use the deterministic mock so the demo always works.
+    A live provider (``serper`` / ``searchapi``) is selected only when a key is
+    present; otherwise (and for any unknown value) we use the deterministic mock
+    so the demo always works. ``settings.external_signals_api_key`` is forgiving:
+    it accepts the key from either ``SERPER_API_KEY`` or ``SEARCHAPI_API_KEY``.
     """
     settings = get_settings()
     provider = (settings.external_signals_provider or "mock").lower()
+    api_key = settings.external_signals_api_key
 
     if provider == "serper":
-        from external_signals.serper_provider import SerperProvider
+        if api_key:
+            from external_signals.serper_provider import SerperProvider
 
-        if settings.serper_api_key:
-            return SerperProvider(api_key=settings.serper_api_key)
+            return SerperProvider(api_key=api_key)
         logger.warning(
-            "EXTERNAL_SIGNALS_PROVIDER=serper but SERPER_API_KEY is empty; "
+            "EXTERNAL_SIGNALS_PROVIDER=serper but no API key is set; "
+            "using deterministic mock external signals."
+        )
+    elif provider == "searchapi":
+        if api_key:
+            from external_signals.searchapi_provider import SearchApiProvider
+
+            return SearchApiProvider(api_key=api_key)
+        logger.warning(
+            "EXTERNAL_SIGNALS_PROVIDER=searchapi but no API key is set; "
             "using deterministic mock external signals."
         )
     elif provider not in KNOWN_PROVIDERS:
@@ -102,9 +119,17 @@ def get_external_signals_provider() -> ExternalSignalsProvider:
 
 
 def _provider_active_name() -> str:
-    """The provider actually in effect (serper degrades to mock without a key)."""
+    """The provider actually in effect (live providers degrade to mock without a key)."""
     try:
         return get_external_signals_provider().name
+    except Exception:  # noqa: BLE001 -- diagnostics must never raise
+        return "mock"
+
+
+def _provider_mode() -> str:
+    """live | fallback | mock -- what the most recent provider call actually used."""
+    try:
+        return getattr(get_external_signals_provider(), "last_mode", "mock") or "mock"
     except Exception:  # noqa: BLE001 -- diagnostics must never raise
         return "mock"
 
@@ -118,9 +143,12 @@ def _disabled_result(account, provider_name: str) -> ExternalSignalsResult:
         account_name=getattr(account, "account_name", ""),
         enabled=False,
         provider=provider_name,
+        provider_mode="mock",
         signals=[],
         summary="",
         seller_takeaway="",
+        sources=[],
+        brief=None,
         caveat=EXTERNAL_CONTEXT_CAVEAT,
         generated_at=_now_iso(),
         cached=False,
@@ -129,10 +157,13 @@ def _disabled_result(account, provider_name: str) -> ExternalSignalsResult:
 
 
 def get_account_signals(account, *, force: bool = False) -> ExternalSignalsResult:
-    """Return external context for one account. Never raises.
+    """Return external context + an Executive Intelligence Fusion brief for one
+    account. Never raises.
 
     Honours ``EXTERNAL_SIGNALS_ENABLED`` (returns a disabled result when off) and
-    caches by ``company_name + industry + region`` for the configured TTL.
+    caches by ``company_name + industry + region`` for the configured TTL. The
+    brief fuses the account's internal CRM trajectory with the external signals;
+    it is explanatory only and never changes ranking, scoring or governance.
     """
     settings = get_settings()
     if not settings.external_signals_enabled:
@@ -155,24 +186,37 @@ def get_account_signals(account, *, force: bool = False) -> ExternalSignalsResul
     try:
         signals = provider.search_company_context(name, industry, region)
         summary: ExternalSummary = provider.summarize_external_signals(account, signals)
+        mode = getattr(provider, "last_mode", "mock") or "mock"
     except Exception as exc:  # noqa: BLE001 -- a provider must never break the app
         logger.warning(
             "External signals lookup failed for %s (%s); returning empty context.",
             name,
             type(exc).__name__,
         )
+        empty_brief = fusion.build_brief(account, [])
         return ExternalSignalsResult(
             account_id=getattr(account, "account_id", ""),
             account_name=name,
             enabled=True,
             provider=provider.name,
+            provider_mode="fallback" if provider.name != "mock" else "mock",
             signals=[],
             summary="",
             seller_takeaway="",
+            sources=[],
+            brief=empty_brief,
             caveat=EXTERNAL_CONTEXT_CAVEAT,
             generated_at=_now_iso(),
             cached=False,
-            note="External provider temporarily unavailable; no external context to show.",
+            note="Live external context was temporarily unavailable; showing an internal-led brief.",
+        )
+
+    brief: ExecutiveBrief = fusion.build_brief(account, signals)
+    note = None
+    if provider.name != "mock" and mode == "fallback":
+        note = (
+            "Live external search returned no usable results; showing illustrative "
+            "context for this account."
         )
 
     result = ExternalSignalsResult(
@@ -180,12 +224,16 @@ def get_account_signals(account, *, force: bool = False) -> ExternalSignalsResul
         account_name=name,
         enabled=True,
         provider=provider.name,
+        provider_mode=mode,
         signals=signals,
         summary=summary.summary,
         seller_takeaway=summary.seller_takeaway,
+        sources=list(brief.sources),
+        brief=brief,
         caveat=EXTERNAL_CONTEXT_CAVEAT,
         generated_at=_now_iso(),
         cached=False,
+        note=note,
     )
 
     if ttl_seconds > 0:
@@ -241,11 +289,15 @@ def status_block() -> dict:
     settings = get_settings()
     with _LOCK:
         cache_entries = len(_CACHE)
+    enabled = settings.external_signals_enabled
     return {
-        "enabled": settings.external_signals_enabled,
+        "enabled": enabled,
         "provider": settings.external_signals_provider or "mock",
-        "provider_active": _provider_active_name() if settings.external_signals_enabled else None,
+        "provider_active": _provider_active_name() if enabled else None,
+        "provider_mode": _provider_mode() if enabled else None,
+        "live_ready": settings.external_signals_live_ready,
         "serper_configured": bool(settings.serper_api_key),
+        "searchapi_configured": bool(settings.searchapi_api_key),
         "cache_entries": cache_entries,
         "cache_ttl_minutes": settings.external_signals_cache_ttl_minutes,
         "refresh_limit": settings.external_signals_refresh_limit,

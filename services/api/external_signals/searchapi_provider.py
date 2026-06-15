@@ -1,17 +1,22 @@
-"""Serper.dev external-signal provider (optional, dependency-free).
+"""SearchAPI.io external-signal provider (optional, dependency-free).
 
-A live provider that queries the Serper.dev Google Search API for recent company
-and industry news, built entirely on the standard library (``urllib``) -- exactly
-like the HubSpot connector and the NVIDIA NIM adapter, so it adds **no new pip
-dependencies**.
+A live provider that queries the SearchAPI.io Google News engine for recent
+company and industry news. Built entirely on the standard library (``urllib``)
+so it adds **no new pip dependencies**, exactly like the Serper provider and the
+HubSpot connector.
 
-Safety contract (this provider must never destabilise the app):
-* If no ``SERPER_API_KEY`` is configured, it transparently falls back to the
-  deterministic :class:`MockProvider`.
-* On any network / HTTP / parse error it falls back to mock signals and never
-  raises. The service layer also wraps calls defensively.
-* The API key is read from settings, sent only as the ``X-API-KEY`` header, and
-  never logged or returned.
+Why a separate provider: a SearchAPI.io key is not a Serper key, and the two
+services speak different protocols. Forcing one onto the other would be brittle,
+so Phase 4.1 adds this clean implementation selected by
+``EXTERNAL_SIGNALS_PROVIDER=searchapi``.
+
+Safety contract (must never destabilise the app):
+
+* With no key it transparently falls back to the deterministic :class:`MockProvider`.
+* On any network / HTTP / parse error it falls back to mock signals and never raises.
+* The key is sent only in the ``Authorization: Bearer`` header (never in the URL
+  or query string), and is never logged or returned. Using the header keeps the
+  key out of any logged request URL.
 """
 
 from __future__ import annotations
@@ -19,6 +24,7 @@ from __future__ import annotations
 import json
 import logging
 import urllib.error
+import urllib.parse
 import urllib.request
 from typing import List, Optional
 
@@ -28,13 +34,13 @@ from external_signals import signal_mapper
 
 logger = logging.getLogger("signal_to_action.external_signals")
 
-_SERPER_NEWS_URL = "https://google.serper.dev/news"
+_SEARCHAPI_URL = "https://www.searchapi.io/api/v1/search"
 
 
-class SerperProvider(ExternalSignalsProvider):
-    """Live external context from Serper.dev, with a deterministic mock fallback."""
+class SearchApiProvider(ExternalSignalsProvider):
+    """Live external context from SearchAPI.io, with a deterministic mock fallback."""
 
-    name = "serper"
+    name = "searchapi"
 
     def __init__(self, api_key: str = "", timeout: float = 10.0, max_results: int = 5) -> None:
         self.api_key = (api_key or "").strip()
@@ -50,34 +56,42 @@ class SerperProvider(ExternalSignalsProvider):
 
     # -- low-level HTTP ---------------------------------------------------
 
-    def _post(self, query: str) -> Optional[dict]:
-        body = json.dumps({"q": query, "num": self.max_results}).encode("utf-8")
+    def _get(self, query: str) -> Optional[dict]:
+        # Key goes in the Authorization header, never the URL/query string.
+        params = urllib.parse.urlencode(
+            {"engine": "google_news", "q": query, "num": self.max_results}
+        )
         req = urllib.request.Request(
-            _SERPER_NEWS_URL,
-            data=body,
-            method="POST",
+            f"{_SEARCHAPI_URL}?{params}",
+            method="GET",
             headers={
-                "X-API-KEY": self.api_key,
-                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}",
                 "Accept": "application/json",
             },
         )
         with urllib.request.urlopen(req, timeout=self.timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
-    def _map_news_item(self, item: dict) -> Optional[ExternalSignal]:
+    @staticmethod
+    def _source_name(item: dict) -> str:
+        src = item.get("source")
+        if isinstance(src, dict):
+            return (src.get("name") or src.get("title") or "Web").strip()
+        return (src or "Web").strip()
+
+    def _map_item(self, item: dict) -> Optional[ExternalSignal]:
         title = (item.get("title") or "").strip()
         if not title:
             return None
-        snippet = (item.get("snippet") or "").strip()
+        snippet = (item.get("snippet") or item.get("description") or "").strip()
         stype = signal_mapper.classify_signal_type(f"{title} {snippet}")
         return ExternalSignal(
             signal_type=stype,
             title=title,
             summary=snippet or title,
-            source=(item.get("source") or "Web").strip(),
-            url=item.get("link"),
-            published_at=item.get("date"),
+            source=self._source_name(item),
+            url=item.get("link") or item.get("url"),
+            published_at=item.get("date") or item.get("published_at"),
             confidence="medium",
             relevance="medium",
             impact=signal_mapper.impact_for_type(stype),
@@ -85,13 +99,18 @@ class SerperProvider(ExternalSignalsProvider):
         )
 
     def _search(self, query: str) -> List[ExternalSignal]:
-        data = self._post(query)
+        data = self._get(query)
         if not data:
             return []
-        items = data.get("news") or data.get("organic") or []
+        items = (
+            data.get("news_results")
+            or data.get("organic_results")
+            or data.get("articles")
+            or []
+        )
         signals: List[ExternalSignal] = []
         for item in items[: self.max_results]:
-            sig = self._map_news_item(item)
+            sig = self._map_item(item)
             if sig is not None:
                 signals.append(sig)
         return signals
@@ -108,13 +127,12 @@ class SerperProvider(ExternalSignalsProvider):
         try:
             signals = self._search(query)
         except (urllib.error.URLError, TimeoutError, ValueError, OSError) as exc:
-            logger.warning("Serper search failed (%s); using mock external signals.", type(exc).__name__)
+            logger.warning("SearchAPI search failed (%s); using mock external signals.", type(exc).__name__)
             self.last_mode = "fallback"
             return self._fallback.search_company_context(company_name, industry, region)
         if not signals:
             self.last_mode = "fallback"
             return self._fallback.search_company_context(company_name, industry, region)
-        # Ensure every signal has a useful link even if Serper omitted one.
         for s in signals:
             if not s.url:
                 s.url = _news_url(company_name, s.title)
@@ -129,7 +147,7 @@ class SerperProvider(ExternalSignalsProvider):
         try:
             signals = self._search(query)
         except (urllib.error.URLError, TimeoutError, ValueError, OSError) as exc:
-            logger.warning("Serper industry search failed (%s); using mock context.", type(exc).__name__)
+            logger.warning("SearchAPI industry search failed (%s); using mock context.", type(exc).__name__)
             self.last_mode = "fallback"
             return self._fallback.get_industry_context(industry, region)
         if signals:

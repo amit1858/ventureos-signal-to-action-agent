@@ -37,7 +37,7 @@ PLACEHOLDER_PROVIDERS = {"openai", "claude", "anthropic"}
 KNOWN_PROVIDERS = {"mock"} | NVIDIA_PROVIDERS | PLACEHOLDER_PROVIDERS
 
 #: External (outside-in) signal providers the factory understands.
-EXTERNAL_SIGNAL_PROVIDERS = {"mock", "serper"}
+EXTERNAL_SIGNAL_PROVIDERS = {"mock", "serper", "searchapi"}
 
 _API_DIR = os.path.dirname(os.path.abspath(__file__))
 _TRUE = {"1", "true", "yes", "on"}
@@ -102,6 +102,7 @@ class Settings:
     external_signals_enabled: bool = False
     external_signals_provider: str = "mock"
     serper_api_key: str = ""
+    searchapi_api_key: str = ""
     external_signals_cache_ttl_minutes: int = 1440
     external_signals_refresh_limit: int = 10
 
@@ -133,6 +134,7 @@ class Settings:
             external_signals_enabled=_flag("EXTERNAL_SIGNALS_ENABLED", False),
             external_signals_provider=(_str("EXTERNAL_SIGNALS_PROVIDER", "mock") or "mock").lower(),
             serper_api_key=_str("SERPER_API_KEY"),
+            searchapi_api_key=_str("SEARCHAPI_API_KEY"),
             external_signals_cache_ttl_minutes=_int("EXTERNAL_SIGNALS_CACHE_TTL_MINUTES", 1440),
             external_signals_refresh_limit=_int("EXTERNAL_SIGNALS_REFRESH_LIMIT", 10),
         )
@@ -157,6 +159,27 @@ class Settings:
     def provider_implemented(self) -> bool:
         """Whether the selected provider has a live code path today."""
         return self.model_provider == "mock" or self.model_provider in NVIDIA_PROVIDERS
+
+    @property
+    def external_signals_api_key(self) -> str:
+        """The key for the configured external provider.
+
+        Forgiving for the demo: the ``searchapi`` provider prefers
+        ``SEARCHAPI_API_KEY`` but accepts ``SERPER_API_KEY`` if that is where the
+        operator pasted the key, and vice versa. Returns "" for the mock provider.
+        """
+        provider = (self.external_signals_provider or "mock").lower()
+        if provider == "searchapi":
+            return self.searchapi_api_key or self.serper_api_key
+        if provider == "serper":
+            return self.serper_api_key or self.searchapi_api_key
+        return ""
+
+    @property
+    def external_signals_live_ready(self) -> bool:
+        """A live external provider is selected *and* has a usable key."""
+        provider = (self.external_signals_provider or "mock").lower()
+        return provider in {"serper", "searchapi"} and bool(self.external_signals_api_key)
 
     def warnings(self) -> List[str]:
         """Human-readable configuration warnings (logged at startup)."""
@@ -190,10 +213,14 @@ class Settings:
             ep = self.external_signals_provider
             if ep not in EXTERNAL_SIGNAL_PROVIDERS:
                 w.append(f"Unknown EXTERNAL_SIGNALS_PROVIDER '{ep}'; the mock external-signal provider will be used.")
-            elif ep == "serper" and not self.serper_api_key:
-                w.append("EXTERNAL_SIGNALS_PROVIDER=serper but SERPER_API_KEY is empty; falling back to mock external signals.")
-        if self.serper_api_key and not self.external_signals_enabled:
-            w.append("SERPER_API_KEY is set but EXTERNAL_SIGNALS_ENABLED is false; the external-signal layer stays off.")
+            elif ep in {"serper", "searchapi"} and not self.external_signals_api_key:
+                key_var = "SEARCHAPI_API_KEY" if ep == "searchapi" else "SERPER_API_KEY"
+                w.append(
+                    f"EXTERNAL_SIGNALS_PROVIDER={ep} but {key_var} is empty; "
+                    "falling back to mock external signals."
+                )
+        if (self.serper_api_key or self.searchapi_api_key) and not self.external_signals_enabled:
+            w.append("An external-search API key is set but EXTERNAL_SIGNALS_ENABLED is false; the external-signal layer stays off.")
 
         if self.cors_origins.strip() == "*":
             w.append("CORS_ORIGINS=* allows any browser origin (fine for the demo; set your Vercel domain for production).")
@@ -224,6 +251,8 @@ class Settings:
             "external_signals_enabled": self.external_signals_enabled,
             "external_signals_provider": self.external_signals_provider,
             "serper_configured": bool(self.serper_api_key),
+            "searchapi_configured": bool(self.searchapi_api_key),
+            "external_signals_live_ready": self.external_signals_live_ready,
             "external_signals_cache_ttl_minutes": self.external_signals_cache_ttl_minutes,
             "external_signals_refresh_limit": self.external_signals_refresh_limit,
         }

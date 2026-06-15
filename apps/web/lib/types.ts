@@ -127,14 +127,39 @@ export interface ExternalSignal {
   seller_takeaway?: string | null;
 }
 
+export interface ExternalSource {
+  title: string;
+  url?: string | null;
+  source?: string | null;
+  published_at?: string | null;
+}
+
+export interface ExecutiveBrief {
+  account_id: string;
+  account_name: string;
+  internal_summary: string;
+  external_summary: string;
+  fused_insight: string;
+  business_implication: string;
+  seller_implication: string;
+  recommended_conversation_strategy: string;
+  suggested_opening_line: string;
+  confidence: string;
+  caveats: string[];
+  sources: ExternalSource[];
+}
+
 export interface ExternalSignalsResult {
   account_id: string;
   account_name: string;
   enabled: boolean;
   provider: string;
+  provider_mode?: string;
   signals: ExternalSignal[];
   summary: string;
   seller_takeaway: string;
+  sources?: ExternalSource[];
+  brief?: ExecutiveBrief | null;
   caveat: string;
   generated_at?: string | null;
   cached: boolean;

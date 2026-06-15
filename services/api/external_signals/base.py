@@ -79,20 +79,61 @@ class ExternalSummary(BaseModel):
     seller_takeaway: str = ""
 
 
+class ExternalSource(BaseModel):
+    """A citable source behind an external signal (Phase 4.1 fusion)."""
+
+    title: str = ""
+    url: Optional[str] = None
+    source: str = ""
+    published_at: Optional[str] = None
+
+
+class ExecutiveBrief(BaseModel):
+    """Executive Intelligence Fusion narrative (Phase 4.1).
+
+    Combines the account's *internal* CRM trajectory with *external* public
+    context into a seller-facing brief. It is **explanatory only**: it never
+    changes ranking, scoring, governance, confidence or CRM write-back. Language
+    is deliberately cautious and every external claim is cited + caveated.
+    """
+
+    account_id: str
+    account_name: str
+    internal_summary: str = Field(default="", description="What the internal CRM signals say")
+    external_summary: str = Field(default="", description="What changed outside the CRM")
+    fused_insight: str = Field(default="", description="How internal + external context combine")
+    business_implication: str = Field(default="", description="Why it matters for the account")
+    seller_implication: str = Field(default="", description="What the seller should do differently")
+    recommended_conversation_strategy: str = Field(default="", description="How to frame the conversation")
+    suggested_opening_line: str = Field(default="", description="A concrete, verifiable opening line")
+    confidence: str = Field(default="low", description="low | medium | high (of the external read)")
+    caveats: List[str] = Field(default_factory=list)
+    sources: List[ExternalSource] = Field(default_factory=list)
+
+
 class ExternalSignalsResult(BaseModel):
     """The response contract for GET /api/external-signals/{account_id}.
 
     Fully self-contained and decoupled from ``Recommendation`` so it can never
-    affect the deterministic recommendation contract.
+    affect the deterministic recommendation contract. Phase 4.1 added the
+    optional ``provider_mode``, ``sources`` and ``brief`` fields; they are purely
+    additive, so older clients keep working unchanged.
     """
 
     account_id: str
     account_name: str
     enabled: bool
     provider: str
+    provider_mode: str = Field(
+        default="mock", description="live | fallback | mock -- whether real external search was used"
+    )
     signals: List[ExternalSignal] = Field(default_factory=list)
     summary: str = ""
     seller_takeaway: str = ""
+    sources: List[ExternalSource] = Field(default_factory=list)
+    brief: Optional[ExecutiveBrief] = Field(
+        default=None, description="Executive Intelligence Fusion narrative (Phase 4.1)"
+    )
     caveat: str = EXTERNAL_CONTEXT_CAVEAT
     generated_at: Optional[str] = None
     cached: bool = False

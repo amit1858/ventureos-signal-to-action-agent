@@ -12,6 +12,7 @@ Endpoints:
     GET  /api/accounts
     GET  /api/accounts/{account_id}
     GET  /api/external-signals/{account_id}   (outside-in context for one account)
+    GET  /api/external-signals/{account_id}/brief  (executive fusion narrative)
     POST /api/external-signals/refresh        (refresh priority accounts only)
     POST /api/recommendations
     POST /api/actions/{recommendation_id}/approve
@@ -87,7 +88,7 @@ from services import scoring_service  # noqa: E402
 from services.recommendation_service import generate_recommendations  # noqa: E402
 from services.refresh_scheduler import RefreshScheduler  # noqa: E402
 import external_signals  # noqa: E402
-from external_signals import ExternalSignalsResult  # noqa: E402
+from external_signals import ExecutiveBrief, ExternalSignalsResult  # noqa: E402
 from agents.orchestrator import AGENT_SEQUENCE  # noqa: E402
 from crm_connectors import (  # noqa: E402
     ConnectorStatus,
@@ -484,6 +485,34 @@ def get_external_signals(account_id: str) -> ExternalSignalsResult:
     if account is None:
         raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
     return external_signals.get_account_signals(account)
+
+
+@app.get("/api/external-signals/{account_id}/brief", response_model=ExecutiveBrief)
+def get_external_signals_brief(account_id: str) -> ExecutiveBrief:
+    """Executive Intelligence Fusion brief for one account (Phase 4.1).
+
+    A convenience view that returns just the fused narrative (internal + external
+    context, business and seller implications, conversation strategy, suggested
+    opening line, confidence, caveats and cited sources). The full
+    ``GET /api/external-signals/{account_id}`` response also embeds this brief, so
+    this endpoint is purely additive and never breaks existing clients.
+
+    Explanatory only: it never changes ranking, scoring, governance or write-back.
+    """
+    try:
+        account = data_loader.get_account(account_id)
+    except data_loader.DataNotGeneratedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    if account is None:
+        raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
+    result = external_signals.get_account_signals(account)
+    if result.brief is not None:
+        return result.brief
+    # Layer disabled (or no brief): synthesise an internal-led brief so the
+    # endpoint still returns a well-formed, useful response.
+    from external_signals import fusion
+
+    return fusion.build_brief(account, list(result.signals))
 
 
 @app.post("/api/external-signals/refresh")

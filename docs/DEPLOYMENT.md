@@ -67,10 +67,11 @@ HUBSPOT_WRITEBACK_ENABLED=true     # second gate required before any CRM write
 NVIDIA_API_KEY=
 OPENAI_API_KEY=
 
-# Outside-In external signals (optional enrichment layer; default OFF)
-EXTERNAL_SIGNALS_ENABLED=false           # true to attach public external context to accounts
-EXTERNAL_SIGNALS_PROVIDER=mock           # mock | serper (serper falls back to mock without a key)
-SERPER_API_KEY=                          # only needed for EXTERNAL_SIGNALS_PROVIDER=serper
+# Outside-In intelligence (optional enrichment layer; default OFF)
+EXTERNAL_SIGNALS_ENABLED=false           # true to attach public external context + fusion brief
+EXTERNAL_SIGNALS_PROVIDER=mock           # mock | serper | searchapi (live providers fall back to mock)
+SERPER_API_KEY=                          # only for EXTERNAL_SIGNALS_PROVIDER=serper (serper.dev)
+SEARCHAPI_API_KEY=                        # only for EXTERNAL_SIGNALS_PROVIDER=searchapi (SearchAPI.io)
 EXTERNAL_SIGNALS_CACHE_TTL_MINUTES=1440  # cache freshness (once per day for the demo)
 EXTERNAL_SIGNALS_REFRESH_LIMIT=10        # max accounts enriched per refresh call
 
@@ -83,6 +84,13 @@ CORS_ORIGINS=*                     # in production, set to your Vercel domain
 > `HUBSPOT_WRITEBACK_ENABLED=false` and `EXTERNAL_SIGNALS_ENABLED=false` (safe defaults). Set HubSpot
 > to `true` only when demoing a real HubSpot **test** portal; set external signals to `true` only to
 > show the supporting-context layer (it never changes recommendations).
+>
+> **Live-search keys are secrets.** `SERPER_API_KEY` / `SEARCHAPI_API_KEY` must live ONLY in
+> `services/api/.env` (git-ignored) or your host's environment settings — never commit them, never
+> print or log them. To enable live external context on the hosted backend, set
+> `EXTERNAL_SIGNALS_ENABLED=true`, `EXTERNAL_SIGNALS_PROVIDER=searchapi` (or `serper`) and the matching
+> key in the host's environment (e.g. Render → Environment), then redeploy. With no key, the provider
+> falls back to mock automatically — nothing breaks.
 
 ### Frontend (`apps/web/.env.local`, copied from `apps/web/.env.local.example`)
 
