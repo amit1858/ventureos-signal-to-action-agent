@@ -5,6 +5,7 @@ import type {
   ActionResult,
   DecisionComparison,
   DecisionCredentialPayload,
+  DecisionProviderCatalog,
   DecisionProviderStatus,
   DecisionProviderTestResult,
   ExternalSignalsResult,
@@ -94,6 +95,9 @@ export const api = {
     jfetch<HubspotWriteback>(`/api/actions/${recommendationId}/hubspot-note`, { method: "POST" }),
   decisionProvidersStatus: () =>
     jfetch<DecisionProviderStatus>("/api/decision-providers/status"),
+  // Phase 5.0A.1 — curated model catalog so users never type a model id.
+  decisionCatalog: () =>
+    jfetch<DecisionProviderCatalog>("/api/decision-providers/catalog"),
   // Phase 5.0A — session BYOK: the key travels in the request BODY (never the URL,
   // so it never lands in access logs) and is used for this single request only.
   decisionTest: (payload: {

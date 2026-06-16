@@ -421,10 +421,29 @@ export type DecisionTestStatus = "connected" | "no_key" | "failed" | "unsupporte
 export interface DecisionProviderTestResult {
   ok: boolean;
   provider: string;
+  provider_label?: string;
   model: string;
+  model_display?: string;
   status: DecisionTestStatus | string;
   error?: string | null;
+  error_category?: string | null;
   latency_ms: number;
+}
+
+/** One curated model entry in the BYOK provider catalog (Phase 5.0A.1). */
+export interface DecisionModelEntry {
+  id: string;
+  display: string;
+  tier?: string;
+  description?: string;
+  recommended?: boolean;
+}
+
+/** Catalog of curated models per provider, with recommended defaults. */
+export interface DecisionProviderCatalog {
+  providers: Record<string, DecisionModelEntry[]>;
+  recommended: Record<string, string>;
+  discovery: string;
 }
 
 /** One per-session BYOK credential as sent to the backend (snake_case wire). */

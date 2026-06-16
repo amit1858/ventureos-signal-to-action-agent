@@ -33,6 +33,13 @@ from decision_providers.base import (
     not_configured_decision,
 )
 from decision_providers.context import build_decision_context
+from decision_providers.catalog import (
+    catalog as model_catalog,
+    display_for,
+    is_known_model,
+    models_for,
+    recommended_model,
+)
 from decision_providers.deterministic_provider import DeterministicProvider
 from decision_providers.llm_base import ProviderError
 from decision_providers.nvidia_provider import NvidiaProvider
@@ -74,6 +81,21 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def provider_catalog() -> dict:
+    """Return the curated model catalog for every live provider (Phase 5.0A.1).
+
+    Shape: ``{"providers": {"openai": [{id, display, tier, description, recommended}, ...], ...},
+    "recommended": {"openai": "gpt-4o-mini", ...}}``. The UI uses this to render
+    a model dropdown so non-technical users never type a model identifier.
+    """
+    providers = model_catalog()
+    return {
+        "providers": providers,
+        "recommended": {pid: recommended_model(pid) for pid in providers},
+        "discovery": "static",  # future: "remote" when ``fetch_remote_models`` is wired
+    }
+
+
 # -- status ---------------------------------------------------------------
 
 
@@ -105,6 +127,8 @@ def provider_status(credentials: Credentials = None) -> dict:
                 "id": pid,
                 "label": prov.label,
                 "model": prov.model_name(),
+                "model_display": display_for(pid, prov.model_name()) or "",
+                "model_recommended": recommended_model(pid) if live_capable else "",
                 "live_capable": live_capable,
                 "configured": configured,
                 "is_baseline": pid == "deterministic",
@@ -131,16 +155,23 @@ def test_provider(provider_id: str, credential: Optional[ProviderCredential]) ->
 
     Builds the named provider with the supplied credential and makes one minimal
     request. Returns a secret-free result -- never the key. Possible ``status``
-    values: ``connected`` | ``no_key`` | ``failed`` | ``unsupported``.
+    values: ``connected`` | ``no_key`` | ``failed`` | ``unsupported``. On
+    ``failed`` the response also carries an ``error_category`` so the UI can
+    show a friendly diagnostic (invalid_key / model_not_found / rate_limited /
+    endpoint_unavailable / timeout / network / http_error / invalid_output /
+    unknown). Phase 5.0A.1 also returns a curated ``model_display`` label.
     """
     pid = (provider_id or "").lower()
     if pid not in LIVE_DECISION_PROVIDERS:
         return {
             "ok": False,
             "provider": pid,
+            "provider_label": pid.title(),
             "model": "",
+            "model_display": "",
             "status": "unsupported",
             "error": "Unknown or non-live provider.",
+            "error_category": "unsupported",
             "latency_ms": 0,
         }
 
@@ -149,30 +180,41 @@ def test_provider(provider_id: str, credential: Optional[ProviderCredential]) ->
         return {
             "ok": False,
             "provider": pid,
+            "provider_label": prov.label,
             "model": prov.model_name(),
+            "model_display": display_for(pid, prov.model_name()) or "",
             "status": "no_key",
             "error": "No API key provided.",
+            "error_category": "invalid_key",
             "latency_ms": 0,
         }
 
     start = time.perf_counter()
     try:
         result = prov.ping()  # type: ignore[attr-defined]  # live providers expose ping()
+        resolved_model = result.get("model", prov.model_name())
         return {
             "ok": True,
             "provider": pid,
-            "model": result.get("model", prov.model_name()),
+            "provider_label": prov.label,
+            "model": resolved_model,
+            "model_display": display_for(pid, resolved_model) or resolved_model,
             "status": "connected",
             "error": None,
+            "error_category": None,
             "latency_ms": int(result.get("latency_ms", 0)),
         }
     except ProviderError as exc:
+        category = getattr(exc, "error_category", "unknown") or "unknown"
         return {
             "ok": False,
             "provider": pid,
+            "provider_label": prov.label,
             "model": prov.model_name(),
+            "model_display": display_for(pid, prov.model_name()) or "",
             "status": "failed",
             "error": str(exc),
+            "error_category": category,
             "latency_ms": int((time.perf_counter() - start) * 1000),
         }
     except Exception as exc:  # noqa: BLE001 -- defence in depth; never leak internals
@@ -180,9 +222,12 @@ def test_provider(provider_id: str, credential: Optional[ProviderCredential]) ->
         return {
             "ok": False,
             "provider": pid,
+            "provider_label": prov.label,
             "model": prov.model_name(),
+            "model_display": display_for(pid, prov.model_name()) or "",
             "status": "failed",
             "error": type(exc).__name__,
+            "error_category": "unknown",
             "latency_ms": int((time.perf_counter() - start) * 1000),
         }
 

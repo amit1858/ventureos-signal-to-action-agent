@@ -530,7 +530,7 @@ export const PROVIDER_META: Record<"openai" | "anthropic" | "nvidia", ProviderMe
     id: "anthropic",
     label: "Anthropic Claude",
     vendor: "Anthropic",
-    defaultModel: "claude-3-5-sonnet-latest",
+    defaultModel: "claude-sonnet-4-20250514",
     keyHint: "sk-ant-",
     placeholder: "sk-ant-…",
     console: "console.anthropic.com",

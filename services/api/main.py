@@ -613,6 +613,18 @@ def decision_providers_status() -> dict:
     return decision_providers.provider_status()
 
 
+@app.get("/api/decision-providers/catalog")
+def decision_providers_catalog() -> dict:
+    """Curated model catalog per live provider (Phase 5.0A.1).
+
+    Drives the UI's model dropdown so a non-technical user never types a model
+    identifier. Read-only, no I/O, contains no secrets. The frontend reads
+    ``providers[provider_id][]`` for ``{id, display, tier, description,
+    recommended}`` entries and ``recommended[provider_id]`` for the default.
+    """
+    return decision_providers.provider_catalog()
+
+
 @app.post("/api/decision-providers/test")
 def decision_providers_test(body: TestConnectionIn) -> dict:
     """Test a BYOK credential against a live provider (Phase 5.0A).

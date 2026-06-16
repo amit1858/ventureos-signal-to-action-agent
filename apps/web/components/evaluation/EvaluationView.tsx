@@ -32,6 +32,8 @@ import { cx } from "@/lib/format";
 import type {
   DecisionComparison,
   DecisionCredentialPayload,
+  DecisionModelEntry,
+  DecisionProviderCatalog,
   DecisionProviderStatus,
   DecisionProviderTestResult,
   HubspotStatus,
@@ -74,6 +76,7 @@ import {
   setCredential as byokSet,
   type ActiveProvider,
 } from "@/lib/byok";
+import { api } from "@/lib/api";
 import { Card } from "@/components/ui";
 
 // -- shared tone language (semantic, never decorative) --------------------
@@ -486,8 +489,35 @@ type TestPhase = "idle" | "testing" | "ok" | "fail";
 interface TestState {
   phase: TestPhase;
   model?: string;
+  modelDisplay?: string;
+  providerLabel?: string;
   error?: string;
+  errorCategory?: string;
   latency?: number;
+}
+
+// Phase 5.0A.1 — humanize backend error_category for the test result chip.
+function diagnosticFor(category: string | undefined, fallback: string): string {
+  switch (category) {
+    case "invalid_key":
+      return "Invalid API key — double-check the value you pasted.";
+    case "model_not_found":
+      return "Model not found — pick a different model from the dropdown.";
+    case "endpoint_unavailable":
+      return "Provider endpoint unavailable — try again in a moment.";
+    case "rate_limited":
+      return "Rate limited by the provider — wait and retry.";
+    case "timeout":
+      return "Request timed out — provider may be slow right now.";
+    case "network":
+      return "Network error reaching the provider.";
+    case "invalid_output":
+      return "Provider replied but the response could not be parsed.";
+    case "unsupported":
+      return fallback || "This provider does not support live testing.";
+    default:
+      return fallback || "Connection failed";
+  }
 }
 
 const EMPTY_CRED: ByokCredential = { apiKey: "", model: "", baseUrl: "" };
@@ -529,6 +559,7 @@ function DecisionProviderSection({
 
   // -- session BYOK state (hydrated on mount; never during SSR) ----------
   const [hydrated, setHydrated] = React.useState(false);
+  const [catalog, setCatalog] = React.useState<DecisionProviderCatalog | null>(null);
   const [creds, setCreds] = React.useState<Record<ByokProviderId, ByokCredential>>({
     openai: EMPTY_CRED,
     anthropic: EMPTY_CRED,
@@ -549,7 +580,39 @@ function DecisionProviderSection({
     });
     setActive(getActiveProvider());
     setHydrated(true);
+    // Phase 5.0A.1 — fetch curated model catalog so users never type a model id.
+    api
+      .decisionCatalog()
+      .then((c) => setCatalog(c))
+      .catch(() => setCatalog(null));
   }, []);
+
+  React.useEffect(() => {
+    if (!catalog) return;
+    setCreds((prev) => {
+      let next = prev;
+      for (const pid of ["openai", "anthropic", "nvidia"] as ByokProviderId[]) {
+        const cur = (prev[pid].model || "").trim();
+        const recommended = catalog.recommended[pid];
+        if (!recommended) continue;
+        const known = (catalog.providers[pid] ?? []).some((m) => m.id === cur);
+        // If empty OR points at a model we no longer offer, snap to recommended.
+        if (!cur || !known) {
+          if (next === prev) next = { ...prev };
+          next[pid] = { ...next[pid], model: recommended };
+        }
+      }
+      return next;
+    });
+  }, [catalog]);
+
+  const modelDisplayFor = React.useCallback(
+    (pid: ByokProviderId, modelId: string): string => {
+      const entry = (catalog?.providers[pid] ?? []).find((m) => m.id === modelId);
+      return entry?.display || modelId;
+    },
+    [catalog],
+  );
 
   const patchCred = React.useCallback(
     (provider: ByokProviderId, patch: Partial<ByokCredential>) => {
@@ -580,8 +643,19 @@ function DecisionProviderSection({
         setTests((prev) => ({
           ...prev,
           [provider]: res.ok
-            ? { phase: "ok", model: res.model, latency: res.latency_ms }
-            : { phase: "fail", error: res.error ?? res.status },
+            ? {
+                phase: "ok",
+                model: res.model,
+                modelDisplay: res.model_display || res.model,
+                providerLabel: res.provider_label,
+                latency: res.latency_ms,
+              }
+            : {
+                phase: "fail",
+                error: res.error ?? res.status,
+                errorCategory: res.error_category ?? undefined,
+                latency: res.latency_ms,
+              },
         }));
       } catch (e) {
         setTests((prev) => ({ ...prev, [provider]: { phase: "fail", error: (e as Error).message } }));
@@ -682,7 +756,7 @@ function DecisionProviderSection({
               key={m.id}
               label={m.label}
               health={health}
-              model={creds[m.id].model.trim() || m.defaultModel}
+              model={modelDisplayFor(m.id, creds[m.id].model.trim() || m.defaultModel)}
             />
           );
         })}
@@ -709,6 +783,8 @@ function DecisionProviderSection({
               envConfigured={statusById[m.id]?.configured ?? false}
               active={active === m.id}
               hydrated={hydrated}
+              models={catalog?.providers[m.id] ?? []}
+              recommendedModel={catalog?.recommended[m.id] ?? m.defaultModel}
               onKeyChange={(v) => patchCred(m.id, { apiKey: v })}
               onModelChange={(v) => patchCred(m.id, { model: v })}
               onTest={() => handleTest(m.id)}
@@ -936,6 +1012,8 @@ function ProviderSettingsCard({
   envConfigured,
   active,
   hydrated,
+  models,
+  recommendedModel,
   onKeyChange,
   onModelChange,
   onTest,
@@ -948,6 +1026,8 @@ function ProviderSettingsCard({
   envConfigured: boolean;
   active: boolean;
   hydrated: boolean;
+  models: DecisionModelEntry[];
+  recommendedModel: string;
   onKeyChange: (v: string) => void;
   onModelChange: (v: string) => void;
   onTest: () => void;
@@ -957,6 +1037,9 @@ function ProviderSettingsCard({
   const hasSessionKey = hydrated && cred.apiKey.trim().length > 0;
   const source = hasSessionKey ? "Session key" : envConfigured ? "Env key" : "No key";
   const sourceTone: Tone = hasSessionKey ? "good" : envConfigured ? "progress" : "muted";
+  const selectedId = cred.model.trim() || recommendedModel || meta.defaultModel;
+  const selectedDisplay = models.find((m) => m.id === selectedId)?.display || selectedId;
+  const hasCatalog = models.length > 0;
 
   return (
     <div
@@ -971,9 +1054,7 @@ function ProviderSettingsCard({
             {active ? <CheckCircle2 size={13} className="shrink-0 text-accent" /> : null}
             <span className="truncate">{meta.label}</span>
           </div>
-          <div className="mt-0.5 font-mono text-[10px] text-faint">
-            {cred.model.trim() || meta.defaultModel}
-          </div>
+          <div className="mt-0.5 truncate text-[11px] text-muted">{selectedDisplay}</div>
         </div>
         <span
           className={cx(
@@ -1006,19 +1087,28 @@ function ProviderSettingsCard({
         <div className="mt-1 text-[10px] text-faint/70">Get a key at {meta.console}</div>
       )}
 
-      {/* MODEL (optional override) */}
+      {/* MODEL — curated dropdown (Phase 5.0A.1, replaces free-text entry) */}
       <label className="mt-2.5 block text-[10px] font-medium uppercase tracking-wider text-faint">
-        Model <span className="normal-case text-faint/60">(optional)</span>
+        Model
       </label>
-      <input
-        type="text"
-        autoComplete="off"
-        spellCheck={false}
-        value={cred.model}
+      <select
+        value={selectedId}
         onChange={(e) => onModelChange(e.target.value)}
-        placeholder={meta.defaultModel}
-        className="mt-1 w-full rounded-lg border border-edge bg-base/50 px-2.5 py-1.5 font-mono text-[12px] text-ink outline-none transition placeholder:text-faint/60 focus:border-brand/40"
-      />
+        disabled={!hasCatalog}
+        className="mt-1 w-full rounded-lg border border-edge bg-base/50 px-2.5 py-1.5 text-[12px] text-ink outline-none transition focus:border-brand/40 disabled:opacity-50"
+      >
+        {hasCatalog ? (
+          models.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.display}
+              {m.recommended ? " · Recommended" : ""}
+              {m.tier ? ` · ${m.tier}` : ""}
+            </option>
+          ))
+        ) : (
+          <option value={selectedId}>{selectedDisplay}</option>
+        )}
+      </select>
 
       {/* ACTIONS */}
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -1058,20 +1148,34 @@ function ProviderSettingsCard({
         ) : null}
       </div>
 
-      {/* TEST RESULT */}
+      {/* TEST RESULT — provider · resolved model · latency (Phase 5.0A.1) */}
       {test.phase === "ok" ? (
-        <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[11px] text-accent">
-          <CheckCircle2 size={12} />
-          Connected{test.model ? ` · ${test.model}` : ""}
+        <div className="mt-2.5 flex items-start gap-1.5 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[11px] text-accent">
+          <CheckCircle2 size={12} className="mt-[2px] shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="font-medium">
+              Connected{test.providerLabel ? ` · ${test.providerLabel}` : ""}
+            </div>
+            {test.modelDisplay ? (
+              <div className="text-[10px] text-muted">{test.modelDisplay}</div>
+            ) : null}
+          </div>
           {typeof test.latency === "number" ? (
-            <span className="ml-auto font-mono text-[10px] text-faint">{test.latency} ms</span>
+            <span className="font-mono text-[10px] text-faint">{test.latency} ms</span>
           ) : null}
         </div>
       ) : null}
       {test.phase === "fail" ? (
-        <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-amber/30 bg-amber/10 px-2.5 py-1.5 text-[11px] text-amber">
-          <XCircle size={12} />
-          {test.error || "Connection failed"}
+        <div className="mt-2.5 flex items-start gap-1.5 rounded-lg border border-amber/30 bg-amber/10 px-2.5 py-1.5 text-[11px] text-amber">
+          <XCircle size={12} className="mt-[2px] shrink-0" />
+          <div className="min-w-0 flex-1">
+            <div className="font-medium">{diagnosticFor(test.errorCategory, test.error || "")}</div>
+            {test.error && test.errorCategory ? (
+              <div className="mt-0.5 truncate text-[10px] text-faint" title={test.error}>
+                {test.error}
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </div>

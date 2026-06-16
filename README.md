@@ -309,8 +309,13 @@ for setup and the Comparison Mode in the Evaluation Center.
 Endpoints (all additive, read-only):
 
 - `GET  /api/decision-providers/status` - per-provider configured / active / not-configured state.
+- `GET  /api/decision-providers/catalog` - curated `{provider, models[]}` catalog used by the
+  UI dropdown so non-technical users never type a model id (Phase 5.0A.1).
 - `POST /api/decision-providers/test` - test a session key without persisting it; returns
-  `{ok, provider, model, status, latency_ms}` only - never the key.
+  `{ok, provider, provider_label, model, model_display, status, error_category, latency_ms}`
+  only - never the key. `error_category` is one of `invalid_key | model_not_found |
+  endpoint_unavailable | rate_limited | timeout | network | invalid_output | unsupported`,
+  surfaced as a friendly diagnostic in the UI (e.g. "Pick a different model from the dropdown").
 - `POST /api/decision-providers/evaluate/{account_id}` - one provider's decision for one account.
 - `POST /api/decision-providers/compare/{account_id}` - deterministic baseline plus every
   configured live provider, with differences and an evaluation block.
