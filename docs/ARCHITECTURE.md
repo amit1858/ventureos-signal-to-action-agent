@@ -71,7 +71,7 @@ The frontend tells a story by scrolling through one continuous journey:
 |---------|-------------------------------|
 | **Landing page** | "What is this product?" |
 | **Command Center** | "What should I pay attention to?" |
-| → Executive Morning Brief | "What changed overnight?" |
+| → Executive Morning Brief | "What changed overnight, and where should I spend today across my whole book?" |
 | → Portfolio Health | "Should I worry?" |
 | → Today's Priorities | "What should I do today?" |
 | → Portfolio Map (Risk vs Opportunity) | "Where should I focus?" |

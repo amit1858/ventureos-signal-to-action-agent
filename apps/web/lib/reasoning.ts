@@ -250,7 +250,12 @@ export function reasonForRecommendation(rec: Recommendation, account?: Account):
   };
 }
 
-// -- executive morning brief (P1) -------------------------------------------
+// -- executive morning brief (Phase 4.3 · portfolio AI Chief of Staff) -------
+// The portfolio-level "what should I do today across my whole book?" briefing.
+// Everything here is derived deterministically from accounts + the already-ranked
+// recommendations the engine produced. It NEVER re-ranks, re-scores or changes
+// governance — outside-in context (when present) is folded in as supporting,
+// advisory colour only.
 export interface MorningBriefTop {
   accountId: string;
   accountName: string;
@@ -260,13 +265,186 @@ export interface MorningBriefTop {
   estimatedMinutes: number;
 }
 
+export interface BriefChange {
+  key: string;
+  text: string;
+  tone: ReasonTone;
+}
+
+export interface BriefFocusAccount {
+  accountId: string;
+  accountName: string;
+  industry?: string;
+  why: string;
+  action: BusinessAction;
+  recommendedAction: string;
+  externalContext?: string | null;
+}
+
+export interface BriefTodayAction {
+  rank: number;
+  accountId: string;
+  accountName: string;
+  industry?: string;
+  action: BusinessAction;
+  reason: string;
+  timing: string;
+  estimatedMinutes: number;
+  expectedOutcome: string;
+}
+
+export interface BriefOneThing {
+  accountId: string;
+  accountName: string;
+  lead: string;
+  text: string;
+  action: BusinessAction;
+}
+
+export interface BriefCrmUpdates {
+  tasks: number;
+  notes: number;
+  followups: number;
+}
+
+// Supporting outside-in context for one account, distilled to a single cautious
+// takeaway. Sourced from the existing external-signals layer — never a driver.
+export interface BriefExternalContext {
+  takeaway: string;
+  sourceCount: number;
+  topSourceTitle?: string;
+  topSourceUrl?: string | null;
+}
+
+export interface MorningBriefOptions {
+  externalEnabled?: boolean;
+  externalContext?: Record<string, BriefExternalContext>;
+}
+
 export interface MorningBrief {
+  // -- existing aggregates (kept stable for backward compatibility) --
   analyzed: number;
   attention: number;
   revenueAtRisk: number;
   growthOpportunity: number;
   hasResult: boolean;
   top: MorningBriefTop | null;
+  // -- Phase 4.3 portfolio brief --
+  headline: string;
+  whatChanged: BriefChange[];
+  biggestRisk: BriefFocusAccount | null;
+  biggestOpportunity: BriefFocusAccount | null;
+  todayActions: BriefTodayAction[];
+  oneThing: BriefOneThing | null;
+  estimatedEffortMinutes: number;
+  suggestedCrmUpdates: BriefCrmUpdates;
+  trustStatement: string;
+  externalEnabled: boolean;
+  externalCount: number;
+}
+
+const ACTION_VERB: Record<ActionKey, string> = {
+  recover: "Call",
+  renewal: "Call",
+  review: "Review",
+  winback: "Re-engage",
+  crosssell: "Follow up with",
+  adoption: "Follow up with",
+  checkin: "Check in with",
+  manual_review: "Review",
+  hold: "Monitor",
+  generic: "Follow up with",
+};
+
+interface FocusPick {
+  rec: Recommendation;
+  account: Account;
+}
+
+function recAccountPairs(accountsById: Record<string, Account>, recs: Recommendation[]): FocusPick[] {
+  const out: FocusPick[] = [];
+  for (const rec of recs) {
+    const account = accountsById[rec.account_id];
+    if (account) out.push({ rec, account });
+  }
+  return out;
+}
+
+function pickBiggestRisk(pairs: FocusPick[]): FocusPick | null {
+  let best: FocusPick | null = null;
+  let bestScore = -1;
+  for (const p of pairs) {
+    const s = churnScore(p.account);
+    if (s > bestScore) {
+      bestScore = s;
+      best = p;
+    }
+  }
+  return best;
+}
+
+function expansionRank(a: Account): number {
+  const lvl = expansionLevel(a);
+  const base = lvl === "High" ? 200 : lvl === "Medium" ? 100 : 0;
+  return base + a.growth_potential_score;
+}
+
+function pickBiggestOpportunity(pairs: FocusPick[], excludeId?: string): FocusPick | null {
+  let best: FocusPick | null = null;
+  let bestScore = -1;
+  for (const p of pairs) {
+    if (excludeId && p.account.account_id === excludeId) continue;
+    const s = expansionRank(p.account);
+    if (s > bestScore) {
+      bestScore = s;
+      best = p;
+    }
+  }
+  return best;
+}
+
+function actionFor(pick: FocusPick): BusinessAction {
+  return businessAction(pick.rec.action_type, {
+    governanceStatus: pick.rec.governance_status,
+    growthPotential: pick.account.growth_potential_score,
+    productUsage: pick.account.product_usage_score,
+  });
+}
+
+function buildFocus(pick: FocusPick, ctx?: BriefExternalContext): BriefFocusAccount {
+  const action = actionFor(pick);
+  return {
+    accountId: pick.account.account_id,
+    accountName: pick.rec.account_name,
+    industry: pick.account.industry,
+    why: whyNow(pick.account),
+    action,
+    recommendedAction: `${action.label} ${timingPhrase(action.urgency)}.`,
+    externalContext: ctx?.takeaway ?? null,
+  };
+}
+
+function lowerFirst(s: string): string {
+  return s ? s.charAt(0).toLowerCase() + s.slice(1) : s;
+}
+
+// The account IDs the portfolio brief will spotlight (biggest risk + biggest
+// opportunity). Exposed so the page can cheaply, cache-backed prefetch outside-in
+// context for just those accounts instead of calling external search for the
+// whole book on every load.
+export function briefFocusAccountIds(
+  accountsById: Record<string, Account>,
+  recs: Recommendation[],
+  hasResult: boolean,
+): string[] {
+  if (!hasResult) return [];
+  const pairs = recAccountPairs(accountsById, recs);
+  const risk = pickBiggestRisk(pairs);
+  const opp = pickBiggestOpportunity(pairs, risk?.account.account_id);
+  const ids: string[] = [];
+  if (risk) ids.push(risk.account.account_id);
+  if (opp && opp.account.account_id !== risk?.account.account_id) ids.push(opp.account.account_id);
+  return ids;
 }
 
 export function morningBrief(
@@ -274,32 +452,143 @@ export function morningBrief(
   accountsById: Record<string, Account>,
   recs: Recommendation[],
   hasResult: boolean,
+  opts: MorningBriefOptions = {},
 ): MorningBrief {
-  const topRec = hasResult ? recs[0] : null;
-  const topAccount = topRec ? accountsById[topRec.account_id] : undefined;
-  let top: MorningBriefTop | null = null;
-  if (topRec) {
-    const action = businessAction(topRec.action_type, {
-      governanceStatus: topRec.governance_status,
-      growthPotential: topAccount?.growth_potential_score,
-      productUsage: topAccount?.product_usage_score,
+  const externalEnabled = opts.externalEnabled ?? false;
+  const externalContext = opts.externalContext ?? {};
+  const externalCount = Object.values(externalContext).filter((c) => c.sourceCount > 0).length;
+
+  const attention = countAttention(accounts);
+  const pairs = hasResult ? recAccountPairs(accountsById, recs) : [];
+
+  // -- legacy `top` (kept so the shape stays stable) --
+  const topPick = pairs[0] ?? null;
+  const topAction = topPick ? actionFor(topPick) : null;
+  const top: MorningBriefTop | null =
+    topPick && topAction
+      ? {
+          accountId: topPick.account.account_id,
+          accountName: topPick.rec.account_name,
+          industry: topPick.account.industry,
+          action: topAction,
+          timing: timingPhrase(topAction.urgency),
+          estimatedMinutes: estimateActionMinutes(topAction.key, topPick.rec.evidence?.length ?? 0),
+        }
+      : null;
+
+  // -- what changed overnight --
+  const whatChanged: BriefChange[] = [];
+  if (attention > 0)
+    whatChanged.push({
+      key: "attention",
+      tone: "risk",
+      text: `${attention} account${attention === 1 ? "" : "s"} require${attention === 1 ? "s" : ""} immediate attention.`,
     });
-    top = {
-      accountId: topRec.account_id,
-      accountName: topRec.account_name,
-      industry: topAccount?.industry,
+  const renew = accounts.filter((a) => a.renewal_days >= 0 && a.renewal_days <= 30).length;
+  if (renew)
+    whatChanged.push({
+      key: "renewal",
+      tone: "risk",
+      text: `${renew} account${renew === 1 ? " has a renewal window" : "s have renewal windows"} approaching.`,
+    });
+  const eng = accounts.filter((a) => a.engagement_score <= ENGAGE_LOW).length;
+  if (eng)
+    whatChanged.push({
+      key: "engagement",
+      tone: "risk",
+      text: `${eng} account${eng === 1 ? "" : "s"} show${eng === 1 ? "s" : ""} declining engagement.`,
+    });
+  const support = accounts.filter((a) => a.support_risk_score >= RISK_HIGH).length;
+  if (support)
+    whatChanged.push({
+      key: "support",
+      tone: "risk",
+      text: `${support} account${support === 1 ? "" : "s"} show${support === 1 ? "s" : ""} rising support risk.`,
+    });
+  if (externalEnabled && externalCount > 0)
+    whatChanged.push({
+      key: "external",
+      tone: "neutral",
+      text: `${externalCount} external development${externalCount === 1 ? "" : "s"} may affect today's conversations.`,
+    });
+
+  // -- biggest risk / opportunity --
+  const riskPick = pickBiggestRisk(pairs);
+  const oppPick = pickBiggestOpportunity(pairs, riskPick?.account.account_id);
+  const biggestRisk = riskPick ? buildFocus(riskPick, externalContext[riskPick.account.account_id]) : null;
+  const biggestOpportunity = oppPick ? buildFocus(oppPick, externalContext[oppPick.account.account_id]) : null;
+
+  // -- what should I do today (ranked; real work only — holds excluded) --
+  const todayActions: BriefTodayAction[] = [];
+  for (const p of pairs) {
+    const action = actionFor(p);
+    if (action.urgency === "hold") continue;
+    const reasons = accountReasons(p.account);
+    todayActions.push({
+      rank: todayActions.length + 1,
+      accountId: p.account.account_id,
+      accountName: p.rec.account_name,
+      industry: p.account.industry,
       action,
+      reason: reasons[0]?.text ?? action.value,
       timing: timingPhrase(action.urgency),
-      estimatedMinutes: estimateActionMinutes(action.key, topRec.evidence?.length ?? 0),
+      estimatedMinutes: estimateActionMinutes(action.key, p.rec.evidence?.length ?? 0),
+      expectedOutcome: expectedOutcome(action.key),
+    });
+    if (todayActions.length >= 5) break;
+  }
+
+  const estimatedEffortMinutes = todayActions.reduce((s, a) => s + a.estimatedMinutes, 0);
+
+  // -- suggested CRM updates (advisory only — created only after approval) --
+  const tasks = todayActions.length;
+  const notes = todayActions.filter((a) =>
+    ["recover", "renewal", "review", "winback", "manual_review"].includes(a.action.key),
+  ).length;
+  const followups = todayActions.filter((a) => {
+    const acc = accountsById[a.accountId];
+    const oppPlay = ["crosssell", "adoption", "checkin"].includes(a.action.key);
+    const renewSoon = acc ? acc.renewal_days >= 0 && acc.renewal_days <= RENEWAL_SOON : false;
+    return oppPlay || renewSoon;
+  }).length;
+
+  // -- if you do only one thing (the engine's #1 priority) --
+  let oneThing: BriefOneThing | null = null;
+  if (topPick && topAction) {
+    const ext = externalContext[topPick.account.account_id];
+    const extSentence = ext ? ` Externally, ${lowerFirst(ext.takeaway)}` : "";
+    const closer =
+      topAction.urgency === "opportunity"
+        ? "Move while the moment is warm — grounded in real usage, not external optimism alone."
+        : "Validate priorities now, before the renewal conversation turns reactive.";
+    oneThing = {
+      accountId: topPick.account.account_id,
+      accountName: topPick.rec.account_name,
+      lead: `${ACTION_VERB[topAction.key]} ${topPick.rec.account_name}`,
+      text: `${whyNow(topPick.account)}${extSentence} ${closer}`,
+      action: topAction,
     };
   }
+
   return {
     analyzed: accounts.length,
-    attention: countAttention(accounts),
+    attention,
     revenueAtRisk: revenueAtRisk(accounts),
     growthOpportunity: growthOpportunity(accounts),
     hasResult,
     top,
+    headline: "Here's where I'd spend today.",
+    whatChanged: whatChanged.slice(0, 5),
+    biggestRisk,
+    biggestOpportunity,
+    todayActions,
+    oneThing,
+    estimatedEffortMinutes,
+    suggestedCrmUpdates: { tasks, notes, followups },
+    trustStatement:
+      "No CRM action is created without your approval. External signals are advisory only and never change ranking, scoring or governance.",
+    externalEnabled,
+    externalCount,
   };
 }
 

@@ -10,7 +10,7 @@ import type {
   HubspotWriteback,
 } from "@/lib/types";
 import { businessAction } from "@/lib/actions";
-import { expectedOutcome } from "@/lib/reasoning";
+import { expectedOutcome, type BriefExternalContext } from "@/lib/reasoning";
 import { cx } from "@/lib/format";
 import { useReveal } from "@/lib/useReveal";
 import { ExecutiveMorningBrief } from "@/components/command/ExecutiveMorningBrief";
@@ -33,6 +33,7 @@ export function CommandCenter({
   dataSourceLabel,
   isHubspotSource,
   externalSignalsEnabled = false,
+  externalContext,
   onRun,
   onOpenAccount,
 }: {
@@ -47,6 +48,7 @@ export function CommandCenter({
   dataSourceLabel: string;
   isHubspotSource: boolean;
   externalSignalsEnabled?: boolean;
+  externalContext?: Record<string, BriefExternalContext>;
   onRun: () => void;
   onOpenAccount: (accountId: string) => void;
 }) {
@@ -87,6 +89,8 @@ export function CommandCenter({
         dataSourceLabel={dataSourceLabel}
         isHubspotSource={isHubspotSource}
         lastSync={lastSync}
+        externalEnabled={externalSignalsEnabled}
+        externalContext={externalContext}
         onRun={onRun}
         onOpenAccount={onOpenAccount}
       />

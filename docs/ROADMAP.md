@@ -12,8 +12,13 @@ UI**.
 - **Synthetic data mode** as an always-available offline fallback.
 - **Deterministic reasoning engine** — auditable rankings, risk, opportunity, and next-best actions.
 - **Six-agent governed workflow** with typed Pydantic contracts.
-- **Executive Command Center** — Morning Brief, Portfolio Health, Today's Priorities, Risk vs
-  Opportunity map, Executive Briefing, Governed Pipeline.
+- **Executive Command Center** — a portfolio-level **Executive Morning Brief** (an AI "chief of
+  staff" open: what changed overnight, biggest risk, biggest opportunity, a ranked "what I'd do
+  today", the single highest-leverage action, estimated seller effort, and advisory CRM updates
+  awaiting approval), plus Portfolio Health, Today's Priorities, Risk vs Opportunity map, Executive
+  Briefing, Governed Pipeline. The brief is derived deterministically from the same ranked
+  recommendations; external context (when enabled) is folded in as supporting colour only and never
+  changes ranking, scoring or governance.
 - **Workspace** — conversational query surface.
 - **Human approval** — nothing autonomous; every action starts as `pending`.
 - **Decision ledger** — full run trace persisted for audit and replay.

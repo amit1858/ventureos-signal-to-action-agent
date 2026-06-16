@@ -15,6 +15,7 @@ import type {
   RecommendationResponse,
 } from "@/lib/types";
 import { cx } from "@/lib/format";
+import { briefFocusAccountIds, type BriefExternalContext } from "@/lib/reasoning";
 import { Header, type AppView } from "@/components/Header";
 import { LeftPanel } from "@/components/LeftPanel";
 import { CrmIntegrationCard } from "@/components/CrmIntegrationCard";
@@ -44,6 +45,22 @@ import { Card, PanelTitle } from "@/components/ui";
 
 const DEFAULT_QUERY = "Which SMB accounts need attention this week and why?";
 const DEMO_MODE_KEY = "s2a_demo_mode";
+
+// Distil one account's outside-in signal result into a single cautious takeaway
+// for the portfolio brief. Supporting context only — never a ranking driver.
+function toBriefExternalContext(d: ExternalSignalsResult): BriefExternalContext | null {
+  if (!d || !d.enabled) return null;
+  const sourceCount = d.sources?.length ?? d.signals?.length ?? 0;
+  const raw = (d.seller_takeaway || d.brief?.fused_insight || d.summary || "").trim();
+  if (!raw || sourceCount === 0) return null;
+  const top = d.sources?.[0];
+  return {
+    takeaway: raw.length > 200 ? `${raw.slice(0, 197).trimEnd()}…` : raw,
+    sourceCount,
+    topSourceTitle: top?.title,
+    topSourceUrl: top?.url ?? null,
+  };
+}
 
 export default function Page() {
   const [meta, setMeta] = React.useState<MetaResponse | null>(null);
@@ -193,6 +210,32 @@ export default function Page() {
       cancelled = true;
     };
   }, [selectedRec, externalSignals, externalSignalsEnabled]);
+
+  // Phase 4.3 — prefetch outside-in context for just the brief's spotlight
+  // accounts (biggest risk + biggest opportunity) so the Executive Morning Brief
+  // can show supporting context without calling external search for the whole
+  // book. Cache-backed and capped to ~2 accounts; silent on failure; a no-op
+  // when the layer is disabled or before any analysis has run.
+  React.useEffect(() => {
+    if (!externalSignalsEnabled) return;
+    const recs = result?.recommendations ?? [];
+    if (recs.length === 0) return;
+    const focusIds = briefFocusAccountIds(accounts, recs, true);
+    const pending = focusIds.filter((id) => !externalSignals[id]);
+    if (pending.length === 0) return;
+    let cancelled = false;
+    pending.forEach((id) => {
+      api
+        .externalSignals(id)
+        .then((d) => {
+          if (!cancelled) setExternalSignals((prev) => (prev[id] ? prev : { ...prev, [id]: d }));
+        })
+        .catch(() => undefined);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [externalSignalsEnabled, result, accounts, externalSignals]);
 
   async function runWorkflow() {
     if (!query.trim() || loading) return;
@@ -378,6 +421,17 @@ export default function Page() {
   const modelProvider = result?.model_provider ?? meta?.model_provider ?? "mock";
   const agents = meta?.agents ?? [];
   const accountsList = React.useMemo(() => Object.values(accounts), [accounts]);
+
+  // Outside-in supporting context keyed by account, distilled for the portfolio
+  // brief from whatever external signals have already been loaded/prefetched.
+  const briefExternalContext = React.useMemo(() => {
+    const out: Record<string, BriefExternalContext> = {};
+    for (const [id, d] of Object.entries(externalSignals)) {
+      const ctx = toBriefExternalContext(d);
+      if (ctx) out[id] = ctx;
+    }
+    return out;
+  }, [externalSignals]);
   const dataSourceLabel =
     result?.data_source ??
     hubStatus?.data_source_label ??
@@ -437,6 +491,7 @@ export default function Page() {
             dataSourceLabel={dataSourceLabel}
             isHubspotSource={isHubspotSource}
             externalSignalsEnabled={externalSignalsEnabled}
+            externalContext={briefExternalContext}
             onRun={runWorkflow}
             onOpenAccount={openAccount}
           />
