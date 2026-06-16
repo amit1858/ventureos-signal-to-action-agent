@@ -530,3 +530,55 @@ One typography rhythm (eyebrow / section heading / decision / supporting / evide
 and a single semantic colour language reused across the app. Loading narrates the work
 ("Reviewing customer signals...", "Evaluating renewal and churn risk...", ...) and resolves to
 "I'm ready. Here's where I'd spend today." All motion honours `prefers-reduced-motion`.
+
+---
+
+## 14. Decision providers (BYOK)
+
+Phase 5.0 adds a Bring-Your-Own-Key (BYOK) decision layer in `services/api/decision_providers/`.
+It is additive and decoupled: it reuses the existing deterministic engine for context and never
+modifies ranking, scoring, confidence, governance, approval or CRM write-back.
+
+### Goal
+Let several model providers reason over the SAME deterministic account context and return ONE
+common structured decision, surfaced as a read-only Comparison Mode in the Evaluation Center. The
+deterministic engine stays the source of truth, the benchmark, and the fallback.
+
+### Package layout
+- `base.py` - the contract: DecisionContext (input), ProviderDecision (output), the action
+  vocabulary and level enums, JSON parsing/validation, and the fallback / not-configured helpers.
+- `context.py` - build_decision_context(account_id) reuses the existing agent pipeline (signal
+  ingestion, account health, opportunity, governance, action) plus the scoring breakdown and the
+  optional external-signals fusion brief. Read-only; never raises.
+- `deterministic_provider.py` - the baseline provider (no LLM).
+- `llm_base.py` - shared LLM behaviour: grounded prompt, strict-JSON parsing, retry-once,
+  ProviderError, safe HTTP. Concrete providers only implement the HTTP call.
+- `openai_provider.py`, `anthropic_provider.py`, `nvidia_provider.py` - concrete providers
+  (stdlib urllib; no new dependencies).
+- `__init__.py` - the router: get_decision_provider, provider_status, evaluate_account,
+  compare_account.
+
+### Common contract
+Every provider returns the same shape: provider, model, mode (deterministic / live / fallback /
+not_configured), risk_level, opportunity_level, recommended_action, confidence, executive_summary,
+business_implication, seller_implication, conversation_strategy, opening_line, crm_note, reasoning,
+caveats, latency_ms.
+
+### Routing and fallback
+The router computes the deterministic baseline first. Configured live providers run through a
+wrapper that catches any error or invalid output and returns a deterministic fallback decision
+(mode = fallback) so the flow never breaks. Providers with no key are reported as not_configured
+and are never called. Comparison runs the baseline plus every configured live provider and adds a
+differences table and an evaluation block (agreement, divergence, availability, latency,
+governance_compliant).
+
+### Governance
+LLM-generated decisions are advisory. They cannot bypass governance, cannot write to CRM, cannot
+create autonomous action, and cannot override human approval. A standing caveat is attached:
+"LLM-generated decisions are advisory and must pass governance and human approval before CRM
+action." External signals remain supporting context only and never change ranking or scoring.
+
+### Security
+Keys are read only from the environment (services/api/.env, git-ignored). They are never returned
+by an API, never logged (providers log only the exception type), and never sent to the browser.
+Status responses contain presence booleans and the model name, never the key value.

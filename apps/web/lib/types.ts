@@ -331,3 +331,84 @@ export interface SystemConfigResponse {
   config: SystemConfigSnapshot;
   warnings: string[];
 }
+
+// -- BYOK decision providers (Phase 5.0) ----------------------------------
+
+export type DecisionProviderMode = "deterministic" | "live" | "fallback" | "not_configured";
+export type DecisionLevel = "low" | "medium" | "high";
+
+export interface DecisionProviderStatusRow {
+  id: string;
+  label: string;
+  model: string;
+  live_capable: boolean;
+  configured: boolean;
+  is_baseline: boolean;
+  is_default: boolean;
+  status: "active" | "configured" | "not_configured" | "failed" | "fallback";
+}
+
+export interface DecisionProviderStatus {
+  default_provider: string;
+  deterministic_is_baseline: boolean;
+  providers: DecisionProviderStatusRow[];
+  configured_live_count: number;
+  governance_caveat: string;
+  generated_at: string;
+}
+
+export interface ProviderDecision {
+  provider: string;
+  model: string;
+  mode: DecisionProviderMode | string;
+  risk_level: DecisionLevel | string;
+  opportunity_level: DecisionLevel | string;
+  recommended_action: string;
+  confidence: DecisionLevel | string;
+  executive_summary: string;
+  business_implication: string;
+  seller_implication: string;
+  conversation_strategy: string[];
+  opening_line: string;
+  crm_note: string;
+  reasoning: string[];
+  caveats: string[];
+  latency_ms: number;
+  is_baseline: boolean;
+  provider_error?: string | null;
+}
+
+export interface DecisionDifferenceRow {
+  field: string;
+  baseline: string;
+  providers: Record<string, string>;
+}
+
+export interface DecisionEvaluation {
+  providers_compared: number;
+  provider_availability: Record<string, boolean>;
+  action_agreement: boolean | null;
+  risk_agreement: boolean | null;
+  opportunity_agreement: boolean | null;
+  confidence_agreement: boolean | null;
+  structured_output_valid: boolean;
+  fallback_used: string[];
+  fallback_success: boolean | null;
+  not_configured: string[];
+  max_latency_ms: number;
+  cost_estimate: number | null;
+  governance_compliant: boolean;
+}
+
+export interface DecisionComparison {
+  account_id: string;
+  account_name: string;
+  external_context_used: boolean;
+  baseline: ProviderDecision;
+  providers: ProviderDecision[];
+  differences: DecisionDifferenceRow[];
+  evaluation: DecisionEvaluation;
+  evaluation_notes: string[];
+  governance_caveat: string;
+  generated_at: string;
+}

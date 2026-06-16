@@ -269,3 +269,36 @@ to the optional, additive Outside-In intelligence layer (off by default): extern
 fused with internal CRM signals into a hedged, cited executive brief. As always, no change to
 recommendation ranking, scoring, governance, the reasoning core, CRM write-back, or any existing API
 contract or UI journey — external context remains supporting-only and never the source of truth.
+
+---
+
+## Decision providers (BYOK)
+
+Signal-to-Action can compare how different model providers reason over the **same**
+deterministic account context. This is a Bring-Your-Own-Key (BYOK) layer: you supply your own
+provider key and the system shows each provider's decision next to the deterministic baseline.
+
+- **Deterministic** - the built-in engine. Always available, no key. Source of truth, benchmark
+  and fallback.
+- **OpenAI** - live when `OPENAI_API_KEY` is set.
+- **Anthropic Claude** - live when `ANTHROPIC_API_KEY` is set.
+- **NVIDIA Nemotron / NIM** - live when `NVIDIA_API_KEY` is set.
+
+Each provider returns the same structured decision (risk, opportunity, recommended action,
+confidence, executive summary, conversation strategy, CRM note draft, reasoning, caveats). LLM
+decisions are **advisory only**: they never change ranking, scoring, confidence or governance,
+never write to CRM, and always require human approval. If a provider has no key, errors, times
+out, or returns invalid JSON, the decision falls back to the deterministic baseline and the app
+continues.
+
+Keys live only in `services/api/.env` (git-ignored). They are never committed, never returned by
+an API, never logged, and never sent to the browser. Status endpoints report presence and model
+name only. See `docs/ARCHITECTURE.md` and `docs/DEPLOYMENT.md` for setup and the Comparison Mode
+in the Evaluation Center.
+
+Endpoints (all additive, read-only):
+
+- `GET  /api/decision-providers/status` - per-provider configured / active / not-configured state.
+- `POST /api/decision-providers/evaluate/{account_id}` - one provider's decision for one account.
+- `POST /api/decision-providers/compare/{account_id}` - deterministic baseline plus every
+  configured live provider, with differences and an evaluation block.

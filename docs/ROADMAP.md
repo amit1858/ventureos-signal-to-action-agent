@@ -80,3 +80,20 @@ planned), the CRM-connector framework (HubSpot live; Salesforce / Dynamics / SAP
 and a production-readiness matrix (live / designed / planned), plus a consistent enterprise
 design language and narrated loading. This is the recommended freeze point before Phase 5 (live
 LLM reasoning and usage telemetry).
+
+---
+
+## Phase 5.0 - BYOK decision provider framework (delivered)
+
+A Bring-Your-Own-Key (BYOK) decision layer that lets several model providers reason over the same
+deterministic account context and return one common structured decision, shown as a read-only
+Comparison Mode in the Evaluation Center. Providers: Deterministic (baseline, always on), OpenAI
+(live with OPENAI_API_KEY), Anthropic Claude (live with ANTHROPIC_API_KEY) and NVIDIA Nemotron /
+NIM (live with NVIDIA_API_KEY). Additive and fully backward compatible: ranking, scoring,
+confidence, governance, approval, CRM write-back, HubSpot and external signals are unchanged. The
+deterministic engine remains the source of truth, the benchmark and the fallback; LLM decisions
+are advisory, never write to CRM, and always require human approval. On any missing key, error,
+timeout or invalid output, the decision falls back to deterministic and the app continues. Keys
+live only in services/api/.env and are never committed, returned, logged or sent to the browser.
+New additive endpoints: GET /api/decision-providers/status,
+POST /api/decision-providers/evaluate/{id}, POST /api/decision-providers/compare/{id}.

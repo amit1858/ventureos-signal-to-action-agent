@@ -68,3 +68,28 @@ valuable.
 - Performance / load — this is a demo build.
 - Authentication / multi-user — not in scope yet (see [`ROADMAP.md`](ROADMAP.md)).
 - Real CRM data — the product is designed to demo on a **test** portal or synthetic data only.
+
+---
+
+## Decision providers (BYOK) - what to try
+
+The Evaluation Center includes a read-only Comparison Mode that shows how different model providers
+reason over the same account. By default only the Deterministic baseline is active; OpenAI,
+Anthropic and NVIDIA appear as "not configured" until you add your own key.
+
+Try this:
+
+- Open Evaluation in the header, scroll to "Decision Provider - BYOK".
+- Pick an account (e.g. Curefoods) and click "Compare providers".
+- Confirm the Deterministic baseline card shows risk, opportunity, confidence, recommended action
+  and an executive summary, and that the not-configured providers prompt for a key.
+- (Optional) Add your own OPENAI_API_KEY or ANTHROPIC_API_KEY to services/api/.env, restart the
+  backend, and compare again to see live decisions next to the baseline.
+
+What to tell us:
+
+- Did the comparison make sense? Was the baseline decision clearly the reference point?
+- Was it obvious that LLM decisions are advisory and that nothing is written to CRM without approval?
+
+Note: never paste a real API key, customer data, or token into feedback or screenshots. Keys belong
+only in services/api/.env, which is git-ignored.

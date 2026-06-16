@@ -39,6 +39,12 @@ KNOWN_PROVIDERS = {"mock"} | NVIDIA_PROVIDERS | PLACEHOLDER_PROVIDERS
 #: External (outside-in) signal providers the factory understands.
 EXTERNAL_SIGNAL_PROVIDERS = {"mock", "serper", "searchapi"}
 
+#: BYOK decision providers the router understands (Phase 5.0). Deterministic is
+#: always available; the other three are live only when their key is configured.
+DECISION_PROVIDERS = {"deterministic", "openai", "anthropic", "nvidia"}
+#: Decision-provider ids that require a remote API key to run live.
+LIVE_DECISION_PROVIDERS = {"openai", "anthropic", "nvidia"}
+
 _API_DIR = os.path.dirname(os.path.abspath(__file__))
 _TRUE = {"1", "true", "yes", "on"}
 
@@ -87,6 +93,20 @@ class Settings:
     openai_api_key: str = ""
     anthropic_api_key: str = ""
 
+    # -- BYOK decision providers (Phase 5.0) -------------------------------
+    # The decision-provider layer is a higher-level, additive reasoning surface
+    # used only by the Evaluation Center comparison experience. It never changes
+    # ranking/scoring/governance. ``decision_provider`` is the default provider
+    # the evaluate endpoint uses; comparison always includes the deterministic
+    # baseline plus every configured provider.
+    decision_provider: str = "deterministic"
+    openai_model: str = "gpt-4o-mini"
+    openai_base_url: str = "https://api.openai.com/v1"
+    anthropic_model: str = "claude-3-5-sonnet-latest"
+    anthropic_base_url: str = "https://api.anthropic.com/v1"
+    anthropic_version: str = "2023-06-01"
+    decision_provider_timeout: float = 30.0
+
     # -- HubSpot connector -------------------------------------------------
     hubspot_enabled: bool = False
     hubspot_token: str = ""
@@ -117,11 +137,18 @@ class Settings:
             db_path=os.getenv("DB_PATH") or os.path.join(_API_DIR, "signal_to_action.db"),
             model_provider=(_str("MODEL_PROVIDER", "mock") or "mock").lower(),
             nvidia_api_key=_str("NVIDIA_API_KEY"),
-            nvidia_base_url=_str("NVIDIA_NIM_BASE_URL", "https://integrate.api.nvidia.com/v1").rstrip("/"),
-            nvidia_model=_str("NVIDIA_NIM_MODEL", "nvidia/nemotron-4-340b-instruct"),
+            nvidia_base_url=(_str("NVIDIA_BASE_URL") or _str("NVIDIA_NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")).rstrip("/"),
+            nvidia_model=_str("NVIDIA_MODEL") or _str("NVIDIA_NIM_MODEL", "nvidia/nemotron-4-340b-instruct"),
             nvidia_timeout=_float("NVIDIA_NIM_TIMEOUT", 30.0),
             openai_api_key=_str("OPENAI_API_KEY"),
             anthropic_api_key=_str("ANTHROPIC_API_KEY"),
+            decision_provider=(_str("DECISION_PROVIDER", "deterministic") or "deterministic").lower(),
+            openai_model=_str("OPENAI_MODEL", "gpt-4o-mini") or "gpt-4o-mini",
+            openai_base_url=_str("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/"),
+            anthropic_model=_str("ANTHROPIC_MODEL", "claude-3-5-sonnet-latest") or "claude-3-5-sonnet-latest",
+            anthropic_base_url=_str("ANTHROPIC_BASE_URL", "https://api.anthropic.com/v1").rstrip("/"),
+            anthropic_version=_str("ANTHROPIC_VERSION", "2023-06-01") or "2023-06-01",
+            decision_provider_timeout=_float("DECISION_PROVIDER_TIMEOUT", 30.0),
             hubspot_enabled=_flag("HUBSPOT_ENABLED", False),
             hubspot_token=_str("HUBSPOT_ACCESS_TOKEN"),
             hubspot_portal_id=_str("HUBSPOT_PORTAL_ID"),
@@ -181,6 +208,33 @@ class Settings:
         provider = (self.external_signals_provider or "mock").lower()
         return provider in {"serper", "searchapi"} and bool(self.external_signals_api_key)
 
+    # -- decision providers (Phase 5.0) ------------------------------------
+
+    @property
+    def openai_configured(self) -> bool:
+        return bool(self.openai_api_key)
+
+    @property
+    def anthropic_configured(self) -> bool:
+        return bool(self.anthropic_api_key)
+
+    @property
+    def nvidia_configured(self) -> bool:
+        return bool(self.nvidia_api_key)
+
+    def decision_provider_configured(self, provider: str) -> bool:
+        """Whether a named decision provider can run live (key present)."""
+        p = (provider or "").lower()
+        if p == "deterministic":
+            return True
+        if p == "openai":
+            return self.openai_configured
+        if p == "anthropic":
+            return self.anthropic_configured
+        if p == "nvidia":
+            return self.nvidia_configured
+        return False
+
     def warnings(self) -> List[str]:
         """Human-readable configuration warnings (logged at startup)."""
         w: List[str] = []
@@ -224,6 +278,15 @@ class Settings:
 
         if self.cors_origins.strip() == "*":
             w.append("CORS_ORIGINS=* allows any browser origin (fine for the demo; set your Vercel domain for production).")
+
+        dp = self.decision_provider
+        if dp not in DECISION_PROVIDERS:
+            w.append(f"Unknown DECISION_PROVIDER '{dp}'; the deterministic baseline will be used.")
+        elif dp in LIVE_DECISION_PROVIDERS and not self.decision_provider_configured(dp):
+            w.append(
+                f"DECISION_PROVIDER='{dp}' but no API key is configured; decisions fall back to the "
+                "deterministic baseline until a key is set (BYOK)."
+            )
         return w
 
     def sanitized(self) -> dict:
@@ -240,6 +303,9 @@ class Settings:
             "nvidia_model": self.nvidia_model,
             "openai_configured": bool(self.openai_api_key),
             "anthropic_configured": bool(self.anthropic_api_key),
+            "decision_provider": self.decision_provider,
+            "openai_model": self.openai_model,
+            "anthropic_model": self.anthropic_model,
             "hubspot_enabled": self.hubspot_enabled,
             "hubspot_configured": self.hubspot_configured,
             "hubspot_writeback_enabled": self.hubspot_writeback_enabled,

@@ -3,12 +3,15 @@ import type {
   AccountDetail,
   AccountListResponse,
   ActionResult,
+  DecisionComparison,
+  DecisionProviderStatus,
   ExternalSignalsResult,
   HealthResponse,
   HubspotStatus,
   HubspotSyncResult,
   HubspotWriteback,
   MetaResponse,
+  ProviderDecision,
   Recommendation,
   RecommendationResponse,
   SystemConfigResponse,
@@ -87,6 +90,15 @@ export const api = {
     jfetch<HubspotWriteback>(`/api/actions/${recommendationId}/hubspot-task`, { method: "POST" }),
   hubspotNote: (recommendationId: string) =>
     jfetch<HubspotWriteback>(`/api/actions/${recommendationId}/hubspot-note`, { method: "POST" }),
+  decisionProvidersStatus: () =>
+    jfetch<DecisionProviderStatus>("/api/decision-providers/status"),
+  decisionEvaluate: (accountId: string, provider?: string) =>
+    jfetch<ProviderDecision>(
+      `/api/decision-providers/evaluate/${accountId}${provider ? `?provider=${provider}` : ""}`,
+      { method: "POST" },
+    ),
+  decisionCompare: (accountId: string) =>
+    jfetch<DecisionComparison>(`/api/decision-providers/compare/${accountId}`, { method: "POST" }),
 };
 
 export type { Recommendation };

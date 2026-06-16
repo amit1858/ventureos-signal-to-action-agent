@@ -6,6 +6,8 @@ import { api } from "@/lib/api";
 import type {
   Account,
   AccountDetail,
+  DecisionComparison,
+  DecisionProviderStatus,
   ExternalSignalsResult,
   HealthResponse,
   HubspotStatus,
@@ -71,6 +73,7 @@ export default function Page() {
   const [accounts, setAccounts] = React.useState<Record<string, Account>>({});
   const [bootError, setBootError] = React.useState<string | null>(null);
   const [systemConfig, setSystemConfig] = React.useState<SystemConfigResponse | null>(null);
+  const [decisionStatus, setDecisionStatus] = React.useState<DecisionProviderStatus | null>(null);
 
   const [query, setQuery] = React.useState(DEFAULT_QUERY);
   const [limit, setLimit] = React.useState(10);
@@ -257,6 +260,27 @@ export default function Page() {
       cancelled = true;
     };
   }, [view, systemConfig]);
+
+  // Lazily load secret-free decision-provider status (BYOK) when the Evaluation
+  // view is opened. Read-only; silent on failure.
+  React.useEffect(() => {
+    if (view !== "evaluation" || decisionStatus) return;
+    let cancelled = false;
+    api
+      .decisionProvidersStatus()
+      .then((s) => {
+        if (!cancelled) setDecisionStatus(s);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [view, decisionStatus]);
+
+  const compareDecision = React.useCallback(
+    (accountId: string): Promise<DecisionComparison> => api.decisionCompare(accountId),
+    [],
+  );
 
   async function runWorkflow() {
     if (!query.trim() || loading) return;
@@ -768,6 +792,8 @@ export default function Page() {
             config={systemConfig}
             loading={loading}
             onRun={runWorkflow}
+            decisionStatus={decisionStatus}
+            onCompareDecision={compareDecision}
           />
         </main>
       ) : null}

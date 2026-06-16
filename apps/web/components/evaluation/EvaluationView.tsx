@@ -9,6 +9,7 @@ import {
   Cpu,
   Eye,
   Gauge,
+  GitCompare,
   KeyRound,
   Layers,
   Lock,
@@ -21,11 +22,21 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cx } from "@/lib/format";
-import type { HubspotStatus, MetaResponse, Recommendation, SystemConfigResponse } from "@/lib/types";
+import type {
+  DecisionComparison,
+  DecisionProviderStatus,
+  HubspotStatus,
+  MetaResponse,
+  ProviderDecision,
+  Recommendation,
+  SystemConfigResponse,
+} from "@/lib/types";
 import {
   connectorCatalog,
+  decisionModeLabel,
   EVAL_GROUPS,
   evaluateSystem,
+  humanizeDecisionAction,
   PRODUCTION_PILLARS,
   providerCatalog,
   TRUST_PRINCIPLES,
@@ -59,6 +70,30 @@ const connectorTone: Record<ConnectorStatus, Tone> = {
   planned: "muted",
 };
 const pillarTone: Record<PillarStatus, Tone> = { live: "good", designed: "progress", planned: "muted" };
+
+// -- decision-provider tone maps (BYOK comparison) ------------------------
+
+const decisionStatusTone: Record<string, Tone> = {
+  active: "good",
+  configured: "progress",
+  not_configured: "muted",
+  failed: "warn",
+  fallback: "warn",
+};
+const decisionModeTone: Record<string, Tone> = {
+  deterministic: "good",
+  live: "good",
+  fallback: "warn",
+  not_configured: "muted",
+};
+
+/** Semantic tone for a level, aware that high risk is a caution but high
+ *  opportunity/confidence is positive. */
+function levelTone(field: "risk" | "opportunity" | "confidence", level: string): Tone {
+  const l = (level || "").toLowerCase();
+  if (field === "risk") return l === "high" ? "warn" : l === "medium" ? "progress" : "muted";
+  return l === "high" ? "good" : l === "medium" ? "progress" : "muted";
+}
 
 function StatusChip({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   const t = TONE[tone];
@@ -113,6 +148,8 @@ export function EvaluationView({
   config,
   loading,
   onRun,
+  decisionStatus,
+  onCompareDecision,
 }: {
   recs: Recommendation[];
   meta: MetaResponse | null;
@@ -123,6 +160,8 @@ export function EvaluationView({
   config: SystemConfigResponse | null;
   loading: boolean;
   onRun: () => void;
+  decisionStatus: DecisionProviderStatus | null;
+  onCompareDecision: (accountId: string) => Promise<DecisionComparison>;
 }) {
   const report = React.useMemo(
     () => evaluateSystem({ recs, meta, externalEnabled, latencyMs, provider }),
@@ -295,6 +334,15 @@ export function EvaluationView({
         </div>
       </Section>
 
+      {/* DECISION PROVIDER · BYOK */}
+      <DecisionProviderSection
+        status={decisionStatus}
+        recs={recs}
+        loading={loading}
+        onRun={onRun}
+        onCompare={onCompareDecision}
+      />
+
       {/* CRM CONNECTOR FRAMEWORK */}
       <Section
         eyebrow="CRM Connectors"
@@ -396,5 +444,295 @@ function Legend({ tone, label }: { tone: Tone; label: string }) {
       <span className={cx("h-2 w-2 rounded-full", TONE[tone].dot)} />
       {label}
     </span>
+  );
+}
+
+// -- Decision Provider · BYOK comparison ----------------------------------
+
+function DecisionProviderSection({
+  status,
+  recs,
+  loading,
+  onRun,
+  onCompare,
+}: {
+  status: DecisionProviderStatus | null;
+  recs: Recommendation[];
+  loading: boolean;
+  onRun: () => void;
+  onCompare: (accountId: string) => Promise<DecisionComparison>;
+}) {
+  const pickAccounts = React.useMemo(() => {
+    const seen = new Set<string>();
+    const out: { id: string; name: string }[] = [];
+    for (const r of recs) {
+      if (seen.has(r.account_id)) continue;
+      seen.add(r.account_id);
+      out.push({ id: r.account_id, name: r.account_name });
+      if (out.length >= 6) break;
+    }
+    return out;
+  }, [recs]);
+
+  const [accountId, setAccountId] = React.useState<string>("");
+  const [cmp, setCmp] = React.useState<DecisionComparison | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!accountId && pickAccounts.length) setAccountId(pickAccounts[0].id);
+  }, [pickAccounts, accountId]);
+
+  const run = React.useCallback(
+    async (id: string) => {
+      if (!id) return;
+      setBusy(true);
+      setErr(null);
+      try {
+        setCmp(await onCompare(id));
+      } catch (e) {
+        setErr((e as Error).message);
+        setCmp(null);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [onCompare],
+  );
+
+  return (
+    <Section
+      eyebrow="Decision Provider · BYOK"
+      title="Compare how each provider would decide."
+      sub="Bring your own key. Deterministic, OpenAI, Anthropic and NVIDIA all reason over the same governed account context and return one structured decision — so you can compare them side by side. The deterministic engine stays the benchmark and the safe fallback; LLM decisions are advisory and never change ranking, scoring or governance."
+    >
+      {/* PROVIDER STATUS STRIP */}
+      <div className="flex flex-wrap items-center gap-2">
+        {(status?.providers ?? []).map((p) => (
+          <span
+            key={p.id}
+            className={cx(
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs",
+              TONE[decisionStatusTone[p.status] ?? "muted"].ring,
+              TONE[decisionStatusTone[p.status] ?? "muted"].bg,
+            )}
+            title={`${p.label} · ${p.model}`}
+          >
+            <span
+              className={cx("h-1.5 w-1.5 rounded-full", TONE[decisionStatusTone[p.status] ?? "muted"].dot)}
+            />
+            <span className="font-medium text-ink">{p.label}</span>
+            <span className={cx("text-[10px] uppercase tracking-wide", TONE[decisionStatusTone[p.status] ?? "muted"].text)}>
+              {p.status.replace(/_/g, " ")}
+            </span>
+          </span>
+        ))}
+        {status ? (
+          <span className="ml-auto text-[11px] text-faint">
+            Default <span className="font-mono text-muted">{status.default_provider}</span> ·{" "}
+            {status.configured_live_count} live key{status.configured_live_count === 1 ? "" : "s"} configured
+          </span>
+        ) : null}
+      </div>
+
+      {/* COMPARISON MODE */}
+      <Card className="p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-ink">
+            <GitCompare size={15} className="text-brand-bright" />
+            Comparison Mode
+          </div>
+          {pickAccounts.length > 0 ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {pickAccounts.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => {
+                    setAccountId(a.id);
+                    void run(a.id);
+                  }}
+                  className={cx(
+                    "rounded-full border px-3 py-1 text-xs transition",
+                    accountId === a.id
+                      ? "border-brand/40 bg-brand/10 text-ink"
+                      : "border-edge bg-surface2/50 text-muted hover:text-ink",
+                  )}
+                >
+                  {a.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => void run(accountId)}
+            disabled={busy || !accountId}
+            className="btn btn-primary ml-auto py-1.5 text-xs"
+          >
+            <GitCompare size={13} />
+            {busy ? "Comparing…" : "Compare providers"}
+          </button>
+        </div>
+
+        {pickAccounts.length === 0 ? (
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-edge bg-surface2/40 p-4 text-[12px] text-muted">
+            <span>Run the workflow once to choose an account to compare across providers.</span>
+            <button
+              type="button"
+              onClick={onRun}
+              disabled={loading}
+              className="btn btn-primary py-1.5 text-xs"
+            >
+              <Sparkles size={13} />
+              {loading ? "Analyzing…" : "Run analysis"}
+            </button>
+          </div>
+        ) : null}
+
+        {err ? (
+          <p className="mt-4 rounded-xl border border-amber/30 bg-amber/10 p-3 text-[12px] text-amber">{err}</p>
+        ) : null}
+
+        {cmp ? (
+          <div className="mt-5 space-y-4">
+            <div className="flex items-center gap-2 text-[12px] text-muted">
+              <span className="text-ink font-medium">{cmp.account_name}</span>
+              <span className="text-faint/50">·</span>
+              <span>
+                {cmp.evaluation.providers_compared} live provider
+                {cmp.evaluation.providers_compared === 1 ? "" : "s"} compared
+              </span>
+              {cmp.external_context_used ? (
+                <>
+                  <span className="text-faint/50">·</span>
+                  <span className="text-faint">external context on (advisory)</span>
+                </>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <DecisionCard decision={cmp.baseline} baseline />
+              {cmp.providers.map((d) => (
+                <DecisionCard key={d.provider} decision={d} />
+              ))}
+            </div>
+
+            {/* EVALUATION NOTES */}
+            {cmp.evaluation_notes.length > 0 ? (
+              <div className="rounded-xl border border-edge bg-surface2/40 p-4">
+                <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-faint">
+                  <Gauge size={12} /> Evaluation
+                </div>
+                <ul className="space-y-1.5">
+                  {cmp.evaluation_notes.map((n, i) => (
+                    <li key={i} className="flex gap-2 text-[12px] leading-relaxed text-muted">
+                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-faint/60" />
+                      {n}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            <div className="flex items-start gap-2 rounded-xl border border-edge bg-surface2/40 p-3.5 text-[12px] text-muted">
+              <ShieldCheck size={14} className="mt-0.5 shrink-0 text-accent" />
+              {cmp.governance_caveat}
+            </div>
+          </div>
+        ) : null}
+      </Card>
+    </Section>
+  );
+}
+
+function DecisionLevelRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: Tone;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[11px] text-faint">{label}</span>
+      <span
+        className={cx(
+          "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium capitalize",
+          TONE[tone].ring,
+          TONE[tone].bg,
+          TONE[tone].text,
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function DecisionCard({ decision, baseline }: { decision: ProviderDecision; baseline?: boolean }) {
+  const mode = decision.mode;
+  const modeT = decisionModeTone[mode] ?? "muted";
+  const notConfigured = mode === "not_configured";
+
+  return (
+    <div
+      className={cx(
+        "flex flex-col rounded-xl border bg-surface2/40 p-4",
+        baseline ? "border-accent/30" : "border-edge",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+            {baseline ? <BadgeCheck size={14} className="shrink-0 text-accent" /> : null}
+            <span className="truncate capitalize">{decision.provider}</span>
+          </div>
+          <div className="mt-0.5 truncate font-mono text-[10px] text-faint">{decision.model}</div>
+        </div>
+        <StatusChip tone={modeT}>{decisionModeLabel(mode)}</StatusChip>
+      </div>
+
+      {notConfigured ? (
+        <div className="mt-4 flex flex-1 flex-col items-start gap-2 rounded-lg border border-edge bg-base/30 p-3 text-[11px] text-faint">
+          <KeyRound size={14} className="text-faint" />
+          Add this provider&apos;s API key (BYOK) to generate a live decision and compare it against the
+          deterministic baseline.
+        </div>
+      ) : (
+        <>
+          <div className="mt-3 space-y-1.5">
+            <DecisionLevelRow label="Risk" value={decision.risk_level} tone={levelTone("risk", decision.risk_level)} />
+            <DecisionLevelRow
+              label="Opportunity"
+              value={decision.opportunity_level}
+              tone={levelTone("opportunity", decision.opportunity_level)}
+            />
+            <DecisionLevelRow
+              label="Confidence"
+              value={decision.confidence}
+              tone={levelTone("confidence", decision.confidence)}
+            />
+          </div>
+          <div className="mt-3 border-t border-edge pt-3">
+            <div className="text-[11px] text-faint">Recommended action</div>
+            <div className="mt-0.5 text-[13px] font-medium text-ink">
+              {humanizeDecisionAction(decision.recommended_action)}
+            </div>
+          </div>
+          {decision.executive_summary ? (
+            <p className="mt-3 line-clamp-4 text-[11px] leading-relaxed text-muted">
+              {decision.executive_summary}
+            </p>
+          ) : null}
+          {decision.provider_error ? (
+            <p className="mt-2 text-[10px] text-amber">Fell back to baseline ({decision.provider_error}).</p>
+          ) : null}
+          <div className="mt-auto pt-3 font-mono text-[10px] text-faint">{decision.latency_ms} ms</div>
+        </>
+      )}
+    </div>
   );
 }

@@ -240,3 +240,37 @@ git push origin main
 | Backend run cmd | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
 | Frontend hosts | Vercel |
 | Backend hosts | Render / Railway / Azure |
+
+---
+
+## 7. Decision providers (BYOK) configuration
+
+The decision-provider layer is a Bring-Your-Own-Key (BYOK) feature. It is OFF by default
+(DECISION_PROVIDER=deterministic) and needs no key to run; the deterministic baseline always
+works. To enable a live provider for Comparison Mode, add its key to services/api/.env (local) or
+to the backend host environment (Render / Railway / Azure):
+
+| Provider | Enable by setting | Optional overrides |
+|----------|-------------------|--------------------|
+| Deterministic | (always on, no key) | - |
+| OpenAI | OPENAI_API_KEY | OPENAI_MODEL (default gpt-4o-mini), OPENAI_BASE_URL |
+| Anthropic | ANTHROPIC_API_KEY | ANTHROPIC_MODEL (default claude-3-5-sonnet-latest), ANTHROPIC_BASE_URL, ANTHROPIC_VERSION |
+| NVIDIA | NVIDIA_API_KEY | NVIDIA_MODEL / NVIDIA_BASE_URL (fall back to NVIDIA_NIM_MODEL / NVIDIA_NIM_BASE_URL) |
+
+DECISION_PROVIDER selects which provider the single-account evaluate endpoint uses by default;
+Comparison Mode always runs the deterministic baseline plus every configured live provider, so
+this default does not affect /compare. DECISION_PROVIDER_TIMEOUT (seconds) bounds each live call.
+
+Key safety (required):
+
+- Put real keys ONLY in services/api/.env (git-ignored) or the host secret store. Never commit a key.
+- Keys are never returned by any API, never logged (only the exception type is logged) and never
+  sent to the browser. Status endpoints expose presence booleans and the model name only.
+- If a configured provider is missing its key, errors, times out, or returns invalid JSON, the
+  decision falls back to the deterministic baseline and the application continues.
+
+Verify after setting a key:
+
+    GET  /api/decision-providers/status
+    POST /api/decision-providers/evaluate/ACC-0016
+    POST /api/decision-providers/compare/ACC-0016

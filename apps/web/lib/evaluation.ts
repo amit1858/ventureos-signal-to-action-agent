@@ -453,3 +453,43 @@ export const LOADING_PHASES: string[] = [
 
 /** Shown the moment results are ready. */
 export const LOADING_DONE = "I'm ready. Here's where I'd spend today.";
+
+// -- BYOK decision providers (Phase 5.0) ----------------------------------
+
+/** Default accounts to showcase in Comparison Mode (synthetic ids). The view
+ *  prefers the live ranked accounts when a run exists, so this is only a hint. */
+export const DECISION_DEMO_ACCOUNTS: { id: string; name: string }[] = [
+  { id: "ACC-0016", name: "Curefoods" },
+  { id: "ACC-0003", name: "Razorpay" },
+  { id: "ACC-0002", name: "Zepto" },
+];
+
+const DECISION_ACTION_LABELS: Record<string, string> = {
+  support_escalation: "Support escalation",
+  renewal_prep: "Renewal prep",
+  optimization_review: "Optimization review",
+  reactivation: "Reactivation",
+  follow_up: "Follow-up",
+  monitor: "Monitor",
+};
+
+/** Human-readable label for a bounded action-vocabulary value. */
+export function humanizeDecisionAction(action: string): string {
+  return DECISION_ACTION_LABELS[action] ?? action.replace(/_/g, " ");
+}
+
+/** Short label for how a single decision was produced. */
+export function decisionModeLabel(mode: string): string {
+  switch (mode) {
+    case "deterministic":
+      return "Baseline";
+    case "live":
+      return "Live";
+    case "fallback":
+      return "Fallback";
+    case "not_configured":
+      return "Not configured";
+    default:
+      return mode;
+  }
+}

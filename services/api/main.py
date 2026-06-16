@@ -89,6 +89,8 @@ from services.recommendation_service import generate_recommendations  # noqa: E4
 from services.refresh_scheduler import RefreshScheduler  # noqa: E402
 import external_signals  # noqa: E402
 from external_signals import ExecutiveBrief, ExternalSignalsResult  # noqa: E402
+import decision_providers  # noqa: E402
+from decision_providers.base import ProviderDecision  # noqa: E402
 from agents.orchestrator import AGENT_SEQUENCE  # noqa: E402
 from crm_connectors import (  # noqa: E402
     ConnectorStatus,
@@ -529,6 +531,59 @@ def refresh_external_signals() -> dict:
         raise HTTPException(status_code=503, detail=str(exc))
     priority = [account for account, _ in scoring_service.rank_accounts(accounts)]
     return external_signals.refresh_accounts(priority)
+
+
+# -- BYOK decision providers (Phase 5.0; additive, read-only) -------------
+# A higher-level reasoning layer that lets multiple providers (Deterministic
+# baseline + OpenAI + Anthropic + NVIDIA) reason over the SAME deterministic
+# account context and return ONE structured decision contract, surfaced as a
+# read-only Comparison Mode in the Evaluation Center. These endpoints never
+# persist, never write to the CRM, and never change ranking/scoring/governance.
+# LLM decisions are advisory and must pass governance + human approval.
+
+
+@app.get("/api/decision-providers/status")
+def decision_providers_status() -> dict:
+    """Secret-free status of every decision provider (BYOK).
+
+    Returns provider ids, labels, model names and presence booleans only -- never
+    any API key value. The deterministic provider is always active; live LLM
+    providers report ``configured`` / ``not_configured`` based on whether their
+    BYOK key is present.
+    """
+    return decision_providers.provider_status()
+
+
+@app.post("/api/decision-providers/evaluate/{account_id}", response_model=ProviderDecision)
+def decision_providers_evaluate(
+    account_id: str,
+    provider: Optional[str] = Query(None, description="deterministic | openai | anthropic | nvidia"),
+) -> ProviderDecision:
+    """Evaluate one account with one decision provider (defaults to configured).
+
+    Read-only and advisory: no persistence, no CRM write-back, no change to
+    ranking/scoring/governance. A not-configured provider returns a placeholder
+    decision; any live-provider failure falls back to the deterministic baseline.
+    """
+    decision = decision_providers.evaluate_account(account_id, provider)
+    if decision is None:
+        raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
+    return decision
+
+
+@app.post("/api/decision-providers/compare/{account_id}")
+def decision_providers_compare(account_id: str) -> dict:
+    """Compare the deterministic baseline against every provider for one account.
+
+    Read-only: returns the baseline decision, each provider's decision (live,
+    fallback or not_configured), field-by-field differences, agreement/divergence
+    analytics and evaluation notes. Never persists, never writes to the CRM and
+    never changes ranking/scoring/governance. LLM decisions are advisory only.
+    """
+    result = decision_providers.compare_account(account_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
+    return result
 
 
 @app.post("/api/recommendations", response_model=RecommendationResponse)
