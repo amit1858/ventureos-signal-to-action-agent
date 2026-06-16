@@ -4,7 +4,9 @@ import type {
   AccountListResponse,
   ActionResult,
   DecisionComparison,
+  DecisionCredentialPayload,
   DecisionProviderStatus,
+  DecisionProviderTestResult,
   ExternalSignalsResult,
   HealthResponse,
   HubspotStatus,
@@ -92,13 +94,40 @@ export const api = {
     jfetch<HubspotWriteback>(`/api/actions/${recommendationId}/hubspot-note`, { method: "POST" }),
   decisionProvidersStatus: () =>
     jfetch<DecisionProviderStatus>("/api/decision-providers/status"),
-  decisionEvaluate: (accountId: string, provider?: string) =>
+  // Phase 5.0A — session BYOK: the key travels in the request BODY (never the URL,
+  // so it never lands in access logs) and is used for this single request only.
+  decisionTest: (payload: {
+    provider: string;
+    api_key: string;
+    model?: string;
+    base_url?: string;
+  }) =>
+    jfetch<DecisionProviderTestResult>("/api/decision-providers/test", {
+      method: "POST",
+      body: JSON.stringify({
+        provider: payload.provider,
+        api_key: payload.api_key,
+        model: payload.model ?? "",
+        base_url: payload.base_url ?? "",
+      }),
+    }),
+  decisionEvaluate: (
+    accountId: string,
+    provider?: string,
+    credentials?: Record<string, DecisionCredentialPayload>,
+  ) =>
     jfetch<ProviderDecision>(
       `/api/decision-providers/evaluate/${accountId}${provider ? `?provider=${provider}` : ""}`,
-      { method: "POST" },
+      {
+        method: "POST",
+        body: JSON.stringify({ provider: provider ?? null, credentials: credentials ?? {} }),
+      },
     ),
-  decisionCompare: (accountId: string) =>
-    jfetch<DecisionComparison>(`/api/decision-providers/compare/${accountId}`, { method: "POST" }),
+  decisionCompare: (accountId: string, credentials?: Record<string, DecisionCredentialPayload>) =>
+    jfetch<DecisionComparison>(`/api/decision-providers/compare/${accountId}`, {
+      method: "POST",
+      body: JSON.stringify({ credentials: credentials ?? {} }),
+    }),
 };
 
 export type { Recommendation };

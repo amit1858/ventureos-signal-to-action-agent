@@ -291,14 +291,26 @@ never write to CRM, and always require human approval. If a provider has no key,
 out, or returns invalid JSON, the decision falls back to the deterministic baseline and the app
 continues.
 
-Keys live only in `services/api/.env` (git-ignored). They are never committed, never returned by
-an API, never logged, and never sent to the browser. Status endpoints report presence and model
-name only. See `docs/ARCHITECTURE.md` and `docs/DEPLOYMENT.md` for setup and the Comparison Mode
-in the Evaluation Center.
+There are **two ways** to supply a key, and they coexist:
+
+1. **Infrastructure mode** - set `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `NVIDIA_API_KEY` in
+   `services/api/.env` (git-ignored) for a deployed instance.
+2. **User BYOK mode (session keys)** - open **Evaluation -> Provider Settings**, paste your own key
+   into a provider card, click **Test connection**, then **Activate**. Session keys are held in the
+   browser's `sessionStorage` (never `localStorage`, never a database), masked in the UI, sent only
+   in the request body of the calls you trigger, and **cleared automatically when the tab closes**.
+   They are never persisted, cached, logged or written to disk by the backend.
+
+Keys live only in `services/api/.env` (git-ignored) or your browser session. They are never
+committed, never returned by an API, never logged, and never persisted server-side. Status
+endpoints report presence and model name only. See `docs/ARCHITECTURE.md` and `docs/DEPLOYMENT.md`
+for setup and the Comparison Mode in the Evaluation Center.
 
 Endpoints (all additive, read-only):
 
 - `GET  /api/decision-providers/status` - per-provider configured / active / not-configured state.
+- `POST /api/decision-providers/test` - test a session key without persisting it; returns
+  `{ok, provider, model, status, latency_ms}` only - never the key.
 - `POST /api/decision-providers/evaluate/{account_id}` - one provider's decision for one account.
 - `POST /api/decision-providers/compare/{account_id}` - deterministic baseline plus every
   configured live provider, with differences and an evaluation block.

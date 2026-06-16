@@ -47,14 +47,14 @@ import time
 # Make this directory importable no matter how the server is launched.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from typing import Optional
+from typing import Dict, Optional
 
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -90,7 +90,7 @@ from services.refresh_scheduler import RefreshScheduler  # noqa: E402
 import external_signals  # noqa: E402
 from external_signals import ExecutiveBrief, ExternalSignalsResult  # noqa: E402
 import decision_providers  # noqa: E402
-from decision_providers.base import ProviderDecision  # noqa: E402
+from decision_providers.base import ProviderCredential, ProviderDecision  # noqa: E402
 from agents.orchestrator import AGENT_SEQUENCE  # noqa: E402
 from crm_connectors import (  # noqa: E402
     ConnectorStatus,
@@ -533,13 +533,72 @@ def refresh_external_signals() -> dict:
     return external_signals.refresh_accounts(priority)
 
 
-# -- BYOK decision providers (Phase 5.0; additive, read-only) -------------
+# -- BYOK decision providers (Phase 5.0 + 5.0A; additive, read-only) ------
 # A higher-level reasoning layer that lets multiple providers (Deterministic
 # baseline + OpenAI + Anthropic + NVIDIA) reason over the SAME deterministic
 # account context and return ONE structured decision contract, surfaced as a
 # read-only Comparison Mode in the Evaluation Center. These endpoints never
 # persist, never write to the CRM, and never change ranking/scoring/governance.
 # LLM decisions are advisory and must pass governance + human approval.
+#
+# Phase 5.0A adds a true BYOK user experience: keys may be brought through the
+# UI (session-scoped in the browser) and passed in the REQUEST BODY for a single
+# request. Such keys are used only for that request -- never persisted, cached,
+# logged or returned. Infrastructure mode (env vars) and user BYOK mode coexist.
+
+
+class ProviderCredentialIn(BaseModel):
+    """A per-session BYOK credential supplied from the browser for one request.
+
+    Never persisted, cached, logged or returned. ``api_key`` is consumed only for
+    the lifetime of the request; ``model`` / ``base_url`` are optional overrides.
+    """
+
+    api_key: str = ""
+    model: str = ""
+    base_url: str = ""
+
+
+class DecisionSessionIn(BaseModel):
+    """Optional session payload for evaluate / compare (Phase 5.0A BYOK).
+
+    ``credentials`` maps provider id -> credential. Absent providers fall back to
+    environment configuration, so both modes work together.
+    """
+
+    provider: Optional[str] = None
+    credentials: Dict[str, ProviderCredentialIn] = Field(default_factory=dict)
+
+
+class TestConnectionIn(BaseModel):
+    """Request body for the BYOK 'Test Connection' action."""
+
+    provider: str
+    api_key: str = ""
+    model: str = ""
+    base_url: str = ""
+
+
+def _to_credentials(body: Optional[DecisionSessionIn]) -> Optional[Dict[str, ProviderCredential]]:
+    """Convert an inbound session payload to the router's credential map.
+
+    Returns ``None`` when nothing usable was supplied so the router stays in
+    pure infrastructure mode. Only credentials that actually carry a key (or an
+    override) are forwarded -- empty entries are ignored.
+    """
+    if body is None or not body.credentials:
+        return None
+    creds: Dict[str, ProviderCredential] = {}
+    for pid, cred in body.credentials.items():
+        if cred is None:
+            continue
+        if cred.api_key.strip() or cred.model.strip() or cred.base_url.strip():
+            creds[(pid or "").lower()] = ProviderCredential(
+                api_key=cred.api_key,
+                model=cred.model,
+                base_url=cred.base_url,
+            )
+    return creds or None
 
 
 @app.get("/api/decision-providers/status")
@@ -554,33 +613,56 @@ def decision_providers_status() -> dict:
     return decision_providers.provider_status()
 
 
+@app.post("/api/decision-providers/test")
+def decision_providers_test(body: TestConnectionIn) -> dict:
+    """Test a BYOK credential against a live provider (Phase 5.0A).
+
+    Makes one minimal request with the supplied session key and returns a
+    secret-free result (``status``: connected | no_key | failed | unsupported).
+    The key is used only for this check -- never persisted, cached, logged or
+    returned. Never raises for credential problems.
+    """
+    credential = ProviderCredential(api_key=body.api_key, model=body.model, base_url=body.base_url)
+    return decision_providers.test_provider(body.provider, credential)
+
+
 @app.post("/api/decision-providers/evaluate/{account_id}", response_model=ProviderDecision)
 def decision_providers_evaluate(
     account_id: str,
     provider: Optional[str] = Query(None, description="deterministic | openai | anthropic | nvidia"),
+    body: Optional[DecisionSessionIn] = None,
 ) -> ProviderDecision:
     """Evaluate one account with one decision provider (defaults to configured).
 
     Read-only and advisory: no persistence, no CRM write-back, no change to
     ranking/scoring/governance. A not-configured provider returns a placeholder
     decision; any live-provider failure falls back to the deterministic baseline.
+    Optional session BYOK keys may be supplied in the request body (Phase 5.0A);
+    the ``provider`` query param takes precedence, then ``body.provider``.
     """
-    decision = decision_providers.evaluate_account(account_id, provider)
+    chosen = provider or (body.provider if body else None)
+    credentials = _to_credentials(body)
+    decision = decision_providers.evaluate_account(account_id, chosen, credentials)
     if decision is None:
         raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
     return decision
 
 
 @app.post("/api/decision-providers/compare/{account_id}")
-def decision_providers_compare(account_id: str) -> dict:
+def decision_providers_compare(
+    account_id: str,
+    body: Optional[DecisionSessionIn] = None,
+) -> dict:
     """Compare the deterministic baseline against every provider for one account.
 
     Read-only: returns the baseline decision, each provider's decision (live,
     fallback or not_configured), field-by-field differences, agreement/divergence
     analytics and evaluation notes. Never persists, never writes to the CRM and
     never changes ranking/scoring/governance. LLM decisions are advisory only.
+    Optional session BYOK keys may be supplied in the request body (Phase 5.0A).
     """
-    result = decision_providers.compare_account(account_id)
+    credentials = _to_credentials(body)
+    result = decision_providers.compare_account(account_id, credentials)
     if result is None:
         raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
     return result

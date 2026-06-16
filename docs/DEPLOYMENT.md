@@ -274,3 +274,23 @@ Verify after setting a key:
     GET  /api/decision-providers/status
     POST /api/decision-providers/evaluate/ACC-0016
     POST /api/decision-providers/compare/ACC-0016
+
+### User BYOK mode (session keys, no env vars)
+
+Infrastructure mode (above) is for deployed hosts. End users can instead bring their own key from
+the UI without touching infrastructure: Evaluation -> Provider Settings -> paste key -> Test
+connection -> Activate. Both modes coexist; if a request carries a session key it takes precedence
+over the env var for that request only.
+
+Session-key rules (enforced):
+
+- Keys are stored only in the browser's sessionStorage and are cleared when the tab closes. They are
+  never written to localStorage or any database.
+- The browser sends a session key only in the request BODY of /test, /evaluate and /compare (never a
+  query string, so it never lands in access logs). The backend uses it for that single request and
+  never persists, caches, logs or writes it to disk.
+- Keys are masked in the UI (e.g. sk-ant-************) and are never returned by any API.
+- POST /api/decision-providers/test validates a key and returns {ok, provider, model, status,
+  latency_ms} only. status is one of connected / no_key / failed / unsupported.
+- If a session provider fails or is cleared, the decision falls back to the deterministic baseline
+  and the app continues.

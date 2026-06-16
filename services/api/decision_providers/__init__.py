@@ -26,6 +26,7 @@ from decision_providers.base import (
     ADVISORY_CAVEAT,
     DecisionContext,
     DecisionProvider,
+    ProviderCredential,
     ProviderDecision,
     ProviderMode,
     fallback_decision,
@@ -42,21 +43,31 @@ logger = logging.getLogger("signal_to_action.decision_providers")
 #: Build order for comparison (baseline first, then live providers).
 _LIVE_ORDER = ("openai", "anthropic", "nvidia")
 
+#: Type alias for a per-session credential map keyed by provider id.
+Credentials = Optional[Dict[str, ProviderCredential]]
 
-def _build_providers() -> Dict[str, DecisionProvider]:
-    """Fresh provider instances (cheap; reflects current settings)."""
+
+def _build_providers(credentials: Credentials = None) -> Dict[str, DecisionProvider]:
+    """Fresh provider instances (cheap; reflects current settings).
+
+    Optional per-session BYOK ``credentials`` (Phase 5.0A) are injected so a
+    provider keyed only in the browser session still runs live. Empty / missing
+    credentials fall back to environment configuration (infrastructure mode).
+    """
+    creds = credentials or {}
     return {
         "deterministic": DeterministicProvider(),
-        "openai": OpenAIProvider(),
-        "anthropic": AnthropicProvider(),
-        "nvidia": NvidiaProvider(),
+        "openai": OpenAIProvider(creds.get("openai")),
+        "anthropic": AnthropicProvider(creds.get("anthropic")),
+        "nvidia": NvidiaProvider(creds.get("nvidia")),
     }
 
 
-def get_decision_provider(name: str) -> DecisionProvider:
+def get_decision_provider(name: str, credential: Optional[ProviderCredential] = None) -> DecisionProvider:
     """Return a provider instance by id (defaults to deterministic)."""
-    providers = _build_providers()
-    return providers.get((name or "").lower(), providers["deterministic"])
+    pid = (name or "").lower()
+    providers = _build_providers({pid: credential} if credential else None)
+    return providers.get(pid, providers["deterministic"])
 
 
 def _now_iso() -> str:
@@ -66,13 +77,15 @@ def _now_iso() -> str:
 # -- status ---------------------------------------------------------------
 
 
-def provider_status() -> dict:
+def provider_status(credentials: Credentials = None) -> dict:
     """Secret-free status for every decision provider.
 
-    Returns presence booleans and model ids only -- never key values.
+    Returns presence booleans and model ids only -- never key values. When a
+    per-session credential map is supplied, a session-keyed provider reports as
+    configured (so the status reflects BYOK without exposing the key).
     """
     settings = get_settings()
-    providers = _build_providers()
+    providers = _build_providers(credentials)
     default = settings.decision_provider if settings.decision_provider in providers else "deterministic"
 
     rows: List[dict] = []
@@ -110,6 +123,70 @@ def provider_status() -> dict:
     }
 
 
+# -- connection test (Phase 5.0A "Test Connection") -----------------------
+
+
+def test_provider(provider_id: str, credential: Optional[ProviderCredential]) -> dict:
+    """Verify a (session) credential can reach a live provider.
+
+    Builds the named provider with the supplied credential and makes one minimal
+    request. Returns a secret-free result -- never the key. Possible ``status``
+    values: ``connected`` | ``no_key`` | ``failed`` | ``unsupported``.
+    """
+    pid = (provider_id or "").lower()
+    if pid not in LIVE_DECISION_PROVIDERS:
+        return {
+            "ok": False,
+            "provider": pid,
+            "model": "",
+            "status": "unsupported",
+            "error": "Unknown or non-live provider.",
+            "latency_ms": 0,
+        }
+
+    prov = _build_providers({pid: credential} if credential else None)[pid]
+    if not prov.configured():
+        return {
+            "ok": False,
+            "provider": pid,
+            "model": prov.model_name(),
+            "status": "no_key",
+            "error": "No API key provided.",
+            "latency_ms": 0,
+        }
+
+    start = time.perf_counter()
+    try:
+        result = prov.ping()  # type: ignore[attr-defined]  # live providers expose ping()
+        return {
+            "ok": True,
+            "provider": pid,
+            "model": result.get("model", prov.model_name()),
+            "status": "connected",
+            "error": None,
+            "latency_ms": int(result.get("latency_ms", 0)),
+        }
+    except ProviderError as exc:
+        return {
+            "ok": False,
+            "provider": pid,
+            "model": prov.model_name(),
+            "status": "failed",
+            "error": str(exc),
+            "latency_ms": int((time.perf_counter() - start) * 1000),
+        }
+    except Exception as exc:  # noqa: BLE001 -- defence in depth; never leak internals
+        logger.warning("test_provider %s failed (%s).", pid, type(exc).__name__)
+        return {
+            "ok": False,
+            "provider": pid,
+            "model": prov.model_name(),
+            "status": "failed",
+            "error": type(exc).__name__,
+            "latency_ms": int((time.perf_counter() - start) * 1000),
+        }
+
+
 # -- single-provider evaluation ------------------------------------------
 
 
@@ -142,12 +219,17 @@ def _run_live(
         )
 
 
-def evaluate_account(account_id: str, provider: Optional[str] = None) -> Optional[ProviderDecision]:
+def evaluate_account(
+    account_id: str,
+    provider: Optional[str] = None,
+    credentials: Credentials = None,
+) -> Optional[ProviderDecision]:
     """Evaluate one account with one provider (defaults to the configured one).
 
-    Returns ``None`` when the account does not exist. Never raises for provider
-    issues -- not-configured returns a placeholder, failures fall back to the
-    deterministic baseline.
+    Optional per-session BYOK ``credentials`` let a session-keyed provider run
+    live without env vars. Returns ``None`` when the account does not exist.
+    Never raises for provider issues -- not-configured returns a placeholder,
+    failures fall back to the deterministic baseline.
     """
     context = build_decision_context(account_id)
     if context is None:
@@ -155,7 +237,7 @@ def evaluate_account(account_id: str, provider: Optional[str] = None) -> Optiona
 
     settings = get_settings()
     name = (provider or settings.decision_provider or "deterministic").lower()
-    providers = _build_providers()
+    providers = _build_providers(credentials)
     baseline = providers["deterministic"].decide(context)
 
     if name == "deterministic" or name not in providers:
@@ -249,17 +331,19 @@ def _evaluation_notes(baseline: ProviderDecision, results: List[ProviderDecision
     return notes
 
 
-def compare_account(account_id: str) -> Optional[dict]:
+def compare_account(account_id: str, credentials: Credentials = None) -> Optional[dict]:
     """Compare the deterministic baseline against every provider for one account.
 
-    Returns ``None`` when the account does not exist. Read-only: no persistence,
-    no CRM writeback, no ranking/scoring/governance change.
+    Optional per-session BYOK ``credentials`` enable live providers keyed only in
+    the browser session. Returns ``None`` when the account does not exist.
+    Read-only: no persistence, no CRM writeback, no ranking/scoring/governance
+    change.
     """
     context = build_decision_context(account_id)
     if context is None:
         return None
 
-    providers = _build_providers()
+    providers = _build_providers(credentials)
     baseline = providers["deterministic"].decide(context)
 
     results: List[ProviderDecision] = []

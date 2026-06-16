@@ -399,6 +399,37 @@ def not_configured_decision(*, provider: str, model: str) -> ProviderDecision:
     )
 
 
+# -- per-session BYOK credential (never persisted) ------------------------
+
+
+class ProviderCredential(BaseModel):
+    """A per-request BYOK credential supplied from the browser session.
+
+    Phase 5.0A: keys can be brought through the UI (session-scoped) in addition
+    to infrastructure env vars. This object carries an optional key plus model /
+    base-url overrides for a *single* request. Empty fields fall back to the
+    environment + defaults, so infrastructure mode (env) and user BYOK mode
+    (session) coexist. The value is used only for the lifetime of one request and
+    is never logged, cached or written to disk.
+    """
+
+    api_key: str = ""
+    model: str = ""
+    base_url: str = ""
+
+    def key(self) -> str:
+        return (self.api_key or "").strip()
+
+    def pick_model(self) -> str:
+        return (self.model or "").strip()
+
+    def pick_base_url(self) -> str:
+        return (self.base_url or "").strip().rstrip("/")
+
+    def has_key(self) -> bool:
+        return bool(self.key())
+
+
 # -- provider interface ---------------------------------------------------
 
 
@@ -410,6 +441,13 @@ class DecisionProvider(ABC):
     #: Human-friendly label.
     label: str = "Base"
 
+    def __init__(self, credential: Optional[ProviderCredential] = None) -> None:
+        """Optionally inject a per-session BYOK credential (Phase 5.0A).
+
+        ``None`` means "infrastructure mode": fall back to environment settings.
+        """
+        self.credential = credential
+
     def model_name(self) -> str:
         """The concrete model id this provider would use."""
         return "n/a"
@@ -418,7 +456,8 @@ class DecisionProvider(ABC):
         """Whether this provider has the credentials it needs to run live.
 
         The deterministic provider is always configured; LLM providers require a
-        BYOK key. Never raises and never exposes the key itself.
+        BYOK key (from the session credential or the environment). Never raises
+        and never exposes the key itself.
         """
         return True
 

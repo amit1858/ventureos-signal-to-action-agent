@@ -20,17 +20,19 @@ class NvidiaProvider(LLMDecisionProvider):
     label = "NVIDIA Nemotron"
 
     def model_name(self) -> str:
-        return get_settings().nvidia_model
+        return self.session_model() or get_settings().nvidia_model
 
     def configured(self) -> bool:
-        return get_settings().nvidia_configured
+        return bool(self.session_key()) or get_settings().nvidia_configured
 
     def _complete(self, system: str, user: str) -> str:
         settings = get_settings()
-        url = f"{settings.nvidia_base_url}/chat/completions"
-        headers = {"Authorization": f"Bearer {settings.nvidia_api_key}"}
+        api_key = self.session_key() or settings.nvidia_api_key
+        base_url = self.session_base_url() or settings.nvidia_base_url
+        url = f"{base_url}/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}"}
         payload: Dict[str, Any] = {
-            "model": settings.nvidia_model,
+            "model": self.model_name(),
             "messages": self._messages(system, user),
             "temperature": 0.2,
             "max_tokens": 900,

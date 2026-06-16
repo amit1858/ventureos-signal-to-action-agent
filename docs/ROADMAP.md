@@ -97,3 +97,22 @@ timeout or invalid output, the decision falls back to deterministic and the app 
 live only in services/api/.env and are never committed, returned, logged or sent to the browser.
 New additive endpoints: GET /api/decision-providers/status,
 POST /api/decision-providers/evaluate/{id}, POST /api/decision-providers/compare/{id}.
+
+---
+
+## Phase 5.0A - True BYOK provider experience (delivered)
+
+Turns the Phase 5.0 backend BYOK framework into a first-class BYOK user experience. Users can bring
+their own provider key, configure it in the UI (Evaluation -> Provider Settings), test the
+connection, activate a provider, compare providers side by side, and clear or switch - without
+touching infrastructure. Both supply paths coexist: environment variables (infrastructure mode) and
+session keys entered in the browser (user BYOK mode).
+
+Session keys are held only in the browser's sessionStorage (never localStorage, never a database),
+masked in the UI, sent only in the request body of the calls the user triggers, used for that single
+request, and cleared automatically when the tab closes. The backend never persists, caches, logs or
+returns a key. New additive endpoint: POST /api/decision-providers/test (returns
+{ok, provider, model, status, latency_ms} only); evaluate and compare gained an optional
+credentials body. Fully backward compatible: ranking, scoring, confidence, governance, approval,
+CRM write-back, HubSpot and external signals are unchanged, and the deterministic engine remains the
+source of truth, benchmark and fallback.

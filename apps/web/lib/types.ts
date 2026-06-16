@@ -412,3 +412,30 @@ export interface DecisionComparison {
   governance_caveat: string;
   generated_at: string;
 }
+
+// -- BYOK provider test connection (Phase 5.0A) ---------------------------
+
+export type DecisionTestStatus = "connected" | "no_key" | "failed" | "unsupported";
+
+/** Secret-free result of a "Test Connection" check — never carries the key. */
+export interface DecisionProviderTestResult {
+  ok: boolean;
+  provider: string;
+  model: string;
+  status: DecisionTestStatus | string;
+  error?: string | null;
+  latency_ms: number;
+}
+
+/** One per-session BYOK credential as sent to the backend (snake_case wire). */
+export interface DecisionCredentialPayload {
+  api_key: string;
+  model: string;
+  base_url: string;
+}
+
+/** Optional session payload for evaluate / compare requests. */
+export interface DecisionSessionPayload {
+  provider?: string;
+  credentials?: Record<string, DecisionCredentialPayload>;
+}

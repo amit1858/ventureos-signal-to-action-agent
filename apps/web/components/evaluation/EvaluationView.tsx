@@ -6,25 +6,34 @@ import {
   BadgeCheck,
   Boxes,
   Building2,
+  CheckCircle2,
   Cpu,
   Eye,
   Gauge,
   GitCompare,
   KeyRound,
   Layers,
+  Loader2,
   Lock,
   Plug,
+  Power,
+  Scale,
   ScrollText,
   ShieldCheck,
   Sparkles,
+  Trash2,
+  Trophy,
   Users,
   Workflow,
+  XCircle,
   type LucideIcon,
 } from "lucide-react";
 import { cx } from "@/lib/format";
 import type {
   DecisionComparison,
+  DecisionCredentialPayload,
   DecisionProviderStatus,
+  DecisionProviderTestResult,
   HubspotStatus,
   MetaResponse,
   ProviderDecision,
@@ -32,19 +41,39 @@ import type {
   SystemConfigResponse,
 } from "@/lib/types";
 import {
+  agreementPct,
   connectorCatalog,
   decisionModeLabel,
+  divergenceNotes,
   EVAL_GROUPS,
   evaluateSystem,
   humanizeDecisionAction,
+  mergeProviderHealth,
   PRODUCTION_PILLARS,
   providerCatalog,
+  providerHealthLabel,
+  PROVIDER_META_LIST,
+  reasoningLeaderboard,
   TRUST_PRINCIPLES,
   type ConnectorStatus,
   type EvalStatus,
   type PillarStatus,
+  type ProviderHealth,
+  type ProviderMeta,
   type ProviderStatus,
 } from "@/lib/evaluation";
+import {
+  type ByokCredential,
+  type ByokProviderId,
+  clearCredential as byokClear,
+  getActiveProvider,
+  getAllCredentialsWire,
+  getCredential,
+  maskKey,
+  setActiveProvider,
+  setCredential as byokSet,
+  type ActiveProvider,
+} from "@/lib/byok";
 import { Card } from "@/components/ui";
 
 // -- shared tone language (semantic, never decorative) --------------------
@@ -73,13 +102,6 @@ const pillarTone: Record<PillarStatus, Tone> = { live: "good", designed: "progre
 
 // -- decision-provider tone maps (BYOK comparison) ------------------------
 
-const decisionStatusTone: Record<string, Tone> = {
-  active: "good",
-  configured: "progress",
-  not_configured: "muted",
-  failed: "warn",
-  fallback: "warn",
-};
 const decisionModeTone: Record<string, Tone> = {
   deterministic: "good",
   live: "good",
@@ -150,6 +172,7 @@ export function EvaluationView({
   onRun,
   decisionStatus,
   onCompareDecision,
+  onTestProvider,
 }: {
   recs: Recommendation[];
   meta: MetaResponse | null;
@@ -161,7 +184,16 @@ export function EvaluationView({
   loading: boolean;
   onRun: () => void;
   decisionStatus: DecisionProviderStatus | null;
-  onCompareDecision: (accountId: string) => Promise<DecisionComparison>;
+  onCompareDecision: (
+    accountId: string,
+    credentials?: Record<string, DecisionCredentialPayload>,
+  ) => Promise<DecisionComparison>;
+  onTestProvider: (payload: {
+    provider: string;
+    api_key: string;
+    model?: string;
+    base_url?: string;
+  }) => Promise<DecisionProviderTestResult>;
 }) {
   const report = React.useMemo(
     () => evaluateSystem({ recs, meta, externalEnabled, latencyMs, provider }),
@@ -341,6 +373,7 @@ export function EvaluationView({
         loading={loading}
         onRun={onRun}
         onCompare={onCompareDecision}
+        onTest={onTestProvider}
       />
 
       {/* CRM CONNECTOR FRAMEWORK */}
@@ -449,18 +482,38 @@ function Legend({ tone, label }: { tone: Tone; label: string }) {
 
 // -- Decision Provider · BYOK comparison ----------------------------------
 
+type TestPhase = "idle" | "testing" | "ok" | "fail";
+interface TestState {
+  phase: TestPhase;
+  model?: string;
+  error?: string;
+  latency?: number;
+}
+
+const EMPTY_CRED: ByokCredential = { apiKey: "", model: "", baseUrl: "" };
+
 function DecisionProviderSection({
   status,
   recs,
   loading,
   onRun,
   onCompare,
+  onTest,
 }: {
   status: DecisionProviderStatus | null;
   recs: Recommendation[];
   loading: boolean;
   onRun: () => void;
-  onCompare: (accountId: string) => Promise<DecisionComparison>;
+  onCompare: (
+    accountId: string,
+    credentials?: Record<string, DecisionCredentialPayload>,
+  ) => Promise<DecisionComparison>;
+  onTest: (payload: {
+    provider: string;
+    api_key: string;
+    model?: string;
+    base_url?: string;
+  }) => Promise<DecisionProviderTestResult>;
 }) {
   const pickAccounts = React.useMemo(() => {
     const seen = new Set<string>();
@@ -474,6 +527,85 @@ function DecisionProviderSection({
     return out;
   }, [recs]);
 
+  // -- session BYOK state (hydrated on mount; never during SSR) ----------
+  const [hydrated, setHydrated] = React.useState(false);
+  const [creds, setCreds] = React.useState<Record<ByokProviderId, ByokCredential>>({
+    openai: EMPTY_CRED,
+    anthropic: EMPTY_CRED,
+    nvidia: EMPTY_CRED,
+  });
+  const [active, setActive] = React.useState<ActiveProvider>("deterministic");
+  const [tests, setTests] = React.useState<Record<ByokProviderId, TestState>>({
+    openai: { phase: "idle" },
+    anthropic: { phase: "idle" },
+    nvidia: { phase: "idle" },
+  });
+
+  React.useEffect(() => {
+    setCreds({
+      openai: getCredential("openai") ?? EMPTY_CRED,
+      anthropic: getCredential("anthropic") ?? EMPTY_CRED,
+      nvidia: getCredential("nvidia") ?? EMPTY_CRED,
+    });
+    setActive(getActiveProvider());
+    setHydrated(true);
+  }, []);
+
+  const patchCred = React.useCallback(
+    (provider: ByokProviderId, patch: Partial<ByokCredential>) => {
+      setCreds((prev) => {
+        const next = { ...prev[provider], ...patch };
+        byokSet(provider, next);
+        return { ...prev, [provider]: next };
+      });
+      // Editing the key invalidates any prior test verdict.
+      if (patch.apiKey !== undefined) {
+        setTests((prev) => ({ ...prev, [provider]: { phase: "idle" } }));
+      }
+    },
+    [],
+  );
+
+  const handleTest = React.useCallback(
+    async (provider: ByokProviderId) => {
+      const cred = creds[provider];
+      setTests((prev) => ({ ...prev, [provider]: { phase: "testing" } }));
+      try {
+        const res = await onTest({
+          provider,
+          api_key: cred.apiKey,
+          model: cred.model,
+          base_url: cred.baseUrl,
+        });
+        setTests((prev) => ({
+          ...prev,
+          [provider]: res.ok
+            ? { phase: "ok", model: res.model, latency: res.latency_ms }
+            : { phase: "fail", error: res.error ?? res.status },
+        }));
+      } catch (e) {
+        setTests((prev) => ({ ...prev, [provider]: { phase: "fail", error: (e as Error).message } }));
+      }
+    },
+    [creds, onTest],
+  );
+
+  const handleActivate = React.useCallback((provider: ActiveProvider) => {
+    setActive(provider);
+    setActiveProvider(provider);
+  }, []);
+
+  const handleClear = React.useCallback(
+    (provider: ByokProviderId) => {
+      byokClear(provider);
+      setCreds((prev) => ({ ...prev, [provider]: EMPTY_CRED }));
+      setTests((prev) => ({ ...prev, [provider]: { phase: "idle" } }));
+      setActive((cur) => (cur === provider ? "deterministic" : cur));
+    },
+    [],
+  );
+
+  // -- comparison --------------------------------------------------------
   const [accountId, setAccountId] = React.useState<string>("");
   const [cmp, setCmp] = React.useState<DecisionComparison | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -489,7 +621,7 @@ function DecisionProviderSection({
       setBusy(true);
       setErr(null);
       try {
-        setCmp(await onCompare(id));
+        setCmp(await onCompare(id, getAllCredentialsWire()));
       } catch (e) {
         setErr((e as Error).message);
         setCmp(null);
@@ -500,40 +632,131 @@ function DecisionProviderSection({
     [onCompare],
   );
 
+  const statusById = React.useMemo(() => {
+    const m: Record<string, DecisionProviderStatus["providers"][number]> = {};
+    for (const p of status?.providers ?? []) m[p.id] = p;
+    return m;
+  }, [status]);
+
+  const sessionKeyCount = hydrated
+    ? PROVIDER_META_LIST.filter((m) => creds[m.id].apiKey.trim().length > 0).length
+    : 0;
+
   return (
     <Section
       eyebrow="Decision Provider · BYOK"
-      title="Compare how each provider would decide."
-      sub="Bring your own key. Deterministic, OpenAI, Anthropic and NVIDIA all reason over the same governed account context and return one structured decision — so you can compare them side by side. The deterministic engine stays the benchmark and the safe fallback; LLM decisions are advisory and never change ranking, scoring or governance."
+      title="Bring your own key. Compare how each provider decides."
+      sub="Add your own OpenAI, Anthropic or NVIDIA key right here — no infrastructure, no redeploy. Keys live only in this browser session and vanish when the tab closes. Every provider reasons over the same governed account context and returns one structured decision, so you can compare them side by side. The deterministic engine stays the benchmark and the safe fallback; LLM decisions are advisory and never change ranking, scoring or governance."
     >
-      {/* PROVIDER STATUS STRIP */}
-      <div className="flex flex-wrap items-center gap-2">
-        {(status?.providers ?? []).map((p) => (
-          <span
-            key={p.id}
-            className={cx(
-              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs",
-              TONE[decisionStatusTone[p.status] ?? "muted"].ring,
-              TONE[decisionStatusTone[p.status] ?? "muted"].bg,
-            )}
-            title={`${p.label} · ${p.model}`}
-          >
-            <span
-              className={cx("h-1.5 w-1.5 rounded-full", TONE[decisionStatusTone[p.status] ?? "muted"].dot)}
-            />
-            <span className="font-medium text-ink">{p.label}</span>
-            <span className={cx("text-[10px] uppercase tracking-wide", TONE[decisionStatusTone[p.status] ?? "muted"].text)}>
-              {p.status.replace(/_/g, " ")}
-            </span>
-          </span>
-        ))}
-        {status ? (
+      {/* SESSION-KEY TRUST BANNER */}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-edge bg-surface2/40 px-3.5 py-2.5 text-[12px] text-muted">
+        <Lock size={13} className="shrink-0 text-accent" />
+        <span>
+          <span className="font-medium text-ink">Session-only keys.</span> Stored in this browser tab,
+          never sent to our servers except to run your request, never logged, never persisted. Closing
+          the tab clears them.
+        </span>
+        {hydrated ? (
           <span className="ml-auto text-[11px] text-faint">
-            Default <span className="font-mono text-muted">{status.default_provider}</span> ·{" "}
-            {status.configured_live_count} live key{status.configured_live_count === 1 ? "" : "s"} configured
+            {sessionKeyCount} session key{sessionKeyCount === 1 ? "" : "s"} set
           </span>
         ) : null}
       </div>
+
+      {/* PROVIDER STATUS STRIP (env + session merged) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <ProviderHealthChip
+          label="Deterministic"
+          health={active === "deterministic" ? "active" : "connected"}
+          model="deterministic-engine-v1"
+        />
+        {PROVIDER_META_LIST.map((m) => {
+          const health = mergeProviderHealth(statusById[m.id], {
+            hasSessionKey: hydrated && creds[m.id].apiKey.trim().length > 0,
+            isActive: active === m.id,
+            lastTestOk:
+              tests[m.id].phase === "ok" ? true : tests[m.id].phase === "fail" ? false : null,
+          });
+          return (
+            <ProviderHealthChip
+              key={m.id}
+              label={m.label}
+              health={health}
+              model={creds[m.id].model.trim() || m.defaultModel}
+            />
+          );
+        })}
+        {status ? (
+          <span className="ml-auto text-[11px] text-faint">
+            Active <span className="font-mono text-muted">{active}</span>
+          </span>
+        ) : null}
+      </div>
+
+      {/* PROVIDER SETTINGS */}
+      <Card className="p-5">
+        <div className="mb-4 flex items-center gap-2 text-sm font-medium text-ink">
+          <KeyRound size={15} className="text-brand-bright" />
+          Provider Settings
+        </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {PROVIDER_META_LIST.map((m) => (
+            <ProviderSettingsCard
+              key={m.id}
+              meta={m}
+              cred={creds[m.id]}
+              test={tests[m.id]}
+              envConfigured={statusById[m.id]?.configured ?? false}
+              active={active === m.id}
+              hydrated={hydrated}
+              onKeyChange={(v) => patchCred(m.id, { apiKey: v })}
+              onModelChange={(v) => patchCred(m.id, { model: v })}
+              onTest={() => handleTest(m.id)}
+              onActivate={() => handleActivate(m.id)}
+              onClear={() => handleClear(m.id)}
+            />
+          ))}
+        </div>
+
+        {/* ACTIVE PROVIDER SELECTOR */}
+        <div className="mt-5 border-t border-edge pt-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-faint">
+              Active provider
+            </span>
+            {(["deterministic", ...PROVIDER_META_LIST.map((m) => m.id)] as ActiveProvider[]).map(
+              (pid) => {
+                const label =
+                  pid === "deterministic"
+                    ? "Deterministic"
+                    : PROVIDER_META_LIST.find((m) => m.id === pid)?.label ?? pid;
+                const isActive = active === pid;
+                return (
+                  <button
+                    key={pid}
+                    type="button"
+                    onClick={() => handleActivate(pid)}
+                    className={cx(
+                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition",
+                      isActive
+                        ? "border-accent/40 bg-accent/10 text-ink"
+                        : "border-edge bg-surface2/50 text-muted hover:text-ink",
+                    )}
+                  >
+                    {isActive ? <CheckCircle2 size={12} className="text-accent" /> : null}
+                    {label}
+                  </button>
+                );
+              },
+            )}
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-faint">
+            This selection drives comparison and evaluation only. The seller Command Center always runs
+            on the governed deterministic engine — activating a provider here never changes ranking,
+            scoring, governance or CRM write-back.
+          </p>
+        </div>
+      </Card>
 
       {/* COMPARISON MODE */}
       <Card className="p-5">
@@ -596,13 +819,22 @@ function DecisionProviderSection({
 
         {cmp ? (
           <div className="mt-5 space-y-4">
-            <div className="flex items-center gap-2 text-[12px] text-muted">
+            <div className="flex flex-wrap items-center gap-2 text-[12px] text-muted">
               <span className="text-ink font-medium">{cmp.account_name}</span>
               <span className="text-faint/50">·</span>
               <span>
                 {cmp.evaluation.providers_compared} live provider
                 {cmp.evaluation.providers_compared === 1 ? "" : "s"} compared
               </span>
+              {cmp.evaluation.fallback_used.length > 0 ? (
+                <>
+                  <span className="text-faint/50">·</span>
+                  <span className="inline-flex items-center gap-1 text-amber">
+                    <ShieldCheck size={12} />
+                    {cmp.evaluation.fallback_used.join(", ")} fell back to deterministic
+                  </span>
+                </>
+              ) : null}
               {cmp.external_context_used ? (
                 <>
                   <span className="text-faint/50">·</span>
@@ -614,9 +846,19 @@ function DecisionProviderSection({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <DecisionCard decision={cmp.baseline} baseline />
               {cmp.providers.map((d) => (
-                <DecisionCard key={d.provider} decision={d} />
+                <DecisionCard
+                  key={d.provider}
+                  decision={d}
+                  agreement={
+                    d.mode === "live" || d.mode === "fallback"
+                      ? agreementPct(cmp.baseline, d)
+                      : undefined
+                  }
+                />
               ))}
             </div>
+
+            <ComparisonAnalytics comparison={cmp} />
 
             {/* EVALUATION NOTES */}
             {cmp.evaluation_notes.length > 0 ? (
@@ -646,6 +888,291 @@ function DecisionProviderSection({
   );
 }
 
+// -- BYOK provider health chip -------------------------------------------
+
+function ProviderHealthChip({
+  label,
+  health,
+  model,
+}: {
+  label: string;
+  health: ProviderHealth;
+  model: string;
+}) {
+  const tone = decisionHealthTone[health] ?? "muted";
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs",
+        TONE[tone].ring,
+        TONE[tone].bg,
+      )}
+      title={`${label} · ${model}`}
+    >
+      <span className={cx("h-1.5 w-1.5 rounded-full", TONE[tone].dot)} />
+      <span className="font-medium text-ink">{label}</span>
+      <span className={cx("text-[10px] uppercase tracking-wide", TONE[tone].text)}>
+        {providerHealthLabel(health)}
+      </span>
+    </span>
+  );
+}
+
+const decisionHealthTone: Record<ProviderHealth, Tone> = {
+  active: "good",
+  connected: "good",
+  configured: "progress",
+  not_configured: "muted",
+  failed: "warn",
+  fallback: "warn",
+};
+
+// -- BYOK provider settings card -----------------------------------------
+
+function ProviderSettingsCard({
+  meta,
+  cred,
+  test,
+  envConfigured,
+  active,
+  hydrated,
+  onKeyChange,
+  onModelChange,
+  onTest,
+  onActivate,
+  onClear,
+}: {
+  meta: ProviderMeta;
+  cred: ByokCredential;
+  test: TestState;
+  envConfigured: boolean;
+  active: boolean;
+  hydrated: boolean;
+  onKeyChange: (v: string) => void;
+  onModelChange: (v: string) => void;
+  onTest: () => void;
+  onActivate: () => void;
+  onClear: () => void;
+}) {
+  const hasSessionKey = hydrated && cred.apiKey.trim().length > 0;
+  const source = hasSessionKey ? "Session key" : envConfigured ? "Env key" : "No key";
+  const sourceTone: Tone = hasSessionKey ? "good" : envConfigured ? "progress" : "muted";
+
+  return (
+    <div
+      className={cx(
+        "flex flex-col rounded-xl border bg-surface2/40 p-4",
+        active ? "border-accent/30" : "border-edge",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[14px] font-semibold text-ink">
+            {active ? <CheckCircle2 size={13} className="shrink-0 text-accent" /> : null}
+            <span className="truncate">{meta.label}</span>
+          </div>
+          <div className="mt-0.5 font-mono text-[10px] text-faint">
+            {cred.model.trim() || meta.defaultModel}
+          </div>
+        </div>
+        <span
+          className={cx(
+            "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
+            TONE[sourceTone].ring,
+            TONE[sourceTone].bg,
+            TONE[sourceTone].text,
+          )}
+        >
+          {source}
+        </span>
+      </div>
+
+      {/* API KEY (masked) */}
+      <label className="mt-3 block text-[10px] font-medium uppercase tracking-wider text-faint">
+        API key
+      </label>
+      <input
+        type="password"
+        autoComplete="off"
+        spellCheck={false}
+        value={cred.apiKey}
+        onChange={(e) => onKeyChange(e.target.value)}
+        placeholder={meta.placeholder}
+        className="mt-1 w-full rounded-lg border border-edge bg-base/50 px-2.5 py-1.5 font-mono text-[12px] text-ink outline-none transition placeholder:text-faint/60 focus:border-brand/40"
+      />
+      {hasSessionKey ? (
+        <div className="mt-1 font-mono text-[10px] text-faint">{maskKey(cred.apiKey)}</div>
+      ) : (
+        <div className="mt-1 text-[10px] text-faint/70">Get a key at {meta.console}</div>
+      )}
+
+      {/* MODEL (optional override) */}
+      <label className="mt-2.5 block text-[10px] font-medium uppercase tracking-wider text-faint">
+        Model <span className="normal-case text-faint/60">(optional)</span>
+      </label>
+      <input
+        type="text"
+        autoComplete="off"
+        spellCheck={false}
+        value={cred.model}
+        onChange={(e) => onModelChange(e.target.value)}
+        placeholder={meta.defaultModel}
+        className="mt-1 w-full rounded-lg border border-edge bg-base/50 px-2.5 py-1.5 font-mono text-[12px] text-ink outline-none transition placeholder:text-faint/60 focus:border-brand/40"
+      />
+
+      {/* ACTIONS */}
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onTest}
+          disabled={test.phase === "testing" || !hasSessionKey}
+          className="btn btn-ghost py-1 text-[11px]"
+          title={hasSessionKey ? "Test this key" : "Enter a key first"}
+        >
+          {test.phase === "testing" ? (
+            <Loader2 size={12} className="animate-spin" />
+          ) : (
+            <Plug size={12} />
+          )}
+          {test.phase === "testing" ? "Testing…" : "Test"}
+        </button>
+        <button
+          type="button"
+          onClick={onActivate}
+          disabled={active}
+          className={cx("btn py-1 text-[11px]", active ? "btn-ghost" : "btn-primary")}
+        >
+          <Power size={12} />
+          {active ? "Active" : "Activate"}
+        </button>
+        {hasSessionKey ? (
+          <button
+            type="button"
+            onClick={onClear}
+            className="btn btn-ghost ml-auto py-1 text-[11px] text-faint hover:text-amber"
+            title="Clear this session key"
+          >
+            <Trash2 size={12} />
+            Clear
+          </button>
+        ) : null}
+      </div>
+
+      {/* TEST RESULT */}
+      {test.phase === "ok" ? (
+        <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-[11px] text-accent">
+          <CheckCircle2 size={12} />
+          Connected{test.model ? ` · ${test.model}` : ""}
+          {typeof test.latency === "number" ? (
+            <span className="ml-auto font-mono text-[10px] text-faint">{test.latency} ms</span>
+          ) : null}
+        </div>
+      ) : null}
+      {test.phase === "fail" ? (
+        <div className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-amber/30 bg-amber/10 px-2.5 py-1.5 text-[11px] text-amber">
+          <XCircle size={12} />
+          {test.error || "Connection failed"}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// -- comparison analytics (agreement / divergence / leaderboard) ----------
+
+function ComparisonAnalytics({ comparison }: { comparison: DecisionComparison }) {
+  const liveProviders = comparison.providers.filter(
+    (p) => p.mode === "live" || p.mode === "fallback",
+  );
+  const notes = React.useMemo(() => divergenceNotes(comparison), [comparison]);
+  const board = React.useMemo(() => reasoningLeaderboard(comparison), [comparison]);
+
+  if (liveProviders.length === 0) return null;
+
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* PROVIDER AGREEMENT */}
+      <div className="rounded-xl border border-edge bg-surface2/40 p-4">
+        <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-faint">
+          <Scale size={12} /> Provider agreement
+        </div>
+        <div className="space-y-2.5">
+          {liveProviders.map((d) => {
+            const pct = agreementPct(comparison.baseline, d);
+            const tone: Tone = pct >= 75 ? "good" : pct >= 50 ? "progress" : "warn";
+            return (
+              <div key={d.provider}>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="capitalize text-muted">Deterministic vs {d.provider}</span>
+                  <span className={cx("font-semibold", TONE[tone].text)}>{pct}%</span>
+                </div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-base/60">
+                  <div className={cx("h-full rounded-full", TONE[tone].dot)} style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* DECISION DIVERGENCE */}
+      <div className="rounded-xl border border-edge bg-surface2/40 p-4">
+        <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-faint">
+          <GitCompare size={12} /> Decision divergence
+        </div>
+        <ul className="space-y-2">
+          {notes.map((n) => (
+            <li key={n.provider} className="text-[11px] leading-relaxed text-muted">
+              <span className="font-medium capitalize text-ink">{n.provider}:</span> {n.text}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* PROVIDER LEADERBOARD */}
+      <div className="rounded-xl border border-edge bg-surface2/40 p-4">
+        <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-faint">
+          <Trophy size={12} /> Reasoning leaderboard
+        </div>
+        <ol className="space-y-2">
+          {board.map((row, i) => (
+            <li key={row.provider} className="flex items-center gap-2.5">
+              <span
+                className={cx(
+                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                  i === 0 ? "bg-accent/15 text-accent" : "bg-base/60 text-faint",
+                )}
+              >
+                {i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-[12px] font-medium text-ink">
+                  <span className="capitalize">{row.label}</span>
+                  {row.isBaseline ? (
+                    <span className="rounded border border-accent/30 bg-accent/10 px-1 text-[8px] font-semibold uppercase text-accent">
+                      Baseline
+                    </span>
+                  ) : null}
+                </div>
+                <div className="text-[10px] text-faint">
+                  {row.reasoningCount} reason{row.reasoningCount === 1 ? "" : "s"}
+                  {row.hasStrategy ? " · strategy" : ""}
+                  {row.hasCrmNote ? " · CRM note" : ""}
+                </div>
+              </div>
+              <span className="font-mono text-[10px] text-faint">{row.score}</span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-2.5 text-[10px] leading-relaxed text-faint/80">
+          Heuristic richness score (explanation depth, strategy, CRM note). Transparency aid only — not a
+          benchmark of accuracy, and it never changes ranking.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function DecisionLevelRow({
   label,
   value,
@@ -672,10 +1199,19 @@ function DecisionLevelRow({
   );
 }
 
-function DecisionCard({ decision, baseline }: { decision: ProviderDecision; baseline?: boolean }) {
+function DecisionCard({
+  decision,
+  baseline,
+  agreement,
+}: {
+  decision: ProviderDecision;
+  baseline?: boolean;
+  agreement?: number;
+}) {
   const mode = decision.mode;
   const modeT = decisionModeTone[mode] ?? "muted";
   const notConfigured = mode === "not_configured";
+  const strategy = (decision.conversation_strategy ?? []).filter((s) => s && s.trim());
 
   return (
     <div
@@ -698,11 +1234,17 @@ function DecisionCard({ decision, baseline }: { decision: ProviderDecision; base
       {notConfigured ? (
         <div className="mt-4 flex flex-1 flex-col items-start gap-2 rounded-lg border border-edge bg-base/30 p-3 text-[11px] text-faint">
           <KeyRound size={14} className="text-faint" />
-          Add this provider&apos;s API key (BYOK) to generate a live decision and compare it against the
-          deterministic baseline.
+          Add this provider&apos;s API key in Provider Settings above (BYOK) to generate a live decision
+          and compare it against the deterministic baseline.
         </div>
       ) : (
         <>
+          {typeof agreement === "number" ? (
+            <div className="mt-2.5 inline-flex w-fit items-center gap-1 rounded-md border border-edge bg-base/40 px-2 py-0.5 text-[10px] text-faint">
+              <Scale size={10} />
+              {agreement}% match with baseline
+            </div>
+          ) : null}
           <div className="mt-3 space-y-1.5">
             <DecisionLevelRow label="Risk" value={decision.risk_level} tone={levelTone("risk", decision.risk_level)} />
             <DecisionLevelRow
@@ -726,6 +1268,41 @@ function DecisionCard({ decision, baseline }: { decision: ProviderDecision; base
             <p className="mt-3 line-clamp-4 text-[11px] leading-relaxed text-muted">
               {decision.executive_summary}
             </p>
+          ) : null}
+          {decision.business_implication ? (
+            <div className="mt-3 border-t border-edge pt-3">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-faint">
+                Business implication
+              </div>
+              <p className="mt-1 line-clamp-3 text-[11px] leading-relaxed text-muted">
+                {decision.business_implication}
+              </p>
+            </div>
+          ) : null}
+          {strategy.length > 0 ? (
+            <div className="mt-3 border-t border-edge pt-3">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-faint">
+                Conversation strategy
+              </div>
+              <ol className="mt-1 space-y-1">
+                {strategy.slice(0, 3).map((s, i) => (
+                  <li key={i} className="flex gap-1.5 text-[11px] leading-relaxed text-muted">
+                    <span className="font-mono text-[9px] text-faint">{i + 1}.</span>
+                    <span className="line-clamp-2">{s}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
+          {decision.crm_note ? (
+            <div className="mt-3 border-t border-edge pt-3">
+              <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-faint">
+                <ScrollText size={10} /> CRM note draft
+              </div>
+              <p className="mt-1 line-clamp-3 rounded-md border border-edge bg-base/40 px-2 py-1.5 text-[10px] leading-relaxed text-muted">
+                {decision.crm_note}
+              </p>
+            </div>
           ) : null}
           {decision.provider_error ? (
             <p className="mt-2 text-[10px] text-amber">Fell back to baseline ({decision.provider_error}).</p>

@@ -139,6 +139,20 @@ class LLMDecisionProvider(DecisionProvider):
     #: subclasses set the live mode label on the resulting decision
     mode = "live"
 
+    # -- BYOK credential resolution (session overrides env) ----------------
+
+    def session_key(self) -> str:
+        """The per-session BYOK key, if one was injected for this request."""
+        return self.credential.key() if self.credential else ""
+
+    def session_model(self) -> str:
+        """A per-session model override, if supplied."""
+        return self.credential.pick_model() if self.credential else ""
+
+    def session_base_url(self) -> str:
+        """A per-session base-url override, if supplied."""
+        return self.credential.pick_base_url() if self.credential else ""
+
     def _complete(self, system: str, user: str) -> str:  # pragma: no cover - subclass
         """Make the HTTP call and return the raw text completion."""
         raise NotImplementedError
@@ -180,6 +194,41 @@ class LLMDecisionProvider(DecisionProvider):
                 continue
 
         raise ProviderError(f"{self.id} returned invalid output: {last_error}")
+
+    # -- lightweight connection test (Phase 5.0A "Test Connection") --------
+
+    def ping(self) -> Dict[str, Any]:
+        """Make a minimal request to verify the credential works.
+
+        Returns ``{"ok": True, "model": ..., "latency_ms": ...}`` on success.
+        Raises :class:`ProviderError` with a safe, key-free message on failure
+        (e.g. "invalid API key", "rate limited (429)", "network error: ...").
+        Never logs or returns the key value.
+        """
+        if not self.configured():
+            raise ProviderError(f"{self.id} has no API key.")
+
+        system = "You are a connection check for an enterprise application."
+        user = 'Reply with only this JSON object: {"status":"ok"}.'
+        start = time.perf_counter()
+        try:
+            self._complete(system, user)
+        except urllib.error.HTTPError as exc:
+            code = getattr(exc, "code", 0)
+            if code in (401, 403):
+                raise ProviderError("invalid API key") from exc
+            if code == 404:
+                raise ProviderError("model or endpoint not found (404)") from exc
+            if code == 429:
+                raise ProviderError("rate limited (429)") from exc
+            raise ProviderError(f"HTTP {code}") from exc
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            raise ProviderError(f"network error: {type(exc).__name__}") from exc
+        except Exception as exc:  # noqa: BLE001 -- never leak provider internals
+            raise ProviderError(f"error: {type(exc).__name__}") from exc
+
+        latency_ms = int((time.perf_counter() - start) * 1000)
+        return {"ok": True, "model": self.model_name(), "latency_ms": latency_ms}
 
     # -- small helpers for subclasses -------------------------------------
 

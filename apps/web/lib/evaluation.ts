@@ -7,7 +7,14 @@
 // changes ranking, scoring, confidence, governance or CRM write-back — there is
 // no business logic here, only how the existing behaviour is measured and shown.
 
-import type { MetaResponse, Recommendation, SystemConfigResponse } from "./types";
+import type {
+  DecisionComparison,
+  DecisionProviderStatusRow,
+  MetaResponse,
+  ProviderDecision,
+  Recommendation,
+  SystemConfigResponse,
+} from "./types";
 
 // -- Evaluation Center ----------------------------------------------------
 
@@ -492,4 +499,208 @@ export function decisionModeLabel(mode: string): string {
     default:
       return mode;
   }
+}
+
+// -- BYOK provider experience (Phase 5.0A) --------------------------------
+
+export interface ProviderMeta {
+  id: "openai" | "anthropic" | "nvidia";
+  label: string;
+  vendor: string;
+  defaultModel: string;
+  /** Recognisable, non-secret key prefix shown as guidance (not validation). */
+  keyHint: string;
+  placeholder: string;
+  /** Where to get a key — informational only. */
+  console: string;
+}
+
+/** Display metadata for the three live BYOK providers (no secrets here). */
+export const PROVIDER_META: Record<"openai" | "anthropic" | "nvidia", ProviderMeta> = {
+  openai: {
+    id: "openai",
+    label: "OpenAI",
+    vendor: "OpenAI",
+    defaultModel: "gpt-4o-mini",
+    keyHint: "sk-",
+    placeholder: "sk-…",
+    console: "platform.openai.com",
+  },
+  anthropic: {
+    id: "anthropic",
+    label: "Anthropic Claude",
+    vendor: "Anthropic",
+    defaultModel: "claude-3-5-sonnet-latest",
+    keyHint: "sk-ant-",
+    placeholder: "sk-ant-…",
+    console: "console.anthropic.com",
+  },
+  nvidia: {
+    id: "nvidia",
+    label: "NVIDIA Nemotron",
+    vendor: "NVIDIA",
+    defaultModel: "nvidia/nemotron-4-340b-instruct",
+    keyHint: "nvapi-",
+    placeholder: "nvapi-…",
+    console: "build.nvidia.com",
+  },
+};
+
+export const PROVIDER_META_LIST: ProviderMeta[] = [
+  PROVIDER_META.openai,
+  PROVIDER_META.anthropic,
+  PROVIDER_META.nvidia,
+];
+
+/** Human label for a merged provider health state (env + session + run). */
+export type ProviderHealth =
+  | "active"
+  | "connected"
+  | "configured"
+  | "not_configured"
+  | "failed"
+  | "fallback";
+
+export function providerHealthLabel(health: ProviderHealth): string {
+  switch (health) {
+    case "active":
+      return "Active";
+    case "connected":
+      return "Connected";
+    case "configured":
+      return "Configured";
+    case "failed":
+      return "Failed";
+    case "fallback":
+      return "Fallback";
+    default:
+      return "Not configured";
+  }
+}
+
+// -- Comparison analytics (heuristic, read-only) --------------------------
+
+const AGREEMENT_FIELDS: (keyof Pick<
+  ProviderDecision,
+  "risk_level" | "opportunity_level" | "recommended_action" | "confidence"
+>)[] = ["risk_level", "opportunity_level", "recommended_action", "confidence"];
+
+/**
+ * Heuristic agreement between a live provider decision and the deterministic
+ * baseline: the fraction of the four decision dimensions that match, as a
+ * percentage. This is a presentation metric only — it never affects ranking.
+ */
+export function agreementPct(baseline: ProviderDecision, decision: ProviderDecision): number {
+  const matches = AGREEMENT_FIELDS.filter(
+    (f) => String(baseline[f]).toLowerCase() === String(decision[f]).toLowerCase(),
+  ).length;
+  return Math.round((matches / AGREEMENT_FIELDS.length) * 100);
+}
+
+export interface DivergenceNote {
+  provider: string;
+  text: string;
+}
+
+const FIELD_LABEL: Record<string, string> = {
+  risk_level: "risk",
+  opportunity_level: "opportunity",
+  recommended_action: "recommended action",
+  confidence: "confidence",
+};
+
+/**
+ * Plain-language notes describing where each live provider diverges from the
+ * deterministic baseline. Advisory framing only — governance still decides.
+ */
+export function divergenceNotes(comparison: DecisionComparison): DivergenceNote[] {
+  const { baseline, providers } = comparison;
+  const live = providers.filter((p) => p.mode === "live" || p.mode === "fallback");
+  const notes: DivergenceNote[] = [];
+  for (const decision of live) {
+    const diffs = AGREEMENT_FIELDS.filter(
+      (f) => String(baseline[f]).toLowerCase() !== String(decision[f]).toLowerCase(),
+    );
+    if (diffs.length === 0) {
+      notes.push({
+        provider: decision.provider,
+        text: `Fully aligned with the deterministic baseline across risk, opportunity, action and confidence.`,
+      });
+      continue;
+    }
+    const parts = diffs.map(
+      (f) => `${FIELD_LABEL[f]} ${String(decision[f])} vs baseline ${String(baseline[f])}`,
+    );
+    notes.push({
+      provider: decision.provider,
+      text: `Diverges on ${parts.join("; ")}. Advisory only — governance and human approval still apply.`,
+    });
+  }
+  return notes;
+}
+
+export interface LeaderboardRow {
+  provider: string;
+  label: string;
+  score: number;
+  reasoningCount: number;
+  hasStrategy: boolean;
+  hasCrmNote: boolean;
+  latencyMs: number;
+  isBaseline: boolean;
+}
+
+/**
+ * A heuristic "reasoning quality" leaderboard across the baseline and any live
+ * providers. Scored by explanation richness (reasoning depth, conversation
+ * strategy, CRM note draft), with lower latency as a gentle tiebreak. This is a
+ * transparent heuristic for demo insight — not a benchmark of model accuracy and
+ * it never changes ranking, scoring or governance.
+ */
+export function reasoningLeaderboard(comparison: DecisionComparison): LeaderboardRow[] {
+  const candidates: ProviderDecision[] = [
+    comparison.baseline,
+    ...comparison.providers.filter((p) => p.mode === "live" || p.mode === "fallback"),
+  ];
+
+  const rows: LeaderboardRow[] = candidates.map((d) => {
+    const reasoningCount = (d.reasoning ?? []).filter((r) => r && r.trim()).length;
+    const hasStrategy = (d.conversation_strategy ?? []).some((s) => s && s.trim());
+    const hasCrmNote = !!(d.crm_note && d.crm_note.trim());
+    // Richness 0–100: reasoning depth (cap 4 → 60) + strategy (20) + crm note (20).
+    const richness =
+      Math.min(reasoningCount, 4) * 15 + (hasStrategy ? 20 : 0) + (hasCrmNote ? 20 : 0);
+    // Latency nudge: up to +5 for a fast (<800ms) response, scaled down to 0 by 4s.
+    const latencyMs = d.latency_ms ?? 0;
+    const latencyBonus = latencyMs > 0 ? Math.max(0, 5 - Math.floor(latencyMs / 800)) : 5;
+    return {
+      provider: d.provider,
+      label: d.provider.charAt(0).toUpperCase() + d.provider.slice(1),
+      score: Math.min(100, richness) + latencyBonus,
+      reasoningCount,
+      hasStrategy,
+      hasCrmNote,
+      latencyMs,
+      isBaseline: d.is_baseline,
+    };
+  });
+
+  return rows.sort((a, b) => b.score - a.score || a.latencyMs - b.latencyMs);
+}
+
+/**
+ * Merge the backend status row (env-driven) with the browser session state to
+ * produce the single health badge the UI shows. Session keys win because they
+ * are the user's explicit, current choice.
+ */
+export function mergeProviderHealth(
+  row: DecisionProviderStatusRow | undefined,
+  opts: { hasSessionKey: boolean; isActive: boolean; lastTestOk?: boolean | null },
+): ProviderHealth {
+  if (opts.isActive) return "active";
+  if (opts.lastTestOk === true) return "connected";
+  if (opts.lastTestOk === false) return "failed";
+  if (opts.hasSessionKey) return "connected";
+  if (row?.configured) return "configured";
+  return "not_configured";
 }

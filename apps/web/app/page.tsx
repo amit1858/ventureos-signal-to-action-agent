@@ -7,7 +7,9 @@ import type {
   Account,
   AccountDetail,
   DecisionComparison,
+  DecisionCredentialPayload,
   DecisionProviderStatus,
+  DecisionProviderTestResult,
   ExternalSignalsResult,
   HealthResponse,
   HubspotStatus,
@@ -278,7 +280,20 @@ export default function Page() {
   }, [view, decisionStatus]);
 
   const compareDecision = React.useCallback(
-    (accountId: string): Promise<DecisionComparison> => api.decisionCompare(accountId),
+    (
+      accountId: string,
+      credentials?: Record<string, DecisionCredentialPayload>,
+    ): Promise<DecisionComparison> => api.decisionCompare(accountId, credentials),
+    [],
+  );
+
+  const testProvider = React.useCallback(
+    (payload: {
+      provider: string;
+      api_key: string;
+      model?: string;
+      base_url?: string;
+    }): Promise<DecisionProviderTestResult> => api.decisionTest(payload),
     [],
   );
 
@@ -794,6 +809,7 @@ export default function Page() {
             onRun={runWorkflow}
             decisionStatus={decisionStatus}
             onCompareDecision={compareDecision}
+            onTestProvider={testProvider}
           />
         </main>
       ) : null}

@@ -18,20 +18,22 @@ class AnthropicProvider(LLMDecisionProvider):
     label = "Anthropic Claude"
 
     def model_name(self) -> str:
-        return get_settings().anthropic_model
+        return self.session_model() or get_settings().anthropic_model
 
     def configured(self) -> bool:
-        return get_settings().anthropic_configured
+        return bool(self.session_key()) or get_settings().anthropic_configured
 
     def _complete(self, system: str, user: str) -> str:
         settings = get_settings()
-        url = f"{settings.anthropic_base_url}/messages"
+        api_key = self.session_key() or settings.anthropic_api_key
+        base_url = self.session_base_url() or settings.anthropic_base_url
+        url = f"{base_url}/messages"
         headers = {
-            "x-api-key": settings.anthropic_api_key,
+            "x-api-key": api_key,
             "anthropic-version": settings.anthropic_version,
         }
         payload: Dict[str, Any] = {
-            "model": settings.anthropic_model,
+            "model": self.model_name(),
             "max_tokens": 900,
             "temperature": 0.2,
             "system": system,

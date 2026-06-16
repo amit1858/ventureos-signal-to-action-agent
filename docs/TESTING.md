@@ -86,6 +86,18 @@ Try this:
 - (Optional) Add your own OPENAI_API_KEY or ANTHROPIC_API_KEY to services/api/.env, restart the
   backend, and compare again to see live decisions next to the baseline.
 
+Try the session-key BYOK UX (no env vars, no restart):
+
+- In Evaluation -> Provider Settings, paste a key into a provider card (it is masked immediately).
+- Click "Test connection". A wrong key shows "invalid API key" / Failed; a valid key shows
+  Connected plus the resolved model. Nothing is persisted.
+- Click "Activate" to make that provider the active session provider, then "Compare providers" to
+  see its live decision beside the deterministic baseline.
+- Click "Clear" to drop the session key; the active provider falls back to Deterministic.
+- Close the browser tab and reopen the app: the key is gone (sessionStorage clears on tab close).
+  Confirm no key ever appears in localStorage, the console, the network query string, or any API
+  response.
+
 What to tell us:
 
 - Did the comparison make sense? Was the baseline decision clearly the reference point?

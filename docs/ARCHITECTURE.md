@@ -582,3 +582,45 @@ action." External signals remain supporting context only and never change rankin
 Keys are read only from the environment (services/api/.env, git-ignored). They are never returned
 by an API, never logged (providers log only the exception type), and never sent to the browser.
 Status responses contain presence booleans and the model name, never the key value.
+
+### Phase 5.0A - UI session-key BYOK (true BYOK experience)
+
+Phase 5.0A adds a first-class BYOK *user experience* on top of the Phase 5.0 backend. A user can
+bring their own key, configure it through the UI, test the connection, activate a provider, compare
+providers and clear the key - without touching infrastructure. Both supply paths coexist:
+
+- Infrastructure mode - keys from environment variables (services/api/.env or the host secret
+  store), unchanged from Phase 5.0.
+- User BYOK mode - session keys supplied through the browser UI.
+
+Frontend (apps/web):
+- lib/byok.ts - a sessionStorage credential store. Keys live under s2a.byok.<provider> and the
+  active provider under s2a.byok.active. Functions: get/set/clearCredential, getActiveProvider /
+  setActiveProvider, toWire / getAllCredentialsWire (backend snake_case shape, only providers that
+  carry a key or override), maskKey (reveals a short prefix then bullets). SSR-guarded; never uses
+  localStorage.
+- Evaluation Center -> Provider Settings - one card per provider with a masked (type=password) key
+  input, an optional model input, and Test / Activate / Clear actions; an active-provider selector
+  (Deterministic + the three LLM providers, one active); and comparison analytics (provider
+  agreement, decision divergence, reasoning leaderboard) that render once at least one live decision
+  exists. Activating a provider here drives Comparison Mode and evaluation only - the seller Command
+  Center always uses the governed deterministic engine.
+
+Backend (services/api):
+- decision_providers/base.py - ProviderCredential value object (api_key / model / base_url) and a
+  DecisionProvider.__init__(credential=None) so a per-request session credential can be threaded in.
+- decision_providers/llm_base.py - session resolvers (session_key / session_model /
+  session_base_url) that prefer the request credential over env settings, and a ping() connection
+  test that classifies failures to safe messages (invalid API key, rate limited, network error)
+  without ever echoing the key.
+- decision_providers/__init__.py - credentials are threaded through provider_status, evaluate_account
+  and compare_account; a new test_provider(provider_id, credential) returns a secret-free
+  {ok, provider, model, status, latency_ms, error}.
+- main.py - additive POST /api/decision-providers/test; evaluate and compare accept an optional body
+  carrying per-provider credentials. Session keys travel in the request BODY only (never the query
+  string) and are used for that single request - never persisted, cached, logged or written to disk.
+
+Security: session keys are masked in the UI, sent only in request bodies, never returned by an API,
+never logged, never persisted server-side, and cleared by the browser when the tab closes. The
+deterministic baseline, governance, human approval and CRM write-back are unchanged; LLM decisions
+remain advisory.
