@@ -305,3 +305,29 @@ export interface HubspotWriteback {
   payload_preview: Record<string, string>;
   safety_note: string;
 }
+
+// -- System diagnostics (read-only; powers the Evaluation & Architecture view) --
+// GET /api/system/config returns secret-free booleans only — never any token.
+
+export interface SystemConfigSnapshot {
+  api_version: string;
+  model_provider: string;
+  provider_implemented: boolean;
+  nvidia_configured: boolean;
+  openai_configured: boolean;
+  anthropic_configured: boolean;
+  hubspot_enabled: boolean;
+  hubspot_configured: boolean;
+  hubspot_writeback_enabled: boolean;
+  external_signals_enabled: boolean;
+  external_signals_provider: string;
+  serper_configured: boolean;
+  searchapi_configured: boolean;
+  external_signals_live_ready: boolean;
+  [key: string]: unknown;
+}
+
+export interface SystemConfigResponse {
+  config: SystemConfigSnapshot;
+  warnings: string[];
+}

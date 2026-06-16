@@ -1,8 +1,8 @@
 import * as React from "react";
-import { Activity, LayoutDashboard, Columns3, Database } from "lucide-react";
+import { Activity, LayoutDashboard, Columns3, Database, Gauge } from "lucide-react";
 import { cx } from "@/lib/format";
 
-export type AppView = "landing" | "command" | "workspace";
+export type AppView = "landing" | "command" | "workspace" | "evaluation";
 
 // Slim, quiet product header (P4): brand mark (returns home) + the
 // Landing → Command Center → Workspace journey + a single calm source
@@ -67,6 +67,12 @@ export function Header({
               onClick={() => onViewChange("workspace")}
               icon={<Columns3 size={13} />}
               label="Workspace"
+            />
+            <ViewTab
+              active={view === "evaluation"}
+              onClick={() => onViewChange("evaluation")}
+              icon={<Gauge size={13} />}
+              label="Evaluation"
             />
           </div>
         ) : null}

@@ -11,6 +11,7 @@ import type {
   MetaResponse,
   Recommendation,
   RecommendationResponse,
+  SystemConfigResponse,
 } from "./types";
 
 export const API_BASE_URL =
@@ -46,6 +47,7 @@ export const api = {
   baseUrl: API_BASE_URL,
   health: () => jfetch<HealthResponse>("/api/health"),
   meta: () => jfetch<MetaResponse>("/api/meta"),
+  systemConfig: () => jfetch<SystemConfigResponse>("/api/system/config"),
   accounts: (limit = 200) => jfetch<AccountListResponse>(`/api/accounts?limit=${limit}`),
   account: (accountId: string) => jfetch<AccountDetail>(`/api/accounts/${accountId}`),
   externalSignals: (accountId: string) =>

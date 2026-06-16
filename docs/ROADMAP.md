@@ -67,3 +67,16 @@ UI**.
 Every future item changes **how facts are narrated or where data comes from** — never **how
 decisions are made**. The deterministic business engine remains the source of truth, and human
 approval remains mandatory before any CRM write.
+
+---
+
+## Phase 4.4 - Enterprise experience & evaluation foundation (delivered)
+
+A polish + foundation pass before any LLM integration. Additive and fully backward compatible
+(no change to ranking, scoring, confidence, governance, approval, CRM write-back, HubSpot or
+external signals). Adds an **Evaluation & Architecture** view: an Evaluation Center (12
+dimensions), the model-provider framework (Mock active; NVIDIA ready; OpenAI / Claude / Azure
+planned), the CRM-connector framework (HubSpot live; Salesforce / Dynamics / SAP / Zoho planned)
+and a production-readiness matrix (live / designed / planned), plus a consistent enterprise
+design language and narrated loading. This is the recommended freeze point before Phase 5 (live
+LLM reasoning and usage telemetry).

@@ -488,3 +488,45 @@ its own — additive, never breaks existing clients), and `POST /api/external-si
 accounts only, capped by `EXTERNAL_SIGNALS_REFRESH_LIMIT`). Status (including `provider_mode`,
 `searchapi_configured` and `live_ready`) is reported in `/api/meta` and `/api/system/status`.
 
+
+## 13. Evaluation & architecture surfaces (Phase 4.4)
+
+Phase 4.4 is a presentation + foundation pass: it adds an enterprise "Evaluation &
+Architecture" view and a consistent design language, with **zero business-logic change**
+(ranking, scoring, confidence, governance, approval, CRM write-back, HubSpot and external
+signals are all untouched; the only backend surface used is the pre-existing, read-only
+`/api/system/config`). Everything below is derived on the frontend from data the engine
+already produced (`apps/web/lib/evaluation.ts` + `apps/web/components/evaluation/EvaluationView.tsx`).
+
+### Evaluation Center
+Twelve evaluation dimensions across three groups - Output quality (recommendation, evidence,
+executive brief, conversation strategy, external intelligence), Governance & trust (governance
+compliance, source attribution, hallucination prevention, CRM write-back safety) and
+Performance & runtime (determinism, latency, token/provider usage). Capability dimensions
+reflect how the system is built; data-derived dimensions (evidence completeness, latency,
+top-rank alignment) are measured from the latest workflow run. Token/provider usage is the
+single "planned" dimension (it arrives with the live LLM provider in Phase 5). This complements
+the deterministic `evals/` suite (10/10), which remains the backend source of truth.
+
+### Model-provider framework
+A presentation of the existing `model_adapters/` factory: Mock (active, deterministic
+baseline), NVIDIA Nemotron / NIM (ready - adapter implemented), OpenAI and Anthropic Claude
+(planned - stubs behind the same interface) and Azure AI (planned). "Key configured" badges
+come only from the redacted booleans in `/api/system/config` - never a secret value. Facts and
+scores stay deterministic; a provider only narrates.
+
+### CRM-connector framework
+A presentation of the existing `crm_connectors/` abstraction: HubSpot live; Salesforce,
+Microsoft Dynamics 365, SAP CRM and Zoho planned behind the same `CRMConnector` contract.
+
+### Production-architecture matrix
+Twelve pillars graded live / designed / planned: Human approval, Decision ledger & audit,
+Governed reasoning, Secrets management and Evaluation are live; Model routing, Connector
+management and Observability are designed (built, ready to wire); Authentication & SSO, Tenant
+isolation, Role-based access and Per-user portfolio are planned for a multi-tenant rollout.
+
+### Design language & demo delight
+One typography rhythm (eyebrow / section heading / decision / supporting / evidence / metadata)
+and a single semantic colour language reused across the app. Loading narrates the work
+("Reviewing customer signals...", "Evaluating renewal and churn risk...", ...) and resolves to
+"I'm ready. Here's where I'd spend today." All motion honours `prefers-reduced-motion`.

@@ -13,9 +13,11 @@ import type {
   MetaResponse,
   Recommendation,
   RecommendationResponse,
+  SystemConfigResponse,
 } from "@/lib/types";
 import { cx } from "@/lib/format";
 import { briefFocusAccountIds, type BriefExternalContext } from "@/lib/reasoning";
+import { LOADING_PHASES } from "@/lib/evaluation";
 import { Header, type AppView } from "@/components/Header";
 import { LeftPanel } from "@/components/LeftPanel";
 import { CrmIntegrationCard } from "@/components/CrmIntegrationCard";
@@ -39,6 +41,7 @@ import { KpiStrip } from "@/components/KpiStrip";
 import { CommandCenter } from "@/components/command/CommandCenter";
 import { WhyThisAccount } from "@/components/WhyThisAccount";
 import { LandingView } from "@/components/landing/LandingView";
+import { EvaluationView } from "@/components/evaluation/EvaluationView";
 import { WorkspaceQuery } from "@/components/WorkspaceQuery";
 import { ThinkingSequence } from "@/components/ThinkingSequence";
 import { Card, PanelTitle } from "@/components/ui";
@@ -67,6 +70,7 @@ export default function Page() {
   const [health, setHealth] = React.useState<HealthResponse | null>(null);
   const [accounts, setAccounts] = React.useState<Record<string, Account>>({});
   const [bootError, setBootError] = React.useState<string | null>(null);
+  const [systemConfig, setSystemConfig] = React.useState<SystemConfigResponse | null>(null);
 
   const [query, setQuery] = React.useState(DEFAULT_QUERY);
   const [limit, setLimit] = React.useState(10);
@@ -237,6 +241,23 @@ export default function Page() {
     };
   }, [externalSignalsEnabled, result, accounts, externalSignals]);
 
+  // Lazily load secret-free system diagnostics the first time the Evaluation &
+  // Architecture view is opened. Read-only; silent on failure (the view falls
+  // back to meta-derived data).
+  React.useEffect(() => {
+    if (view !== "evaluation" || systemConfig) return;
+    let cancelled = false;
+    api
+      .systemConfig()
+      .then((c) => {
+        if (!cancelled) setSystemConfig(c);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [view, systemConfig]);
+
   async function runWorkflow() {
     if (!query.trim() || loading) return;
     setLoading(true);
@@ -256,11 +277,12 @@ export default function Page() {
   }
 
   // Auto-run the default query once after data is ready, either in demo mode or
-  // when the Executive Command Center is the landing view (so the cockpit shows
-  // live recommendations on load). Read-only generation against the local API.
+  // when the Command Center / Evaluation view needs live recommendations to
+  // present (cockpit on load, Evaluation Center measured on real output).
+  // Read-only generation against the local API.
   React.useEffect(() => {
     if (autoRanRef.current) return;
-    if (!demoMode && view !== "command") return;
+    if (!demoMode && view !== "command" && view !== "evaluation") return;
     if (!meta || result || loading) return;
     autoRanRef.current = true;
     runWorkflow();
@@ -570,6 +592,10 @@ export default function Page() {
 
             {result && !loading ? (
               <div className="space-y-3">
+                <div className="flex items-center gap-2 text-[13px] font-medium text-accent">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulseline" />
+                  {LOADING_DONE}
+                </div>
                 <KpiStrip
                   recs={result.recommendations}
                   latencyMs={result.latency_ms}
@@ -724,6 +750,28 @@ export default function Page() {
       </main>
       ) : null}
 
+      {view === "evaluation" ? (
+        <main key="evaluation" className="scene mx-auto w-full max-w-[1840px] flex-1 px-4 py-6">
+          {runError ? (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-risk/40 bg-risk/10 px-4 py-3 text-sm text-risk">
+              <AlertTriangle size={16} />
+              {runError}
+            </div>
+          ) : null}
+          <EvaluationView
+            recs={result?.recommendations ?? []}
+            meta={meta}
+            hubStatus={hubStatus}
+            externalEnabled={externalSignalsEnabled}
+            latencyMs={result?.latency_ms ?? 0}
+            provider={modelProvider}
+            config={systemConfig}
+            loading={loading}
+            onRun={runWorkflow}
+          />
+        </main>
+      ) : null}
+
       {view !== "landing" ? (
         <RuntimeTrace
           ledger={result?.decision_ledger ?? null}
@@ -736,13 +784,7 @@ export default function Page() {
   );
 }
 
-const LOADING_PHASES = [
-  "Running controlled agent workflow…",
-  "Analyzing customer signals…",
-  "Scoring accounts deterministically…",
-  "Checking evidence and governance…",
-  "Generating next-best action…",
-];
+const LOADING_DONE = "I'm ready. Here's where I'd spend today.";
 
 function CenterLoading() {
   const [phase, setPhase] = React.useState(0);
