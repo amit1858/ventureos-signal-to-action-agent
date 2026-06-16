@@ -20,9 +20,13 @@ UI**.
 - **Replaceable model provider** — mock adapter active; NVIDIA NIM adapter stubbed.
 - **Outside-In intelligence (optional, default off)** — an additive enrichment layer that attaches
   cited, caveated *public* context (news, market/funding/leadership/regulatory shifts) to an account
-  and **fuses it with internal CRM signals** into a hedged executive brief (what changed outside the
-  CRM, why it matters, seller implication, conversation strategy, suggested opening line). Supporting
-  context only — it never changes ranking, scoring, governance, confidence or CRM write-back. Mock
+  and **fuses it with internal CRM signals** into a hedged executive brief. Phase 4.2 expands this into
+  a McKinsey-style **Executive Decision Brief**: executive summary, why it matters, structured internal
+  evidence (source of truth), synthesized external intelligence, AI fused insight, business & seller
+  implications, conversation strategy, suggested opening line, an **advisory, approval-gated CRM
+  write-back recommendation** (task + note + follow-up), confidence + why, an explicit "what not to do"
+  list, and sources. Supporting context only — it never changes ranking, scoring, governance, confidence
+  or CRM write-back, and the write-back recommendation is advisory (human approval still required). Mock
   provider wired; live `serper` and `searchapi` providers ready behind a key with safe mock fallback.
 
 ---

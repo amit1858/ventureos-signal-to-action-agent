@@ -88,17 +88,66 @@ class ExternalSource(BaseModel):
     published_at: Optional[str] = None
 
 
+class InternalEvidenceItem(BaseModel):
+    """One structured internal-CRM evidence point for the executive brief.
+
+    Phase 4.2. The numbers are read straight from the deterministic engine's
+    account fields; the brief only *presents* them, never recomputes or changes
+    scoring.
+    """
+
+    label: str = Field(..., description="e.g. 'Spend trend', 'Engagement', 'Renewal timing'")
+    value: str = Field(..., description="Human-readable value, e.g. 'Down 18% MoM'")
+    tone: str = Field(default=IMPACT_NEUTRAL, description="positive | negative | neutral")
+
+
+class CRMTaskRecommendation(BaseModel):
+    """A *suggested* CRM task to log after the seller interaction (Phase 4.2).
+
+    Advisory only. Nothing here is written to the CRM automatically; the seller
+    must review and approve before any write-back happens. It does not change the
+    existing CRM write-back architecture in any way.
+    """
+
+    title: str = ""
+    description: str = ""
+    priority: str = Field(default="medium", description="high | medium | low")
+    owner: str = Field(default="Account owner", description="Suggested owner (generic, no PII)")
+    suggested_due_date: str = Field(default="", description="Human-friendly, e.g. 'Within 3 business days'")
+
+
+class CRMWritebackRecommendation(BaseModel):
+    """Suggested CRM write-back content: task + note + follow-up (Phase 4.2).
+
+    Advisory and approval-gated. It describes what a seller *might* log after the
+    conversation; it never triggers a write-back and never bypasses the existing
+    human-approval workflow.
+    """
+
+    task: CRMTaskRecommendation = Field(default_factory=CRMTaskRecommendation)
+    note: str = Field(default="", description="A polished, ready-to-edit CRM note")
+    follow_up_reminder: str = Field(default="", description="When/why to revisit")
+
+
 class ExecutiveBrief(BaseModel):
-    """Executive Intelligence Fusion narrative (Phase 4.1).
+    """Executive Decision Brief (Phase 4.1 fusion, extended in Phase 4.2).
 
     Combines the account's *internal* CRM trajectory with *external* public
-    context into a seller-facing brief. It is **explanatory only**: it never
-    changes ranking, scoring, governance, confidence or CRM write-back. Language
-    is deliberately cautious and every external claim is cited + caveated.
+    context into a seller-facing executive briefing. It is **explanatory only**:
+    it never changes ranking, scoring, governance, confidence or CRM write-back.
+    Language is deliberately cautious and every external claim is cited +
+    caveated.
+
+    Phase 4.2 added the executive-summary, why-it-matters, structured internal
+    evidence, synthesized external intelligence, conversation steps, confidence
+    rationale, explicit "what not to do" cautions and an advisory CRM write-back
+    recommendation. Every new field is optional with a safe default, so older
+    clients and previously-cached results keep validating unchanged.
     """
 
     account_id: str
     account_name: str
+    # -- Phase 4.1 core narrative ----------------------------------------
     internal_summary: str = Field(default="", description="What the internal CRM signals say")
     external_summary: str = Field(default="", description="What changed outside the CRM")
     fused_insight: str = Field(default="", description="How internal + external context combine")
@@ -109,6 +158,25 @@ class ExecutiveBrief(BaseModel):
     confidence: str = Field(default="low", description="low | medium | high (of the external read)")
     caveats: List[str] = Field(default_factory=list)
     sources: List[ExternalSource] = Field(default_factory=list)
+    # -- Phase 4.2 Executive Decision Brief (all additive + optional) -----
+    executive_summary: str = Field(default="", description="What is happening (one paragraph)")
+    why_it_matters: str = Field(default="", description="Why the seller should care")
+    internal_evidence: List[InternalEvidenceItem] = Field(
+        default_factory=list, description="Structured internal CRM evidence points"
+    )
+    external_intelligence: List[str] = Field(
+        default_factory=list, description="Synthesized external themes (not raw article dumps)"
+    )
+    conversation_strategy_steps: List[str] = Field(
+        default_factory=list, description="Practical, ordered outreach steps"
+    )
+    confidence_rationale: str = Field(default="", description="Why the confidence level is what it is")
+    what_not_to_do: List[str] = Field(
+        default_factory=list, description="Explicit cautions for the seller"
+    )
+    crm_writeback: Optional[CRMWritebackRecommendation] = Field(
+        default=None, description="Advisory, approval-gated CRM write-back recommendation"
+    )
 
 
 class ExternalSignalsResult(BaseModel):

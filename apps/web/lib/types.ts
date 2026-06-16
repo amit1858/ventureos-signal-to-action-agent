@@ -134,6 +134,26 @@ export interface ExternalSource {
   published_at?: string | null;
 }
 
+export interface InternalEvidenceItem {
+  label: string;
+  value: string;
+  tone: "positive" | "negative" | "neutral" | string;
+}
+
+export interface CRMTaskRecommendation {
+  title: string;
+  description: string;
+  priority: string;
+  owner: string;
+  suggested_due_date: string;
+}
+
+export interface CRMWritebackRecommendation {
+  task: CRMTaskRecommendation;
+  note: string;
+  follow_up_reminder: string;
+}
+
 export interface ExecutiveBrief {
   account_id: string;
   account_name: string;
@@ -147,6 +167,15 @@ export interface ExecutiveBrief {
   confidence: string;
   caveats: string[];
   sources: ExternalSource[];
+  // Phase 4.2 — Executive Decision Brief (additive, optional for older clients).
+  executive_summary?: string;
+  why_it_matters?: string;
+  internal_evidence?: InternalEvidenceItem[];
+  external_intelligence?: string[];
+  conversation_strategy_steps?: string[];
+  confidence_rationale?: string;
+  what_not_to_do?: string[];
+  crm_writeback?: CRMWritebackRecommendation | null;
 }
 
 export interface ExternalSignalsResult {

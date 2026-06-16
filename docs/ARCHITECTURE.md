@@ -455,20 +455,32 @@ Internal CRM signals                     External signals
                                └──────────────┘
 ```
 
-The `ExecutiveBrief` contains: `internal_summary`, `external_summary`, `fused_insight`,
-`business_implication`, `seller_implication`, `recommended_conversation_strategy`,
-`suggested_opening_line`, `confidence`, `caveats[]`, `sources[]`. Confidence is **conservative**:
-external context alone never earns "high" — "high" requires multiple strong, credible external
-signals **and** internal corroboration (e.g. negative external context alongside declining spend, or
-positive external context alongside rising spend / high growth). The language is deliberately hedged
-("External signals suggest…", "Public context indicates…", "this may increase urgency because…") and
-every brief carries the standing external-context caveat.
+The `ExecutiveBrief` contains the Phase 4.1 narrative — `internal_summary`, `external_summary`,
+`fused_insight`, `business_implication`, `seller_implication`, `recommended_conversation_strategy`,
+`suggested_opening_line`, `confidence`, `caveats[]`, `sources[]` — plus the Phase 4.2 Executive
+Decision Brief fields (all additive and optional, so older clients and cached results still validate):
+`executive_summary`, `why_it_matters`, `internal_evidence[]` (structured label/value/tone rows read
+straight from the deterministic engine's account fields), `external_intelligence[]` (synthesized
+themes, **not** an article dump), `conversation_strategy_steps[]`, `confidence_rationale`,
+`what_not_to_do[]` (explicit cautions, always including "do not treat external news as proof" and "do
+not bypass human approval"), and `crm_writeback` (an **advisory, approval-gated** suggestion of a CRM
+task + note + follow-up reminder). Confidence is **conservative**: external context alone never earns
+"high" — "high" requires multiple strong, credible external signals **and** internal corroboration
+(e.g. negative external context alongside declining spend, or positive external context alongside
+rising spend / high growth). The language is deliberately hedged ("External signals suggest…", "Public
+context indicates…", "this may increase urgency because…") and every brief carries the standing
+external-context caveat.
 
-In the UI this renders as the **"Outside-In Intelligence"** section in the workspace account panel,
-visually secondary to internal evidence: *what this means* (fused insight + confidence), *what changed
-outside the CRM*, *why it matters*, *seller implication*, *suggested conversation strategy*, a
-*suggested opening line*, *sources*, and the caveat. Raw signals are tucked behind a "show supporting
-signals" toggle to keep the panel calm.
+In the UI this renders as the **"Executive Decision Brief"** section in the workspace account panel
+(Phase 4.2 — formerly "Outside-In Intelligence"), framed as supporting context and laid out as a
+McKinsey-style memo with clear hierarchy: an *executive summary* (what's happening + confidence),
+*why this matters*, the *AI fused insight*, a structured *internal evidence* table tagged **source of
+truth**, synthesized *external intelligence* tagged **supporting**, *business* and *seller*
+implications, a numbered *conversation strategy*, a *suggested opening line*, a collapsible
+*recommended CRM write-back* (clearly marked **draft · needs approval**), *confidence + why*, an amber
+*what not to do* list, and *sources*. Raw signals stay tucked behind a "show supporting signals"
+toggle. The CRM write-back block is **advisory only** — it never triggers a write-back; the seller
+still uses the existing approval controls to log a task or note.
 
 Endpoints: `GET /api/external-signals/{account_id}` (one account; the response embeds the brief plus
 `provider_mode` and `sources`), `GET /api/external-signals/{account_id}/brief` (the fusion brief on
