@@ -72,7 +72,7 @@ export function Header({
               active={view === "evaluation"}
               onClick={() => onViewChange("evaluation")}
               icon={<Gauge size={13} />}
-              label="Evaluation"
+              label="Trust & Governance"
             />
           </div>
         ) : null}

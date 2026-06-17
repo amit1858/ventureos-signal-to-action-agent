@@ -374,64 +374,84 @@ export interface ProductionPillar {
 /** The production architecture pillars, honestly graded live / designed / planned. */
 export const PRODUCTION_PILLARS: ProductionPillar[] = [
   {
-    name: "Human approval workflow",
+    name: "HubSpot CRM (live)",
+    status: "live",
+    detail: "HubSpot test portal is the active system of record — 40 companies, 71 contacts, 28 deals, 83 activities synced on a schedule with approved task + note write-back.",
+  },
+  {
+    name: "Market Intelligence (live)",
+    status: "live",
+    detail: "Outside-in signals layer (Serper-backed) fuses public market context with internal evidence — advisory only, never changes ranking.",
+  },
+  {
+    name: "Governed Decision Engine (live)",
+    status: "live",
+    detail: "Deterministic priority, risk, opportunity, confidence and caveats — the same inputs always produce the same ranking. The audit-grade benchmark.",
+  },
+  {
+    name: "OpenAI BYOK (live)",
+    status: "live",
+    detail: "Bring your own OpenAI key in the browser. Live model discovery, structured decisions, deterministic fallback on any failure.",
+  },
+  {
+    name: "Anthropic BYOK (live)",
+    status: "live",
+    detail: "Bring your own Anthropic key in the browser. Live Claude model discovery, structured decisions, deterministic fallback on any failure.",
+  },
+  {
+    name: "Human approval workflow (live)",
     status: "live",
     detail: "Every action starts pending; a person approves, edits or rejects before any write-back.",
   },
   {
-    name: "Decision ledger & audit",
+    name: "Decision ledger & audit (live)",
     status: "live",
     detail: "Every run is traced — agents, evidence, confidence, caveats — and persisted for replay.",
   },
   {
-    name: "Governed reasoning",
+    name: "Secrets management (live)",
     status: "live",
-    detail: "Confidence scoring with caveats and an insufficient-evidence guardrail on every recommendation.",
+    detail: "BYOK keys are session-scoped in the browser only; backend keys read once via central config, never logged; .env git-ignored, diagnostics redacted to booleans.",
   },
   {
-    name: "Secrets management",
+    name: "Evaluation harness (live)",
     status: "live",
-    detail: "Keys read once via central config, never logged; .env is git-ignored and diagnostics are redacted to booleans.",
+    detail: "A deterministic eval suite (10/10) plus this Trust & Governance view measure output, governance and latency on every run.",
   },
   {
-    name: "Evaluation",
-    status: "live",
-    detail: "A deterministic eval suite (10/10) plus this Evaluation Center measure output, governance and latency.",
-  },
-  {
-    name: "Model routing",
+    name: "NVIDIA Nemotron / NIM (ready)",
     status: "designed",
-    detail: "A provider factory routes mock → NVIDIA / OpenAI via MODEL_PROVIDER without touching the agents.",
+    detail: "BYOK adapter implemented behind the same interface — paste an NVIDIA key to enable live Nemotron / NIM decisions with no infrastructure change.",
   },
   {
-    name: "Connector management",
+    name: "Observability (ready)",
     status: "designed",
-    detail: "A shared CRMConnector abstraction — HubSpot is live; Salesforce, Dynamics and others slot in.",
+    detail: "Read-only /api/system/status, /config and /threads diagnostics with structured, secret-free logs — wire to your APM of choice.",
   },
   {
-    name: "Observability",
-    status: "designed",
-    detail: "Read-only /api/system/status, /config and /threads diagnostics with structured, secret-free logs.",
+    name: "Salesforce (planned)",
+    status: "planned",
+    detail: "Same CRMConnector contract — accounts, deals, activities; approved task + note write-back.",
   },
   {
-    name: "Authentication & SSO",
+    name: "Microsoft Dynamics 365 (planned)",
+    status: "planned",
+    detail: "Same CRMConnector contract — maps to the shared read + write-back surface.",
+  },
+  {
+    name: "Authentication & SSO (planned)",
     status: "planned",
     detail: "OIDC / Microsoft Entra ID at the edge; the API contracts are already stateless and token-ready.",
   },
   {
-    name: "Tenant isolation",
-    status: "planned",
-    detail: "Per-tenant data and key partitioning so each customer's portfolio and secrets stay separate.",
-  },
-  {
-    name: "Role-based access",
+    name: "Role-based access (planned)",
     status: "planned",
     detail: "Seller / manager / admin scopes governing who can approve and who can write back.",
   },
   {
-    name: "Per-user portfolio",
+    name: "Multi-tenant isolation (planned)",
     status: "planned",
-    detail: "Book-of-business scoping so each seller sees and acts on only their own accounts.",
+    detail: "Per-tenant data and key partitioning so each customer's portfolio and secrets stay separate.",
   },
 ];
 

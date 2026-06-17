@@ -241,10 +241,10 @@ export function EvaluationView({
         </div>
       </section>
 
-      {/* EVALUATION CENTER */}
+      {/* TRUST & GOVERNANCE */}
       <Section
-        eyebrow="Evaluation Center"
-        title="How the AI is measured."
+        eyebrow="Trust & Governance"
+        title="How every decision is measured."
         sub="Twelve dimensions across output quality, governance and runtime. Capability checks reflect how the system is built; data-derived checks are measured from the latest workflow run."
       >
         <div className="flex flex-wrap items-center gap-3">
@@ -305,11 +305,11 @@ export function EvaluationView({
         </div>
       </Section>
 
-      {/* MODEL PROVIDER FRAMEWORK */}
+      {/* AI REASONING ENGINES */}
       <Section
-        eyebrow="Model Provider"
+        eyebrow="AI Reasoning Engines"
         title="One interface. Many engines."
-        sub="Reasoning is deterministic today and the narrative layer is provider-agnostic. The same agent contracts route from the mock engine to NVIDIA, OpenAI or Azure with no business-logic change."
+        sub="Reasoning is governed and deterministic today; the narrative layer is provider-agnostic. The same agent contracts route from the governed engine to NVIDIA, OpenAI, Anthropic or Azure with no business-logic change."
       >
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
           <Cpu size={14} className="text-brand-bright" />
@@ -379,10 +379,10 @@ export function EvaluationView({
         onTest={onTestProvider}
       />
 
-      {/* CRM CONNECTOR FRAMEWORK */}
+      {/* SYSTEMS OF RECORD */}
       <Section
-        eyebrow="CRM Connectors"
-        title="Pluggable systems of record."
+        eyebrow="Systems of Record"
+        title="Pluggable CRM connectors."
         sub="Every CRM speaks the same connector contract: read accounts and signals, then write back approved tasks and notes. HubSpot is live; the rest slot into the same abstraction."
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -412,9 +412,9 @@ export function EvaluationView({
         </div>
       </Section>
 
-      {/* PRODUCTION ARCHITECTURE */}
+      {/* PRODUCTION READINESS */}
       <Section
-        eyebrow="Production Architecture"
+        eyebrow="Production Readiness"
         title="Built to graduate from demo to deployment."
         sub="What is live today, what is designed and ready to wire, and what comes next for a multi-tenant enterprise rollout."
       >
@@ -450,18 +450,22 @@ export function EvaluationView({
 }
 
 const PILLAR_ICON: Record<string, LucideIcon> = {
-  "Human approval workflow": ShieldCheck,
-  "Decision ledger & audit": ScrollText,
-  "Governed reasoning": BadgeCheck,
-  "Secrets management": KeyRound,
-  Evaluation: Gauge,
-  "Model routing": Cpu,
-  "Connector management": Boxes,
-  Observability: Eye,
-  "Authentication & SSO": Lock,
-  "Tenant isolation": Building2,
-  "Role-based access": Users,
-  "Per-user portfolio": Workflow,
+  "HubSpot CRM (live)": Plug,
+  "Market Intelligence (live)": Sparkles,
+  "Governed Decision Engine (live)": BadgeCheck,
+  "OpenAI BYOK (live)": Cpu,
+  "Anthropic BYOK (live)": Cpu,
+  "Human approval workflow (live)": ShieldCheck,
+  "Decision ledger & audit (live)": ScrollText,
+  "Secrets management (live)": KeyRound,
+  "Evaluation harness (live)": Gauge,
+  "NVIDIA Nemotron / NIM (ready)": Cpu,
+  "Observability (ready)": Eye,
+  "Salesforce (planned)": Plug,
+  "Microsoft Dynamics 365 (planned)": Plug,
+  "Authentication & SSO (planned)": Lock,
+  "Role-based access (planned)": Users,
+  "Multi-tenant isolation (planned)": Building2,
 };
 
 function SummaryStat({ tone, value, label }: { tone: Tone; value: number; label: string }) {
@@ -762,9 +766,9 @@ function DecisionProviderSection({
 
   return (
     <Section
-      eyebrow="Decision Provider · BYOK"
-      title="Bring your own key. Compare how each provider decides."
-      sub="Add your own OpenAI, Anthropic or NVIDIA key right here — no infrastructure, no redeploy. Keys live only in this browser session and vanish when the tab closes. Every provider reasons over the same governed account context and returns one structured decision, so you can compare them side by side. The deterministic engine stays the benchmark and the safe fallback; LLM decisions are advisory and never change ranking, scoring or governance."
+      eyebrow="AI Decision Engines · BYOK"
+      title="Bring your own key. See how each engine decides."
+      sub="Connect your own OpenAI, Anthropic or NVIDIA key right here — no infrastructure, no redeploy. Keys live only in this browser session and vanish when the tab closes. Every engine reasons over the same governed account context and returns one structured decision, so you can review them side by side as an executive review board. The Governed Decision Engine stays the benchmark and the safe fallback; LLM decisions are advisory and never change ranking, scoring or governance."
     >
       {/* SESSION-KEY TRUST BANNER */}
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-edge bg-surface2/40 px-3.5 py-2.5 text-[12px] text-muted">
@@ -963,6 +967,8 @@ function DecisionProviderSection({
                 </>
               ) : null}
             </div>
+
+            <ProviderConsensusBanner comparison={cmp} />
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <DecisionCard decision={cmp.baseline} baseline />
@@ -1238,6 +1244,126 @@ function ProviderSettingsCard({
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+// -- Provider Consensus banner -------------------------------------------
+
+/**
+ * Executive review-board banner that summarises the comparison: overall
+ * agreement %, areas of alignment, areas of disagreement and the recommended
+ * final decision. Heuristic & advisory — never changes ranking or governance.
+ */
+function ProviderConsensusBanner({ comparison }: { comparison: DecisionComparison }) {
+  const live = comparison.providers.filter(
+    (p) => p.mode === "live" || p.mode === "fallback",
+  );
+  if (live.length === 0) return null;
+
+  // Average agreement across live providers vs the governed baseline.
+  const avgAgreement = Math.round(
+    live.reduce((s, d) => s + agreementPct(comparison.baseline, d), 0) / live.length,
+  );
+
+  // Dimension-by-dimension consensus across baseline + every live provider.
+  type Dim = "recommended_action" | "risk_level" | "opportunity_level" | "confidence";
+  const DIMS: { key: Dim; label: string }[] = [
+    { key: "recommended_action", label: "Recommended action" },
+    { key: "risk_level", label: "Risk" },
+    { key: "opportunity_level", label: "Opportunity" },
+    { key: "confidence", label: "Confidence" },
+  ];
+  const aligned: { label: string; value: string }[] = [];
+  const disputed: { label: string; baseline: string; others: string }[] = [];
+  for (const d of DIMS) {
+    const base = String(comparison.baseline[d.key]);
+    const others = live.map((p) => String(p[d.key]));
+    if (others.every((v) => v.toLowerCase() === base.toLowerCase())) {
+      aligned.push({ label: d.label, value: base });
+    } else {
+      const uniqueOthers = Array.from(new Set(others)).join(" / ");
+      disputed.push({ label: d.label, baseline: base, others: uniqueOthers });
+    }
+  }
+
+  const tone: Tone = avgAgreement >= 75 ? "good" : avgAgreement >= 50 ? "progress" : "warn";
+  const verdict =
+    avgAgreement === 100
+      ? "All engines align with the Governed Decision Engine. Proceed with the baseline recommendation."
+      : avgAgreement >= 75
+        ? "Strong alignment. The Governed Decision Engine remains the recommended final decision; advisory engines reinforce it."
+        : avgAgreement >= 50
+          ? "Partial alignment. Review the divergence below; the Governed Decision Engine remains the recommended final decision pending human review."
+          : "Significant divergence. Defer to the Governed Decision Engine and escalate for human review.";
+
+  return (
+    <div className="rounded-2xl border border-edge bg-gradient-to-br from-surface2/70 to-surface2/30 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-faint">
+            <Scale size={12} /> Provider Consensus
+          </div>
+          <div className="mt-2 flex items-baseline gap-3">
+            <span className={cx("font-mono text-[34px] font-semibold leading-none", TONE[tone].text)}>
+              {avgAgreement}%
+            </span>
+            <span className="text-[13px] text-muted">
+              agreement across {live.length + 1} engine{live.length + 1 === 1 ? "" : "s"}
+            </span>
+          </div>
+          <p className="mt-2 max-w-2xl text-[12px] leading-relaxed text-muted">{verdict}</p>
+        </div>
+
+        <div className="grid w-full grid-cols-1 gap-3 sm:max-w-xl sm:grid-cols-2">
+          <div className="rounded-xl border border-accent/20 bg-accent/5 p-3">
+            <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
+              <CheckCircle2 size={11} /> Alignment ({aligned.length})
+            </div>
+            {aligned.length > 0 ? (
+              <ul className="space-y-1">
+                {aligned.map((a) => (
+                  <li key={a.label} className="flex items-center justify-between gap-2 text-[11px]">
+                    <span className="text-muted">{a.label}</span>
+                    <span className="truncate font-medium capitalize text-ink">{a.value}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[11px] text-faint">No fully aligned dimensions.</p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-amber/20 bg-amber/5 p-3">
+            <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber">
+              <GitCompare size={11} /> Divergence ({disputed.length})
+            </div>
+            {disputed.length > 0 ? (
+              <ul className="space-y-1">
+                {disputed.map((d) => (
+                  <li key={d.label} className="flex items-center justify-between gap-2 text-[11px]">
+                    <span className="text-muted">{d.label}</span>
+                    <span className="truncate font-medium capitalize text-ink" title={`Baseline ${d.baseline} · Others ${d.others}`}>
+                      {d.baseline} <span className="text-faint">vs</span> {d.others}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[11px] text-faint">Fully aligned — no divergence.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-edge pt-3 text-[11px] text-faint">
+        <BadgeCheck size={12} className="text-accent" />
+        <span>
+          <span className="font-medium text-ink">Recommended final decision:</span>{" "}
+          <span className="capitalize">{String(comparison.baseline.recommended_action)}</span> · Governed Decision Engine
+        </span>
+        <span className="ml-auto">Advisory only — governance and human approval still apply.</span>
+      </div>
     </div>
   );
 }

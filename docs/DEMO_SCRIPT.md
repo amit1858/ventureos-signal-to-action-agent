@@ -1,106 +1,169 @@
-# Demo Script — Signal-to-Action Agent
+# Signal-to-Action Agent — 10-Minute Executive Demo Script
 
-A polished **5-minute** demo for a hackathon judge, executive, or reviewer. The goal is that within
-three minutes the audience can explain the product to someone else.
-
-**Total time:** ~5 minutes · **Setup:** backend running, frontend open, HubSpot test CRM synced
-(or synthetic mode as fallback).
-
----
-
-## Opening (20 seconds)
-
-> "Every CRM tells you what **happened**.
-> Signal-to-Action tells you what to **do next**."
-
-> "This is not a chatbot. It's a governed system that watches your customer portfolio, tells you what
-> changed overnight, explains why it matters, recommends what to do, and only updates the CRM after a
-> human approves."
+> **Phase 5.1 — Executive Demo Hardening.** A controlled, scripted walkthrough.
+> Audience: VP / GM / executive sponsor / strategic partner.
+> Surface: https://ventureos-signal-to-action-agent.vercel.app
+> Backend: https://signal-to-action-api.onrender.com (live, HubSpot test CRM)
 
 ---
 
-## The walkthrough
+## Setup (do this before the meeting — 2 min)
 
-### 1. Landing page — "What is this?" (30s)
-- Open the landing page.
-- One line: *continuously monitors your portfolio, detects risk and opportunity, recommends governed
-  actions, writes approved actions back to CRM.*
-- Contrast: **Traditional CRM stores data → Signal-to-Action understands it, reasons over it,
-  recommends action, waits for approval, writes back.**
-- Click **Enter Command Center**.
-
-### 2. Morning Brief — "What happened?" (45s)
-- Read the Executive Morning Brief: *"While you were away, I reviewed your portfolio overnight."*
-- **40 accounts analyzed · 7 need attention · ₹45L at risk · ₹26L growth opportunity.**
-- Point out: this is plain-English, executive language — not a wall of metrics.
-
-### 3. Portfolio Health — "Should I worry?" (30s)
-- Show readiness (e.g. **83/100**, Healthy), revenue at risk, expansion potential.
-- 33 of 40 accounts healthy; 7 need attention now.
-
-### 4. Today's Priorities — "What should I do?" (30s)
-- Show the ranked shortlist of accounts that deserve attention today.
-- Each entry says **why it matters** and the **recommended next move**.
-
-### 5. Risk vs Opportunity map — "Where should I focus?" (30s)
-- Open the Portfolio Map. Every account placed by risk and expansion potential.
-- Four quadrants: **Act Now · Escalate · Nurture · Monitor.**
-- This is the "where to spend my day" view.
-
-### 6. Select Curefoods — "Why this account?" (45s)
-- Click the top-priority account (**Curefoods**).
-- Recommended action: **Recover At-Risk Customer**.
-- Walk the reasoning:
-  - **Why this account** — declining spend / rising support risk / renewal window.
-  - **Why now** — renewal/contact timing.
-  - **Business impact** — revenue at stake.
-  - **If ignored** — likely churn.
-  - **Confidence** — ~91%, backed by evidence chips.
-
-### 7. Governed pipeline — "Can I trust this?" (30s)
-- Show the Governed Pipeline: HubSpot → Signal Detection → AI Analysis → Evidence → Human Approval →
-  Decision Ledger → CRM Writeback.
-- Emphasize: **nothing touches the CRM without human approval; every step is logged.**
-
-### 8. Approve — "I decide" (20s)
-- Click **Approve** on the recommendation. It moves from `pending` to approved.
-
-### 9. CRM Writeback — "What happens next?" (30s)
-- Click **Create HubSpot task** (or note).
-- Show the result: external id, timestamp, payload preview, safety note.
-
-### 10. Verify in HubSpot (20s)
-- Switch to HubSpot, open the company, show the new task/note on Curefoods.
-- "The loop is closed — and a human approved every step."
+1. Open the production URL in a clean browser profile (incognito works).
+2. Wait until the header reads **"HubSpot test CRM · 40 accounts"**.
+3. In **Trust & Governance → AI Decision Engines · BYOK**, paste your Anthropic
+   key, click **Test**, then **Activate**. Expect:
+   `✓ Connected · Anthropic Claude · claude-sonnet-4-6 · ~1,400 ms`.
 
 ---
 
-## Closing (15 seconds)
+## Demo Flow (10 min)
 
-> "This is not a chatbot. It is a governed **signal-to-action** system for revenue teams.
-> The deterministic engine decides; AI explains; a human approves; the CRM is updated.
-> That's how you get enterprise AI you can actually trust."
+### Act I — The Question (0:00 – 1:30)
+*"Every Monday a seller and their manager ask the same question:
+'Which of my accounts need attention this week, and why?' Today they
+answer that by scrolling a CRM. We answer it with a governed multi-agent
+workflow."*
+
+In **Command Center** point to: Portfolio Health (one-line answer),
+Today's Priorities (Curefoods #1), Executive Briefing (sequenced).
+
+**Line:** *"We didn't ask the AI what to do. We asked the **governed engine**
+to rank — and the engine showed its work."*
+
+### Act II — The Reasoning (1:30 – 4:30)
+**Workspace → Curefoods.** Walk through, in order:
+1. Risk · Opportunity · Confidence (figures from HubSpot, not generated).
+2. Why this account (deterministic chain).
+3. Internal evidence (every signal cited, with source + date).
+4. Market Intelligence (outside-in context, advisory only).
+5. Draft email / call script (narrative layer).
+6. Approve / Reject / Edit — the only path to CRM write-back.
+
+**Line:** *"The math is governed. The narrative is helpful. Nothing
+reaches HubSpot without a human approving it."*
+
+### Act III — The Trust Layer (4:30 – 7:00)
+**Trust & Governance.** Walk through:
+1. Twelve evaluation dimensions, 10/10 on the latest run.
+2. AI Reasoning Engines — Governed Decision Engine + BYOK lineup.
+3. Systems of Record — HubSpot live, Salesforce / Dynamics on the same contract.
+4. Production Readiness — Live / Ready / Planned matrix.
+
+**Line:** *"This is what makes it an early product, not a hackathon
+prototype. We've drawn the line between what's live, what's ready to
+wire, and what comes next."*
+
+### Act IV — The Review Board (7:00 – 9:30)
+Anthropic is already activated. Scroll to **Compare across providers**,
+pick **Curefoods**, click **Compare**.
+
+While it runs (~40s), narrate:
+*"Same evidence, same schema, sent to the Governed Decision Engine **and**
+to Claude. We're asking each engine to make a decision. This is our
+executive review board."*
+
+When the result lands, point to the **Provider Consensus banner**:
+- 100% agreement (when Claude agrees).
+- Alignment: action, risk, opportunity, confidence — all four match.
+- Divergence: named precisely if any.
+- Recommended final decision: **Governed Decision Engine**.
+
+Read Claude's exec summary out loud (~3 sentences), then the Governed
+Decision Engine's. Let the silence sit.
+
+**Line:** *"When the most advanced LLM available agrees with our governed
+engine on action, risk, opportunity and confidence — that's the trust
+signal a CRO needs to enable this org-wide. When it disagrees, governance
+still wins, and we surface the divergence."*
+
+### Act V — The Close (9:30 – 10:00)
+*"Three takeaways.*
+
+*1. **Governance is the product.** Deterministic engine is the source of
+truth. Every LLM is advisory and bound by human approval.*
+
+*2. **BYOK is a real feature, not a stub.** Your key, your browser tab,
+no server-side persistence. Live discovery of every model your key can
+actually call.*
+
+*3. **The architecture is honest.** We've labelled what's live, what's
+ready, and what's planned — a credible path to a multi-tenant product,
+not a list of TODOs.*
+
+*Repo: `amit1858/ventureos-signal-to-action-agent`. Happy to walk
+the architecture or run a discovery session next."*
 
 ---
 
-## Backup plan (always have one)
+## Talking Points · Quick Reference
 
-| If this fails… | Do this |
-|----------------|---------|
-| **HubSpot unavailable** | Switch to **synthetic mode** (CRM card → *Use synthetic*). The entire story still works offline. |
-| **LLM / model provider unavailable** | The product already runs on the **mock adapter**; rankings and actions are **deterministic** and never depend on an LLM, so the demo is unaffected. |
-| **Internet unavailable** | Fall back to a **recorded demo / screenshots** of the same flow. |
-
-**Pre-demo checklist:**
-- [ ] Backend health returns `ok` (`/api/health`).
-- [ ] Frontend loads (landing page renders).
-- [ ] HubSpot synced **or** synthetic mode confirmed working.
-- [ ] One known account (Curefoods) selected and reviewed once before going live.
-- [ ] Recorded demo ready as a last resort.
+| Surface | Key sentence |
+|---|---|
+| Command Center | "Governed answer to a recurring question — not a chatbot." |
+| Workspace | "Math from your CRM. Narrative from a senior AE. Action gated on a human." |
+| Market Intelligence | "Outside-in context, advisory only — never changes ranking." |
+| Trust & Governance | "Twelve dimensions, measured on the latest run." |
+| Provider Settings | "Your key. Your tab. No server-side storage. Live model discovery." |
+| Provider Consensus | "An executive review board across engines." |
+| Production Readiness | "Live / Ready / Planned — honestly labelled." |
 
 ---
 
-## One-sentence takeaway for the audience
+## Q&A · Anticipated
 
-> "It's an AI operating layer that watches my customer portfolio, tells me what changed overnight,
-> explains why it matters, recommends what I should do, and only updates CRM after I approve."
+**"Why deterministic when LLMs are so good now?"**
+*"A VP signing off on outbound to 40 accounts a week needs the same
+answer every Monday from the same data. LLMs are advisory and rated
+against the baseline."*
+
+**"What if the LLM disagrees?"**
+*"The engine wins. The divergence is surfaced for human review.
+Nothing ships without approval either way."*
+
+**"Where do BYOK keys live?"**
+*"In the browser tab's sessionStorage. Close the tab and they're gone.
+Backend receives them only in-flight to make one provider call. Never
+logged. Never persisted. Never returned from any API."*
+
+**"How does this become a real product?"**
+*"Three planned pillars: SSO, multi-tenant isolation, RBAC.
+Salesforce and Dynamics slot into the same CRMConnector contract
+that HubSpot uses today. The decision provider framework already
+supports swapping engines without touching the agents."*
+
+**"How long until I can pilot this with my team?"**
+*"A controlled pilot on a test HubSpot portal is ready today.
+Production rollout pivots on SSO + multi-tenant + your CRM of choice."*
+
+**"Latency on the LLM is ~40s — production-acceptable?"**
+*"For an executive review-board on a single account, yes. For batch
+evaluation across 40 accounts we run the governed engine — which is
+sub-second — and use the LLM only on the priority shortlist."*
+
+---
+
+## Pre-Demo Checklist
+
+- [ ] Clean browser profile / incognito.
+- [ ] Production URL loads in <3s.
+- [ ] Header chip: `HubSpot test CRM · 40 accounts`.
+- [ ] Curefoods is #1 in Command Center.
+- [ ] Anthropic BYOK is connected & active.
+- [ ] You've rehearsed the Act IV transition while compare is running.
+- [ ] You've memorised one sentence from Curefoods' Claude exec summary
+      so you can deliver it from the screen, not read it.
+
+---
+
+## What NOT to demo
+
+- Don't click **Sync HubSpot** live (10+ s, breaks pace).
+- Don't paste real production keys; the sandbox one only.
+- Don't open the full decision ledger unless asked.
+- Don't switch the active provider away from **Deterministic**
+  mid-demo unless explicitly showing fallback.
+
+---
+
+*Generated for Phase 5.1 Executive Demo Hardening.*
