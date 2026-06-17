@@ -52,7 +52,7 @@ from typing import Dict, Optional
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -623,6 +623,48 @@ def decision_providers_catalog() -> dict:
     recommended}`` entries and ``recommended[provider_id]`` for the default.
     """
     return decision_providers.provider_catalog()
+
+
+@app.get("/api/decision-providers/models/{provider}")
+def decision_providers_models(
+    provider: str,
+    x_byok_api_key: Optional[str] = Header(
+        default=None,
+        alias="X-Byok-Api-Key",
+        description=(
+            "Optional BYOK key for live model discovery. Sent in a request"
+            " header (never the URL) so it does not land in access logs."
+            " Used only for this single GET; never persisted, cached or logged."
+        ),
+    ),
+    x_byok_base_url: Optional[str] = Header(
+        default=None,
+        alias="X-Byok-Base-Url",
+        description="Optional provider base URL override (used by NVIDIA NIM).",
+    ),
+) -> dict:
+    """Live model discovery for one provider, with static-catalog fallback (Phase 5.0A.2).
+
+    When the optional ``X-Byok-Api-Key`` header is present we call the
+    provider's own ``/v1/models`` endpoint (OpenAI / Anthropic / NVIDIA) and
+    merge the live ids with the curated catalog so the UI dropdown reflects
+    the models the supplied key can actually use. Without a key, returns the
+    curated catalog only.
+
+    Returns ``{provider, models[], recommended, source, discovery_error?}``.
+    ``source`` is one of ``"live"`` (discovery succeeded), ``"static"`` (no
+    key supplied, curated catalog), or ``"static_fallback"`` (a live attempt
+    failed and a ``discovery_error`` block is attached). The endpoint never
+    returns the key, never logs it, and is read-only.
+    """
+    credential = None
+    if x_byok_api_key:
+        credential = ProviderCredential(
+            api_key=x_byok_api_key,
+            model="",
+            base_url=(x_byok_base_url or "").strip(),
+        )
+    return decision_providers.provider_models(provider, credential)
 
 
 @app.post("/api/decision-providers/test")

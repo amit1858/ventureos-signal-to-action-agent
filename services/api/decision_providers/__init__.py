@@ -35,6 +35,7 @@ from decision_providers.base import (
 from decision_providers.context import build_decision_context
 from decision_providers.catalog import (
     catalog as model_catalog,
+    discover_models,
     display_for,
     is_known_model,
     models_for,
@@ -94,6 +95,31 @@ def provider_catalog() -> dict:
         "recommended": {pid: recommended_model(pid) for pid in providers},
         "discovery": "static",  # future: "remote" when ``fetch_remote_models`` is wired
     }
+
+
+def provider_models(provider: str, credential: Optional[ProviderCredential] = None) -> dict:
+    """Return live-discovered models for one provider, falling back to static.
+
+    Phase 5.0A.2 — when a BYOK credential is supplied we call the provider's
+    own model-listing endpoint (OpenAI / Anthropic / NVIDIA) and merge those
+    ids with the curated catalog so the dropdown stays accurate even as
+    providers release new models. Without a credential, returns the static
+    catalog as-is. Never returns the key, never logs it, never persists it.
+
+    Result shape::
+
+        {
+          "provider": "anthropic",
+          "models": [{"id": "...", "display": "...", "tier": "...",
+                      "recommended": true, ...}, ...],
+          "recommended": "claude-sonnet-4-...",
+          "source": "live" | "static" | "static_fallback",
+          "discovery_error": {"category": "...", "message": "..."}  # only on fallback
+        }
+    """
+    api_key = (credential.api_key if credential else "") or ""
+    base_url = (credential.base_url if credential else "") or ""
+    return discover_models(provider, api_key=api_key.strip(), base_url=base_url.strip() or None)
 
 
 # -- status ---------------------------------------------------------------

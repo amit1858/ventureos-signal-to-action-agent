@@ -5,6 +5,7 @@ import type {
   ActionResult,
   DecisionComparison,
   DecisionCredentialPayload,
+  DecisionModelEntry,
   DecisionProviderCatalog,
   DecisionProviderStatus,
   DecisionProviderTestResult,
@@ -98,6 +99,21 @@ export const api = {
   // Phase 5.0A.1 — curated model catalog so users never type a model id.
   decisionCatalog: () =>
     jfetch<DecisionProviderCatalog>("/api/decision-providers/catalog"),
+  // Phase 5.0A.2 — live model discovery per provider. The optional BYOK key
+  // travels in a request HEADER (never URL/body of a GET, never logged) and
+  // is used only for this single discovery call.
+  decisionModels: (provider: string, apiKey?: string, baseUrl?: string) => {
+    const headers: Record<string, string> = {};
+    if (apiKey && apiKey.trim()) headers["X-Byok-Api-Key"] = apiKey.trim();
+    if (baseUrl && baseUrl.trim()) headers["X-Byok-Base-Url"] = baseUrl.trim();
+    return jfetch<{
+      provider: string;
+      models: DecisionModelEntry[];
+      recommended: string;
+      source: "live" | "static" | "static_fallback";
+      discovery_error?: { category: string; message: string };
+    }>(`/api/decision-providers/models/${encodeURIComponent(provider)}`, { headers });
+  },
   // Phase 5.0A — session BYOK: the key travels in the request BODY (never the URL,
   // so it never lands in access logs) and is used for this single request only.
   decisionTest: (payload: {

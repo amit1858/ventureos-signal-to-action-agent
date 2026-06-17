@@ -614,6 +614,50 @@ function DecisionProviderSection({
     [catalog],
   );
 
+  // Phase 5.0A.2 — when a session key is pasted, rediscover that provider's
+  // available models from its own /v1/models endpoint and merge into catalog
+  // state. Falls back silently to the static catalog on any failure.
+  const [discoverySource, setDiscoverySource] = React.useState<
+    Record<ByokProviderId, "live" | "static" | "static_fallback">
+  >({ openai: "static", anthropic: "static", nvidia: "static" });
+
+  React.useEffect(() => {
+    if (!hydrated) return;
+    const timers: Array<ReturnType<typeof setTimeout>> = [];
+    for (const pid of ["openai", "anthropic", "nvidia"] as ByokProviderId[]) {
+      const key = creds[pid].apiKey.trim();
+      if (!key) continue;
+      // Debounce so we don't hammer providers while the user is typing.
+      const t = setTimeout(() => {
+        api
+          .decisionModels(pid, key, creds[pid].baseUrl || undefined)
+          .then((res) => {
+            setCatalog((cur) => {
+              if (!cur) return cur;
+              const nextProviders = { ...cur.providers, [pid]: res.models };
+              const nextRecommended = { ...cur.recommended, [pid]: res.recommended };
+              return { ...cur, providers: nextProviders, recommended: nextRecommended };
+            });
+            setDiscoverySource((cur) => ({ ...cur, [pid]: res.source }));
+            // If the user's currently-selected model isn't in the live list, snap to recommended.
+            setCreds((prev) => {
+              const cur = (prev[pid].model || "").trim();
+              const known = res.models.some((m) => m.id === cur);
+              if (cur && known) return prev;
+              const next = { ...prev[pid], model: res.recommended };
+              byokSet(pid, next);
+              return { ...prev, [pid]: next };
+            });
+          })
+          .catch(() => {
+            setDiscoverySource((cur) => ({ ...cur, [pid]: "static_fallback" }));
+          });
+      }, 600);
+      timers.push(t);
+    }
+    return () => timers.forEach(clearTimeout);
+  }, [hydrated, creds.openai.apiKey, creds.anthropic.apiKey, creds.nvidia.apiKey]);
+
   const patchCred = React.useCallback(
     (provider: ByokProviderId, patch: Partial<ByokCredential>) => {
       setCreds((prev) => {
@@ -785,6 +829,7 @@ function DecisionProviderSection({
               hydrated={hydrated}
               models={catalog?.providers[m.id] ?? []}
               recommendedModel={catalog?.recommended[m.id] ?? m.defaultModel}
+              discoverySource={discoverySource[m.id]}
               onKeyChange={(v) => patchCred(m.id, { apiKey: v })}
               onModelChange={(v) => patchCred(m.id, { model: v })}
               onTest={() => handleTest(m.id)}
@@ -1014,6 +1059,7 @@ function ProviderSettingsCard({
   hydrated,
   models,
   recommendedModel,
+  discoverySource,
   onKeyChange,
   onModelChange,
   onTest,
@@ -1028,6 +1074,7 @@ function ProviderSettingsCard({
   hydrated: boolean;
   models: DecisionModelEntry[];
   recommendedModel: string;
+  discoverySource?: "live" | "static" | "static_fallback";
   onKeyChange: (v: string) => void;
   onModelChange: (v: string) => void;
   onTest: () => void;
@@ -1088,8 +1135,21 @@ function ProviderSettingsCard({
       )}
 
       {/* MODEL — curated dropdown (Phase 5.0A.1, replaces free-text entry) */}
-      <label className="mt-2.5 block text-[10px] font-medium uppercase tracking-wider text-faint">
-        Model
+      <label className="mt-2.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-faint">
+        <span>Model</span>
+        {discoverySource === "live" ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-1.5 py-[1px] text-[9px] font-semibold normal-case tracking-normal text-accent">
+            Live · {models.length}
+          </span>
+        ) : null}
+        {discoverySource === "static_fallback" ? (
+          <span
+            className="inline-flex items-center gap-1 rounded-full border border-amber/30 bg-amber/10 px-1.5 py-[1px] text-[9px] font-semibold normal-case tracking-normal text-amber"
+            title="Live discovery failed — using curated catalog."
+          >
+            Catalog
+          </span>
+        ) : null}
       </label>
       <select
         value={selectedId}
