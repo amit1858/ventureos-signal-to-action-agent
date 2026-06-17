@@ -1,118 +1,113 @@
 # Roadmap — Signal-to-Action Agent
 
-A lightweight view of where the product is today and where it is going. The architecture is designed
-so that each future step slots in **without changing the deterministic engine, the contracts, or the
-UI**.
+A pragmatic view of where the product is today and where it is going.
+The architecture is designed so each future step slots in **without
+changing the deterministic engine, the contracts, or the governance
+posture**.
 
 ---
 
-## ✅ Current (demo build — feature frozen)
+## ✅ Current (deployed, demo-ready)
 
-- **HubSpot test CRM** integration (sync 40 demo companies; approved task/note writeback).
-- **Synthetic data mode** as an always-available offline fallback.
-- **Deterministic reasoning engine** — auditable rankings, risk, opportunity, and next-best actions.
-- **Six-agent governed workflow** with typed Pydantic contracts.
-- **Executive Command Center** — a portfolio-level **Executive Morning Brief** (an AI "chief of
-  staff" open: what changed overnight, biggest risk, biggest opportunity, a ranked "what I'd do
-  today", the single highest-leverage action, estimated seller effort, and advisory CRM updates
-  awaiting approval), plus Portfolio Health, Today's Priorities, Risk vs Opportunity map, Executive
-  Briefing, Governed Pipeline. The brief is derived deterministically from the same ranked
-  recommendations; external context (when enabled) is folded in as supporting colour only and never
-  changes ranking, scoring or governance.
-- **Workspace** — conversational query surface.
-- **Human approval** — nothing autonomous; every action starts as `pending`.
-- **Decision ledger** — full run trace persisted for audit and replay.
-- **Replaceable model provider** — mock adapter active; NVIDIA NIM adapter stubbed.
-- **Outside-In intelligence (optional, default off)** — an additive enrichment layer that attaches
-  cited, caveated *public* context (news, market/funding/leadership/regulatory shifts) to an account
-  and **fuses it with internal CRM signals** into a hedged executive brief. Phase 4.2 expands this into
-  a McKinsey-style **Executive Decision Brief**: executive summary, why it matters, structured internal
-  evidence (source of truth), synthesized external intelligence, AI fused insight, business & seller
-  implications, conversation strategy, suggested opening line, an **advisory, approval-gated CRM
-  write-back recommendation** (task + note + follow-up), confidence + why, an explicit "what not to do"
-  list, and sources. Supporting context only — it never changes ranking, scoring, governance, confidence
-  or CRM write-back, and the write-back recommendation is advisory (human approval still required). Mock
-  provider wired; live `serper` and `searchapi` providers ready behind a key with safe mock fallback.
+Live at https://ventureos-signal-to-action-agent.vercel.app
 
----
-
-## 🔜 Next
-
-- **OpenAI narrative provider** — route the narrative layer through OpenAI (facts stay deterministic).
-- **NVIDIA Nemotron / NIM provider** — production NVIDIA path for the narrative layer.
-- **Provider toggle / abstraction** — switch providers via `MODEL_PROVIDER` with no other changes.
-- **Live external signals (serper.dev / SearchAPI.io)** — flip `EXTERNAL_SIGNALS_PROVIDER=serper` or
-  `=searchapi` with the matching key to pull real public context; still fused conservatively, cited,
-  caveated and non-authoritative, with automatic mock fallback if the provider is unavailable.
-- **Richer evaluation harness** — expand `evals/` to score narrative quality and ranking stability.
-- **Production authentication** — real user identity to drive the greeting and approval audit trail.
-- **Additional CRM connectors** — beyond HubSpot, using the existing vendor-neutral interface.
+- **HubSpot connector** — sync 40 demo SMB companies + contacts + deals
+  + activities from a test portal; approved task and note write-back.
+- **External signals** — Serper / SearchAPI provider layer (default off).
+  Outside-in supporting context only; never changes ranking.
+- **Deterministic prioritization** — six-agent governed workflow with
+  typed Pydantic contracts. Auditable rankings, risk/opportunity scores,
+  confidence, and recommended next-best actions.
+- **LLM reasoning overlay (Phase 6)** — top-N recommendations are
+  enriched with executive summary, business implication, conversation
+  strategy, opening line and CRM note draft. Strictly advisory; never
+  alters ranking/scoring/governance.
+- **BYOK** — OpenAI / Anthropic / NVIDIA configured by the user from the
+  browser. Session-storage keys, live model discovery, masked display,
+  no server-side persistence.
+- **Evaluation & governance** — 12-dimension evaluation board, Provider
+  Consensus across engines, approval gate on every CRM action, decision
+  ledger persisted for audit and replay.
+- **CRM write-back** — HubSpot tasks + notes on approved recommendations
+  only. Idempotency via fingerprint.
+- **Executive surfaces** — Command Center, Executive Morning Brief,
+  Executive Decision Brief per account, Trust & Governance view with
+  AI Reasoning Status, "How AI is helping" panel and Provider Utilization.
 
 ---
 
-## 🌅 Later
+## 🔜 Next — Phase 7: Multi-Agent Strategic Reasoning
 
-- **Microsoft Dynamics connector.**
-- **Salesforce connector.**
-- **Real enterprise identity** (SSO / directory integration).
-- **Multi-tenant isolation** — separate data and config per customer.
-- **Admin controls** — manage data sources, providers, and write-back gates from the UI.
-- **Governance audit export** — export the decision ledger for compliance review.
-- **Benchmark dashboards** — track recommendation quality and outcomes over time.
+Move from *one orchestrator → six sequential agents* to a true
+multi-agent strategic reasoning layer that can:
 
----
-
-## Guiding principle
-
-Every future item changes **how facts are narrated or where data comes from** — never **how
-decisions are made**. The deterministic business engine remains the source of truth, and human
-approval remains mandatory before any CRM write.
+- Debate alternatives and surface dissent.
+- Plan multi-step engagement sequences (not just a single next action).
+- Reason across accounts (book-level orchestration), not only per-account.
+- Use BYOK providers in a structured *review-board* pattern — proposer
+  vs critic vs governance — rather than a single advisory pass.
+- Preserve every existing invariant: deterministic ranking still owns
+  priority; humans still own approval; CRM write-back stays gated.
 
 ---
 
-## Phase 4.4 - Enterprise experience & evaluation foundation (delivered)
+## 🛠 Connector strategy
 
-A polish + foundation pass before any LLM integration. Additive and fully backward compatible
-(no change to ranking, scoring, confidence, governance, approval, CRM write-back, HubSpot or
-external signals). Adds an **Evaluation & Architecture** view: an Evaluation Center (12
-dimensions), the model-provider framework (Mock active; NVIDIA ready; OpenAI / Claude / Azure
-planned), the CRM-connector framework (HubSpot live; Salesforce / Dynamics / SAP / Zoho planned)
-and a production-readiness matrix (live / designed / planned), plus a consistent enterprise
-design language and narrated loading. This is the recommended freeze point before Phase 5 (live
-LLM reasoning and usage telemetry).
+| Connector | Status | Notes |
+|---|---|---|
+| **HubSpot** | ✅ Live | Test portal, private-app token, idempotent write-back |
+| **Salesforce** | 📐 Planned | Same `CRMConnector` contract; OAuth flow |
+| **Microsoft Dynamics 365** | 📐 Planned | Same `CRMConnector` contract; Azure AD app |
+| **Pipedrive / Zoho** | 🔮 Future | Driven by demand |
 
----
-
-## Phase 5.0 - BYOK decision provider framework (delivered)
-
-A Bring-Your-Own-Key (BYOK) decision layer that lets several model providers reason over the same
-deterministic account context and return one common structured decision, shown as a read-only
-Comparison Mode in the Evaluation Center. Providers: Deterministic (baseline, always on), OpenAI
-(live with OPENAI_API_KEY), Anthropic Claude (live with ANTHROPIC_API_KEY) and NVIDIA Nemotron /
-NIM (live with NVIDIA_API_KEY). Additive and fully backward compatible: ranking, scoring,
-confidence, governance, approval, CRM write-back, HubSpot and external signals are unchanged. The
-deterministic engine remains the source of truth, the benchmark and the fallback; LLM decisions
-are advisory, never write to CRM, and always require human approval. On any missing key, error,
-timeout or invalid output, the decision falls back to deterministic and the app continues. Keys
-live only in services/api/.env and are never committed, returned, logged or sent to the browser.
-New additive endpoints: GET /api/decision-providers/status,
-POST /api/decision-providers/evaluate/{id}, POST /api/decision-providers/compare/{id}.
+The CRMConnector contract is intentionally narrow — `list_accounts`,
+`list_contacts`, `list_deals`, `list_activities`, `create_task`,
+`create_note`. Adding a connector is a sprint, not a refactor.
 
 ---
 
-## Phase 5.0A - True BYOK provider experience (delivered)
+## 🤖 Reasoning provider strategy
 
-Turns the Phase 5.0 backend BYOK framework into a first-class BYOK user experience. Users can bring
-their own provider key, configure it in the UI (Evaluation -> Provider Settings), test the
-connection, activate a provider, compare providers side by side, and clear or switch - without
-touching infrastructure. Both supply paths coexist: environment variables (infrastructure mode) and
-session keys entered in the browser (user BYOK mode).
+| Provider | Status |
+|---|---|
+| **Deterministic Decision Engine** | ✅ Live · source of truth |
+| **OpenAI** (GPT-4.1 / 4o / 4o mini) | ✅ Live BYOK |
+| **Anthropic** (Claude Sonnet 4.6, Opus 4, Haiku) | ✅ Live BYOK |
+| **NVIDIA Nemotron / NIM** | 🟡 Ready · BYOK wired, hackathon eligibility |
+| **Azure OpenAI** | 🔮 Future · enterprise key vault path |
+| **Local / on-prem models** | 🔮 Future · sovereign deployment |
 
-Session keys are held only in the browser's sessionStorage (never localStorage, never a database),
-masked in the UI, sent only in the request body of the calls the user triggers, used for that single
-request, and cleared automatically when the tab closes. The backend never persists, caches, logs or
-returns a key. New additive endpoint: POST /api/decision-providers/test (returns
-{ok, provider, model, status, latency_ms} only); evaluate and compare gained an optional
-credentials body. Fully backward compatible: ranking, scoring, confidence, governance, approval,
-CRM write-back, HubSpot and external signals are unchanged, and the deterministic engine remains the
-source of truth, benchmark and fallback.
+---
+
+## 🔐 Enterprise readiness
+
+| Pillar | Status |
+|---|---|
+| Human approval gate | ✅ Live |
+| Decision ledger (audit replay) | ✅ Live |
+| Secrets management (BYOK, no persisted creds) | ✅ Live |
+| Evaluation harness (12 dimensions) | ✅ Live |
+| Observability (logs, latency, fallback counts) | 🟡 In progress |
+| **Authentication & SSO** | 📐 Planned |
+| **Role-based access control** | 📐 Planned |
+| **Multi-tenant isolation** | 📐 Planned |
+| **Production-grade key vault** (Azure KV / AWS KMS) | 📐 Planned |
+| **Usage telemetry & billing** | 📐 Planned |
+
+---
+
+## 🧭 Phased commitment
+
+- **Phase 7 — Multi-Agent Strategic Reasoning.** Debate, planning,
+  book-level orchestration.
+- **Phase 8 — Salesforce connector.** Same governance, second CRM.
+- **Phase 9 — Authentication + RBAC + multi-tenant isolation.**
+  Production posture, single deployment serves multiple teams safely.
+- **Phase 10 — Production key vault + observability + usage telemetry.**
+  The full enterprise control plane.
+
+Each phase preserves the Phase-6 invariants:
+
+> AI helps explain and recommend. AI does not determine priority,
+> change governance, or execute CRM actions. Humans remain accountable
+> for all decisions.
