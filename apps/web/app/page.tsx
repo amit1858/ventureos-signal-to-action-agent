@@ -22,6 +22,8 @@ import type {
 import { cx } from "@/lib/format";
 import { briefFocusAccountIds, type BriefExternalContext } from "@/lib/reasoning";
 import { LOADING_PHASES } from "@/lib/evaluation";
+import { fetchOverlay, overlayFor, type AIOverlayMap } from "@/lib/aiOverlay";
+import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
 import { Header, type AppView } from "@/components/Header";
 import { LeftPanel } from "@/components/LeftPanel";
 import { CrmIntegrationCard } from "@/components/CrmIntegrationCard";
@@ -107,6 +109,11 @@ export default function Page() {
   const [writebacks, setWritebacks] = React.useState<Record<string, Writeback[]>>({});
   const [wbBusy, setWbBusy] = React.useState<"task" | "note" | null>(null);
   const [wbError, setWbError] = React.useState<string | null>(null);
+
+  // Phase 6 · client-side AI overlay state. Populated only when the user
+  // has an active BYOK provider; never affects ranking/scoring/governance.
+  const [aiOverlay, setAiOverlay] = React.useState<AIOverlayMap | null>(null);
+  const [aiOverlayLoading, setAiOverlayLoading] = React.useState(false);
 
   const refreshHubStatus = React.useCallback(async (probe = false) => {
     try {
@@ -302,10 +309,20 @@ export default function Page() {
     setLoading(true);
     setRunError(null);
     setEditing(false);
+    setAiOverlay(null);
     try {
       const res = await api.recommendations(query.trim(), limit);
       setResult(res);
       setSelectedId(res.recommendations[0]?.recommendation_id ?? null);
+      // Phase 6 · fire-and-forget AI overlay for the top recommendations.
+      // The overlay only fetches when an active BYOK provider has a session
+      // key; otherwise it resolves to null and we stay on the deterministic
+      // narrative. Failures are swallowed so they never block the cockpit.
+      setAiOverlayLoading(true);
+      fetchOverlay(res.recommendations, { limit: 3 })
+        .then((m) => setAiOverlay(m))
+        .catch(() => setAiOverlay(null))
+        .finally(() => setAiOverlayLoading(false));
     } catch (e) {
       setRunError((e as Error).message);
       setResult(null);
@@ -510,6 +527,8 @@ export default function Page() {
         dataSourceLabel={dataSourceLabel}
         isHubspotSource={isHubspotSource}
         accountCount={meta?.dataset.accounts ?? accountsList.length}
+        overlayProvider={aiOverlay?.provider ?? null}
+        overlayModel={aiOverlay?.model ?? null}
       />
 
       {bootError ? (
@@ -553,6 +572,7 @@ export default function Page() {
             isHubspotSource={isHubspotSource}
             externalSignalsEnabled={externalSignalsEnabled}
             externalContext={briefExternalContext}
+            aiOverlay={aiOverlay}
             onRun={runWorkflow}
             onOpenAccount={openAccount}
           />
@@ -631,6 +651,7 @@ export default function Page() {
 
             {result && !loading ? (
               <div className="space-y-3">
+                <AIEnhancedBanner overlay={aiOverlay} />
                 <div className="flex items-center gap-2 text-[13px] font-medium text-accent">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulseline" />
                   {LOADING_DONE}
@@ -665,6 +686,7 @@ export default function Page() {
                     rec={selectedRec}
                     detail={details[selectedRec.account_id] ?? null}
                     loading={detailLoading}
+                    overlay={overlayFor(aiOverlay, selectedRec.account_id)}
                   />
                 </Card>
 
@@ -810,6 +832,7 @@ export default function Page() {
             decisionStatus={decisionStatus}
             onCompareDecision={compareDecision}
             onTestProvider={testProvider}
+            aiOverlay={aiOverlay}
           />
         </main>
       ) : null}

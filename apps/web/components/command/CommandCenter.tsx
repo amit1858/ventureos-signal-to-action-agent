@@ -20,6 +20,9 @@ import { PortfolioMatrix } from "@/components/command/PortfolioMatrix";
 import { PriorityAccountsTable } from "@/components/command/PriorityAccountsTable";
 import { AiInsightsPanel } from "@/components/command/AiInsightsPanel";
 import { LiveWorkflowRail } from "@/components/command/LiveWorkflowRail";
+import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
+import type { AIOverlayMap } from "@/lib/aiOverlay";
+import { topOverlay } from "@/lib/aiOverlay";
 
 export function CommandCenter({
   meta,
@@ -34,6 +37,7 @@ export function CommandCenter({
   isHubspotSource,
   externalSignalsEnabled = false,
   externalContext,
+  aiOverlay,
   onRun,
   onOpenAccount,
 }: {
@@ -49,6 +53,7 @@ export function CommandCenter({
   isHubspotSource: boolean;
   externalSignalsEnabled?: boolean;
   externalContext?: Record<string, BriefExternalContext>;
+  aiOverlay?: AIOverlayMap | null;
   onRun: () => void;
   onOpenAccount: (accountId: string) => void;
 }) {
@@ -91,9 +96,18 @@ export function CommandCenter({
         lastSync={lastSync}
         externalEnabled={externalSignalsEnabled}
         externalContext={externalContext}
+        aiTopOverlay={topOverlay(aiOverlay ?? null, recs)}
         onRun={onRun}
         onOpenAccount={onOpenAccount}
       />
+
+      {/* Phase 6 · AI-enhanced reasoning applied banner. Only renders when an
+          overlay successfully landed for at least one recommendation. */}
+      {aiOverlay && hasResult ? (
+        <div className="-mb-8">
+          <AIEnhancedBanner overlay={aiOverlay} />
+        </div>
+      ) : null}
 
       {/* Section 2 · Portfolio Health */}
       <Section

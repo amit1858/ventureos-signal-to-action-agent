@@ -26,6 +26,8 @@ import {
 } from "@/lib/reasoning";
 import { Counter } from "@/components/Counter";
 import { ThinkingSequence } from "@/components/ThinkingSequence";
+import { GeneratedWithBadge } from "@/components/AIReasoningStatus";
+import type { AIOverlay } from "@/lib/aiOverlay";
 
 // Phase 4.3 · Executive Morning Brief — the portfolio-level "AI Chief of Staff"
 // opening memo. It answers "what should I do today across my whole book?" using
@@ -45,6 +47,7 @@ export function ExecutiveMorningBrief({
   lastSync,
   externalEnabled = false,
   externalContext,
+  aiTopOverlay,
   onRun,
   onOpenAccount,
 }: {
@@ -58,6 +61,7 @@ export function ExecutiveMorningBrief({
   lastSync: string | null;
   externalEnabled?: boolean;
   externalContext?: Record<string, BriefExternalContext>;
+  aiTopOverlay?: AIOverlay | null;
   onRun: () => void;
   onOpenAccount: (accountId: string) => void;
 }) {
@@ -124,10 +128,28 @@ export function ExecutiveMorningBrief({
                 <ThinkingSequence caption="Reviewing your portfolio overnight" />
               </div>
             ) : brief.hasResult ? (
-              <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-muted">
-                I reviewed your portfolio overnight —{" "}
-                <span className="font-semibold text-ink">{brief.headline}</span>
-              </p>
+              <>
+                <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-muted">
+                  I reviewed your portfolio overnight —{" "}
+                  <span className="font-semibold text-ink">{brief.headline}</span>
+                </p>
+                {aiTopOverlay?.executive_summary ? (
+                  <div className="mt-3 max-w-2xl rounded-xl border border-accent/25 bg-accent/[0.05] p-3.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
+                        Executive synthesis
+                      </span>
+                      <GeneratedWithBadge
+                        provider={aiTopOverlay.provider}
+                        model={aiTopOverlay.model}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-ink">
+                      {aiTopOverlay.executive_summary}
+                    </p>
+                  </div>
+                ) : null}
+              </>
             ) : (
               <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-muted">
                 Connect a data source and run the analysis to generate today&apos;s portfolio briefing.

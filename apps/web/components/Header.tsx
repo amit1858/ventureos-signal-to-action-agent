@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Activity, LayoutDashboard, Columns3, Database, Gauge } from "lucide-react";
 import { cx } from "@/lib/format";
+import { AIReasoningChip } from "@/components/AIReasoningStatus";
 
 export type AppView = "landing" | "command" | "workspace" | "evaluation";
 
@@ -15,6 +16,8 @@ export function Header({
   dataSourceLabel,
   isHubspotSource,
   accountCount,
+  overlayProvider,
+  overlayModel,
 }: {
   dataReady: boolean;
   view: AppView;
@@ -23,6 +26,8 @@ export function Header({
   dataSourceLabel: string;
   isHubspotSource: boolean;
   accountCount: number;
+  overlayProvider?: string | null;
+  overlayModel?: string | null;
 }) {
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-base/85 backdrop-blur">
@@ -77,8 +82,14 @@ export function Header({
           </div>
         ) : null}
 
-        {/* Single calm source indicator (P4) */}
+        {/* Phase 6 · persistent AI reasoning status + single calm source indicator */}
         <div className="flex items-center gap-2">
+          {view !== "landing" ? (
+            <AIReasoningChip
+              overlayProvider={overlayProvider}
+              overlayModel={overlayModel}
+            />
+          ) : null}
           <span
             className="inline-flex items-center gap-2 rounded-full border border-edge bg-surface2/70 px-3 py-1 text-[11px] font-medium text-muted"
             title={dataReady ? `Active data source: ${dataSourceLabel}` : "Dataset not generated"}

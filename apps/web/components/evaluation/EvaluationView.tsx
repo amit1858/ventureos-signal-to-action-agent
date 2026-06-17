@@ -78,6 +78,8 @@ import {
 } from "@/lib/byok";
 import { api } from "@/lib/api";
 import { Card } from "@/components/ui";
+import { AIReasoningPanel } from "@/components/AIReasoningStatus";
+import type { AIOverlayMap } from "@/lib/aiOverlay";
 
 // -- shared tone language (semantic, never decorative) --------------------
 
@@ -176,6 +178,7 @@ export function EvaluationView({
   decisionStatus,
   onCompareDecision,
   onTestProvider,
+  aiOverlay,
 }: {
   recs: Recommendation[];
   meta: MetaResponse | null;
@@ -197,6 +200,7 @@ export function EvaluationView({
     model?: string;
     base_url?: string;
   }) => Promise<DecisionProviderTestResult>;
+  aiOverlay?: AIOverlayMap | null;
 }) {
   const report = React.useMemo(
     () => evaluateSystem({ recs, meta, externalEnabled, latencyMs, provider }),
@@ -240,6 +244,11 @@ export function EvaluationView({
           </div>
         </div>
       </section>
+
+      {/* Phase 6 · AI Reasoning Status — transparency anchor for the
+          executive: provider/model, what AI is doing, what it is NOT
+          doing, session utilization and the trust statement. */}
+      <AIReasoningPanel overlay={aiOverlay ?? null} />
 
       {/* TRUST & GOVERNANCE */}
       <Section
