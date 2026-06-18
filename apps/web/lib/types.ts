@@ -458,3 +458,109 @@ export interface DecisionSessionPayload {
   provider?: string;
   credentials?: Record<string, DecisionCredentialPayload>;
 }
+
+
+// ---- Phase 7 -- Multi-Agent Strategic Reasoning -------------------------
+
+export interface AgentAttribution {
+  provider: string;
+  model: string;
+  mode: string;
+  latency_ms: number;
+}
+
+export interface RiskAssessment {
+  objective: string;
+  risk_level: string;
+  risk_drivers: string[];
+  risk_evidence: string[];
+  risk_narrative: string;
+  recommended_mitigation: string;
+  confidence: string;
+  attribution: AgentAttribution;
+}
+
+export interface GrowthAssessment {
+  objective: string;
+  opportunity_level: string;
+  opportunity_drivers: string[];
+  opportunity_evidence: string[];
+  growth_narrative: string;
+  suggested_motion: string;
+  confidence: string;
+  attribution: AgentAttribution;
+}
+
+export interface ResearchAssessment {
+  objective: string;
+  market_themes: string[];
+  competitor_activity: string[];
+  company_developments: string[];
+  industry_context: string;
+  relevance_score: string;
+  sources: string[];
+  narrative: string;
+  confidence: string;
+  attribution: AgentAttribution;
+}
+
+export interface EngagementPlan {
+  objective: string;
+  executive_summary: string;
+  opening_line: string;
+  conversation_strategy: string[];
+  outreach_recommendation: string;
+  crm_note_draft: string;
+  follow_up_suggestion: string;
+  confidence: string;
+  attribution: AgentAttribution;
+}
+
+export interface GovernanceReview {
+  objective: string;
+  evidence_sufficiency: string;
+  contradictions: string[];
+  unsupported_claims: string[];
+  risk_warnings: string[];
+  blocked_actions: string[];
+  confidence_assessment: string;
+  summary: string;
+  attribution: AgentAttribution;
+}
+
+export interface MultiAgentReport {
+  account_id: string;
+  account_name: string;
+  generated_at: string;
+  provider_used: string;
+  consensus_score: number;
+  consensus_label: string;
+  contradictions: string[];
+  risk: RiskAssessment;
+  growth: GrowthAssessment;
+  research: ResearchAssessment;
+  engagement: EngagementPlan;
+  governance_review: GovernanceReview;
+}
+
+export interface PortfolioPriority {
+  account_id: string;
+  account_name: string;
+  priority_rank: number;
+  reason: string;
+  recommended_action: string;
+}
+
+export interface PortfolioAgentReport {
+  objective: string;
+  generated_at: string;
+  provider_used: string;
+  top_priorities: PortfolioPriority[];
+  biggest_risk: PortfolioPriority | null;
+  biggest_opportunity: PortfolioPriority | null;
+  resource_allocation: string;
+  portfolio_observations: string[];
+  executive_summary: string;
+  confidence: string;
+  caveats: string[];
+}

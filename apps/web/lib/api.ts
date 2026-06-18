@@ -15,6 +15,8 @@ import type {
   HubspotSyncResult,
   HubspotWriteback,
   MetaResponse,
+  MultiAgentReport,
+  PortfolioAgentReport,
   ProviderDecision,
   Recommendation,
   RecommendationResponse,
@@ -147,6 +149,28 @@ export const api = {
     jfetch<DecisionComparison>(`/api/decision-providers/compare/${accountId}`, {
       method: "POST",
       body: JSON.stringify({ credentials: credentials ?? {} }),
+    }),
+  // Phase 7 — multi-agent specialist reasoning for one account.
+  multiAgent: (
+    accountId: string,
+    provider?: string,
+    credentials?: Record<string, DecisionCredentialPayload>,
+  ) =>
+    jfetch<MultiAgentReport>(`/api/multi-agent/${accountId}`, {
+      method: "POST",
+      body: JSON.stringify({
+        provider: provider ?? null,
+        credentials: credentials ?? {},
+      }),
+    }),
+  // Phase 7 — Portfolio (Chief-of-Staff) agent across the ranked recommendations.
+  multiAgentPortfolio: (
+    query = "Which accounts need attention this week and why?",
+    limit = 10,
+  ) =>
+    jfetch<PortfolioAgentReport>("/api/multi-agent/portfolio", {
+      method: "POST",
+      body: JSON.stringify({ query, limit }),
     }),
 };
 

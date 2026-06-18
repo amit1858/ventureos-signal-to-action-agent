@@ -92,6 +92,8 @@ from external_signals import ExecutiveBrief, ExternalSignalsResult  # noqa: E402
 import decision_providers  # noqa: E402
 from decision_providers.base import ProviderCredential, ProviderDecision  # noqa: E402
 from agents.orchestrator import AGENT_SEQUENCE  # noqa: E402
+from agents.multi_agent import run_multi_agent, run_portfolio  # noqa: E402
+from schemas.multi_agent import AgentReport, PortfolioRecommendation  # noqa: E402
 from crm_connectors import (  # noqa: E402
     ConnectorStatus,
     CRMError,
@@ -720,6 +722,72 @@ def decision_providers_compare(
     if result is None:
         raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
     return result
+
+
+class PortfolioAgentRequest(BaseModel):
+    """Request body for the Portfolio (Chief-of-Staff) agent.
+
+    ``query`` and ``limit`` mirror /api/recommendations so the Portfolio Agent
+    reasons over the same ranked output the product already produces. Optional
+    BYOK ``credentials`` are accepted but unused today (deterministic agent).
+    """
+
+    query: str = "Which accounts need attention this week and why?"
+    limit: int = 10
+    credentials: Dict[str, ProviderCredentialIn] = Field(default_factory=dict)
+
+
+@app.post("/api/multi-agent/portfolio", response_model=PortfolioRecommendation)
+def multi_agent_portfolio(body: Optional[PortfolioAgentRequest] = None) -> PortfolioRecommendation:
+    """Phase 7 -- Portfolio (Chief-of-Staff) agent across all accounts.
+
+    Reads the same ranked recommendations the Governed Decision Engine
+    produces, NEVER re-ranks, and returns a portfolio-level allocation.
+    """
+    req = body or PortfolioAgentRequest()
+    try:
+        response = generate_recommendations(
+            RecommendationRequest(query=req.query, limit=max(1, min(req.limit, 25)))
+        )
+    except data_loader.DataNotGeneratedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    return run_portfolio(list(response.recommendations))
+
+
+@app.post("/api/multi-agent/{account_id}", response_model=AgentReport)
+def multi_agent_analyze(
+    account_id: str,
+    body: Optional[DecisionSessionIn] = None,
+) -> AgentReport:
+    """Phase 7 -- run the multi-agent specialist workflow for one account.
+
+    Five specialist agents (Risk, Growth, Research, Engagement, Governance)
+    independently reason over the SAME deterministic context and collaborate.
+    Reasoning only -- never changes ranking, scoring, confidence, governance,
+    approval or CRM write-back. The Engagement agent reuses the active provider
+    decision when a BYOK provider is supplied; every other agent is
+    deterministic, so live LLM exposure stays bounded to ONE call per account.
+    """
+    credentials = _to_credentials(body)
+    provider_decision: Optional[ProviderDecision] = None
+    chosen = (body.provider if body else None) or ""
+    if chosen and chosen.lower() != "deterministic":
+        try:
+            provider_decision = decision_providers.evaluate_account(
+                account_id, chosen, credentials
+            )
+        except Exception as exc:  # noqa: BLE001 -- never let an LLM break the workflow
+            logger.warning(
+                "Multi-agent: provider %s failed (%s); falling back to deterministic engagement.",
+                chosen,
+                type(exc).__name__,
+            )
+            provider_decision = None
+
+    report = run_multi_agent(account_id, credentials=credentials, provider_decision=provider_decision)
+    if report is None:
+        raise HTTPException(status_code=404, detail=f"Account {account_id} not found")
+    return report
 
 
 @app.post("/api/recommendations", response_model=RecommendationResponse)

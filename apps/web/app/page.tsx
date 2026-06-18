@@ -31,6 +31,7 @@ import { HubspotWriteback } from "@/components/HubspotWriteback";
 import { RecommendationCard } from "@/components/RecommendationCard";
 import { AgentPipeline } from "@/components/AgentTrace";
 import { AccountDetailPanel } from "@/components/AccountDetailPanel";
+import { MultiAgentPanel } from "@/components/MultiAgentPanel";
 import { OutsideInSignals } from "@/components/OutsideInSignals";
 import { EvidenceLedger } from "@/components/EvidenceChips";
 import { ConfidenceRing } from "@/components/ConfidenceMeter";
@@ -689,6 +690,8 @@ export default function Page() {
                     overlay={overlayFor(aiOverlay, selectedRec.account_id)}
                   />
                 </Card>
+
+                <MultiAgentPanel accountId={selectedRec.account_id} />
 
                 {/* Recommended action + governance + evidence + approval + drafts */}
                 <Card className="p-4">
