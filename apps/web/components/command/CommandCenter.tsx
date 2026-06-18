@@ -5,6 +5,7 @@ import { Globe } from "lucide-react";
 import type {
   Account,
   MetaResponse,
+  PortfolioAgentReport,
   RecommendationResponse,
   HubspotStatus,
   HubspotWriteback,
@@ -38,6 +39,7 @@ export function CommandCenter({
   externalSignalsEnabled = false,
   externalContext,
   aiOverlay,
+  portfolio,
   onRun,
   onOpenAccount,
 }: {
@@ -54,6 +56,7 @@ export function CommandCenter({
   externalSignalsEnabled?: boolean;
   externalContext?: Record<string, BriefExternalContext>;
   aiOverlay?: AIOverlayMap | null;
+  portfolio?: PortfolioAgentReport | null;
   onRun: () => void;
   onOpenAccount: (accountId: string) => void;
 }) {
@@ -97,6 +100,7 @@ export function CommandCenter({
         externalEnabled={externalSignalsEnabled}
         externalContext={externalContext}
         aiTopOverlay={topOverlay(aiOverlay ?? null, recs)}
+        portfolio={portfolio ?? null}
         onRun={onRun}
         onOpenAccount={onOpenAccount}
       />

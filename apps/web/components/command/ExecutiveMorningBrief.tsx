@@ -28,6 +28,7 @@ import { Counter } from "@/components/Counter";
 import { ThinkingSequence } from "@/components/ThinkingSequence";
 import { GeneratedWithBadge } from "@/components/AIReasoningStatus";
 import type { AIOverlay } from "@/lib/aiOverlay";
+import type { PortfolioAgentReport } from "@/lib/types";
 
 // Phase 4.3 · Executive Morning Brief — the portfolio-level "AI Chief of Staff"
 // opening memo. It answers "what should I do today across my whole book?" using
@@ -48,6 +49,7 @@ export function ExecutiveMorningBrief({
   externalEnabled = false,
   externalContext,
   aiTopOverlay,
+  portfolio,
   onRun,
   onOpenAccount,
 }: {
@@ -62,6 +64,7 @@ export function ExecutiveMorningBrief({
   externalEnabled?: boolean;
   externalContext?: Record<string, BriefExternalContext>;
   aiTopOverlay?: AIOverlay | null;
+  portfolio?: PortfolioAgentReport | null;
   onRun: () => void;
   onOpenAccount: (accountId: string) => void;
 }) {
@@ -147,6 +150,46 @@ export function ExecutiveMorningBrief({
                     <p className="mt-1.5 text-[13px] leading-relaxed text-ink">
                       {aiTopOverlay.executive_summary}
                     </p>
+                  </div>
+                ) : null}
+                {portfolio ? (
+                  <div className="mt-3 max-w-2xl rounded-xl border border-brand/25 bg-brand/[0.05] p-3.5">
+                    <div className="flex items-center gap-2">
+                      <Crown size={12} className="text-brand-bright" />
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-bright">
+                        AI Chief of Staff · Portfolio Agent
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-ink">
+                      {portfolio.executive_summary}
+                    </p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-muted">
+                      {portfolio.resource_allocation}
+                    </p>
+                    {portfolio.biggest_risk || portfolio.biggest_opportunity ? (
+                      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {portfolio.biggest_risk ? (
+                          <div className="rounded-lg border border-risk/25 bg-risk/[0.06] p-2">
+                            <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-risk">
+                              <ShieldAlert size={10} /> Biggest risk
+                            </div>
+                            <div className="mt-1 text-[12px] font-medium text-ink">
+                              {portfolio.biggest_risk.account_name}
+                            </div>
+                          </div>
+                        ) : null}
+                        {portfolio.biggest_opportunity ? (
+                          <div className="rounded-lg border border-accent/25 bg-accent/[0.06] p-2">
+                            <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-accent">
+                              <TrendingUp size={10} /> Biggest opportunity
+                            </div>
+                            <div className="mt-1 text-[12px] font-medium text-ink">
+                              {portfolio.biggest_opportunity.account_name}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </>

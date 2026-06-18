@@ -39,6 +39,7 @@ import type {
   HubspotStatus,
   MetaResponse,
   ProviderDecision,
+  MultiAgentReport,
   Recommendation,
   SystemConfigResponse,
 } from "@/lib/types";
@@ -249,6 +250,12 @@ export function EvaluationView({
           executive: provider/model, what AI is doing, what it is NOT
           doing, session utilization and the trust statement. */}
       <AIReasoningPanel overlay={aiOverlay ?? null} />
+
+      {/* Phase 7 · Multi-agent reasoning metrics — sampled from the top
+          recommendation. Shows specialist consensus, governance critic
+          intervention rate and evidence sufficiency. Reasoning-only; never
+          alters ranking, scoring or confidence. */}
+      <MultiAgentMetrics recs={recs} />
 
       {/* TRUST & GOVERNANCE */}
       <Section
@@ -1609,6 +1616,144 @@ function DecisionCard({
           <div className="mt-auto pt-3 font-mono text-[10px] text-faint">{decision.latency_ms} ms</div>
         </>
       )}
+    </div>
+  );
+}
+
+
+// -- Phase 7 -- Multi-agent reasoning metrics ------------------------------
+
+function MultiAgentMetrics({ recs }: { recs: Recommendation[] }) {
+  const [reports, setReports] = React.useState<MultiAgentReport[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const sampleIds = React.useMemo(
+    () => recs.slice(0, 3).map((r) => r.account_id),
+    [recs],
+  );
+
+  React.useEffect(() => {
+    if (sampleIds.length === 0) {
+      setReports([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.allSettled(sampleIds.map((id) => api.multiAgent(id)))
+      .then((settled) => {
+        if (cancelled) return;
+        const ok = settled
+          .filter((s): s is PromiseFulfilledResult<MultiAgentReport> => s.status === "fulfilled")
+          .map((s) => s.value);
+        setReports(ok);
+        if (ok.length === 0) setError("Multi-agent endpoint unreachable.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sampleIds.join(",")]);
+
+  if (sampleIds.length === 0) {
+    return (
+      <Card className="p-5">
+        <div className="panel-title mb-2">Multi-agent reasoning</div>
+        <p className="text-[12px] text-muted">
+          Run the analysis to measure specialist agent agreement and governance intervention.
+        </p>
+      </Card>
+    );
+  }
+
+  const consensusAvg =
+    reports.length > 0
+      ? reports.reduce((sum, r) => sum + (r.consensus_score || 0), 0) / reports.length
+      : 0;
+  const totalContradictions = reports.reduce(
+    (sum, r) => sum + r.contradictions.length + r.governance_review.contradictions.length,
+    0,
+  );
+  const totalUnsupported = reports.reduce(
+    (sum, r) => sum + r.governance_review.unsupported_claims.length,
+    0,
+  );
+  const totalWarnings = reports.reduce(
+    (sum, r) => sum + r.governance_review.risk_warnings.length,
+    0,
+  );
+  const governanceRate =
+    reports.length > 0
+      ? Math.round(
+          (reports.filter(
+            (r) =>
+              r.governance_review.contradictions.length +
+                r.governance_review.unsupported_claims.length +
+                r.governance_review.risk_warnings.length >
+              0,
+          ).length /
+            reports.length) *
+            100,
+        )
+      : 0;
+  const evidenceStrong = reports.filter((r) => r.governance_review.evidence_sufficiency === "high").length;
+
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="panel-title">Multi-agent reasoning (Phase 7)</div>
+        <span className="text-[10px] uppercase tracking-wide text-faint">
+          Sampled across top {reports.length || sampleIds.length} accounts
+        </span>
+      </div>
+      {loading && reports.length === 0 ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-20 animate-pulse rounded-lg border border-edge bg-surface2/40" />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-risk/30 bg-risk/10 p-3 text-[12px] text-risk">{error}</div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <MetricCell label="Specialist consensus" value={`${Math.round(consensusAvg * 100)}%`} tone="ok" />
+          <MetricCell
+            label="Governance intervention"
+            value={`${governanceRate}%`}
+            tone={governanceRate > 50 ? "warn" : "ok"}
+          />
+          <MetricCell
+            label="Unsupported claims"
+            value={String(totalUnsupported)}
+            tone={totalUnsupported > 0 ? "warn" : "ok"}
+          />
+          <MetricCell label="Cross-agent contradictions" value={String(totalContradictions)} tone={totalContradictions > 0 ? "warn" : "ok"} />
+        </div>
+      )}
+      <p className="mt-3 text-[11px] leading-relaxed text-faint">
+        Five specialist agents (Risk, Growth, Research, Engagement, Governance critic) reason independently
+        over each account. Metrics above are advisory � they never alter ranking, scoring or confidence.
+        Strong evidence sufficiency on {evidenceStrong} of {reports.length} sampled accounts; {totalWarnings} active
+        governance warning(s).
+      </p>
+    </Card>
+  );
+}
+
+function MetricCell({ label, value, tone }: { label: string; value: string; tone: "ok" | "warn" }) {
+  return (
+    <div
+      className={cx(
+        "rounded-lg border p-3",
+        tone === "ok" ? "border-accent/25 bg-accent/[0.05]" : "border-amber-400/25 bg-amber-400/[0.05]",
+      )}
+    >
+      <div className="text-[10px] uppercase tracking-wide text-faint">{label}</div>
+      <div className={cx("mt-1 text-xl font-semibold", tone === "ok" ? "text-accent" : "text-amber-300")}>
+        {value}
+      </div>
     </div>
   );
 }

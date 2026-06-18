@@ -15,6 +15,7 @@ import type {
   HubspotStatus,
   HubspotWriteback as Writeback,
   MetaResponse,
+  PortfolioAgentReport,
   Recommendation,
   RecommendationResponse,
   SystemConfigResponse,
@@ -115,6 +116,9 @@ export default function Page() {
   // has an active BYOK provider; never affects ranking/scoring/governance.
   const [aiOverlay, setAiOverlay] = React.useState<AIOverlayMap | null>(null);
   const [aiOverlayLoading, setAiOverlayLoading] = React.useState(false);
+  // Phase 7 · Portfolio Agent (Chief-of-Staff) summary. Read-only: never
+  // re-ranks, never persists. Fetched after each workflow run.
+  const [portfolio, setPortfolio] = React.useState<PortfolioAgentReport | null>(null);
 
   const refreshHubStatus = React.useCallback(async (probe = false) => {
     try {
@@ -311,6 +315,7 @@ export default function Page() {
     setRunError(null);
     setEditing(false);
     setAiOverlay(null);
+    setPortfolio(null);
     try {
       const res = await api.recommendations(query.trim(), limit);
       setResult(res);
@@ -324,6 +329,12 @@ export default function Page() {
         .then((m) => setAiOverlay(m))
         .catch(() => setAiOverlay(null))
         .finally(() => setAiOverlayLoading(false));
+      // Phase 7 · fire-and-forget Portfolio (Chief-of-Staff) agent. Read-only
+      // summary across the ranked output; never re-ranks. Failures swallowed.
+      api
+        .multiAgentPortfolio(query.trim(), limit)
+        .then((p) => setPortfolio(p))
+        .catch(() => setPortfolio(null));
     } catch (e) {
       setRunError((e as Error).message);
       setResult(null);
@@ -574,6 +585,7 @@ export default function Page() {
             externalSignalsEnabled={externalSignalsEnabled}
             externalContext={briefExternalContext}
             aiOverlay={aiOverlay}
+            portfolio={portfolio}
             onRun={runWorkflow}
             onOpenAccount={openAccount}
           />
