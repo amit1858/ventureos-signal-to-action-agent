@@ -111,3 +111,22 @@ Each phase preserves the Phase-6 invariants:
 > AI helps explain and recommend. AI does not determine priority,
 > change governance, or execute CRM actions. Humans remain accountable
 > for all decisions.
+
+## Phase 13 — Decision Ledger and System of Action (complete)
+
+- Persistent Decision Ledger module (`apps/web/lib/decisionLedger.ts`) — backend-swappable.
+- Lifecycle ribbon on the Account Workspace cockpit + Approval Drawer.
+- Approval Drawer rewired: approvals/rejections/review requests persist to the ledger and
+  survive a page refresh; full per-account history rendered from the ledger.
+- Outcome capture controls (6 outcomes) appear after approval and update the ledger.
+- New Trust and Governance panels: Manager Summary, Decision Ledger (counts + table),
+  CRM Writeback Readiness.
+- Governance caveat surfaced in the Approval Drawer.
+- Zero changes to scoring, ranking, recommendation generation, governance engine, approval
+  logic, agents, or backend contracts.
+
+## Phase 14 — CRM writeback (next)
+
+Take the "Ready for CRM" output of Phase 13 and route approved actions through the existing
+HubSpot connector (task + note + verification). The ledger persistence layer can move from
+localStorage to backend SQLite without changing any UI caller.

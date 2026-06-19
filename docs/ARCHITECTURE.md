@@ -694,3 +694,36 @@ already exposed everything needed (`/api/decision-providers/evaluate`,
 `/api/decision-providers/models/{provider}`). Adding the transparency
 layer in the frontend lets us iterate on the UX without redeploying
 the API and keeps the governance-critical code paths untouched.
+
+## 14. Decision Ledger and action lifecycle (Phase 13)
+
+The frontend now ships a deterministic, persistent Decision Ledger
+(`apps/web/lib/decisionLedger.ts`) that records every human decision against a recommendation.
+
+Storage today: browser localStorage under key `s2a_decision_ledger_v1`, with a custom
+`s2a:ledger:changed` event for same-tab subscribers. The module exposes a thin, backend-
+replaceable API (`appendLedgerEntry`, `listLedger`, `listLedgerForAccount`, `lifecycleFor`,
+`recordOutcome`, `summarize`, `subscribeLedger`). A Phase 14 backend can take over the
+persistence without changing any caller.
+
+Each ledger entry shape:
+
+  ledger_id, recommendation_id, account_id, account_name, recommended_action,
+  decision_type (approved | rejected | review), reviewer_name, reviewer_note,
+  confidence, risk_level, opportunity_level, evidence_count, business_impact,
+  governance_caveat, source (deterministic | ai_assisted | multi_agent),
+  created_at, outcome?, outcome_note?, outcome_captured_at?
+
+Lifecycle derivation (`lifecycleFor`) reads the latest matching entry and maps it to:
+
+  Detected -> Recommended -> Prepared -> Submitted -> Approved | Rejected ->
+    Executed -> Outcome captured
+
+The lifecycle ribbon is rendered both at the top of the workspace cockpit and inside the
+Approval Drawer. Outcome controls appear only after an approved entry exists.
+
+Governance integration: the Trust and Governance zone now contains three additional panels
+that are pure read-only views over the ledger module: Manager Summary, Decision Ledger
+(with counts + last 10 entries), and CRM Writeback Readiness (a 5-step pipeline that stops
+at "Ready for CRM"). None of these panels alter ranking, scoring, governance status, or the
+approval gate. The deterministic engine remains the single source of truth.

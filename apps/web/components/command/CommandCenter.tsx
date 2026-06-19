@@ -41,6 +41,21 @@ import { AiInsightsPanel } from "@/components/command/AiInsightsPanel";
 import { LiveWorkflowRail } from "@/components/command/LiveWorkflowRail";
 import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
 import type { AIOverlayMap } from "@/lib/aiOverlay";
+import {
+  LIFECYCLE_LABEL,
+  LIFECYCLE_ORDER,
+  OUTCOME_LABEL,
+  appendLedgerEntry,
+  lifecycleFor,
+  listLedger,
+  listLedgerForAccount,
+  recordOutcome,
+  subscribeLedger,
+  summarize,
+  type LedgerEntry,
+  type LifecycleState,
+  type OutcomeKind,
+} from "@/lib/decisionLedger";
 
 function useZoneOpen(id: string, defaultOpen: boolean): [boolean, () => void] {
   const key = `s2a_zone_${id}`;
@@ -327,6 +342,18 @@ export function CommandCenter({
                   </button>
                 </div>
               ) : null}
+            </CompactSection>
+
+            <CompactSection eyebrow="Manager view" heading="Manager summary">
+              <ManagerSummaryPanel recs={recs} accounts={accounts} />
+            </CompactSection>
+
+            <CompactSection eyebrow="Decision ledger" heading="Persistent audit trail">
+              <DecisionLedgerPanel recs={recs} />
+            </CompactSection>
+
+            <CompactSection eyebrow="CRM writeback readiness" heading="Connector lifecycle">
+              <CrmWritebackReadinessPanel recs={recs} />
             </CompactSection>
           </CollapsibleZone>
         </div>
@@ -694,6 +721,13 @@ interface MockApprovalEntry {
   note?: string;
 }
 
+function useLedgerTick(): number {
+  // Re-render whenever the ledger changes anywhere in the app.
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => subscribeLedger(() => setTick((t) => t + 1)), []);
+  return tick;
+}
+
 function WorkspaceCockpit({
   recommendation,
   account,
@@ -710,7 +744,15 @@ function WorkspaceCockpit({
   const [tab, setTab] = React.useState<WorkspaceTab>("overview");
   const [focus, setFocus] = React.useState<WorkspaceFocus>("summary");
   const [approvalOpen, setApprovalOpen] = React.useState(false);
-  const [approvalHistory, setApprovalHistory] = React.useState<MockApprovalEntry[]>([]);
+  const ledgerTick = useLedgerTick();
+  const accountHistory = React.useMemo(
+    () => listLedgerForAccount(recommendation.account_id),
+    [recommendation.account_id, ledgerTick],
+  );
+  const lifecycle = React.useMemo<LifecycleState>(
+    () => lifecycleFor(recommendation.recommendation_id, "prepared"),
+    [recommendation.recommendation_id, ledgerTick],
+  );
   const cockpitRef = React.useRef<HTMLDivElement | null>(null);
   const risk = riskLevel(account);
 
@@ -752,6 +794,7 @@ function WorkspaceCockpit({
         <p className="mt-1 text-[11px] text-muted">
           Recommended action: <span className="font-semibold text-ink">{reasoning.action.label}</span>
         </p>
+        <LifecycleRibbon state={lifecycle} />
         {/* Primary execution CTAs — wired to in-workspace navigation +
             transient focus. Approval opens a mock human-in-the-loop drawer. */}
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -812,12 +855,31 @@ function WorkspaceCockpit({
           recommendation={recommendation}
           account={account}
           reasoning={reasoning}
-          history={approvalHistory}
+          history={accountHistory}
+          lifecycle={lifecycle}
           onAct={(decision, note) => {
-            setApprovalHistory((prev) => [
-              ...prev,
-              { decision, reviewer: "You (demo reviewer)", timestamp: new Date().toISOString(), note },
-            ]);
+            appendLedgerEntry({
+              recommendation_id: recommendation.recommendation_id,
+              account_id: recommendation.account_id,
+              account_name: recommendation.account_name,
+              recommended_action: reasoning.action.label,
+              decision_type: decision,
+              reviewer_name: "You (demo reviewer)",
+              reviewer_note: note,
+              confidence: recommendation.confidence_score,
+              risk_level: risk,
+              opportunity_level: account?.growth_potential_score ?? 0,
+              evidence_count: recommendation.evidence.length,
+              business_impact: businessImpactLine(recommendation, reasoning, account),
+              governance_caveat: recommendation.governance_caveats[0],
+              source:
+                (recommendation.agents_invoked?.length ?? 0) > 1
+                  ? "multi_agent"
+                  : "deterministic",
+            });
+          }}
+          onCaptureOutcome={(outcome, outcomeNote) => {
+            recordOutcome(recommendation.account_id, outcome, outcomeNote);
           }}
           onClose={() => setApprovalOpen(false)}
         />
@@ -1239,24 +1301,31 @@ function FocusRing({ focused, children }: { focused?: boolean; children: React.R
   );
 }
 
-// -- Phase 10 approval drawer (mock, in-memory only) -------------------------
+// -- Phase 13 approval drawer (ledger-backed; persists across refresh) -------
 function ApprovalDrawer({
   recommendation,
   account,
   reasoning,
   history,
+  lifecycle,
   onAct,
+  onCaptureOutcome,
   onClose,
 }: {
   recommendation: Recommendation;
   account?: Account;
   reasoning: NonNullable<ReturnType<typeof reasonForRecommendation>>;
-  history: MockApprovalEntry[];
-  onAct: (decision: MockApprovalEntry["decision"], note?: string) => void;
+  history: LedgerEntry[];
+  lifecycle: LifecycleState;
+  onAct: (decision: LedgerEntry["decision_type"], note?: string) => void;
+  onCaptureOutcome: (outcome: OutcomeKind, note?: string) => void;
   onClose: () => void;
 }) {
   const [note, setNote] = React.useState("");
   const risk = riskLevel(account);
+  const isApproved = lifecycle === "approved" || lifecycle === "executed" || lifecycle === "outcome_captured";
+  const latestApproved = history.find((h) => h.decision_type === "approved");
+  const hasOutcome = Boolean(latestApproved?.outcome);
   return (
     <div
       role="dialog"
@@ -1266,7 +1335,7 @@ function ApprovalDrawer({
       onClick={onClose}
     >
       <div
-        className="flex h-full w-full max-w-[420px] flex-col gap-2 overflow-y-auto border-l border-edge bg-surface p-4 shadow-2xl"
+        className="flex h-full w-full max-w-[440px] flex-col gap-2 overflow-y-auto border-l border-edge bg-surface p-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
@@ -1282,6 +1351,8 @@ function ApprovalDrawer({
             Close
           </button>
         </div>
+
+        <LifecycleRibbon state={lifecycle} compact />
 
         <div className="grid grid-cols-2 gap-1.5 text-[10px]">
           <MiniStat label="Recommendation" value={reasoning.action.label} />
@@ -1314,6 +1385,17 @@ function ApprovalDrawer({
           <div className="text-[10px] font-semibold uppercase tracking-wider text-faint">Expected outcome</div>
           <p className="mt-1 text-[11px] text-muted">{reasoning.expectedOutcome}</p>
         </section>
+
+        {recommendation.governance_caveats.length ? (
+          <section className="rounded-lg border border-yellow-400/30 bg-yellow-400/5 p-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-yellow-400">Governance caveat</div>
+            <ul className="mt-1 space-y-0.5 text-[11px] text-muted">
+              {recommendation.governance_caveats.map((c, i) => (
+                <li key={`gc-${i}`}>• {c}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section className="rounded-lg border border-edge bg-bg/30 p-2.5">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-faint">Reviewer note (optional)</div>
@@ -1349,7 +1431,7 @@ function ApprovalDrawer({
           <button
             type="button"
             onClick={() => {
-              onAct("review", note.trim() || undefined);
+            onAct("review", note.trim() || undefined);
               setNote("");
             }}
             className="btn btn-ghost px-2.5 py-1 text-[11px]"
@@ -1358,31 +1440,81 @@ function ApprovalDrawer({
           </button>
         </div>
 
+        {isApproved ? (
+          <section className="rounded-lg border border-accent/30 bg-accent/5 p-2.5">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-accent">
+                Ready for CRM writeback
+              </div>
+              <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-accent">
+                Advisory
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-muted">
+              CRM writeback not enabled in this demo mode. The approved action would be staged for the
+              connector pipeline (Prepared → Approved → Ready for CRM → Written → Verified).
+            </p>
+          </section>
+        ) : null}
+
+        {isApproved ? (
+          <section className="rounded-lg border border-edge bg-bg/30 p-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-faint">
+              Capture outcome
+            </div>
+            <p className="mt-1 text-[11px] text-muted">
+              {hasOutcome
+                ? `Recorded: ${OUTCOME_LABEL[latestApproved!.outcome!]}`
+                : "Tag the real-world result so the ledger reflects execution."}
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {(Object.keys(OUTCOME_LABEL) as OutcomeKind[]).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => onCaptureOutcome(k, note.trim() || undefined)}
+                  className={cx(
+                    "rounded border px-1.5 py-0.5 text-[10px] transition-colors",
+                    latestApproved?.outcome === k
+                      ? "border-accent bg-accent/15 text-accent"
+                      : "border-edge-soft text-muted hover:border-edge hover:bg-surface2/40 hover:text-ink",
+                  )}
+                >
+                  {OUTCOME_LABEL[k]}
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <section className="mt-1 rounded-lg border border-edge bg-bg/30 p-2.5">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-faint">Approval history</div>
           {history.length === 0 ? (
-            <p className="mt-1 text-[11px] text-faint">No decisions recorded yet for this session.</p>
+            <p className="mt-1 text-[11px] text-faint">No decisions recorded yet for this account.</p>
           ) : (
             <ul className="mt-1 space-y-1.5">
-              {history.map((entry, idx) => (
-                <li key={`hist-${idx}`} className="rounded border border-edge-soft bg-bg/40 px-2 py-1.5 text-[10px]">
+              {history.map((entry) => (
+                <li key={entry.ledger_id} className="rounded border border-edge-soft bg-bg/40 px-2 py-1.5 text-[10px]">
                   <div className="flex items-center gap-2">
                     <span
                       className={cx(
                         "rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase",
-                        entry.decision === "approved"
+                        entry.decision_type === "approved"
                           ? "bg-accent/15 text-accent"
-                          : entry.decision === "rejected"
+                          : entry.decision_type === "rejected"
                             ? "bg-risk/15 text-risk"
                             : "bg-yellow-400/15 text-yellow-400",
                       )}
                     >
-                      {entry.decision}
+                      {entry.decision_type.replace("_", " ")}
                     </span>
-                    <span className="text-muted">{entry.reviewer}</span>
-                    <span className="ml-auto text-faint">{formatTimestamp(entry.timestamp) || entry.timestamp}</span>
+                    <span className="text-muted">{entry.reviewer_name}</span>
+                    <span className="ml-auto text-faint">{formatTimestamp(entry.created_at) || entry.created_at}</span>
                   </div>
-                  {entry.note ? <p className="mt-1 text-muted">{entry.note}</p> : null}
+                  {entry.reviewer_note ? <p className="mt-1 text-muted">{entry.reviewer_note}</p> : null}
+                  {entry.outcome ? (
+                    <p className="mt-1 text-accent">Outcome: {OUTCOME_LABEL[entry.outcome]}</p>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -1390,12 +1522,49 @@ function ApprovalDrawer({
         </section>
 
         <p className="mt-auto text-[10px] text-faint">
-          Demo workflow — decisions are recorded in-session only. No backend write-back.
+          Decisions persist in the local Decision Ledger. No backend writeback yet — Phase 14 will
+          forward approved actions to the CRM connector.
         </p>
       </div>
     </div>
   );
 }
+
+// -- Phase 13 lifecycle ribbon (Detected → … → Outcome captured) -------------
+function LifecycleRibbon({ state, compact }: { state: LifecycleState; compact?: boolean }) {
+  const idx = LIFECYCLE_ORDER.indexOf(state);
+  return (
+    <div className={cx("mt-2 flex flex-wrap items-center gap-1", compact ? "" : "")}
+      aria-label={`Lifecycle: ${LIFECYCLE_LABEL[state]}`}
+    >
+      {LIFECYCLE_ORDER.map((s, i) => {
+        const done = i < idx;
+        const active = i === idx;
+        return (
+          <React.Fragment key={s}>
+            <span
+              className={cx(
+                "rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+                active
+                  ? "border-brand-bright bg-brand/15 text-brand-bright"
+                  : done
+                    ? "border-accent/30 bg-accent/10 text-accent"
+                    : "border-edge-soft text-faint",
+              )}
+            >
+              {LIFECYCLE_LABEL[s]}
+            </span>
+            {i < LIFECYCLE_ORDER.length - 1 ? (
+              <span className={cx("text-[9px]", done ? "text-accent" : "text-faint")}>›</span>
+            ) : null}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+
 
 
 function MiniStat({ label, value }: { label: string; value: string }) {
@@ -1947,3 +2116,196 @@ function parseBulletLines(value: string): string[] {
     .slice(0, 5);
 }
 
+
+// -- Phase 13 governance panels ----------------------------------------------
+function ManagerSummaryPanel({ recs, accounts }: { recs: Recommendation[]; accounts: Account[] }) {
+  const tick = useLedgerTick();
+  const all = React.useMemo(() => listLedger(), [tick]);
+  const byAcct = React.useMemo(() => new Map(accounts.map((a) => [a.account_id, a])), [accounts]);
+
+  const reviewed = new Set(all.map((e) => e.recommendation_id)).size;
+  const approved = all.filter((e) => e.decision_type === "approved").length;
+  const rejected = all.filter((e) => e.decision_type === "rejected").length;
+  const reviewQ = all.filter((e) => e.decision_type === "review").length;
+  const pending = recs.filter((r) => !all.some((e) => e.recommendation_id === r.recommendation_id)).length;
+
+  const revenueReviewed = all
+    .filter((e) => e.decision_type === "approved" || e.decision_type === "rejected")
+    .reduce((sum, e) => {
+      const a = byAcct.get(e.account_id);
+      return sum + (a ? (a.current_month_spend || 0) * 12 : 0);
+    }, 0);
+  const revenueProtected = all
+    .filter((e) => e.decision_type === "approved" && e.outcome === "renewal_risk_reduced")
+    .reduce((sum, e) => {
+      const a = byAcct.get(e.account_id);
+      return sum + (a ? (a.current_month_spend || 0) * 12 : 0);
+    }, 0);
+  const opportunitiesAdvanced = all.filter(
+    (e) => e.outcome === "opportunity_created" || e.outcome === "meeting_booked",
+  ).length;
+
+  return (
+    <div className="card-premium p-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <ManagerStat label="Recommendations reviewed" value={String(reviewed)} />
+        <ManagerStat label="Approved" value={String(approved)} tone="ok" />
+        <ManagerStat label="Rejected" value={String(rejected)} tone="risk" />
+        <ManagerStat label="Review requested" value={String(reviewQ)} tone="warn" />
+        <ManagerStat label="Pending approvals" value={String(pending)} tone={pending > 0 ? "warn" : undefined} />
+        <ManagerStat label="Revenue at risk reviewed" value={inrCompact(revenueReviewed)} />
+        <ManagerStat label="Revenue protected" value={inrCompact(revenueProtected)} tone="ok" />
+        <ManagerStat label="Opportunities advanced" value={String(opportunitiesAdvanced)} tone="ok" />
+      </div>
+      <p className="mt-2 text-[10px] text-faint">
+        Manager view aggregates the local Decision Ledger. Numbers update as decisions and outcomes
+        are captured.
+      </p>
+    </div>
+  );
+}
+
+function ManagerStat({ label, value, tone }: { label: string; value: string; tone?: "ok" | "warn" | "risk" }) {
+  const cls =
+    tone === "ok" ? "text-accent" : tone === "warn" ? "text-yellow-400" : tone === "risk" ? "text-risk" : "text-ink";
+  return (
+    <div className="rounded border border-edge-soft bg-bg/35 p-2">
+      <div className="text-[9px] uppercase tracking-wider text-faint">{label}</div>
+      <div className={cx("mt-0.5 text-[14px] font-semibold tabular-nums", cls)}>{value}</div>
+    </div>
+  );
+}
+
+function DecisionLedgerPanel({ recs }: { recs: Recommendation[] }) {
+  const tick = useLedgerTick();
+  const entries = React.useMemo(() => listLedger().slice(0, 10), [tick]);
+  const summary = React.useMemo(
+    () => summarize(recs.map((r) => r.recommendation_id)),
+    [recs, tick],
+  );
+
+  return (
+    <div className="card-premium p-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <LedgerCount label="Total decisions" value={summary.total} />
+        <LedgerCount label="Approved" value={summary.approved} tone="ok" />
+        <LedgerCount label="Rejected" value={summary.rejected} tone="risk" />
+        <LedgerCount label="Review requested" value={summary.review} tone="warn" />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <LedgerCount label="Awaiting approval" value={summary.awaitingApproval} />
+        <LedgerCount label="Approved � not executed" value={summary.approvedNotExecuted} />
+        <LedgerCount label="Outcome captured" value={summary.outcomeCaptured} tone="ok" />
+        <LedgerCount label="Outcome pending" value={summary.outcomePending} tone="warn" />
+      </div>
+
+      <div className="mt-3 rounded-lg border border-edge bg-bg/35">
+        <div className="grid grid-cols-[1fr,90px,1fr,90px,110px] gap-2 border-b border-edge-soft px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-faint">
+          <div>Account</div>
+          <div>Decision</div>
+          <div>Reviewer</div>
+          <div>Outcome</div>
+          <div className="text-right">When</div>
+        </div>
+        {entries.length === 0 ? (
+          <div className="px-2.5 py-3 text-center text-[11px] text-faint">
+            No decisions yet. Approve, reject, or request review from the Approval drawer to start
+            the audit trail.
+          </div>
+        ) : (
+          entries.map((e) => (
+            <div
+              key={e.ledger_id}
+              className="grid grid-cols-[1fr,90px,1fr,90px,110px] items-center gap-2 border-b border-edge-soft/50 px-2.5 py-1.5 text-[11px] last:border-b-0"
+            >
+              <div className="truncate text-ink">{e.account_name}</div>
+              <div>
+                <span
+                  className={cx(
+                    "rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase",
+                    e.decision_type === "approved"
+                      ? "bg-accent/15 text-accent"
+                      : e.decision_type === "rejected"
+                        ? "bg-risk/15 text-risk"
+                        : "bg-yellow-400/15 text-yellow-400",
+                  )}
+                >
+                  {e.decision_type.replace("_", " ")}
+                </span>
+              </div>
+              <div className="truncate text-muted">{e.reviewer_name}</div>
+              <div className="truncate text-faint">{e.outcome ? OUTCOME_LABEL[e.outcome] : "�"}</div>
+              <div className="text-right text-faint">{formatTimestamp(e.created_at) || "�"}</div>
+            </div>
+          ))
+        )}
+      </div>
+      <p className="mt-2 text-[10px] text-faint">
+        Ledger persists in browser storage (Phase 13 demo). The API surface is backend-swappable for
+        Phase 14 � same record shape, real database.
+      </p>
+    </div>
+  );
+}
+
+function LedgerCount({ label, value, tone }: { label: string; value: number; tone?: "ok" | "warn" | "risk" }) {
+  const cls =
+    tone === "ok" ? "text-accent" : tone === "warn" ? "text-yellow-400" : tone === "risk" ? "text-risk" : "text-ink";
+  return (
+    <div className="rounded border border-edge-soft bg-bg/35 p-2">
+      <div className="text-[9px] uppercase tracking-wider text-faint">{label}</div>
+      <div className={cx("mt-0.5 text-[14px] font-semibold tabular-nums", cls)}>{value}</div>
+    </div>
+  );
+}
+
+function CrmWritebackReadinessPanel({ recs }: { recs: Recommendation[] }) {
+  const tick = useLedgerTick();
+  const all = React.useMemo(() => listLedger(), [tick]);
+
+  const prepared = recs.length;
+  const approved = recs.filter((r) =>
+    all.some((e) => e.recommendation_id === r.recommendation_id && e.decision_type === "approved"),
+  ).length;
+  const readyForCrm = approved; // approved but not yet written
+  const written = 0;
+  const verified = 0;
+
+  const steps: { label: string; value: number; complete: boolean }[] = [
+    { label: "Prepared", value: prepared, complete: prepared > 0 },
+    { label: "Approved", value: approved, complete: approved > 0 },
+    { label: "Ready for CRM", value: readyForCrm, complete: readyForCrm > 0 },
+    { label: "Written to CRM", value: written, complete: false },
+    { label: "Verified", value: verified, complete: false },
+  ];
+
+  return (
+    <div className="card-premium p-4">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {steps.map((s, i) => (
+          <React.Fragment key={s.label}>
+            <div
+              className={cx(
+                "rounded-lg border px-2.5 py-1.5 text-[11px]",
+                s.complete
+                  ? "border-accent/40 bg-accent/10 text-accent"
+                  : "border-edge-soft bg-bg/40 text-faint",
+              )}
+            >
+              <div className="text-[9px] font-semibold uppercase tracking-wider">{s.label}</div>
+              <div className="mt-0.5 text-[14px] font-semibold tabular-nums">{s.value}</div>
+            </div>
+            {i < steps.length - 1 ? (
+              <span className={cx("text-[12px]", s.complete ? "text-accent" : "text-faint")}>�</span>
+            ) : null}
+          </React.Fragment>
+        ))}
+      </div>
+      <p className="mt-2 text-[11px] text-muted">
+        {readyForCrm > 0 ? `${readyForCrm} approved action${readyForCrm === 1 ? "" : "s"} ready for CRM writeback. ` : ""}
+        <span className="text-faint">CRM writeback not enabled in this demo mode.</span> Phase 14
+        will route approved actions through the HubSpot connector (task + note) with verification.
+      </p>
+    </div>
+  );
+}

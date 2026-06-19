@@ -238,3 +238,28 @@ What's next: see [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 This is a hackathon project by **Team VentureOS**. Demo CRM data only.
 No real customer information.
+
+## Decision Ledger and action lifecycle (Phase 13)
+
+Every approval, rejection, or review request in the Account Workspace is now recorded in a
+persistent Decision Ledger. Each entry captures the recommendation, the account, the reviewer,
+the reviewer note, the decision type, confidence, evidence count, business impact, governance
+caveat, and source (deterministic | ai_assisted | multi_agent).
+
+Each recommendation now carries an explicit lifecycle:
+
+  Detected -> Recommended -> Prepared -> Submitted for approval ->
+    Approved | Rejected -> Executed -> Outcome captured
+
+After approval the user can capture a real-world outcome (Meeting booked, Customer contacted,
+Renewal risk reduced, Opportunity created, No response, Follow-up required). The ledger is
+visible in Trust and Governance as a Manager Summary, a Decision Ledger table, and a CRM
+Writeback Readiness lifecycle (Prepared -> Approved -> Ready for CRM -> Written -> Verified).
+
+Phase 13 stops at "Ready for CRM" — CRM writeback is not enabled in demo mode. Phase 14 will
+route approved actions through the existing HubSpot connector. The ledger API surface
+(`apps/web/lib/decisionLedger.ts`) is backend-swappable; today it persists to browser
+localStorage so the demo works without auth.
+
+This phase is additive. Scoring, ranking, governance, approval logic, agents, and backend
+contracts are unchanged.

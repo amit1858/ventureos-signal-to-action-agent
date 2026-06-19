@@ -180,3 +180,16 @@ Every planned item preserves the governance invariants above.
 > week and why?"* with a deterministic ranking, an optional LLM
 > narrative on top, and a human approval gate on every step that
 > reaches the CRM.
+
+## Decision Ledger and lifecycle (Phase 13)
+
+The product is no longer just a recommendation workspace; it is a governed system of action.
+Every decision a seller makes — approve, reject, request review, and the real-world outcome —
+is captured in a Decision Ledger. Managers see a roll-up: how many recommendations were
+reviewed, how many approved/rejected, how much revenue at risk was reviewed, how many
+opportunities advanced. The lifecycle of each recommendation (Detected -> Recommended ->
+Prepared -> Submitted -> Approved -> Executed -> Outcome captured) is visible on the
+cockpit and in the Approval Drawer.
+
+CRM writeback readiness is shown but disabled in demo mode — Phase 14 will connect the
+approved-action pipeline to the existing HubSpot connector.
