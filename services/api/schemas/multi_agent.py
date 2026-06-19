@@ -62,10 +62,17 @@ class EngagementPlan(BaseModel):
     objective: str = "Generate seller-ready actions (advisory, approval-gated)."
     executive_summary: str = ""
     opening_line: str = ""
+    likely_objections: List[str] = Field(default_factory=list)
+    talking_points: List[str] = Field(default_factory=list)
     conversation_strategy: List[str] = Field(default_factory=list)
     outreach_recommendation: str = ""
     crm_note_draft: str = ""
     follow_up_suggestion: str = ""
+    action_selected_why: str = ""
+    execution_steps: List[str] = Field(default_factory=list)
+    expected_business_outcome: str = ""
+    estimated_seller_effort: str = ""
+    suggested_timeline: str = ""
     confidence: str = "medium"
     attribution: AgentAttribution = Field(default_factory=AgentAttribution)
 
@@ -99,12 +106,33 @@ class AgentReport(BaseModel):
     governance_review: GovernanceReview
 
 
+class SellerPlanItem(BaseModel):
+    account_id: str
+    account_name: str
+    priority_rank: int = 0
+    recommended_action: str
+    focus: str
+    expected_outcome: str
+    evidence_count: int = 0
+    estimated_effort_minutes: int
+    suggested_timeline: str
+
+
+class DailySellerPlan(BaseModel):
+    one_thing_today: Optional[SellerPlanItem] = None
+    morning_priorities: List[SellerPlanItem] = Field(default_factory=list)
+    afternoon_priorities: List[SellerPlanItem] = Field(default_factory=list)
+    end_of_day_followups: List[str] = Field(default_factory=list)
+
+
 class PortfolioPriority(BaseModel):
     account_id: str
     account_name: str
     priority_rank: int
     reason: str
     recommended_action: str
+    calculation_source: str = ""
+    calculation_score: float = 0.0
 
 
 class PortfolioRecommendation(BaseModel):
@@ -113,9 +141,23 @@ class PortfolioRecommendation(BaseModel):
     objective: str = "Allocate the seller's day across the full portfolio."
     generated_at: str
     provider_used: str = "deterministic"
+    analysis_scope_count: int = 0
     top_priorities: List[PortfolioPriority] = Field(default_factory=list)
     biggest_risk: Optional[PortfolioPriority] = None
     biggest_opportunity: Optional[PortfolioPriority] = None
+    biggest_risk_source: str = ""
+    biggest_opportunity_source: str = ""
+    daily_plan: DailySellerPlan = Field(default_factory=DailySellerPlan)
+    seller_journey: List[str] = Field(
+        default_factory=lambda: [
+            "Discover",
+            "Prioritize",
+            "Prepare",
+            "Engage",
+            "Follow Up",
+            "Renew/Expand",
+        ]
+    )
     resource_allocation: str = ""
     portfolio_observations: List[str] = Field(default_factory=list)
     executive_summary: str = ""

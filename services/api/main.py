@@ -746,12 +746,13 @@ def multi_agent_portfolio(body: Optional[PortfolioAgentRequest] = None) -> Portf
     """
     req = body or PortfolioAgentRequest()
     try:
+        top_limit = max(1, min(req.limit, 25))
         response = generate_recommendations(
-            RecommendationRequest(query=req.query, limit=max(1, min(req.limit, 25)))
+            RecommendationRequest(query=req.query, limit=50)
         )
     except data_loader.DataNotGeneratedError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
-    return run_portfolio(list(response.recommendations))
+    return run_portfolio(list(response.recommendations), top_limit=top_limit)
 
 
 @app.post("/api/multi-agent/{account_id}", response_model=AgentReport)

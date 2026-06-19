@@ -586,6 +586,7 @@ export default function Page() {
             externalContext={briefExternalContext}
             aiOverlay={aiOverlay}
             portfolio={portfolio}
+            onOpenEvaluation={() => setView("evaluation")}
             onRun={runWorkflow}
             onOpenAccount={openAccount}
           />

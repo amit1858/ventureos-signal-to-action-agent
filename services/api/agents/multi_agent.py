@@ -37,6 +37,7 @@ from decision_providers.context import build_decision_context
 from schemas.multi_agent import (
     AgentAttribution,
     AgentReport,
+    DailySellerPlan,
     EngagementPlan,
     GovernanceReview,
     GrowthAssessment,
@@ -44,9 +45,89 @@ from schemas.multi_agent import (
     PortfolioRecommendation,
     ResearchAssessment,
     RiskAssessment,
+    SellerPlanItem,
 )
 
 logger = logging.getLogger("signal_to_action.multi_agent")
+
+
+_ACTION_EXECUTION_LIBRARY = {
+    "support_escalation": {
+        "why": "Support friction and risk indicators suggest immediate intervention to protect retention.",
+        "steps": [
+            "Review open support issues and identify unresolved blockers before outreach.",
+            "Run a 20-minute escalation call with a customer decision-maker and support lead.",
+            "Agree on a dated stabilization plan with owners for each blocker.",
+            "Book a follow-up checkpoint to verify progress within one week.",
+        ],
+        "outcome": "Stabilises service risk and reduces near-term churn probability.",
+        "effort": "High effort (~55 minutes seller time).",
+        "timeline": "Start within 24 hours; complete stabilization plan this week.",
+    },
+    "renewal_prep": {
+        "why": "Renewal timing and account health require proactive alignment before negotiation pressure builds.",
+        "steps": [
+            "Review renewal timeline, usage trends and unresolved objections.",
+            "Set a renewal strategy call with commercial and product stakeholders.",
+            "Confirm mutual success criteria and procurement milestones.",
+            "Capture commitments and next decision date in CRM draft.",
+        ],
+        "outcome": "Improves renewal confidence and reduces last-minute discount pressure.",
+        "effort": "Medium-high effort (~45 minutes seller time).",
+        "timeline": "Run this week; lock renewal path before the 2-week window.",
+    },
+    "optimization_review": {
+        "why": "Usage and value realization need recalibration to restore momentum and account confidence.",
+        "steps": [
+            "Audit usage patterns and identify adoption drop-off areas.",
+            "Prepare a focused optimization agenda tied to business KPIs.",
+            "Run a value review with customer champions and success owner.",
+            "Agree on one adoption milestone and one executive checkpoint.",
+        ],
+        "outcome": "Improves adoption and reopens path for expansion.",
+        "effort": "Medium effort (~35 minutes seller time).",
+        "timeline": "Initiate in 2-3 days; revisit progress in 10 business days.",
+    },
+    "reactivation": {
+        "why": "Inactivity signals indicate relationship drift that needs a structured re-engagement motion.",
+        "steps": [
+            "Gather latest usage, spend and support context for a concise briefing.",
+            "Send a reactivation email anchored on customer outcomes, not product features.",
+            "Follow with a call to secure a short recovery conversation.",
+            "Document re-engagement status and next milestone in CRM note.",
+        ],
+        "outcome": "Reopens dialogue and restores account momentum.",
+        "effort": "Medium effort (~30 minutes seller time).",
+        "timeline": "Outreach today; secure response within 72 hours.",
+    },
+    "follow_up": {
+        "why": "Signals show a manageable opportunity that benefits from timely seller follow-through.",
+        "steps": [
+            "Summarize the top risk/opportunity evidence for the account.",
+            "Open with a contextual message tied to recent customer outcomes.",
+            "Validate priority, budget and timeline in a short follow-up call.",
+            "Capture commitment and next action in the CRM draft.",
+        ],
+        "outcome": "Converts current interest into a concrete next step.",
+        "effort": "Medium effort (~25 minutes seller time).",
+        "timeline": "Execute within 48 hours.",
+    },
+    "monitor": {
+        "why": "Current signals are stable, so low-touch monitoring preserves focus on higher-priority accounts.",
+        "steps": [
+            "Review account health indicators and confirm stability.",
+            "Set an automated reminder for weekly health check.",
+            "Prepare a lightweight check-in note for future outreach if risk rises.",
+        ],
+        "outcome": "Keeps account coverage while protecting seller capacity.",
+        "effort": "Low effort (~10 minutes seller time).",
+        "timeline": "Review weekly unless risk signals worsen.",
+    },
+}
+
+
+def _execution_blueprint(action: str) -> dict:
+    return _ACTION_EXECUTION_LIBRARY.get(action, _ACTION_EXECUTION_LIBRARY["follow_up"])
 
 
 # ---------------------------------------------------------------------------
@@ -256,15 +337,32 @@ class EngagementAgent:
         provider_decision: Optional[ProviderDecision] = None,
     ) -> EngagementPlan:
         start = time.perf_counter()
+        blueprint = _execution_blueprint(ctx.deterministic_action)
+        likely_objections = [
+            "We are focused on other priorities this quarter.",
+            "We need evidence this change will improve business outcomes.",
+            "Budget and stakeholder availability are constrained.",
+        ]
+        talking_points = [
+            "Lead with deterministic evidence from spend, engagement and support trends.",
+            "Connect the recommendation to a measurable customer outcome and timeline.",
+            "Close with one explicit commitment and follow-up owner.",
+        ]
 
         if provider_decision is not None and provider_decision.mode in (
             ProviderMode.live.value,
             ProviderMode.fallback.value,
             ProviderMode.deterministic.value,
         ):
+            if provider_decision.reasoning:
+                likely_objections = list(provider_decision.reasoning[:3])
+            if provider_decision.conversation_strategy:
+                talking_points = list(provider_decision.conversation_strategy[:5])
             return EngagementPlan(
                 executive_summary=provider_decision.executive_summary or ctx.brief_executive_summary,
                 opening_line=provider_decision.opening_line or ctx.brief_opening_line,
+                likely_objections=likely_objections,
+                talking_points=talking_points,
                 conversation_strategy=list(provider_decision.conversation_strategy)
                 or list(ctx.brief_conversation_strategy),
                 outreach_recommendation=provider_decision.business_implication
@@ -272,6 +370,11 @@ class EngagementAgent:
                 crm_note_draft=provider_decision.crm_note or ctx.brief_crm_note,
                 follow_up_suggestion=provider_decision.seller_implication
                 or ctx.brief_seller_implication,
+                action_selected_why=blueprint["why"],
+                execution_steps=list(blueprint["steps"])[:5],
+                expected_business_outcome=blueprint["outcome"],
+                estimated_seller_effort=blueprint["effort"],
+                suggested_timeline=blueprint["timeline"],
                 confidence=provider_decision.confidence or ctx.confidence_level,
                 attribution=_llm_attr(provider_decision),
             )
@@ -304,10 +407,17 @@ class EngagementAgent:
         return EngagementPlan(
             executive_summary=exec_summary,
             opening_line=opening,
+            likely_objections=likely_objections,
+            talking_points=talking_points,
             conversation_strategy=strategy[:6],
             outreach_recommendation=outreach,
             crm_note_draft=crm_note,
             follow_up_suggestion=follow_up,
+            action_selected_why=blueprint["why"],
+            execution_steps=list(blueprint["steps"])[:5],
+            expected_business_outcome=blueprint["outcome"],
+            estimated_seller_effort=blueprint["effort"],
+            suggested_timeline=blueprint["timeline"],
             confidence=ctx.confidence_level,
             attribution=_det_attr(latency),
         )
@@ -477,60 +587,177 @@ def run_multi_agent(
 # ---------------------------------------------------------------------------
 
 
-def run_portfolio(recommendations: list, credentials: Optional[dict] = None) -> PortfolioRecommendation:
+def _priority(rec, reason: str, source: str, score: float) -> PortfolioPriority:
+    return PortfolioPriority(
+        account_id=getattr(rec, "account_id", ""),
+        account_name=getattr(rec, "account_name", ""),
+        priority_rank=getattr(rec, "priority_rank", 0),
+        reason=(reason or getattr(rec, "priority_reason", "") or "")[:240],
+        recommended_action=(getattr(rec, "recommended_action", "") or "")[:160],
+        calculation_source=source,
+        calculation_score=round(float(score), 3),
+    )
+
+
+def _risk_strength(rec) -> tuple[float, str]:
+    sb = getattr(rec, "score_breakdown", None)
+    if sb is None:
+        return 0.0, "Fallback: no score breakdown available."
+    score = (
+        0.35 * float(getattr(sb, "support_risk", 0.0))
+        + 0.3 * float(getattr(sb, "spend_decline", 0.0))
+        + 0.2 * float(getattr(sb, "renewal_urgency", 0.0))
+        + 0.1 * float(getattr(sb, "engagement_gap", 0.0))
+        + 0.05 * float(getattr(sb, "last_contact_gap", 0.0))
+    )
+    source = (
+        "Risk strength = 35% support risk + 30% spend decline + "
+        "20% renewal urgency + 10% engagement gap + 5% last-contact gap."
+    )
+    return score, source
+
+
+def _opportunity_strength(rec) -> tuple[float, str]:
+    sb = getattr(rec, "score_breakdown", None)
+    if sb is None:
+        return 0.0, "Fallback: no score breakdown available."
+    support_risk = float(getattr(sb, "support_risk", 0.0))
+    score = (
+        0.5 * float(getattr(sb, "growth_potential", 0.0))
+        + 0.3 * float(getattr(sb, "campaign_response", 0.0))
+        + 0.2 * max(0.0, 1.0 - support_risk)
+    )
+    source = (
+        "Opportunity strength = 50% growth potential + 30% campaign response + "
+        "20% account stability (1 - support risk)."
+    )
+    return score, source
+
+
+def _effort_minutes(action: str) -> int:
+    action_key = (action or "").lower().replace(" ", "_")
+    if "escalation" in action_key:
+        return 55
+    if "renewal" in action_key:
+        return 45
+    if "optimization" in action_key:
+        return 35
+    if "reactivation" in action_key:
+        return 30
+    if "monitor" in action_key:
+        return 10
+    return 25
+
+
+def _timeline(action: str) -> str:
+    action_key = (action or "").lower().replace(" ", "_")
+    if "escalation" in action_key:
+        return "Today"
+    if "renewal" in action_key:
+        return "Within 48 hours"
+    if "optimization" in action_key:
+        return "This week"
+    if "reactivation" in action_key:
+        return "Today + follow-up in 72 hours"
+    if "monitor" in action_key:
+        return "Weekly checkpoint"
+    return "Within 48 hours"
+
+
+def _outcome(action: str) -> str:
+    action_key = (action or "").lower().replace(" ", "_")
+    if "escalation" in action_key:
+        return "Stabilize account health and reduce churn exposure."
+    if "renewal" in action_key:
+        return "Increase renewal confidence and protect recurring revenue."
+    if "optimization" in action_key:
+        return "Improve adoption and recover value realization."
+    if "reactivation" in action_key:
+        return "Re-open stakeholder engagement and rebuild momentum."
+    if "monitor" in action_key:
+        return "Maintain coverage while prioritizing higher-risk accounts."
+    return "Convert current signals into a concrete next customer commitment."
+
+
+def _plan_item(rec, focus: str) -> SellerPlanItem:
+    action = (getattr(rec, "recommended_action", "") or "").strip() or "Follow-up"
+    return SellerPlanItem(
+        account_id=getattr(rec, "account_id", ""),
+        account_name=getattr(rec, "account_name", ""),
+        priority_rank=int(getattr(rec, "priority_rank", 0)),
+        recommended_action=action[:160],
+        focus=focus,
+        expected_outcome=_outcome(action),
+        evidence_count=len(getattr(rec, "evidence", []) or []),
+        estimated_effort_minutes=_effort_minutes(action),
+        suggested_timeline=_timeline(action),
+    )
+
+
+def run_portfolio(
+    recommendations: list,
+    credentials: Optional[dict] = None,
+    top_limit: int = 5,
+) -> PortfolioRecommendation:
     """Portfolio Agent: where should the seller spend the next 4 hours?
 
     Input is the already-ranked recommendation list from the Governed Decision
     Engine. The Portfolio Agent NEVER re-ranks; it summarises and allocates.
     """
+    analysis_pool = list(recommendations)
     top: List[PortfolioPriority] = []
     biggest_risk: Optional[PortfolioPriority] = None
     biggest_opportunity: Optional[PortfolioPriority] = None
 
-    for idx, rec in enumerate(recommendations[:5]):
-        item = PortfolioPriority(
-            account_id=getattr(rec, "account_id", ""),
-            account_name=getattr(rec, "account_name", ""),
-            priority_rank=getattr(rec, "priority_rank", idx + 1),
-            reason=getattr(rec, "priority_reason", "")[:240],
-            recommended_action=getattr(rec, "recommended_action", "")[:160],
+    for idx, rec in enumerate(analysis_pool[: max(1, top_limit)]):
+        item = _priority(
+            rec,
+            reason=getattr(rec, "priority_reason", ""),
+            source="Deterministic governed priority rank from the recommendation engine.",
+            score=float(getattr(rec, "priority_score", 0.0)),
         )
+        if item.priority_rank <= 0:
+            item.priority_rank = idx + 1
         top.append(item)
 
-    # Pick biggest risk = first recommendation whose risk summary suggests churn.
-    for rec in recommendations:
-        summary = (getattr(rec, "risk_summary", "") or "").lower()
-        if any(k in summary for k in ("churn", "risk", "escalat", "decline", "renewal")):
-            biggest_risk = PortfolioPriority(
-                account_id=rec.account_id,
-                account_name=rec.account_name,
-                priority_rank=rec.priority_rank,
-                reason=(rec.risk_summary or rec.priority_reason or "")[:240],
-                recommended_action=(rec.recommended_action or "")[:160],
+    risk_best_score = -1.0
+    risk_source = ""
+    for rec in analysis_pool:
+        score, source = _risk_strength(rec)
+        if score > risk_best_score:
+            risk_best_score = score
+            risk_source = source
+            biggest_risk = _priority(
+                rec,
+                reason=getattr(rec, "risk_summary", "") or getattr(rec, "priority_reason", ""),
+                source=source,
+                score=score,
             )
-            break
 
-    for rec in recommendations:
-        summary = (getattr(rec, "opportunity_summary", "") or "").lower()
-        if any(k in summary for k in ("expansion", "upsell", "growth", "opportunity")):
-            biggest_opportunity = PortfolioPriority(
-                account_id=rec.account_id,
-                account_name=rec.account_name,
-                priority_rank=rec.priority_rank,
-                reason=(rec.opportunity_summary or rec.priority_reason or "")[:240],
-                recommended_action=(rec.recommended_action or "")[:160],
+    opp_best_score = -1.0
+    opp_source = ""
+    for rec in analysis_pool:
+        score, source = _opportunity_strength(rec)
+        if score > opp_best_score:
+            opp_best_score = score
+            opp_source = source
+            biggest_opportunity = _priority(
+                rec,
+                reason=getattr(rec, "opportunity_summary", "") or getattr(rec, "priority_reason", ""),
+                source=source,
+                score=score,
             )
-            break
 
-    total = len(recommendations)
-    attention = sum(1 for r in recommendations if (r.recommended_action or "").lower() != "monitor")
+    total = len(analysis_pool)
+    attention = sum(1 for r in analysis_pool if (r.recommended_action or "").lower() != "monitor")
     observations: List[str] = [
         f"{attention} of {total} accounts need attention this cycle.",
-        "Ranking, scoring and governance remain deterministic; this view only allocates time.",
+        f"Biggest risk and opportunity were derived independently across all {total} ranked accounts.",
+        "Ranking, scoring and governance remain deterministic; this view only allocates execution time.",
     ]
     if biggest_risk:
         observations.append(f"Lead with risk on {biggest_risk.account_name}.")
-    if biggest_opportunity and (not biggest_risk or biggest_opportunity.account_id != biggest_risk.account_id):
+    if biggest_opportunity:
         observations.append(f"Reserve afternoon time for opportunity on {biggest_opportunity.account_name}.")
 
     if attention >= 5:
@@ -548,12 +775,39 @@ def run_portfolio(recommendations: list, credentials: Optional[dict] = None) -> 
     else:
         executive_summary = "No prioritised accounts to act on today."
 
+    one_thing_pick = biggest_risk or (top[0] if top else None)
+    one_thing_rec = None
+    if one_thing_pick is not None:
+        one_thing_rec = next((r for r in analysis_pool if getattr(r, "account_id", "") == one_thing_pick.account_id), None)
+
+    morning_recs = analysis_pool[:3]
+    afternoon_recs = analysis_pool[3:5]
+    if biggest_opportunity and all(getattr(r, "account_id", "") != biggest_opportunity.account_id for r in afternoon_recs):
+        opp_rec = next((r for r in analysis_pool if getattr(r, "account_id", "") == biggest_opportunity.account_id), None)
+        if opp_rec is not None:
+            afternoon_recs = [opp_rec, *afternoon_recs[:1]]
+
+    daily_plan = DailySellerPlan(
+        one_thing_today=_plan_item(one_thing_rec, "If you only do one thing today") if one_thing_rec is not None else None,
+        morning_priorities=[_plan_item(r, "Morning priority") for r in morning_recs],
+        afternoon_priorities=[_plan_item(r, "Afternoon priority") for r in afternoon_recs],
+        end_of_day_followups=[
+            "Update CRM note drafts for every completed conversation (approval still required before write-back).",
+            "Flag blocked accounts for manager review with supporting evidence.",
+            "Queue next-day follow-ups for accounts with pending commitments.",
+        ],
+    )
+
     return PortfolioRecommendation(
         generated_at=_now(),
         provider_used="deterministic",
+        analysis_scope_count=total,
         top_priorities=top,
         biggest_risk=biggest_risk,
         biggest_opportunity=biggest_opportunity,
+        biggest_risk_source=risk_source,
+        biggest_opportunity_source=opp_source,
+        daily_plan=daily_plan,
         resource_allocation=allocation,
         portfolio_observations=observations,
         executive_summary=executive_summary,

@@ -508,10 +508,17 @@ export interface EngagementPlan {
   objective: string;
   executive_summary: string;
   opening_line: string;
+  likely_objections: string[];
+  talking_points: string[];
   conversation_strategy: string[];
   outreach_recommendation: string;
   crm_note_draft: string;
   follow_up_suggestion: string;
+  action_selected_why: string;
+  execution_steps: string[];
+  expected_business_outcome: string;
+  estimated_seller_effort: string;
+  suggested_timeline: string;
   confidence: string;
   attribution: AgentAttribution;
 }
@@ -549,15 +556,41 @@ export interface PortfolioPriority {
   priority_rank: number;
   reason: string;
   recommended_action: string;
+  calculation_source: string;
+  calculation_score: number;
+}
+
+export interface SellerPlanItem {
+  account_id: string;
+  account_name: string;
+  priority_rank: number;
+  recommended_action: string;
+  focus: string;
+  expected_outcome: string;
+  evidence_count: number;
+  estimated_effort_minutes: number;
+  suggested_timeline: string;
+}
+
+export interface DailySellerPlan {
+  one_thing_today: SellerPlanItem | null;
+  morning_priorities: SellerPlanItem[];
+  afternoon_priorities: SellerPlanItem[];
+  end_of_day_followups: string[];
 }
 
 export interface PortfolioAgentReport {
   objective: string;
   generated_at: string;
   provider_used: string;
+  analysis_scope_count: number;
   top_priorities: PortfolioPriority[];
   biggest_risk: PortfolioPriority | null;
   biggest_opportunity: PortfolioPriority | null;
+  biggest_risk_source: string;
+  biggest_opportunity_source: string;
+  daily_plan: DailySellerPlan;
+  seller_journey: string[];
   resource_allocation: string;
   portfolio_observations: string[];
   executive_summary: string;

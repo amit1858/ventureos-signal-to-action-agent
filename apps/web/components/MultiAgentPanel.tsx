@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   Activity,
   Brain,
+  ClipboardList,
   Globe2,
   MessageSquareText,
   ShieldCheck,
@@ -248,13 +249,70 @@ export function MultiAgentPanel({ accountId }: { accountId: string | null }) {
               icon={MessageSquareText}
               title="Engagement Agent"
               objective={report.engagement.objective}
-              bullets={report.engagement.conversation_strategy}
+              bullets={report.engagement.talking_points?.length ? report.engagement.talking_points : report.engagement.conversation_strategy}
               narrative={report.engagement.executive_summary}
               recommendation={report.engagement.opening_line}
               recommendationLabel="Suggested opening"
               confidence={report.engagement.confidence}
               attribution={report.engagement.attribution}
             />
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <div className="rounded-2xl border border-cyan-400/30 bg-cyan-400/5 p-4">
+              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-text">
+                <ClipboardList className="h-4 w-4 text-cyan-300" />
+                Guided playbook
+              </div>
+              <p className="text-[12px] text-text/85">{report.engagement.action_selected_why}</p>
+              {report.engagement.execution_steps?.length ? (
+                <ol className="mt-2 space-y-1 text-[12px] text-text/90">
+                  {report.engagement.execution_steps.slice(0, 5).map((step, i) => (
+                    <li key={i}>
+                      {i + 1}. {step}
+                    </li>
+                  ))}
+                </ol>
+              ) : null}
+              <div className="mt-3 rounded-lg border border-edge-soft bg-bg/40 p-3 text-[11px] text-text/85">
+                <div>
+                  <span className="text-subtle">Expected outcome: </span>
+                  {report.engagement.expected_business_outcome}
+                </div>
+                <div className="mt-1">
+                  <span className="text-subtle">Seller effort: </span>
+                  {report.engagement.estimated_seller_effort}
+                </div>
+                <div className="mt-1">
+                  <span className="text-subtle">Timeline: </span>
+                  {report.engagement.suggested_timeline}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-brand/30 bg-brand/5 p-4">
+              <div className="mb-2 text-sm font-semibold text-text">AI conversation coach</div>
+              <div className="rounded-lg border border-edge-soft bg-bg/40 p-3">
+                <div className="text-[10px] uppercase tracking-wide text-subtle">Suggested opening line</div>
+                <p className="mt-1 text-[12px] italic text-text/90">&ldquo;{report.engagement.opening_line}&rdquo;</p>
+              </div>
+              <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                <CoachBlock
+                  title="Likely objections"
+                  items={report.engagement.likely_objections}
+                  empty="No objections surfaced."
+                />
+                <CoachBlock
+                  title="Talking points"
+                  items={report.engagement.talking_points}
+                  empty="Use deterministic evidence and confirm one commitment."
+                />
+              </div>
+              <div className="mt-2 rounded-lg border border-edge-soft bg-bg/40 p-3">
+                <div className="text-[10px] uppercase tracking-wide text-subtle">CRM note draft</div>
+                <p className="mt-1 text-[12px] text-text/85">{report.engagement.crm_note_draft}</p>
+              </div>
+            </div>
           </div>
 
           <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4">
@@ -317,6 +375,23 @@ function GovBlock({ title, items, empty }: { title: string; items: string[]; emp
             <li key={i}>• {item}</li>
           ))}
         </ul>
+      )}
+    </div>
+  );
+}
+
+function CoachBlock({ title, items, empty }: { title: string; items: string[]; empty: string }) {
+  return (
+    <div className="rounded-lg border border-edge-soft bg-bg/40 p-3">
+      <div className="text-[10px] uppercase tracking-wide text-subtle">{title}</div>
+      {items.length ? (
+        <ul className="mt-1 space-y-1 text-[12px] text-text/85">
+          {items.slice(0, 4).map((item, i) => (
+            <li key={i}>• {item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-1 text-[12px] text-text/60">{empty}</p>
       )}
     </div>
   );
