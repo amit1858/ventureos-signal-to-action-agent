@@ -777,21 +777,19 @@ function WorkspaceCockpit({
   };
 
   return (
-    <div ref={cockpitRef} className="flex h-full flex-col rounded-xl border border-edge bg-surface2/35 p-3">
+    <div ref={cockpitRef} className="flex h-full flex-col rounded-xl border border-edge bg-surface2/35 p-3 ambient-glow">
       {/* Persistent cockpit header */}
-      <div className="rounded-lg border border-edge-soft bg-bg/35 p-2.5">
+      <div className="rounded-lg border border-edge-soft surface-warm p-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <div className="text-[15px] font-semibold text-ink">{recommendation.account_name}</div>
+          <div className="text-[17px] font-semibold tracking-tight text-ink">{recommendation.account_name}</div>
           <Badge label={`Priority #${recommendation.priority_rank}`} tone="brand" />
           <Badge label={`Risk ${risk}`} tone={risk === "High" ? "risk" : risk === "Medium" ? "warn" : "ok"} />
           <Badge label={`Opportunity ${account?.growth_potential_score ?? 0}`} tone="ok" />
           <Badge label={`Renewal ${account?.renewal_days ?? "—"}d`} tone="neutral" />
-          {/* Moved from queue (Phase 10): keep selection-essential data only
-              in the queue; show effort + evidence count in the workspace. */}
           <Badge label={`~${reasoning.estimatedMinutes}m`} tone="neutral" />
           <Badge label={`${recommendation.evidence.length} evidence`} tone="neutral" />
         </div>
-        <p className="mt-1 text-[11px] text-muted">
+        <p className="mt-1.5 text-[11px] text-muted">
           Recommended action: <span className="font-semibold text-ink">{reasoning.action.label}</span>
         </p>
         <LifecycleRibbon state={lifecycle} />
@@ -801,16 +799,16 @@ function WorkspaceCockpit({
           <button type="button" onClick={onOpenAccountClick} className="btn btn-primary px-2.5 py-1 text-[11px]">
             <ArrowUpRight size={12} /> Open Account
           </button>
-          <button type="button" onClick={() => goto("prep", "prep")} className="btn btn-ghost px-2.5 py-1 text-[11px]">
+          <button type="button" onClick={() => goto("prep", "prep")} className="btn btn-outline-primary px-2.5 py-1 text-[11px]">
             <MessageSquare size={12} /> Prepare Outreach
           </button>
-          <button type="button" onClick={() => goto("crm", "crm")} className="btn btn-ghost px-2.5 py-1 text-[11px]">
+          <button type="button" onClick={() => goto("crm", "crm")} className="btn btn-outline-primary px-2.5 py-1 text-[11px]">
             <FileText size={12} /> Draft CRM Note
           </button>
           <button type="button" onClick={() => goto("evidence", "evidence")} className="btn btn-ghost px-2.5 py-1 text-[11px]">
             <ListChecks size={12} /> Review Evidence
           </button>
-          <button type="button" onClick={() => setApprovalOpen(true)} className="btn btn-ghost px-2.5 py-1 text-[11px]">
+          <button type="button" onClick={() => setApprovalOpen(true)} className="btn btn-governance px-2.5 py-1 text-[11px]">
             <CheckCircle2 size={12} /> Mark for Approval
           </button>
         </div>
@@ -1534,28 +1532,54 @@ function ApprovalDrawer({
 function LifecycleRibbon({ state, compact }: { state: LifecycleState; compact?: boolean }) {
   const idx = LIFECYCLE_ORDER.indexOf(state);
   return (
-    <div className={cx("mt-2 flex flex-wrap items-center gap-1", compact ? "" : "")}
+    <div
+      className={cx(
+        "mt-2 flex w-full items-stretch rounded-lg border border-edge-soft bg-base/40 p-1",
+        compact ? "gap-0.5" : "gap-0.5",
+      )}
       aria-label={`Lifecycle: ${LIFECYCLE_LABEL[state]}`}
+      role="group"
     >
       {LIFECYCLE_ORDER.map((s, i) => {
         const done = i < idx;
         const active = i === idx;
         return (
           <React.Fragment key={s}>
-            <span
+            <div
               className={cx(
-                "rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+                "flex flex-1 items-center gap-1 rounded-md px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wide transition-colors",
                 active
-                  ? "border-brand-bright bg-brand/15 text-brand-bright"
+                  ? "bg-brand/15 text-brand-bright shadow-[inset_0_0_0_1px_rgba(216,154,61,0.45)]"
                   : done
-                    ? "border-accent/30 bg-accent/10 text-accent"
-                    : "border-edge-soft text-faint",
+                    ? "text-accent"
+                    : "text-faint",
               )}
             >
-              {LIFECYCLE_LABEL[s]}
-            </span>
+              <span
+                aria-hidden
+                className={cx(
+                  "inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border text-[8px] font-bold",
+                  active
+                    ? "border-brand-bright bg-brand text-[#1a1206]"
+                    : done
+                      ? "border-accent/60 bg-accent/25 text-accent"
+                      : "border-edge-soft text-faint",
+                )}
+              >
+                {done ? "✓" : i + 1}
+              </span>
+              <span className="truncate">{LIFECYCLE_LABEL[s]}</span>
+            </div>
             {i < LIFECYCLE_ORDER.length - 1 ? (
-              <span className={cx("text-[9px]", done ? "text-accent" : "text-faint")}>›</span>
+              <span
+                aria-hidden
+                className={cx(
+                  "self-center text-[10px] leading-none",
+                  done ? "text-accent/70" : i === idx ? "text-brand-bright/60" : "text-faint/50",
+                )}
+              >
+                →
+              </span>
             ) : null}
           </React.Fragment>
         );
@@ -2185,7 +2209,16 @@ function DecisionLedgerPanel({ recs }: { recs: Recommendation[] }) {
   );
 
   return (
-    <div className="card-premium p-4">
+    <div className="card-premium p-4 shadow-glow-gov">
+      <div className="mb-3 flex items-center gap-2 border-b border-gov/15 pb-2">
+        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-gov-bright" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gov-bright">
+          Audit-grade decision trail
+        </span>
+        <span className="ml-auto rounded border border-gov/30 bg-gov/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-gov-bright">
+          Governance
+        </span>
+      </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <LedgerCount label="Total decisions" value={summary.total} />
         <LedgerCount label="Approved" value={summary.approved} tone="ok" />

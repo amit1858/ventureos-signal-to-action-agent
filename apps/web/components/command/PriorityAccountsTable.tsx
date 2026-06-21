@@ -166,15 +166,22 @@ export function PriorityAccountsTable({
                 onClick={() => onOpenAccount(r.id)}
                 className={cx(
                   "group cursor-pointer border-b border-edge/50 transition-colors",
-                  isSel ? "bg-accent/5" : "hover:bg-surface2/50",
+                  isSel ? "rail-selected" : "hover:bg-surface2/50",
                 )}
               >
                 <td className="px-2.5 py-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-edge bg-surface2 font-mono text-[10px] text-muted">
+                    <span
+                      className={cx(
+                        "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border font-mono text-[10px]",
+                        isSel
+                          ? "border-brand/60 bg-brand/15 text-brand-bright"
+                          : "border-edge bg-surface2 text-muted",
+                      )}
+                    >
                       {r.rank}
                     </span>
-                    <span className={cx("font-medium", isSel ? "text-accent" : "text-ink")}>{r.name}</span>
+                    <span className={cx("font-medium", isSel ? "text-ink" : "text-ink")}>{r.name}</span>
                   </div>
                 </td>
                 <td className="px-2.5 py-2.5 text-xs text-muted">{r.industry}</td>

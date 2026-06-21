@@ -9,28 +9,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        base: "#0B0F0E",
-        panel: "#0E1117",
-        surface: "#151A1E",
-        surface2: "#1B2127",
-        elevated: "#1B2228",
-        edge: "#242A30",
-        "edge-soft": "#1F252B",
-        ink: "#F4F6F8",
-        muted: "#AAB2BD",
-        faint: "#6B7480",
-        accent: "#76B900",
-        "accent-dim": "#5C9000",
-        "accent-bright": "#8FD400",
-        brand: "#8B7CF6",
-        "brand-bright": "#A89CFB",
-        "brand-dim": "#6D5DE0",
-        // Neutral slate for secondary/informational accents (replaces the old
-        // neon cyan — keeps the palette to purple / green / amber / red / slate).
+        // Phase 13.5 — Executive Visual System.
+        // Charcoal stack (replaces the old blue-leaning #0B0F0E → #1B2228 set):
+        base: "#0A0B0D",
+        panel: "#111317",
+        surface: "#171A1F",
+        surface2: "#1B1F25",
+        elevated: "#1F242B",
+        edge: "rgba(255,255,255,0.06)",
+        "edge-soft": "rgba(255,255,255,0.04)",
+        // Warm typography (off-white → taupe ladder):
+        ink: "#F5F1E8",
+        muted: "#B5B0A5",
+        faint: "#8A857B",
+        // Revenue green — desaturated, executive (was neon #76B900):
+        accent: "#76B65D",
+        "accent-dim": "#5C9447",
+        "accent-bright": "#8CCB72",
+        // Primary action accent is now AMBER (was lavender #8B7CF6).
+        // `brand` keeps its name so every existing CTA / active tab /
+        // lifecycle "current" chip retones in one change.
+        brand: "#D89A3D",
+        "brand-bright": "#E5AE55",
+        "brand-dim": "#B4802C",
+        // Governance lavender — reserved for audit / approval history.
+        gov: "#8B7CC8",
+        "gov-bright": "#A498D6",
+        // Secondary slate (unchanged role).
         cyan: "#7E8BA3",
         slate: "#7E8BA3",
-        amber: "#F5B84B",
-        risk: "#EF6B73",
+        amber: "#D89A3D",
+        risk: "#D96A5F",
       },
       fontFamily: {
         sans: [
@@ -54,10 +63,13 @@ const config: Config = {
         ],
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(139,124,246,0.22), 0 0 26px -10px rgba(139,124,246,0.30)",
-        "glow-soft": "0 0 0 1px rgba(139,124,246,0.14), 0 0 44px -14px rgba(139,124,246,0.18)",
+        glow: "0 0 0 1px rgba(216,154,61,0.22), 0 0 26px -10px rgba(216,154,61,0.30)",
+        "glow-soft": "0 0 0 1px rgba(216,154,61,0.14), 0 0 44px -14px rgba(216,154,61,0.18)",
+        "glow-gov": "0 0 0 1px rgba(139,124,200,0.20), 0 0 30px -12px rgba(139,124,200,0.25)",
         panel: "0 1px 0 0 rgba(255,255,255,0.025) inset, 0 12px 30px -18px rgba(0,0,0,0.65)",
         elevated: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 22px 50px -24px rgba(0,0,0,0.78)",
+        executive:
+          "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 30px 60px -28px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)",
       },
       keyframes: {
         "fade-in": {
