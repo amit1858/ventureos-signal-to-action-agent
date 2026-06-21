@@ -589,6 +589,13 @@ export default function Page() {
             onOpenEvaluation={() => setView("evaluation")}
             onRun={runWorkflow}
             onOpenAccount={openAccount}
+            onSelectActive={(accountId) => {
+              // Phase 13.6 — lightweight active-account selection from the queue
+              // / accordion. Updates the App-level selectedId without switching
+              // view (Open Account = deep view; selecting = focus only).
+              const rec = result?.recommendations.find((r) => r.account_id === accountId);
+              if (rec) setSelectedId(rec.recommendation_id);
+            }}
           />
         </main>
       ) : null}

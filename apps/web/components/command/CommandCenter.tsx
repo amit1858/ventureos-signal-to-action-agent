@@ -108,6 +108,7 @@ export function CommandCenter({
   onOpenEvaluation,
   onRun,
   onOpenAccount,
+  onSelectActive,
 }: {
   meta: MetaResponse | null;
   accounts: Account[];
@@ -126,6 +127,8 @@ export function CommandCenter({
   onOpenEvaluation?: () => void;
   onRun: () => void;
   onOpenAccount: (accountId: string) => void;
+  /** Phase 13.6 — lightweight active-account selection (focus, not navigate). */
+  onSelectActive?: (accountId: string) => void;
 }) {
   void meta;
   const recs = result?.recommendations ?? [];
@@ -242,7 +245,10 @@ export function CommandCenter({
               <WorkQueuePanel
                 rows={queueRows}
                 activeAccountId={activeRec?.account_id ?? null}
-                onSelect={(accountId) => setActiveAccountId(accountId)}
+                onSelect={(accountId) => {
+                  setActiveAccountId(accountId);
+                  onSelectActive?.(accountId);
+                }}
                 loading={loading}
                 onRun={onRun}
               />
@@ -358,19 +364,35 @@ export function CommandCenter({
           </CollapsibleZone>
         </div>
 
-        <aside className="hidden w-[220px] shrink-0 xl:block">
+        <aside className="hidden w-[244px] shrink-0 xl:block">
           <div className="sticky top-5 space-y-2">
-            <div className="rounded-xl border border-edge bg-surface2/50 p-3">
-              <div className="mb-2.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-faint">Executive Snapshot</div>
-              <div className="space-y-1.5 text-[11px]">
-                <RailRow icon={<ShieldAlert size={11} className="text-risk" />} label="Revenue at risk" value={inrCompact(snapRevRisk)} tone="risk" />
-                <RailRow icon={<TrendingUp size={11} className="text-accent" />} label="Expansion opportunity" value={inrCompact(snapGrowth)} tone="opp" />
-                <RailRow icon={<Zap size={11} className="text-brand-bright" />} label="Accounts requiring action" value={String(snapAttention)} />
-                <RailRow icon={<Clock size={11} className="text-muted" />} label="Renewals due" value={String(snapRenewals)} tone={snapRenewals > 0 ? "warn" : undefined} />
-                <RailRow icon={<CheckCircle2 size={11} className="text-muted" />} label="Pending approvals" value={String(snapOpenApprovals)} tone={snapOpenApprovals > 0 ? "warn" : undefined} />
-                <RailRow icon={<Clock size={11} className="text-muted" />} label="Estimated effort" value={snapEffortMin > 0 ? `~${Math.round((snapEffortMin / 60) * 10) / 10} hrs` : "—"} />
-                <RailRow icon={<Zap size={11} className="text-brand-bright" />} label="AI confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "—"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? undefined : "risk"} />
-                <RailRow icon={<TrendingUp size={11} className="text-brand-bright" />} label="Top account" value={snapTopAccount} />
+            <div className="rounded-xl border border-edge bg-surface2/50 p-3.5">
+              <div className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-faint">
+                Executive Snapshot
+              </div>
+              {activeRec ? (
+                <div className="mb-2.5 rounded-lg border border-brand/35 surface-warm px-2.5 py-2">
+                  <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-brand-bright/90">
+                    Active account
+                  </div>
+                  <div className="mt-0.5 truncate text-[13px] font-semibold text-ink" title={activeRec.account_name}>
+                    {activeRec.account_name}
+                  </div>
+                  <div className="mt-0.5 text-[10.5px] text-muted">
+                    Priority #{activeRec.priority_rank} ·{" "}
+                    {activeReasoning?.action.label ?? activeRec.recommended_action}
+                  </div>
+                </div>
+              ) : null}
+              <div className="space-y-1.5">
+                <RailRow icon={<ShieldAlert size={12} className="text-risk" />} label="Revenue at risk" value={inrCompact(snapRevRisk)} tone="risk" />
+                <RailRow icon={<TrendingUp size={12} className="text-accent" />} label="Expansion opportunity" value={inrCompact(snapGrowth)} tone="opp" />
+                <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="Accounts requiring action" value={String(snapAttention)} />
+                <RailRow icon={<Clock size={12} className="text-muted" />} label="Renewals due" value={String(snapRenewals)} tone={snapRenewals > 0 ? "warn" : undefined} />
+                <RailRow icon={<CheckCircle2 size={12} className="text-muted" />} label="Pending approvals" value={String(snapOpenApprovals)} tone={snapOpenApprovals > 0 ? "warn" : undefined} />
+                <RailRow icon={<Clock size={12} className="text-muted" />} label="Estimated effort" value={snapEffortMin > 0 ? `~${Math.round((snapEffortMin / 60) * 10) / 10} hrs` : "—"} />
+                <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="AI confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "—"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? undefined : "risk"} />
+                <RailRow icon={<TrendingUp size={12} className="text-brand-bright" />} label="Top account" value={snapTopAccount} />
               </div>
             </div>
           </div>
@@ -475,30 +497,46 @@ function WorkQueuePanel({
 }) {
   const selectedIndex = Math.max(0, rows.findIndex((r) => r.recommendation.account_id === activeAccountId));
   const [hovered, setHovered] = React.useState<string | null>(null);
+  const rowRefs = React.useRef<Record<string, HTMLTableRowElement | null>>({});
 
   const mustDo = rows.filter((r) => r.rank <= 3);
   const shouldDo = rows.filter((r) => r.rank > 3 && r.rank <= 7);
   const optional = rows.filter((r) => r.rank > 7);
 
+  // Phase 13.6 — keep the selected row visible when arrow-key navigation moves
+  // beyond the viewport. Uses nearest scrolling so the queue itself only
+  // scrolls when necessary.
+  React.useEffect(() => {
+    if (!activeAccountId) return;
+    const node = rowRefs.current[activeAccountId];
+    node?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [activeAccountId]);
+
+  void selectedIndex;
+
   return (
     <div
-      className="rounded-xl border border-edge bg-surface2/35 p-2.5"
+      className="rounded-xl border border-edge bg-surface2/35 p-3"
       tabIndex={0}
       onKeyDown={(e) => {
         if (rows.length === 0) return;
+        const idx = Math.max(0, rows.findIndex((r) => r.recommendation.account_id === activeAccountId));
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          const next = Math.min(rows.length - 1, selectedIndex + 1);
+          const next = Math.min(rows.length - 1, idx + 1);
           onSelect(rows[next].recommendation.account_id);
         }
         if (e.key === "ArrowUp") {
           e.preventDefault();
-          const next = Math.max(0, selectedIndex - 1);
+          const next = Math.max(0, idx - 1);
           onSelect(rows[next].recommendation.account_id);
         }
       }}
     >
-      <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">Work queue</div>
+      <div className="mb-2 flex items-center justify-between">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">Work queue</div>
+        <div className="text-[10px] text-faint">{rows.length ? `${rows.length} accounts` : ""}</div>
+      </div>
       {rows.length === 0 ? (
         loading ? (
           <QueueSkeleton />
@@ -513,13 +551,13 @@ function WorkQueuePanel({
       ) : (
         <>
           <div className="overflow-x-auto rounded-lg border border-edge-soft">
-            <table className="w-full border-collapse text-[11px]">
+            <table className="w-full border-collapse text-[12px]">
               <thead>
-                <tr className="border-b border-edge bg-bg/30 text-[9px] uppercase tracking-wider text-faint">
-                  <th className="px-2 py-1.5 text-left">Rank</th>
-                  <th className="px-2 py-1.5 text-left">Account</th>
-                  <th className="px-2 py-1.5 text-left">Recommended action</th>
-                  <th className="px-2 py-1.5 text-left">Risk</th>
+                <tr className="border-b border-edge bg-bg/30 text-[10px] uppercase tracking-wider text-faint">
+                  <th className="px-2.5 py-2 text-left">Rank</th>
+                  <th className="px-2.5 py-2 text-left">Account</th>
+                  <th className="px-2.5 py-2 text-left">Recommended action</th>
+                  <th className="px-2.5 py-2 text-left">Risk</th>
                 </tr>
               </thead>
               <tbody>
@@ -528,21 +566,47 @@ function WorkQueuePanel({
                   return (
                     <tr
                       key={row.recommendation.recommendation_id}
+                      ref={(el) => {
+                        rowRefs.current[row.recommendation.account_id] = el;
+                      }}
                       onClick={() => onSelect(row.recommendation.account_id)}
                       onMouseEnter={() => setHovered(row.recommendation.account_id)}
                       onMouseLeave={() => setHovered(null)}
                       aria-selected={active}
                       className={cx(
                         "cursor-pointer border-b border-edge/40 transition-colors",
-                        active
-                          ? "bg-brand/[0.14] shadow-[inset_3px_0_0_0_theme(colors.indigo.400)]"
-                          : "hover:bg-surface2/50",
+                        active ? "rail-selected" : "hover:bg-surface2/50",
                       )}
                     >
-                      <td className={cx("px-2 py-1.5 font-mono font-semibold", active ? "text-brand-bright" : "text-brand-bright/80")}>#{row.rank}</td>
-                      <td className={cx("px-2 py-1.5 font-medium", active ? "text-ink" : "text-ink/90")}>{row.recommendation.account_name}</td>
-                      <td className="px-2 py-1.5 text-muted">{row.action}</td>
-                      <td className={cx("px-2 py-1.5 font-medium", row.risk === "High" ? "text-risk" : row.risk === "Medium" ? "text-yellow-400" : "text-accent")}>{row.risk}</td>
+                      <td
+                        className={cx(
+                          "px-2.5 py-2 font-mono font-semibold",
+                          active ? "text-brand-bright" : "text-brand-bright/75",
+                        )}
+                      >
+                        #{row.rank}
+                      </td>
+                      <td
+                        className={cx(
+                          "px-2.5 py-2 text-[13px] font-semibold tracking-tight",
+                          active ? "text-ink" : "text-ink/90",
+                        )}
+                      >
+                        {row.recommendation.account_name}
+                      </td>
+                      <td className="px-2.5 py-2 text-muted">{row.action}</td>
+                      <td
+                        className={cx(
+                          "px-2.5 py-2 font-medium",
+                          row.risk === "High"
+                            ? "text-risk"
+                            : row.risk === "Medium"
+                              ? "text-yellow-400"
+                              : "text-accent",
+                        )}
+                      >
+                        {row.risk}
+                      </td>
                     </tr>
                   );
                 })}
@@ -550,10 +614,10 @@ function WorkQueuePanel({
             </table>
           </div>
 
-          <div className="mt-2 rounded-lg border border-edge bg-bg/25 px-2 py-1.5 text-[10px] text-faint">
+          <div className="mt-2 rounded-lg border border-edge bg-bg/25 px-2.5 py-2 text-[11px] text-faint">
             {hovered
               ? rows.find((r) => r.recommendation.account_id === hovered)?.whyNow ?? "Hover any row to preview why now."
-              : "Use ↑/↓ keys to move selection. Click a row to load the account workspace."}
+              : "Use ↑/↓ keys to move selection. Click a row to focus the account workspace."}
           </div>
 
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -779,9 +843,9 @@ function WorkspaceCockpit({
   return (
     <div ref={cockpitRef} className="flex h-full flex-col rounded-xl border border-edge bg-surface2/35 p-3 ambient-glow">
       {/* Persistent cockpit header */}
-      <div className="rounded-lg border border-edge-soft surface-warm p-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <div className="text-[17px] font-semibold tracking-tight text-ink">{recommendation.account_name}</div>
+      <div className="rounded-lg border border-edge-soft surface-warm p-3.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <div className="text-[19px] font-semibold leading-tight tracking-tight text-ink">{recommendation.account_name}</div>
           <Badge label={`Priority #${recommendation.priority_rank}`} tone="brand" />
           <Badge label={`Risk ${risk}`} tone={risk === "High" ? "risk" : risk === "Medium" ? "warn" : "ok"} />
           <Badge label={`Opportunity ${account?.growth_potential_score ?? 0}`} tone="ok" />
@@ -789,33 +853,33 @@ function WorkspaceCockpit({
           <Badge label={`~${reasoning.estimatedMinutes}m`} tone="neutral" />
           <Badge label={`${recommendation.evidence.length} evidence`} tone="neutral" />
         </div>
-        <p className="mt-1.5 text-[11px] text-muted">
+        <p className="mt-2 text-[12.5px] text-muted">
           Recommended action: <span className="font-semibold text-ink">{reasoning.action.label}</span>
         </p>
         <LifecycleRibbon state={lifecycle} />
         {/* Primary execution CTAs — wired to in-workspace navigation +
             transient focus. Approval opens a mock human-in-the-loop drawer. */}
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          <button type="button" onClick={onOpenAccountClick} className="btn btn-primary px-2.5 py-1 text-[11px]">
-            <ArrowUpRight size={12} /> Open Account
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <button type="button" onClick={onOpenAccountClick} className="btn btn-primary px-3 py-1.5 text-[12px]">
+            <ArrowUpRight size={13} /> Open Account
           </button>
-          <button type="button" onClick={() => goto("prep", "prep")} className="btn btn-outline-primary px-2.5 py-1 text-[11px]">
-            <MessageSquare size={12} /> Prepare Outreach
+          <button type="button" onClick={() => goto("prep", "prep")} className="btn btn-outline-primary px-3 py-1.5 text-[12px]">
+            <MessageSquare size={13} /> Prepare Outreach
           </button>
-          <button type="button" onClick={() => goto("crm", "crm")} className="btn btn-outline-primary px-2.5 py-1 text-[11px]">
-            <FileText size={12} /> Draft CRM Note
+          <button type="button" onClick={() => goto("crm", "crm")} className="btn btn-outline-primary px-3 py-1.5 text-[12px]">
+            <FileText size={13} /> Draft CRM Note
           </button>
-          <button type="button" onClick={() => goto("evidence", "evidence")} className="btn btn-ghost px-2.5 py-1 text-[11px]">
-            <ListChecks size={12} /> Review Evidence
+          <button type="button" onClick={() => goto("evidence", "evidence")} className="btn btn-ghost px-3 py-1.5 text-[12px]">
+            <ListChecks size={13} /> Review Evidence
           </button>
-          <button type="button" onClick={() => setApprovalOpen(true)} className="btn btn-governance px-2.5 py-1 text-[11px]">
-            <CheckCircle2 size={12} /> Mark for Approval
+          <button type="button" onClick={() => setApprovalOpen(true)} className="btn btn-governance px-3 py-1.5 text-[12px]">
+            <CheckCircle2 size={13} /> Mark for Approval
           </button>
         </div>
       </div>
 
       {/* Tab bar */}
-      <div role="tablist" aria-label="Account execution workspace" className="mt-2 flex flex-wrap gap-1 border-b border-edge">
+      <div role="tablist" aria-label="Account execution workspace" className="mt-2.5 flex flex-wrap gap-1 border-b border-edge">
         {WORKSPACE_TABS.map((t) => {
           const active = t.id === tab;
           return (
@@ -826,7 +890,7 @@ function WorkspaceCockpit({
               aria-selected={active}
               onClick={() => setTab(t.id)}
               className={cx(
-                "inline-flex items-center gap-1 rounded-t-md px-2.5 py-1.5 text-[11px] font-medium transition-colors -mb-px border-b-2",
+                "inline-flex items-center gap-1.5 rounded-t-md px-3 py-2 text-[12.5px] font-medium transition-colors -mb-px border-b-2",
                 active
                   ? "border-brand-bright text-ink bg-bg/35"
                   : "border-transparent text-faint hover:text-muted hover:bg-surface2/40",
@@ -2074,14 +2138,20 @@ function RailRow({
   tone?: "risk" | "opp" | "warn";
 }) {
   const valClass =
-    tone === "risk" ? "text-risk" : tone === "opp" ? "text-accent" : tone === "warn" ? "text-yellow-400" : "text-ink";
+    tone === "risk"
+      ? "text-risk"
+      : tone === "opp"
+        ? "text-accent"
+        : tone === "warn"
+          ? "text-yellow-400"
+          : "text-brand-bright";
   return (
-    <div className="flex items-center justify-between gap-2 rounded border border-edge/60 bg-bg/30 px-2 py-1">
-      <span className="flex items-center gap-1 text-faint">
+    <div className="flex items-center justify-between gap-2 rounded-md border border-edge/60 bg-bg/30 px-2.5 py-1.5">
+      <span className="flex items-center gap-1.5 text-[11.5px] text-faint">
         {icon}
         <span className="leading-tight">{label}</span>
       </span>
-      <span className={cx("font-semibold tabular-nums", valClass)}>{value}</span>
+      <span className={cx("text-[13px] font-semibold tabular-nums", valClass)}>{value}</span>
     </div>
   );
 }
