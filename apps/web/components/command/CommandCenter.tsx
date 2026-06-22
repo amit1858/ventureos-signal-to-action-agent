@@ -49,6 +49,7 @@ import {
   loadDeltas,
   type RecommendationDelta,
 } from "@/lib/recommendationDelta";
+import { recordExternalSnapshot } from "@/lib/externalChangeMonitor";
 import dynamic from "next/dynamic";
 
 // Phase 14C — Timeline surfaces. Heavy-ish, lazy-loaded so the home page's
@@ -79,6 +80,10 @@ const ExecutiveChangeBriefPanel = dynamic(
 );
 const PortfolioTimeline = dynamic(
   () => import("@/components/command/ExecutiveChangeBrief").then((m) => m.PortfolioTimeline),
+  { ssr: false, loading: () => null },
+);
+const ExternalChangeMonitorPanel = dynamic(
+  () => import("@/components/command/ExternalChangeMonitor").then((m) => m.ExternalChangeMonitorPanel),
   { ssr: false, loading: () => null },
 );
 import { LiveWorkflowRail } from "@/components/command/LiveWorkflowRail";
@@ -193,6 +198,17 @@ export function CommandCenter({
     ingestRecommendations(recs);
     setDeltas(loadDeltas());
   }, [result?.generated_at, recs.length]);
+
+  // ---- Phase 14E: external system change detection ----
+  // Snapshot the external dataset on each result and detect field-level
+  // changes since the prior sync. Pure overlay; persists snapshot + events.
+  const [externalRefreshKey, setExternalRefreshKey] = React.useState(0);
+  React.useEffect(() => {
+    if (accounts.length === 0) return;
+    const sourceLabel = isHubspotSource ? "HubSpot test CRM" : "Synthetic dataset";
+    recordExternalSnapshot(accounts, { source: sourceLabel, lastSync: lastSync ?? null });
+    setExternalRefreshKey((k) => k + 1);
+  }, [result?.generated_at, accounts.length, isHubspotSource, lastSync]);
 
   const brief = React.useMemo(
     () =>
@@ -360,6 +376,13 @@ export function CommandCenter({
                   onOpenAccount={onOpenAccount}
                 />
               </div>
+            </CompactSection>
+
+            <CompactSection eyebrow="External system change detection" heading="What changed since the last sync">
+              <ExternalChangeMonitorPanel
+                refreshKey={`${externalRefreshKey}-${result?.generated_at ?? ""}`}
+                onOpenAccount={onOpenAccount}
+              />
             </CompactSection>
 
             <CompactSection eyebrow="Recommendation change log" heading="Priority and action evolution">
