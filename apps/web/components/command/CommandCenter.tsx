@@ -49,6 +49,30 @@ import {
   loadDeltas,
   type RecommendationDelta,
 } from "@/lib/recommendationDelta";
+import dynamic from "next/dynamic";
+
+// Phase 14C — Timeline surfaces. Heavy-ish, lazy-loaded so the home page's
+// First Load JS stays inside the program budget.
+const AccountTimeline = dynamic(
+  () => import("@/components/command/AccountTimeline").then((m) => m.AccountTimeline),
+  { ssr: false, loading: () => <div className="rounded-lg border border-edge bg-surface2/40 px-3 py-4 text-[11.5px] text-muted">Loading timeline…</div> },
+);
+const ReasoningTrail = dynamic(
+  () => import("@/components/command/AccountTimeline").then((m) => m.ReasoningTrail),
+  { ssr: false, loading: () => null },
+);
+const RecommendationSeverityBadge = dynamic(
+  () => import("@/components/command/AccountTimeline").then((m) => m.RecommendationSeverityBadge),
+  { ssr: false, loading: () => null },
+);
+const WhyRecommendationChanged = dynamic(
+  () => import("@/components/command/AccountTimeline").then((m) => m.WhyRecommendationChanged),
+  { ssr: false, loading: () => null },
+);
+const RecommendationEvolutionPanel = dynamic(
+  () => import("@/components/command/AccountTimeline").then((m) => m.RecommendationEvolutionPanel),
+  { ssr: false, loading: () => null },
+);
 import { LiveWorkflowRail } from "@/components/command/LiveWorkflowRail";
 import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
 import type { AIOverlayMap } from "@/lib/aiOverlay";
@@ -293,6 +317,7 @@ export function CommandCenter({
                 onOpenAccount={onOpenAccount}
                 loading={loading}
                 onRun={onRun}
+                timelineRefreshKey={`${deltas.length}-${result?.generated_at ?? ""}`}
               />
             </div>
 
@@ -775,6 +800,7 @@ function AccountWorkspacePanel({
   onOpenAccount,
   loading,
   onRun,
+  timelineRefreshKey,
 }: {
   recommendation: Recommendation | null;
   account?: Account;
@@ -783,6 +809,7 @@ function AccountWorkspacePanel({
   onOpenAccount: (accountId: string) => void;
   loading?: boolean;
   onRun?: () => void;
+  timelineRefreshKey?: string;
 }) {
   if (!recommendation || !reasoning) {
     if (loading) {
@@ -807,12 +834,13 @@ function AccountWorkspacePanel({
       reasoning={reasoning}
       generatedAt={generatedAt}
       onOpenAccount={onOpenAccount}
+      timelineRefreshKey={timelineRefreshKey}
     />
   );
 }
 
-type WorkspaceTab = "overview" | "prep" | "email" | "crm" | "evidence";
-type WorkspaceFocus = null | "summary" | "prep" | "crm" | "evidence";
+type WorkspaceTab = "overview" | "prep" | "email" | "crm" | "evidence" | "timeline";
+type WorkspaceFocus = null | "summary" | "prep" | "crm" | "evidence" | "timeline";
 
 const WORKSPACE_TABS: { id: WorkspaceTab; label: string; icon: React.ReactNode }[] = [
   { id: "overview", label: "Overview", icon: <Target size={12} /> },
@@ -820,6 +848,7 @@ const WORKSPACE_TABS: { id: WorkspaceTab; label: string; icon: React.ReactNode }
   { id: "email", label: "Email Draft", icon: <Mail size={12} /> },
   { id: "crm", label: "CRM Update", icon: <ClipboardList size={12} /> },
   { id: "evidence", label: "Evidence", icon: <ListChecks size={12} /> },
+  { id: "timeline", label: "Timeline", icon: <Clock size={12} /> },
 ];
 
 interface MockApprovalEntry {
@@ -842,12 +871,14 @@ function WorkspaceCockpit({
   reasoning,
   generatedAt,
   onOpenAccount,
+  timelineRefreshKey,
 }: {
   recommendation: Recommendation;
   account?: Account;
   reasoning: NonNullable<ReturnType<typeof reasonForRecommendation>>;
   generatedAt?: string;
   onOpenAccount: (accountId: string) => void;
+  timelineRefreshKey?: string;
 }) {
   const [tab, setTab] = React.useState<WorkspaceTab>("overview");
   const [focus, setFocus] = React.useState<WorkspaceFocus>("summary");
@@ -891,6 +922,7 @@ function WorkspaceCockpit({
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <div className="text-[19px] font-semibold leading-tight tracking-tight text-ink">{recommendation.account_name}</div>
           <Badge label={`Priority #${recommendation.priority_rank}`} tone="brand" />
+          <RecommendationSeverityBadge accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
           <Badge label={`Risk ${risk}`} tone={risk === "High" ? "risk" : risk === "Medium" ? "warn" : "ok"} />
           <Badge label={`Opportunity ${account?.growth_potential_score ?? 0}`} tone="ok" />
           <Badge label={`Renewal ${account?.renewal_days ?? "—"}d`} tone="neutral" />
@@ -900,6 +932,13 @@ function WorkspaceCockpit({
         <p className="mt-2 text-[12.5px] text-muted">
           Recommended action: <span className="font-semibold text-ink">{reasoning.action.label}</span>
         </p>
+        <RecommendationEvolutionPanel
+          accountId={recommendation.account_id}
+          fallbackAction={reasoning.action.label}
+          fallbackRank={recommendation.priority_rank}
+          refreshKey={timelineRefreshKey}
+        />
+        <WhyRecommendationChanged accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
         <LifecycleRibbon state={lifecycle} />
         {/* Primary execution CTAs — wired to in-workspace navigation +
             transient focus. Approval opens a mock human-in-the-loop drawer. */}
@@ -954,6 +993,12 @@ function WorkspaceCockpit({
         {tab === "email" ? <EmailDraftTab recommendation={recommendation} account={account} reasoning={reasoning} /> : null}
         {tab === "crm" ? <CrmUpdateTab recommendation={recommendation} reasoning={reasoning} generatedAt={generatedAt} focused={focus === "crm"} /> : null}
         {tab === "evidence" ? <EvidenceTab recommendation={recommendation} generatedAt={generatedAt} focused={focus === "evidence"} /> : null}
+        {tab === "timeline" ? (
+          <div className="space-y-3">
+            <AccountTimeline accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
+            <ReasoningTrail accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
+          </div>
+        ) : null}
       </div>
 
       {approvalOpen ? (
