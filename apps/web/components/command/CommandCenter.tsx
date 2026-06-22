@@ -38,6 +38,8 @@ import { PortfolioHealthCard } from "@/components/command/PortfolioHealthCard";
 import { PortfolioMatrix } from "@/components/command/PortfolioMatrix";
 import { PriorityAccountsTable } from "@/components/command/PriorityAccountsTable";
 import { AiInsightsPanel } from "@/components/command/AiInsightsPanel";
+import { LivePortfolioDriftPanel } from "@/components/command/LivePortfolioDriftPanel";
+import { PortfolioPulseBar, DriftAcknowledgementLine } from "@/components/command/PortfolioPulseBar";
 import { LiveWorkflowRail } from "@/components/command/LiveWorkflowRail";
 import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
 import type { AIOverlayMap } from "@/lib/aiOverlay";
@@ -225,7 +227,10 @@ export function CommandCenter({
             isHubspotSource={isHubspotSource}
             lastSync={lastSync}
             onRun={onRun}
+            driftAck={<DriftAcknowledgementLine accounts={accounts} />}
           />
+
+          <PortfolioPulseBar accounts={accounts} recs={recs} onOpenAccount={onOpenAccount} />
 
           <CollapsibleZone
             id="workbench"
@@ -273,6 +278,10 @@ export function CommandCenter({
             heading="Analytics and portfolio context"
             summary="Ranked accounts, risk vs opportunity, portfolio health, and trends."
           >
+            <CompactSection eyebrow="Live signal drift" heading="Streaming telemetry simulator">
+              <LivePortfolioDriftPanel accounts={accounts} />
+            </CompactSection>
+
             <CompactSection eyebrow="Ranked accounts" heading="Deterministic priority shortlist">
               <div className="card-premium p-2 sm:p-3">
                 <PriorityAccountsTable
@@ -412,6 +421,7 @@ function ChiefOfStaffNarrativeCard({
   isHubspotSource,
   lastSync,
   onRun,
+  driftAck,
 }: {
   brief: ReturnType<typeof morningBrief>;
   topRec: Recommendation | null;
@@ -421,6 +431,7 @@ function ChiefOfStaffNarrativeCard({
   isHubspotSource: boolean;
   lastSync: string | null;
   onRun: () => void;
+  driftAck?: React.ReactNode;
 }) {
   const reasoning = topRec ? reasonForRecommendation(topRec, topAccount) : null;
   const spendChange = topAccount ? Math.round(spendChangePct(topAccount) * 100) : 0;
@@ -432,7 +443,7 @@ function ChiefOfStaffNarrativeCard({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className={cx("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold", isHubspotSource ? "border-accent/40 bg-accent/10 text-accent" : "border-brand/40 bg-brand/10 text-brand-bright")}>
-              {dataSourceLabel}
+              {dataSourceLabel} <span className="opacity-70">·</span> {brief.analyzed}
             </span>
             <h2 className="text-[15px] font-semibold text-ink">AI Chief of Staff</h2>
             <span className="text-[10px] text-faint">· sync {lastSync ?? "—"}</span>
@@ -442,6 +453,7 @@ function ChiefOfStaffNarrativeCard({
             <span className="font-semibold text-accent">{inrCompact(brief.growthOpportunity)}</span> expansion,{" "}
             <span className="font-semibold text-ink">{brief.attention}</span> need attention.
           </p>
+          {driftAck}
         </div>
         <div className="flex items-center gap-1.5">
           <DemoModeTrigger />

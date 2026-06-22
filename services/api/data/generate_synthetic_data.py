@@ -77,6 +77,95 @@ COMPANIES = [
 ]
 
 
+# Phase 14A revision · bulk synthetic fillers to bring the portfolio to ~150
+# accounts so the live drift engine has a believable surface area. These are
+# 100% fabricated company names (industry-suffix + city/region tag). No real
+# brands, no customer references.
+_BULK_INDUSTRIES = [
+    ("Logistics", ["Freight", "Transit", "Cargo", "Express", "Movers"]),
+    ("FinTech", ["Capital", "Pay", "Ledger", "Vault", "Wealth"]),
+    ("SaaS", ["Cloud", "Stack", "Works", "Labs", "Platform"]),
+    ("Retail", ["Bazaar", "Mart", "Outfitters", "Goods", "Trade"]),
+    ("Healthcare", ["Care", "Health", "Med", "Clinics", "BioWorks"]),
+    ("Manufacturing", ["Industries", "Forge", "Works", "Assembly", "Castings"]),
+    ("EdTech", ["Learn", "Academy", "Tutor", "Skills", "Schoolworks"]),
+    ("Food Delivery", ["Kitchens", "Bites", "FeedCo", "Plates", "Larder"]),
+    ("Energy & Utilities", ["Power", "Grid", "Energy", "Utilities", "Watt"]),
+    ("HealthTech", ["MedTech", "BioSys", "DocOnline", "Wellness", "Vita"]),
+    ("Marketing & Agency", ["Studios", "Collective", "Media", "Creative", "Brandworks"]),
+    ("Professional Services", ["Advisors", "Partners", "Consulting", "Group", "Counsel"]),
+    ("IT Services", ["Systems", "InfoTech", "Solutions", "Networks", "Services"]),
+    ("FMCG", ["Brands", "Foods", "Goods", "Consumer", "Essentials"]),
+    ("Quick Commerce", ["Now", "Express", "Rapid", "Instant", "Quick"]),
+]
+_BULK_PREFIXES = [
+    "North", "South", "East", "West", "Central", "Pacific", "Atlantic", "Summit",
+    "Pine", "Cedar", "Granite", "Harbor", "Meridian", "Beacon", "Crescent",
+    "Ironwood", "Sterling", "Vanguard", "Lighthouse", "Compass", "Frontier",
+    "Heritage", "Hudson", "Prairie", "Cobalt", "Indigo", "Maple", "Aurora",
+    "Brookline", "Capstone", "Cascade", "Halcyon", "Juniper", "Larkspur",
+    "Mosaic", "Onyx", "Quill", "Redwood", "Sequoia", "Tessera", "Umbra",
+    "Vintage", "Whetstone", "Zenith",
+]
+_BULK_CITIES = [
+    ("Mumbai", "India"), ("Bengaluru", "India"), ("Hyderabad", "India"),
+    ("Chennai", "India"), ("Pune", "India"), ("Ahmedabad", "India"),
+    ("Singapore", "Singapore"), ("Sydney", "Australia"), ("Melbourne", "Australia"),
+    ("Dubai", "United Arab Emirates"), ("Riyadh", "Saudi Arabia"),
+    ("London", "United Kingdom"), ("Manchester", "United Kingdom"),
+    ("Berlin", "Germany"), ("Amsterdam", "Netherlands"), ("Paris", "France"),
+    ("Toronto", "Canada"), ("Vancouver", "Canada"),
+    ("New York", "United States"), ("San Francisco", "United States"),
+    ("Austin", "United States"), ("Denver", "United States"),
+    ("Seattle", "United States"), ("Chicago", "United States"),
+    ("Boston", "United States"), ("Atlanta", "United States"),
+    ("Dallas", "United States"), ("Phoenix", "United States"),
+]
+_BULK_SEGMENTS = ["SMB", "Mid-Market", "Mid-Market", "Mid-Market", "Enterprise", "Startup"]
+_BULK_ARCHETYPES = [
+    "growth_ready", "growth_ready",
+    "at_risk_declining", "at_risk_declining",
+    "renewal_due", "renewal_due",
+    "support_escalation",
+    "campaign_responder_no_followup", "campaign_responder_no_followup",
+    "stable_monitor", "stable_monitor",
+    "weak_evidence",
+]
+
+
+def _bulk_fillers(target_total: int = 150) -> list:
+    """Deterministically generate filler accounts to reach `target_total`.
+
+    Uses a separate random.Random(SEED) so the curated COMPANIES list above
+    stays byte-for-byte identical to prior dataset versions.
+    """
+    rng = random.Random(SEED + 7)
+    needed = max(0, target_total - len(COMPANIES))
+    seen = {row[0] for row in COMPANIES}
+    out: list = []
+    while len(out) < needed:
+        prefix = rng.choice(_BULK_PREFIXES)
+        industry, suffixes = rng.choice(_BULK_INDUSTRIES)
+        suffix = rng.choice(suffixes)
+        city, country = rng.choice(_BULK_CITIES)
+        name = f"{prefix} {suffix}"
+        if name in seen:
+            name = f"{prefix} {suffix} {city.split(' ')[0]}"
+        if name in seen:
+            continue
+        seen.add(name)
+        segment = rng.choice(_BULK_SEGMENTS)
+        archetype = rng.choice(_BULK_ARCHETYPES)
+        out.append((name, industry, segment, city, country, archetype))
+    return out
+
+
+# Final curated + bulk roster used by generate(). Phase 14A revision raises
+# the portfolio to ~150 accounts so the drift engine has enough surface to
+# feel alive in leadership demos.
+ALL_COMPANIES = COMPANIES + _bulk_fillers(target_total=150)
+
+
 def _rint(lo: int, hi: int) -> int:
     return random.randint(lo, hi)
 
@@ -241,7 +330,7 @@ def generate() -> dict:
     notes: list = []
 
     sig_counter = 1
-    for idx, spec in enumerate(COMPANIES, start=1):
+    for idx, spec in enumerate(ALL_COMPANIES, start=1):
         name, industry, segment, city, country, archetype = spec
         account_id = f"ACC-{idx:04d}"
         prof = _profile(archetype)

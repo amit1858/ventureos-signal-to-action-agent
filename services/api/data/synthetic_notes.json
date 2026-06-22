@@ -3,240 +3,900 @@
     "account_id": "ACC-0001",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-05-17"
+    "created_date": "2026-05-28"
   },
   {
     "account_id": "ACC-0002",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-05-19"
+    "created_date": "2026-05-30"
   },
   {
     "account_id": "ACC-0003",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-06-07"
+    "created_date": "2026-06-18"
   },
   {
     "account_id": "ACC-0004",
     "note_type": "internal",
     "note_text": "Marketing flagged engagement; no seller follow-up yet.",
-    "created_date": "2026-05-18"
+    "created_date": "2026-05-29"
   },
   {
     "account_id": "ACC-0005",
     "note_type": "call",
     "note_text": "Customer mentioned budget review; usage has dropped.",
-    "created_date": "2026-05-21"
+    "created_date": "2026-06-01"
   },
   {
     "account_id": "ACC-0006",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-06-05"
+    "created_date": "2026-06-16"
   },
   {
     "account_id": "ACC-0007",
     "note_type": "call",
     "note_text": "Renewal conversation not yet scheduled.",
-    "created_date": "2026-06-06"
+    "created_date": "2026-06-17"
   },
   {
     "account_id": "ACC-0008",
     "note_type": "support",
     "note_text": "Escalation in progress; customer frustrated with response time.",
-    "created_date": "2026-05-31"
+    "created_date": "2026-06-11"
   },
   {
     "account_id": "ACC-0009",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-06-08"
+    "created_date": "2026-06-19"
   },
   {
     "account_id": "ACC-0010",
     "note_type": "call",
     "note_text": "Renewal conversation not yet scheduled.",
-    "created_date": "2026-05-26"
+    "created_date": "2026-06-06"
   },
   {
     "account_id": "ACC-0011",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-06-06"
+    "created_date": "2026-06-17"
   },
   {
     "account_id": "ACC-0012",
     "note_type": "internal",
     "note_text": "Account healthy; no action needed this cycle.",
-    "created_date": "2026-06-07"
+    "created_date": "2026-06-18"
   },
   {
     "account_id": "ACC-0013",
     "note_type": "internal",
     "note_text": "Marketing flagged engagement; no seller follow-up yet.",
-    "created_date": "2026-05-26"
+    "created_date": "2026-06-06"
   },
   {
     "account_id": "ACC-0014",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-06-01"
+    "created_date": "2026-06-12"
   },
   {
     "account_id": "ACC-0015",
     "note_type": "call",
     "note_text": "Customer mentioned budget review; usage has dropped.",
-    "created_date": "2026-05-25"
+    "created_date": "2026-06-05"
   },
   {
     "account_id": "ACC-0016",
     "note_type": "call",
     "note_text": "Customer mentioned budget review; usage has dropped.",
-    "created_date": "2026-05-22"
+    "created_date": "2026-06-02"
   },
   {
     "account_id": "ACC-0017",
     "note_type": "call",
     "note_text": "Renewal conversation not yet scheduled.",
-    "created_date": "2026-06-08"
+    "created_date": "2026-06-19"
   },
   {
     "account_id": "ACC-0018",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-06-06"
+    "created_date": "2026-06-17"
   },
   {
     "account_id": "ACC-0019",
     "note_type": "call",
     "note_text": "Customer mentioned budget review; usage has dropped.",
-    "created_date": "2026-05-21"
+    "created_date": "2026-06-01"
   },
   {
     "account_id": "ACC-0020",
     "note_type": "internal",
     "note_text": "Marketing flagged engagement; no seller follow-up yet.",
-    "created_date": "2026-06-08"
+    "created_date": "2026-06-19"
   },
   {
     "account_id": "ACC-0021",
     "note_type": "call",
     "note_text": "Renewal conversation not yet scheduled.",
-    "created_date": "2026-05-24"
+    "created_date": "2026-06-04"
   },
   {
     "account_id": "ACC-0022",
     "note_type": "support",
     "note_text": "Escalation in progress; customer frustrated with response time.",
-    "created_date": "2026-05-29"
+    "created_date": "2026-06-09"
   },
   {
     "account_id": "ACC-0023",
     "note_type": "internal",
     "note_text": "Marketing flagged engagement; no seller follow-up yet.",
-    "created_date": "2026-06-06"
+    "created_date": "2026-06-17"
   },
   {
     "account_id": "ACC-0024",
     "note_type": "internal",
     "note_text": "Limited recent activity; insufficient context to act.",
-    "created_date": "2026-05-19"
+    "created_date": "2026-05-30"
   },
   {
     "account_id": "ACC-0025",
     "note_type": "call",
     "note_text": "Renewal conversation not yet scheduled.",
-    "created_date": "2026-05-18"
+    "created_date": "2026-05-29"
   },
   {
     "account_id": "ACC-0026",
     "note_type": "support",
     "note_text": "Escalation in progress; customer frustrated with response time.",
-    "created_date": "2026-06-06"
+    "created_date": "2026-06-17"
   },
   {
     "account_id": "ACC-0027",
     "note_type": "call",
     "note_text": "Renewal conversation not yet scheduled.",
-    "created_date": "2026-06-01"
+    "created_date": "2026-06-12"
   },
   {
     "account_id": "ACC-0028",
     "note_type": "call",
     "note_text": "Customer mentioned budget review; usage has dropped.",
-    "created_date": "2026-06-09"
+    "created_date": "2026-06-20"
   },
   {
     "account_id": "ACC-0029",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-05-21"
+    "created_date": "2026-06-01"
   },
   {
     "account_id": "ACC-0030",
     "note_type": "internal",
     "note_text": "Account healthy; no action needed this cycle.",
-    "created_date": "2026-06-06"
+    "created_date": "2026-06-17"
   },
   {
     "account_id": "ACC-0031",
     "note_type": "internal",
     "note_text": "Marketing flagged engagement; no seller follow-up yet.",
-    "created_date": "2026-05-27"
+    "created_date": "2026-06-07"
   },
   {
     "account_id": "ACC-0032",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-05-22"
+    "created_date": "2026-06-02"
   },
   {
     "account_id": "ACC-0033",
     "note_type": "call",
     "note_text": "Customer mentioned budget review; usage has dropped.",
-    "created_date": "2026-06-05"
+    "created_date": "2026-06-16"
   },
   {
     "account_id": "ACC-0034",
     "note_type": "support",
     "note_text": "Escalation in progress; customer frustrated with response time.",
-    "created_date": "2026-06-02"
+    "created_date": "2026-06-13"
   },
   {
     "account_id": "ACC-0035",
     "note_type": "call",
     "note_text": "Renewal conversation not yet scheduled.",
-    "created_date": "2026-06-01"
+    "created_date": "2026-06-12"
   },
   {
     "account_id": "ACC-0036",
     "note_type": "internal",
     "note_text": "Account healthy; no action needed this cycle.",
-    "created_date": "2026-06-04"
+    "created_date": "2026-06-15"
   },
   {
     "account_id": "ACC-0037",
     "note_type": "internal",
     "note_text": "Limited recent activity; insufficient context to act.",
-    "created_date": "2026-05-20"
+    "created_date": "2026-05-31"
   },
   {
     "account_id": "ACC-0038",
     "note_type": "meeting",
     "note_text": "Champion wants to expand to two more teams next quarter.",
-    "created_date": "2026-06-02"
+    "created_date": "2026-06-13"
   },
   {
     "account_id": "ACC-0039",
     "note_type": "support",
     "note_text": "Escalation in progress; customer frustrated with response time.",
-    "created_date": "2026-05-31"
+    "created_date": "2026-06-11"
   },
   {
     "account_id": "ACC-0040",
     "note_type": "internal",
     "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-18"
+  },
+  {
+    "account_id": "ACC-0041",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-05-29"
+  },
+  {
+    "account_id": "ACC-0042",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-16"
+  },
+  {
+    "account_id": "ACC-0043",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-06-03"
+  },
+  {
+    "account_id": "ACC-0044",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
     "created_date": "2026-06-07"
+  },
+  {
+    "account_id": "ACC-0045",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-03"
+  },
+  {
+    "account_id": "ACC-0046",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-06-09"
+  },
+  {
+    "account_id": "ACC-0047",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-05-28"
+  },
+  {
+    "account_id": "ACC-0048",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-09"
+  },
+  {
+    "account_id": "ACC-0049",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-13"
+  },
+  {
+    "account_id": "ACC-0050",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-14"
+  },
+  {
+    "account_id": "ACC-0051",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-06"
+  },
+  {
+    "account_id": "ACC-0052",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-16"
+  },
+  {
+    "account_id": "ACC-0053",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-08"
+  },
+  {
+    "account_id": "ACC-0054",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-05-30"
+  },
+  {
+    "account_id": "ACC-0055",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-05-29"
+  },
+  {
+    "account_id": "ACC-0056",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-13"
+  },
+  {
+    "account_id": "ACC-0057",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-05-31"
+  },
+  {
+    "account_id": "ACC-0058",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-14"
+  },
+  {
+    "account_id": "ACC-0059",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-20"
+  },
+  {
+    "account_id": "ACC-0060",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-10"
+  },
+  {
+    "account_id": "ACC-0061",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-09"
+  },
+  {
+    "account_id": "ACC-0062",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-07"
+  },
+  {
+    "account_id": "ACC-0063",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-04"
+  },
+  {
+    "account_id": "ACC-0064",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-12"
+  },
+  {
+    "account_id": "ACC-0065",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-04"
+  },
+  {
+    "account_id": "ACC-0066",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-10"
+  },
+  {
+    "account_id": "ACC-0067",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-16"
+  },
+  {
+    "account_id": "ACC-0068",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-03"
+  },
+  {
+    "account_id": "ACC-0069",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-03"
+  },
+  {
+    "account_id": "ACC-0070",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-16"
+  },
+  {
+    "account_id": "ACC-0071",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-06-15"
+  },
+  {
+    "account_id": "ACC-0072",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-05"
+  },
+  {
+    "account_id": "ACC-0073",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-11"
+  },
+  {
+    "account_id": "ACC-0074",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-18"
+  },
+  {
+    "account_id": "ACC-0075",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-16"
+  },
+  {
+    "account_id": "ACC-0076",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-12"
+  },
+  {
+    "account_id": "ACC-0077",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-02"
+  },
+  {
+    "account_id": "ACC-0078",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-04"
+  },
+  {
+    "account_id": "ACC-0079",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-05-31"
+  },
+  {
+    "account_id": "ACC-0080",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-15"
+  },
+  {
+    "account_id": "ACC-0081",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-10"
+  },
+  {
+    "account_id": "ACC-0082",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-10"
+  },
+  {
+    "account_id": "ACC-0083",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-04"
+  },
+  {
+    "account_id": "ACC-0084",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-07"
+  },
+  {
+    "account_id": "ACC-0085",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-06"
+  },
+  {
+    "account_id": "ACC-0086",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-15"
+  },
+  {
+    "account_id": "ACC-0087",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-05-29"
+  },
+  {
+    "account_id": "ACC-0088",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-19"
+  },
+  {
+    "account_id": "ACC-0089",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-01"
+  },
+  {
+    "account_id": "ACC-0090",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-03"
+  },
+  {
+    "account_id": "ACC-0091",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-08"
+  },
+  {
+    "account_id": "ACC-0092",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-05-31"
+  },
+  {
+    "account_id": "ACC-0093",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-05"
+  },
+  {
+    "account_id": "ACC-0094",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-05"
+  },
+  {
+    "account_id": "ACC-0095",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-08"
+  },
+  {
+    "account_id": "ACC-0096",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-20"
+  },
+  {
+    "account_id": "ACC-0097",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-04"
+  },
+  {
+    "account_id": "ACC-0098",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-16"
+  },
+  {
+    "account_id": "ACC-0099",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-12"
+  },
+  {
+    "account_id": "ACC-0100",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-10"
+  },
+  {
+    "account_id": "ACC-0101",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-05-30"
+  },
+  {
+    "account_id": "ACC-0102",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-06-11"
+  },
+  {
+    "account_id": "ACC-0103",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-05-28"
+  },
+  {
+    "account_id": "ACC-0104",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-01"
+  },
+  {
+    "account_id": "ACC-0105",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-03"
+  },
+  {
+    "account_id": "ACC-0106",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-13"
+  },
+  {
+    "account_id": "ACC-0107",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-08"
+  },
+  {
+    "account_id": "ACC-0108",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-07"
+  },
+  {
+    "account_id": "ACC-0109",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-05-31"
+  },
+  {
+    "account_id": "ACC-0110",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-05-30"
+  },
+  {
+    "account_id": "ACC-0111",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-15"
+  },
+  {
+    "account_id": "ACC-0112",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-16"
+  },
+  {
+    "account_id": "ACC-0113",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-17"
+  },
+  {
+    "account_id": "ACC-0114",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-06-15"
+  },
+  {
+    "account_id": "ACC-0115",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-18"
+  },
+  {
+    "account_id": "ACC-0116",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-05-28"
+  },
+  {
+    "account_id": "ACC-0117",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-06-12"
+  },
+  {
+    "account_id": "ACC-0118",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-01"
+  },
+  {
+    "account_id": "ACC-0119",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-08"
+  },
+  {
+    "account_id": "ACC-0120",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-10"
+  },
+  {
+    "account_id": "ACC-0121",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-06-06"
+  },
+  {
+    "account_id": "ACC-0122",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-05-29"
+  },
+  {
+    "account_id": "ACC-0123",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-05-30"
+  },
+  {
+    "account_id": "ACC-0124",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-18"
+  },
+  {
+    "account_id": "ACC-0125",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-03"
+  },
+  {
+    "account_id": "ACC-0126",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-19"
+  },
+  {
+    "account_id": "ACC-0127",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-02"
+  },
+  {
+    "account_id": "ACC-0128",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-12"
+  },
+  {
+    "account_id": "ACC-0129",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-08"
+  },
+  {
+    "account_id": "ACC-0130",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-12"
+  },
+  {
+    "account_id": "ACC-0131",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-16"
+  },
+  {
+    "account_id": "ACC-0132",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-06-15"
+  },
+  {
+    "account_id": "ACC-0133",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-09"
+  },
+  {
+    "account_id": "ACC-0134",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-05-29"
+  },
+  {
+    "account_id": "ACC-0135",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-05-29"
+  },
+  {
+    "account_id": "ACC-0136",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-10"
+  },
+  {
+    "account_id": "ACC-0137",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-05-28"
+  },
+  {
+    "account_id": "ACC-0138",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-05-31"
+  },
+  {
+    "account_id": "ACC-0139",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-18"
+  },
+  {
+    "account_id": "ACC-0140",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-05-30"
+  },
+  {
+    "account_id": "ACC-0141",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-05-31"
+  },
+  {
+    "account_id": "ACC-0142",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-06-08"
+  },
+  {
+    "account_id": "ACC-0143",
+    "note_type": "support",
+    "note_text": "Escalation in progress; customer frustrated with response time.",
+    "created_date": "2026-06-03"
+  },
+  {
+    "account_id": "ACC-0144",
+    "note_type": "call",
+    "note_text": "Customer mentioned budget review; usage has dropped.",
+    "created_date": "2026-05-29"
+  },
+  {
+    "account_id": "ACC-0145",
+    "note_type": "internal",
+    "note_text": "Account healthy; no action needed this cycle.",
+    "created_date": "2026-06-14"
+  },
+  {
+    "account_id": "ACC-0146",
+    "note_type": "call",
+    "note_text": "Renewal conversation not yet scheduled.",
+    "created_date": "2026-06-06"
+  },
+  {
+    "account_id": "ACC-0147",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-06-06"
+  },
+  {
+    "account_id": "ACC-0148",
+    "note_type": "internal",
+    "note_text": "Limited recent activity; insufficient context to act.",
+    "created_date": "2026-06-12"
+  },
+  {
+    "account_id": "ACC-0149",
+    "note_type": "internal",
+    "note_text": "Marketing flagged engagement; no seller follow-up yet.",
+    "created_date": "2026-05-30"
+  },
+  {
+    "account_id": "ACC-0150",
+    "note_type": "meeting",
+    "note_text": "Champion wants to expand to two more teams next quarter.",
+    "created_date": "2026-05-29"
   }
 ]
