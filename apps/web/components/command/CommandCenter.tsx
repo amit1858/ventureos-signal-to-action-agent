@@ -40,6 +40,15 @@ import { PriorityAccountsTable } from "@/components/command/PriorityAccountsTabl
 import { AiInsightsPanel } from "@/components/command/AiInsightsPanel";
 import { LivePortfolioDriftPanel } from "@/components/command/LivePortfolioDriftPanel";
 import { PortfolioPulseBar, DriftAcknowledgementLine } from "@/components/command/PortfolioPulseBar";
+import {
+  RecommendationDeltaCompact,
+  RecommendationDeltaLog,
+} from "@/components/command/RecommendationDeltaLog";
+import {
+  ingestRecommendations,
+  loadDeltas,
+  type RecommendationDelta,
+} from "@/lib/recommendationDelta";
 import { LiveWorkflowRail } from "@/components/command/LiveWorkflowRail";
 import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
 import type { AIOverlayMap } from "@/lib/aiOverlay";
@@ -140,6 +149,19 @@ export function CommandCenter({
   const lastSync = isHubspotSource ? hubStatus?.last_synced_at ?? null : null;
   const latency = result?.latency_ms ?? result?.decision_ledger?.latency_ms ?? 0;
 
+  // ---- Phase 14B: recommendation delta tracking ----
+  // Hydrate from localStorage once on mount, then re-ingest whenever a new
+  // RecommendationResponse arrives. Diff is pure; persists snapshot + log.
+  const [deltas, setDeltas] = React.useState<RecommendationDelta[]>([]);
+  React.useEffect(() => {
+    setDeltas(loadDeltas());
+  }, []);
+  React.useEffect(() => {
+    if (recs.length === 0) return;
+    ingestRecommendations(recs);
+    setDeltas(loadDeltas());
+  }, [result?.generated_at, recs.length]);
+
   const brief = React.useMemo(
     () =>
       morningBrief(accounts, accountsById, recs, hasResult, {
@@ -232,6 +254,12 @@ export function CommandCenter({
 
           <PortfolioPulseBar accounts={accounts} recs={recs} onOpenAccount={onOpenAccount} />
 
+          {deltas.length > 0 ? (
+            <div className="overflow-hidden rounded-lg border border-edge bg-surface2/30">
+              <RecommendationDeltaCompact deltas={deltas} />
+            </div>
+          ) : null}
+
           <CollapsibleZone
             id="workbench"
             defaultOpen={true}
@@ -280,6 +308,10 @@ export function CommandCenter({
           >
             <CompactSection eyebrow="Live signal drift" heading="Streaming telemetry simulator">
               <LivePortfolioDriftPanel accounts={accounts} />
+            </CompactSection>
+
+            <CompactSection eyebrow="Recommendation change log" heading="Priority and action evolution">
+              <RecommendationDeltaLog deltas={deltas} onOpenAccount={onOpenAccount} />
             </CompactSection>
 
             <CompactSection eyebrow="Ranked accounts" heading="Deterministic priority shortlist">
