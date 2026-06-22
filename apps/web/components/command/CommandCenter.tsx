@@ -50,6 +50,7 @@ import {
   type RecommendationDelta,
 } from "@/lib/recommendationDelta";
 import { recordExternalSnapshot } from "@/lib/externalChangeMonitor";
+import { buildExecutiveDailyBriefing } from "@/lib/executiveDailyBriefing";
 import dynamic from "next/dynamic";
 
 // Phase 14C — Timeline surfaces. Heavy-ish, lazy-loaded so the home page's
@@ -84,6 +85,10 @@ const PortfolioTimeline = dynamic(
 );
 const ExternalChangeMonitorPanel = dynamic(
   () => import("@/components/command/ExternalChangeMonitor").then((m) => m.ExternalChangeMonitorPanel),
+  { ssr: false, loading: () => null },
+);
+const ExecutiveDailyBriefingPanel = dynamic(
+  () => import("@/components/command/ExecutiveDailyBriefing").then((m) => m.ExecutiveDailyBriefingPanel),
   { ssr: false, loading: () => null },
 );
 import { LiveWorkflowRail } from "@/components/command/LiveWorkflowRail";
@@ -210,6 +215,21 @@ export function CommandCenter({
     setExternalRefreshKey((k) => k + 1);
   }, [result?.generated_at, accounts.length, isHubspotSource, lastSync]);
 
+  // ---- Phase 14F: executive daily briefing ----
+  // Pure composer reads from drift / deltas / external events / ledger and
+  // produces a leadership-voice briefing. Recompute whenever any source
+  // changes (result, deltas log, external snapshot, or ledger).
+  const briefing = React.useMemo(() => {
+    if (typeof window === "undefined") return null;
+    if (!hasResult) return null;
+    return buildExecutiveDailyBriefing({
+      accounts,
+      recommendations: recs,
+      sessionStartIso: result?.generated_at ?? null,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasResult, accounts.length, recs.length, result?.generated_at, deltas.length, externalRefreshKey]);
+
   const brief = React.useMemo(
     () =>
       morningBrief(accounts, accountsById, recs, hasResult, {
@@ -299,6 +319,8 @@ export function CommandCenter({
             onRun={onRun}
             driftAck={<DriftAcknowledgementLine accounts={accounts} />}
           />
+
+          <ExecutiveDailyBriefingPanel briefing={briefing} onOpenAccount={onOpenAccount} />
 
           <PortfolioPulseBar accounts={accounts} recs={recs} onOpenAccount={onOpenAccount} />
 
