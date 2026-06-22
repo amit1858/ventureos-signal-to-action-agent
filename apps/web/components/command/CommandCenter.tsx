@@ -73,6 +73,14 @@ const RecommendationEvolutionPanel = dynamic(
   () => import("@/components/command/AccountTimeline").then((m) => m.RecommendationEvolutionPanel),
   { ssr: false, loading: () => null },
 );
+const ExecutiveChangeBriefPanel = dynamic(
+  () => import("@/components/command/ExecutiveChangeBrief").then((m) => m.ExecutiveChangeBriefPanel),
+  { ssr: false, loading: () => null },
+);
+const PortfolioTimeline = dynamic(
+  () => import("@/components/command/ExecutiveChangeBrief").then((m) => m.PortfolioTimeline),
+  { ssr: false, loading: () => null },
+);
 import { LiveWorkflowRail } from "@/components/command/LiveWorkflowRail";
 import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
 import type { AIOverlayMap } from "@/lib/aiOverlay";
@@ -278,6 +286,16 @@ export function CommandCenter({
 
           <PortfolioPulseBar accounts={accounts} recs={recs} onOpenAccount={onOpenAccount} />
 
+          <ExecutiveChangeBriefPanel
+            accounts={accounts}
+            refreshKey={`${deltas.length}-${result?.generated_at ?? ""}`}
+            onOpenAccount={onOpenAccount}
+            onOpenTimeline={() => {
+              const el = document.getElementById("portfolio-timeline-anchor");
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          />
+
           {deltas.length > 0 ? (
             <div className="overflow-hidden rounded-lg border border-edge bg-surface2/30">
               <RecommendationDeltaCompact deltas={deltas} />
@@ -333,6 +351,15 @@ export function CommandCenter({
           >
             <CompactSection eyebrow="Live signal drift" heading="Streaming telemetry simulator">
               <LivePortfolioDriftPanel accounts={accounts} />
+            </CompactSection>
+
+            <CompactSection eyebrow="Portfolio timeline" heading="Cross-account chronological feed">
+              <div id="portfolio-timeline-anchor">
+                <PortfolioTimeline
+                  refreshKey={`${deltas.length}-${result?.generated_at ?? ""}`}
+                  onOpenAccount={onOpenAccount}
+                />
+              </div>
             </CompactSection>
 
             <CompactSection eyebrow="Recommendation change log" heading="Priority and action evolution">
