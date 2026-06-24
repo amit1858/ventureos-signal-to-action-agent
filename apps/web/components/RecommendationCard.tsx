@@ -14,11 +14,13 @@ export function RecommendationCard({
   account,
   selected,
   onClick,
+  onAction,
 }: {
   rec: Recommendation;
   account?: Account;
   selected: boolean;
   onClick: () => void;
+  onAction?: (target: "prep" | "email" | "crm" | "evidence") => void;
 }) {
   const score = scoreTone(rec.priority_score);
   const conf = scoreTone(rec.confidence_score);
@@ -160,6 +162,60 @@ export function RecommendationCard({
       <div className="mt-2">
         <EvidenceChips evidence={rec.evidence} max={4} />
       </div>
+
+       <div className="mt-2 rounded-lg border border-edge bg-bg/25 px-2 py-1.5">
+         <div className="text-[10px] font-semibold uppercase tracking-wider text-faint">Triggered by</div>
+         <ul className="mt-1 space-y-0.5 text-[10.5px] text-muted">
+           {reasons.length > 0
+             ? reasons.map((r) => <li key={`trigger-${r.key}`}>• {r.text}</li>)
+             : rec.evidence.slice(0, 3).map((e, idx) => <li key={`ev-trigger-${idx}`}>• {e.label}</li>)}
+         </ul>
+       </div>
+
+      {onAction ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            className="rounded border border-edge-soft px-2 py-1 text-[10px] text-muted hover:bg-surface2/40 hover:text-ink"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction("prep");
+            }}
+          >
+            Prepare Outreach
+          </button>
+          <button
+            type="button"
+            className="rounded border border-edge-soft px-2 py-1 text-[10px] text-muted hover:bg-surface2/40 hover:text-ink"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction("email");
+            }}
+          >
+            Draft Email
+          </button>
+          <button
+            type="button"
+            className="rounded border border-edge-soft px-2 py-1 text-[10px] text-muted hover:bg-surface2/40 hover:text-ink"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction("crm");
+            }}
+          >
+            CRM Note
+          </button>
+          <button
+            type="button"
+            className="rounded border border-edge-soft px-2 py-1 text-[10px] text-muted hover:bg-surface2/40 hover:text-ink"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction("evidence");
+            }}
+          >
+            Review Signals
+          </button>
+        </div>
+      ) : null}
 
       {/* Footer: confidence + governance + approval */}
       <div className="mt-3 flex items-center justify-between gap-2 border-t border-edge pt-2.5">

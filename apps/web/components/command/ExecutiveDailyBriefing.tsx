@@ -32,6 +32,8 @@ import type {
 
 interface Props {
   briefing: ExecutiveDailyBriefing | null;
+  titleLabel?: string;
+  actionsLabel?: string;
   onOpenAccount?: (accountId: string) => void;
 }
 
@@ -57,7 +59,12 @@ function formatGeneratedAt(iso: string): string {
   }
 }
 
-export function ExecutiveDailyBriefingPanel({ briefing, onOpenAccount }: Props) {
+export function ExecutiveDailyBriefingPanel({
+  briefing,
+  titleLabel = "Executive Daily Briefing",
+  actionsLabel = "Recommended actions",
+  onOpenAccount,
+}: Props) {
   const totalMinutes = useMemo(() => {
     if (!briefing) return 0;
     return briefing.recommended_actions.reduce((s, a) => s + (a.est_minutes ?? 0), 0);
@@ -68,7 +75,7 @@ export function ExecutiveDailyBriefingPanel({ briefing, onOpenAccount }: Props) 
       <div className="card-premium p-3.5">
         <div className="flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-accent">
           <Sparkles size={11} />
-          Executive Daily Briefing
+          {titleLabel}
         </div>
         <div className="mt-2 rounded-md border border-dashed border-edge/40 px-3 py-3 text-[12px] text-muted">
           Run an analysis to generate today's leadership briefing.
@@ -85,7 +92,7 @@ export function ExecutiveDailyBriefingPanel({ briefing, onOpenAccount }: Props) 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <div className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-accent">
           <Sparkles size={11} />
-          Executive Daily Briefing
+          {titleLabel}
         </div>
         <span className={cx("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold", urgency.cls)}>
           {urgency.icon} {urgency.label}
@@ -130,7 +137,7 @@ export function ExecutiveDailyBriefingPanel({ briefing, onOpenAccount }: Props) 
       {/* Recommended actions */}
       <div className="mt-3">
         <div className="flex items-center justify-between">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">Recommended actions</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">{actionsLabel}</div>
           {totalMinutes > 0 ? (
             <div className="text-[10px] text-faint">
               <Clock size={9} className="mr-0.5 inline" />

@@ -51,6 +51,17 @@ import {
 } from "@/lib/recommendationDelta";
 import { recordExternalSnapshot } from "@/lib/externalChangeMonitor";
 import { buildExecutiveDailyBriefing } from "@/lib/executiveDailyBriefing";
+import { useExperienceMode, isSectionVisible, isOpenByDefault } from "@/lib/experienceMode";
+import {
+  normalizePreferredSection,
+  type OpenAccountFromSurfaceInput,
+  type WorkspaceSectionTarget,
+} from "@/lib/accountNavigation";
+import { ExperienceModeSwitch } from "@/components/command/ExperienceModeSwitch";
+import { DisclosurePanel } from "@/components/command/DisclosurePanel";
+import { ExecutiveAttentionBrief } from "@/components/command/ExecutiveAttentionBrief";
+import { loadDriftSnapshot } from "@/lib/driftEngine";
+import { type AccountSelectionContext } from "@/lib/accountSelectionContext";
 import dynamic from "next/dynamic";
 
 // Phase 14C — Timeline surfaces. Heavy-ish, lazy-loaded so the home page's
@@ -131,6 +142,24 @@ function useZoneOpen(id: string, defaultOpen: boolean): [boolean, () => void] {
   return [open, toggle];
 }
 
+function trackSellerMetric(
+  event: "account_opened" | "recommendation_action_clicked" | "workspace_loaded" | "conversation_prep_opened" | "crm_note_opened",
+  detail: Record<string, unknown>,
+) {
+  if (typeof window === "undefined") return;
+  const payload = { event, timestamp: new Date().toISOString(), ...detail };
+  try {
+    const key = "s2a_seller_metrics_v1";
+    const raw = window.localStorage.getItem(key);
+    const list = raw ? (JSON.parse(raw) as unknown[]) : [];
+    const next = [...list, payload].slice(-200);
+    window.localStorage.setItem(key, JSON.stringify(next));
+  } catch {
+    /* noop */
+  }
+  if (console?.info) console.info("[seller-metric]", payload);
+}
+
 type QueueRow = {
   recommendation: Recommendation;
   account?: Account;
@@ -152,6 +181,7 @@ export function CommandCenter({
   hubStatus,
   writebacks,
   selectedId,
+  accountSelectionContext,
   dataSourceLabel,
   isHubspotSource,
   externalSignalsEnabled = false,
@@ -171,6 +201,7 @@ export function CommandCenter({
   hubStatus: HubspotStatus | null;
   writebacks: Record<string, HubspotWriteback[]>;
   selectedId: string | null;
+  accountSelectionContext: AccountSelectionContext;
   dataSourceLabel: string;
   isHubspotSource: boolean;
   externalSignalsEnabled?: boolean;
@@ -179,7 +210,9 @@ export function CommandCenter({
   portfolio?: PortfolioAgentReport | null;
   onOpenEvaluation?: () => void;
   onRun: () => void;
-  onOpenAccount: (accountId: string) => void;
+  onOpenAccount: (
+    input: OpenAccountFromSurfaceInput,
+  ) => void;
   /** Phase 13.6 — lightweight active-account selection (focus, not navigate). */
   onSelectActive?: (accountId: string) => void;
 }) {
@@ -214,6 +247,9 @@ export function CommandCenter({
     recordExternalSnapshot(accounts, { source: sourceLabel, lastSync: lastSync ?? null });
     setExternalRefreshKey((k) => k + 1);
   }, [result?.generated_at, accounts.length, isHubspotSource, lastSync]);
+
+  // ---- Phase 15A: experience mode ----
+  const [experienceMode, setExperienceMode] = useExperienceMode();
 
   // ---- Phase 14F: executive daily briefing ----
   // Pure composer reads from drift / deltas / external events / ledger and
@@ -258,21 +294,125 @@ export function CommandCenter({
       }),
     [recs, accountsById],
   );
+  const visibleQueueRows = React.useMemo<QueueRow[]>(
+    () => (experienceMode === "operations" ? queueRows : queueRows.slice(0, 5)),
+    [queueRows, experienceMode],
+  );
 
-  const [activeAccountId, setActiveAccountId] = React.useState<string | null>(selectedId ?? recs[0]?.account_id ?? null);
-  React.useEffect(() => {
-    if (selectedId && selectedId !== activeAccountId) setActiveAccountId(selectedId);
-  }, [selectedId, activeAccountId]);
-  React.useEffect(() => {
-    if (!activeAccountId && recs.length > 0) setActiveAccountId(recs[0].account_id);
-    if (activeAccountId && !recs.some((r) => r.account_id === activeAccountId)) {
-      setActiveAccountId(recs[0]?.account_id ?? null);
-    }
-  }, [recs, activeAccountId]);
-
-  const activeRec = recs.find((r) => r.account_id === activeAccountId) ?? recs[0] ?? null;
+  // Phase 15C.5 — Single source of truth: consume app-level account selection context.
+  // App/page.tsx owns selection logic; CommandCenter uses it for rendering only.
+  const activeAccountId = accountSelectionContext.activeAccountId;
+  const activeRec = accountSelectionContext.activeRecommendation ?? null;
   const activeAccount = activeRec ? accountsById[activeRec.account_id] : undefined;
   const activeReasoning = activeRec ? reasonForRecommendation(activeRec, activeAccount) : null;
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    console.info("[account-routing]", {
+      stage: "command-center-received-context",
+      requestedAccountId: accountSelectionContext.requestedAccountId,
+      activeAccountId: accountSelectionContext.activeAccountId,
+      renderedAccountId: activeRec?.account_id ?? null,
+      selectedAccountId: selectedId ?? null,
+      source: accountSelectionContext.redirectSource ?? "workspace",
+      isRedirected: accountSelectionContext.isRedirected,
+      event: "command center context received",
+    });
+    if (
+      accountSelectionContext.activeAccountId &&
+      activeRec?.account_id &&
+      accountSelectionContext.activeAccountId !== activeRec.account_id
+    ) {
+      console.warn("[account-routing-mismatch]", {
+        appActiveAccountId: accountSelectionContext.activeAccountId,
+        commandCenterRenderedAccountId: activeRec.account_id,
+      });
+    }
+  }, [
+    accountSelectionContext.activeAccountId,
+    accountSelectionContext.isRedirected,
+    accountSelectionContext.redirectSource,
+    accountSelectionContext.requestedAccountId,
+    activeRec?.account_id,
+    selectedId,
+  ]);
+  const [navigationContext, setNavigationContext] = React.useState<{
+    accountId: string;
+    source: string;
+    targetSection?: WorkspaceSectionTarget;
+    at: number;
+  } | null>(null);
+  const modeLabels = React.useMemo(
+    () => ({
+      dailyBriefing:
+        experienceMode === "seller"
+          ? "Seller Briefing"
+          : experienceMode === "operations"
+            ? "System Operations Brief"
+            : "Executive Daily Briefing",
+      attention:
+        experienceMode === "seller"
+          ? "Accounts Needing Action"
+          : experienceMode === "operations"
+            ? "Operational Attention Queue"
+            : "Executive Attention Required",
+      snapshot:
+        experienceMode === "seller"
+          ? "My Book of Business"
+          : experienceMode === "operations"
+            ? "System Snapshot"
+            : "Executive Snapshot",
+      priorities:
+        experienceMode === "seller"
+          ? "Today's Priorities"
+          : experienceMode === "operations"
+            ? "Recommendation Queue"
+            : "Recommended Actions",
+      pulse: experienceMode === "seller" ? "Account Changes" : "Portfolio Pulse",
+      changeBrief: experienceMode === "seller" ? "What Changed" : "Executive Change Brief",
+    }),
+    [experienceMode],
+  );
+  const openAccountWithContext = React.useCallback(
+    (
+      accountId: string,
+      source = "Command Center",
+      targetSection?: WorkspaceSectionTarget,
+    ) => {
+      const normalizedTarget = normalizePreferredSection(targetSection);
+      if (process.env.NODE_ENV !== "production") {
+        console.info("[account-routing]", {
+          stage: "account-click",
+          traceStage: "account-click",
+          clickedAccountId: accountId,
+          urlAccountId: null,
+          selectedAccountId: selectedId ?? null,
+          activeAccountId: activeAccountId ?? null,
+          renderedAccountId: activeRec?.account_id ?? null,
+          source,
+          event: "activeAccountId set",
+          clickSource: source,
+        });
+      }
+      // Phase 15C.5: activeAccountId is now managed by app/page.tsx
+      // CommandCenter delegates to onOpenAccount which updates app state
+      setNavigationContext({ accountId, source, targetSection: normalizedTarget, at: Date.now() });
+      onOpenAccount({
+        accountId,
+        source,
+        preferredSection: normalizedTarget,
+        mode: experienceMode,
+      });
+      if (typeof window !== "undefined") {
+        window.setTimeout(() => {
+          document.getElementById("workbench")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 40);
+      }
+      if (experienceMode === "seller") {
+        trackSellerMetric("account_opened", { account_id: accountId, source, target_section: normalizedTarget ?? null });
+      }
+    },
+    [onOpenAccount, onSelectActive, experienceMode],
+  );
 
   const recommendedIds = React.useMemo(() => new Set(recs.map((r) => r.account_id)), [recs]);
   const storyByAccount = React.useMemo(() => {
@@ -304,42 +444,150 @@ export function CommandCenter({
   const snapRenewals = accounts.filter((a) => a.renewal_days != null && a.renewal_days <= 30).length;
   const snapEffortMin = queueRows.slice(0, 6).reduce((sum, row) => sum + row.minutes, 0);
 
+  // Phase 15B — derive lightweight summary stats for accordion headers.
+  // Pure read of existing engines; no new intelligence.
+  const driftSummary = React.useMemo(() => {
+    if (typeof window === "undefined") return { changed: 0, risk: 0, opportunity: 0 };
+    const snap = loadDriftSnapshot();
+    const accountIds = new Set(snap.events.map((e) => e.account_id));
+    const risk = snap.events.filter((e) => e.impact === "risk").length;
+    const opportunity = snap.events.filter((e) => e.impact === "opportunity").length;
+    return { changed: accountIds.size, risk, opportunity };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result?.generated_at, accounts.length]);
+
+  // Phase 15B — right-rail snapshot compression. Seller mode lands collapsed
+  // (compact KPI strip) to focus on action; Executive/Operations stay
+  // expanded. Persists per-mode toggle in localStorage.
+  const [snapshotExpanded, setSnapshotExpanded] = React.useState<boolean>(true);
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = `s2a_snapshot_expanded_v1:${experienceMode}`;
+    const raw = window.localStorage.getItem(key);
+    if (raw === "1") setSnapshotExpanded(true);
+    else if (raw === "0") setSnapshotExpanded(false);
+    else setSnapshotExpanded(experienceMode !== "seller");
+  }, [experienceMode]);
+  const toggleSnapshot = React.useCallback(() => {
+    setSnapshotExpanded((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(`s2a_snapshot_expanded_v1:${experienceMode}`, next ? "1" : "0");
+        } catch {
+          /* noop */
+        }
+      }
+      return next;
+    });
+  }, [experienceMode]);
+
   return (
     <div className="animate-fade-in pb-8">
       <div className="flex items-start gap-5">
         <div className="min-w-0 flex-1 space-y-4">
-          <ChiefOfStaffNarrativeCard
-            brief={brief}
-            topRec={recs[0] ?? null}
-            topAccount={recs[0] ? accountsById[recs[0].account_id] : undefined}
-            loading={loading}
-            dataSourceLabel={dataSourceLabel}
-            isHubspotSource={isHubspotSource}
-            lastSync={lastSync}
-            onRun={onRun}
-            driftAck={<DriftAcknowledgementLine accounts={accounts} />}
-          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <ExperienceModeSwitch value={experienceMode} onChange={setExperienceMode} />
+            <span className="text-[10.5px] uppercase tracking-[0.14em] text-faint">{dataSourceLabel}</span>
+          </div>
 
-          <ExecutiveDailyBriefingPanel briefing={briefing} onOpenAccount={onOpenAccount} />
-
-          <PortfolioPulseBar accounts={accounts} recs={recs} onOpenAccount={onOpenAccount} />
-
-          <ExecutiveChangeBriefPanel
-            accounts={accounts}
-            refreshKey={`${deltas.length}-${result?.generated_at ?? ""}`}
-            onOpenAccount={onOpenAccount}
-            onOpenTimeline={() => {
-              const el = document.getElementById("portfolio-timeline-anchor");
-              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-          />
-
-          {deltas.length > 0 ? (
-            <div className="overflow-hidden rounded-lg border border-edge bg-surface2/30">
-              <RecommendationDeltaCompact deltas={deltas} />
-            </div>
+          {isSectionVisible(experienceMode, "chiefOfStaff") ? (
+            <ChiefOfStaffNarrativeCard
+              brief={brief}
+              topRec={recs[0] ?? null}
+              topAccount={recs[0] ? accountsById[recs[0].account_id] : undefined}
+              loading={loading}
+              dataSourceLabel={dataSourceLabel}
+              isHubspotSource={isHubspotSource}
+              lastSync={lastSync}
+              onRun={onRun}
+              driftAck={<DriftAcknowledgementLine accounts={accounts} />}
+            />
           ) : null}
 
+          {isSectionVisible(experienceMode, "attentionBrief") && hasResult ? (
+            <ExecutiveAttentionBrief
+              accounts={accounts}
+              accountsById={accountsById}
+              recs={recs}
+              defaultOpen={isOpenByDefault(experienceMode, "attentionBrief")}
+              titleLabel={modeLabels.attention}
+              onOpenAccount={(accountId) => openAccountWithContext(accountId, modeLabels.attention)}
+            />
+          ) : null}
+
+          {isSectionVisible(experienceMode, "dailyBriefing") ? (
+            <ExecutiveDailyBriefingPanel
+              briefing={briefing}
+              titleLabel={modeLabels.dailyBriefing}
+              actionsLabel={
+                experienceMode === "seller"
+                  ? "Today's Priorities"
+                  : experienceMode === "operations"
+                    ? "Recommendation Queue"
+                    : "Recommended actions"
+              }
+              onOpenAccount={(accountId) => openAccountWithContext(accountId, modeLabels.dailyBriefing)}
+            />
+          ) : null}
+
+          {isSectionVisible(experienceMode, "portfolioPulse") ? (
+            <DisclosurePanel
+              id="portfolio-pulse"
+              eyebrow="Portfolio intelligence"
+              title={modeLabels.pulse}
+              summary={
+                driftSummary.changed > 0
+                  ? `${driftSummary.changed} accounts changed · ${driftSummary.risk} risks · ${driftSummary.opportunity} opportunities`
+                  : "Awaiting next pulse cycle"
+              }
+              defaultOpen={isOpenByDefault(experienceMode, "portfolioPulse")}
+            >
+              <PortfolioPulseBar
+                accounts={accounts}
+                recs={recs}
+                onOpenAccount={(accountId) => openAccountWithContext(accountId, modeLabels.pulse)}
+              />
+            </DisclosurePanel>
+          ) : null}
+
+          {isSectionVisible(experienceMode, "executiveChangeBrief") ? (
+            <DisclosurePanel
+              id="executive-change-brief"
+              eyebrow="Executive intelligence"
+              title={modeLabels.changeBrief}
+              summary={
+                deltas.length > 0
+                  ? `${deltas.length} recommendation${deltas.length === 1 ? "" : "s"} revised since last review`
+                  : "No new recommendation changes"
+              }
+              defaultOpen={isOpenByDefault(experienceMode, "executiveChangeBrief")}
+            >
+              <ExecutiveChangeBriefPanel
+                accounts={accounts}
+                refreshKey={`${deltas.length}-${result?.generated_at ?? ""}`}
+                onOpenAccount={(accountId) => openAccountWithContext(accountId, modeLabels.changeBrief)}
+                onOpenTimeline={() => {
+                  const el = document.getElementById("portfolio-timeline-anchor");
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              />
+            </DisclosurePanel>
+          ) : null}
+
+          {isSectionVisible(experienceMode, "deltaCompact") && deltas.length > 0 ? (
+            <DisclosurePanel
+              id="recommendation-deltas"
+              eyebrow="Operations intelligence"
+              title="Recommendation Changes"
+              summary={`${deltas.length} action${deltas.length === 1 ? "" : "s"} revised`}
+              defaultOpen={isOpenByDefault(experienceMode, "deltaCompact")}
+            >
+              <RecommendationDeltaCompact deltas={deltas} />
+            </DisclosurePanel>
+          ) : null}
+
+          {isSectionVisible(experienceMode, "workbench") ? (
           <CollapsibleZone
             id="workbench"
             defaultOpen={true}
@@ -356,10 +604,12 @@ export function CommandCenter({
           >
             <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_3fr]">
               <WorkQueuePanel
-                rows={queueRows}
+                rows={visibleQueueRows}
                 activeAccountId={activeRec?.account_id ?? null}
+                experienceMode={experienceMode}
+                titleLabel={modeLabels.priorities}
                 onSelect={(accountId) => {
-                  setActiveAccountId(accountId);
+                  // Phase 15C.5: activeAccountId update delegated to app-level onSelectActive
                   onSelectActive?.(accountId);
                 }}
                 loading={loading}
@@ -369,8 +619,15 @@ export function CommandCenter({
                 recommendation={activeRec}
                 account={activeAccount}
                 reasoning={activeReasoning}
+                experienceMode={experienceMode}
+                requestedAccountId={accountSelectionContext.requestedAccountId}
+                isRedirected={accountSelectionContext.isRedirected}
+                redirectSource={accountSelectionContext.redirectSource}
                 generatedAt={result?.generated_at}
-                onOpenAccount={onOpenAccount}
+                onOpenAccount={openAccountWithContext}
+                openedFromSource={navigationContext?.source ?? null}
+                openedFromAt={navigationContext?.at ?? null}
+                navigationTargetSection={navigationContext?.targetSection ?? null}
                 loading={loading}
                 onRun={onRun}
                 timelineRefreshKey={`${deltas.length}-${result?.generated_at ?? ""}`}
@@ -379,7 +636,9 @@ export function CommandCenter({
 
             {aiOverlay && hasResult ? <AIEnhancedBanner overlay={aiOverlay} /> : null}
           </CollapsibleZone>
+          ) : null}
 
+          {isSectionVisible(experienceMode, "portfolioIntelligence") ? (
           <CollapsibleZone
             id="portfolio"
             defaultOpen={false}
@@ -395,7 +654,7 @@ export function CommandCenter({
               <div id="portfolio-timeline-anchor">
                 <PortfolioTimeline
                   refreshKey={`${deltas.length}-${result?.generated_at ?? ""}`}
-                  onOpenAccount={onOpenAccount}
+                  onOpenAccount={(accountId) => openAccountWithContext(accountId, "Portfolio Timeline")}
                 />
               </div>
             </CompactSection>
@@ -403,12 +662,15 @@ export function CommandCenter({
             <CompactSection eyebrow="External system change detection" heading="What changed since the last sync">
               <ExternalChangeMonitorPanel
                 refreshKey={`${externalRefreshKey}-${result?.generated_at ?? ""}`}
-                onOpenAccount={onOpenAccount}
+                onOpenAccount={(accountId) => openAccountWithContext(accountId, "External Change Detection")}
               />
             </CompactSection>
 
             <CompactSection eyebrow="Recommendation change log" heading="Priority and action evolution">
-              <RecommendationDeltaLog deltas={deltas} onOpenAccount={onOpenAccount} />
+              <RecommendationDeltaLog
+                deltas={deltas}
+                onOpenAccount={(accountId) => openAccountWithContext(accountId, "Recommendation Delta Tracking")}
+              />
             </CompactSection>
 
             <CompactSection eyebrow="Ranked accounts" heading="Deterministic priority shortlist">
@@ -417,7 +679,7 @@ export function CommandCenter({
                   recs={recs}
                   accountsById={accountsById}
                   selectedId={selectedId}
-                  onOpenAccount={onOpenAccount}
+                  onOpenAccount={(accountId) => openAccountWithContext(accountId, "Today's Priorities")}
                   onRun={onRun}
                   hasResult={hasResult}
                   loading={loading}
@@ -433,7 +695,7 @@ export function CommandCenter({
                   selectedId={selectedId}
                   recommendedIds={recommendedIds}
                   storyByAccount={storyByAccount}
-                  onOpenAccount={onOpenAccount}
+                  onOpenAccount={(accountId) => openAccountWithContext(accountId, "Portfolio Map")}
                 />
               </div>
             </CompactSection>
@@ -448,7 +710,9 @@ export function CommandCenter({
               </div>
             </CompactSection>
           </CollapsibleZone>
+          ) : null}
 
+          {isSectionVisible(experienceMode, "trustGovernance") ? (
           <CollapsibleZone
             id="governance"
             defaultOpen={false}
@@ -500,38 +764,62 @@ export function CommandCenter({
               <CrmWritebackReadinessPanel recs={recs} />
             </CompactSection>
           </CollapsibleZone>
+          ) : null}
         </div>
 
         <aside className="hidden w-[244px] shrink-0 xl:block">
           <div className="sticky top-5 space-y-2">
             <div className="rounded-xl border border-edge bg-surface2/50 p-3.5">
-              <div className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-faint">
-                Executive Snapshot
-              </div>
-              {activeRec ? (
-                <div className="mb-2.5 rounded-lg border border-brand/35 surface-warm px-2.5 py-2">
-                  <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-brand-bright/90">
-                    Active account
+              <button
+                type="button"
+                onClick={toggleSnapshot}
+                aria-expanded={snapshotExpanded}
+                className="-m-1 mb-2 flex w-[calc(100%+0.5rem)] items-center justify-between gap-2 rounded-md p-1 text-left hover:bg-surface2/60"
+              >
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-faint">
+                  {modeLabels.snapshot}
+                </span>
+                <ChevronDown
+                  size={12}
+                  className={cx("text-muted transition-transform", snapshotExpanded ? "rotate-0" : "-rotate-90")}
+                  aria-hidden
+                />
+              </button>
+              {snapshotExpanded ? (
+                <>
+                  {activeRec ? (
+                    <div className="mb-2.5 rounded-lg border border-brand/35 surface-warm px-2.5 py-2">
+                      <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-brand-bright/90">
+                        Active account
+                      </div>
+                      <div className="mt-0.5 truncate text-[13px] font-semibold text-ink" title={activeRec.account_name}>
+                        {activeRec.account_name}
+                      </div>
+                      <div className="mt-0.5 text-[10.5px] text-muted">
+                        Priority #{activeRec.priority_rank} ·{" "}
+                        {activeReasoning?.action.label ?? activeRec.recommended_action}
+                      </div>
+                    </div>
+                  ) : null}
+                  <div className="space-y-1.5">
+                    <RailRow icon={<ShieldAlert size={12} className="text-risk" />} label="Revenue at risk" value={inrCompact(snapRevRisk)} tone="risk" />
+                    <RailRow icon={<TrendingUp size={12} className="text-accent" />} label="Expansion opportunity" value={inrCompact(snapGrowth)} tone="opp" />
+                    <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="Accounts requiring action" value={String(snapAttention)} />
+                    <RailRow icon={<Clock size={12} className="text-muted" />} label="Renewals due" value={String(snapRenewals)} tone={snapRenewals > 0 ? "warn" : undefined} />
+                    <RailRow icon={<CheckCircle2 size={12} className="text-muted" />} label="Pending approvals" value={String(snapOpenApprovals)} tone={snapOpenApprovals > 0 ? "warn" : undefined} />
+                    <RailRow icon={<Clock size={12} className="text-muted" />} label="Estimated effort" value={snapEffortMin > 0 ? `~${Math.round((snapEffortMin / 60) * 10) / 10} hrs` : "—"} />
+                    <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="AI confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "—"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? undefined : "risk"} />
+                    <RailRow icon={<TrendingUp size={12} className="text-brand-bright" />} label="Top account" value={snapTopAccount} />
                   </div>
-                  <div className="mt-0.5 truncate text-[13px] font-semibold text-ink" title={activeRec.account_name}>
-                    {activeRec.account_name}
-                  </div>
-                  <div className="mt-0.5 text-[10.5px] text-muted">
-                    Priority #{activeRec.priority_rank} ·{" "}
-                    {activeReasoning?.action.label ?? activeRec.recommended_action}
-                  </div>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-1.5">
+                  <CompactKpi label="At risk" value={inrCompact(snapRevRisk)} tone="risk" />
+                  <CompactKpi label="Expansion" value={inrCompact(snapGrowth)} tone="opp" />
+                  <CompactKpi label="Approvals" value={String(snapOpenApprovals)} tone={snapOpenApprovals > 0 ? "warn" : "neutral"} />
+                  <CompactKpi label="Confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "—"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? "neutral" : "risk"} />
                 </div>
-              ) : null}
-              <div className="space-y-1.5">
-                <RailRow icon={<ShieldAlert size={12} className="text-risk" />} label="Revenue at risk" value={inrCompact(snapRevRisk)} tone="risk" />
-                <RailRow icon={<TrendingUp size={12} className="text-accent" />} label="Expansion opportunity" value={inrCompact(snapGrowth)} tone="opp" />
-                <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="Accounts requiring action" value={String(snapAttention)} />
-                <RailRow icon={<Clock size={12} className="text-muted" />} label="Renewals due" value={String(snapRenewals)} tone={snapRenewals > 0 ? "warn" : undefined} />
-                <RailRow icon={<CheckCircle2 size={12} className="text-muted" />} label="Pending approvals" value={String(snapOpenApprovals)} tone={snapOpenApprovals > 0 ? "warn" : undefined} />
-                <RailRow icon={<Clock size={12} className="text-muted" />} label="Estimated effort" value={snapEffortMin > 0 ? `~${Math.round((snapEffortMin / 60) * 10) / 10} hrs` : "—"} />
-                <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="AI confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "—"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? undefined : "risk"} />
-                <RailRow icon={<TrendingUp size={12} className="text-brand-bright" />} label="Top account" value={snapTopAccount} />
-              </div>
+              )}
             </div>
           </div>
         </aside>
@@ -626,12 +914,16 @@ function ChiefOfStaffNarrativeCard({
 function WorkQueuePanel({
   rows,
   activeAccountId,
+  experienceMode,
+  titleLabel,
   onSelect,
   loading,
   onRun,
 }: {
   rows: QueueRow[];
   activeAccountId: string | null;
+  experienceMode: "executive" | "seller" | "operations";
+  titleLabel: string;
   onSelect: (accountId: string) => void;
   loading?: boolean;
   onRun?: () => void;
@@ -643,6 +935,30 @@ function WorkQueuePanel({
   const mustDo = rows.filter((r) => r.rank <= 3);
   const shouldDo = rows.filter((r) => r.rank > 3 && r.rank <= 7);
   const optional = rows.filter((r) => r.rank > 7);
+  const effortMin = rows.reduce((sum, row) => sum + row.minutes, 0);
+  const pendingApprovals = rows.filter((row) => row.recommendation.approval_status === "pending").length;
+  const [showBuckets, setShowBuckets] = React.useState<boolean>(experienceMode === "operations");
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = `s2a_workspace_buckets_v1:${experienceMode}`;
+    const raw = window.localStorage.getItem(key);
+    if (raw === "1") setShowBuckets(true);
+    else if (raw === "0") setShowBuckets(false);
+    else setShowBuckets(experienceMode === "operations");
+  }, [experienceMode]);
+  const toggleBuckets = () => {
+    setShowBuckets((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(`s2a_workspace_buckets_v1:${experienceMode}`, next ? "1" : "0");
+        } catch {
+          /* noop */
+        }
+      }
+      return next;
+    });
+  };
 
   // Phase 13.6 — keep the selected row visible when arrow-key navigation moves
   // beyond the viewport. Uses nearest scrolling so the queue itself only
@@ -675,8 +991,12 @@ function WorkQueuePanel({
       }}
     >
       <div className="mb-2 flex items-center justify-between">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">Work queue</div>
-        <div className="text-[10px] text-faint">{rows.length ? `${rows.length} accounts` : ""}</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">{titleLabel}</div>
+        <div className="text-[10px] text-faint">
+          {rows.length
+            ? `${rows.length} account${rows.length === 1 ? "" : "s"} · ${Math.round((effortMin / 60) * 10) / 10 || 0}h effort · ${pendingApprovals} approvals`
+            : ""}
+        </div>
       </div>
       {rows.length === 0 ? (
         loading ? (
@@ -761,10 +1081,27 @@ function WorkQueuePanel({
               : "Use ↑/↓ keys to move selection. Click a row to focus the account workspace."}
           </div>
 
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <UrgencyBucket title="Must do" items={mustDo} tone="risk" />
-            <UrgencyBucket title="Should do" items={shouldDo} tone="warn" />
-            <UrgencyBucket title="Optional" items={optional} tone="neutral" />
+          <div className="mt-2 rounded-lg border border-edge bg-bg/25">
+            <button
+              type="button"
+              onClick={toggleBuckets}
+              className="flex w-full items-center justify-between px-2.5 py-2 text-left"
+              aria-expanded={showBuckets}
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">
+                Priority buckets
+              </span>
+              <span className="text-[10px] text-muted">
+                {mustDo.length} must do · {shouldDo.length} should do · {optional.length} optional
+              </span>
+            </button>
+            {showBuckets ? (
+              <div className="grid grid-cols-1 gap-2 border-t border-edge px-2.5 py-2 sm:grid-cols-3">
+                <UrgencyBucket title="Must do" items={mustDo} tone="risk" />
+                <UrgencyBucket title="Should do" items={shouldDo} tone="warn" />
+                <UrgencyBucket title="Optional" items={optional} tone="neutral" />
+              </div>
+            ) : null}
           </div>
         </>
       )}
@@ -868,6 +1205,13 @@ function AccountWorkspacePanel({
   recommendation,
   account,
   reasoning,
+  experienceMode,
+  requestedAccountId,
+  isRedirected,
+  redirectSource,
+  openedFromSource,
+  openedFromAt,
+  navigationTargetSection,
   generatedAt,
   onOpenAccount,
   loading,
@@ -877,8 +1221,19 @@ function AccountWorkspacePanel({
   recommendation: Recommendation | null;
   account?: Account;
   reasoning: ReturnType<typeof reasonForRecommendation> | null;
+  experienceMode: "executive" | "seller" | "operations";
+  requestedAccountId?: string | null;
+  isRedirected?: boolean;
+  redirectSource?: string | null;
+  openedFromSource?: string | null;
+  openedFromAt?: number | null;
+  navigationTargetSection?: "overview" | "prep" | "email" | "crm" | "evidence" | "evolution" | "timeline" | "reasoning" | "intelligence" | null;
   generatedAt?: string;
-  onOpenAccount: (accountId: string) => void;
+  onOpenAccount: (
+    accountId: string,
+    source?: string,
+    targetSection?: "overview" | "prep" | "email" | "crm" | "evidence" | "evolution" | "timeline" | "reasoning" | "intelligence",
+  ) => void;
   loading?: boolean;
   onRun?: () => void;
   timelineRefreshKey?: string;
@@ -887,11 +1242,16 @@ function AccountWorkspacePanel({
     if (loading) {
       return <WorkspaceSkeleton />;
     }
+    const redirectedUnavailable = Boolean(isRedirected && requestedAccountId);
     return (
       <div className="rounded-xl border border-edge bg-surface2/35 p-4">
         <EmptyPanelState
-          title="No account selected"
-          description="Select an account from the work queue to load the execution workspace, evidence, and recommended action."
+          title={redirectedUnavailable ? "Selected account is not in the current queue" : "No account selected"}
+          description={
+            redirectedUnavailable
+              ? `Account selected from ${redirectSource ?? "Portfolio Pulse"} is not currently in the recommendation queue. Run analysis or open Portfolio Intelligence.`
+              : "Select an account from the work queue to load the execution workspace, evidence, and recommended action."
+          }
           actionLabel="Run analysis"
           onAction={onRun}
         />
@@ -904,6 +1264,10 @@ function AccountWorkspacePanel({
       recommendation={recommendation}
       account={account}
       reasoning={reasoning}
+      experienceMode={experienceMode}
+      openedFromSource={openedFromSource}
+      openedFromAt={openedFromAt}
+      navigationTargetSection={navigationTargetSection}
       generatedAt={generatedAt}
       onOpenAccount={onOpenAccount}
       timelineRefreshKey={timelineRefreshKey}
@@ -911,17 +1275,39 @@ function AccountWorkspacePanel({
   );
 }
 
-type WorkspaceTab = "overview" | "prep" | "email" | "crm" | "evidence" | "timeline";
+type WorkspaceSection =
+  | "overview"
+  | "prep"
+  | "email"
+  | "crm"
+  | "evidence"
+  | "evolution"
+  | "timeline"
+  | "reasoning"
+  | "intelligence";
 type WorkspaceFocus = null | "summary" | "prep" | "crm" | "evidence" | "timeline";
 
-const WORKSPACE_TABS: { id: WorkspaceTab; label: string; icon: React.ReactNode }[] = [
-  { id: "overview", label: "Overview", icon: <Target size={12} /> },
-  { id: "prep", label: "Conversation Prep", icon: <MessageSquare size={12} /> },
-  { id: "email", label: "Email Draft", icon: <Mail size={12} /> },
-  { id: "crm", label: "CRM Update", icon: <ClipboardList size={12} /> },
-  { id: "evidence", label: "Evidence", icon: <ListChecks size={12} /> },
-  { id: "timeline", label: "Timeline", icon: <Clock size={12} /> },
+const WORKSPACE_SECTIONS: WorkspaceSection[] = [
+  "overview",
+  "prep",
+  "email",
+  "crm",
+  "evidence",
+  "evolution",
+  "timeline",
+  "reasoning",
+  "intelligence",
 ];
+
+function defaultWorkspaceSections(mode: "executive" | "seller" | "operations"): WorkspaceSection[] {
+  if (mode === "operations") {
+    return ["overview", "evidence", "timeline", "reasoning", "evolution", "intelligence"];
+  }
+  if (mode === "seller") {
+    return ["prep", "evolution"];
+  }
+  return ["overview", "evolution"];
+}
 
 interface MockApprovalEntry {
   decision: "approved" | "rejected" | "review";
@@ -941,6 +1327,10 @@ function WorkspaceCockpit({
   recommendation,
   account,
   reasoning,
+  experienceMode,
+  openedFromSource,
+  openedFromAt,
+  navigationTargetSection,
   generatedAt,
   onOpenAccount,
   timelineRefreshKey,
@@ -948,13 +1338,21 @@ function WorkspaceCockpit({
   recommendation: Recommendation;
   account?: Account;
   reasoning: NonNullable<ReturnType<typeof reasonForRecommendation>>;
+  experienceMode: "executive" | "seller" | "operations";
+  openedFromSource?: string | null;
+  openedFromAt?: number | null;
+  navigationTargetSection?: "overview" | "prep" | "email" | "crm" | "evidence" | "evolution" | "timeline" | "reasoning" | "intelligence" | null;
   generatedAt?: string;
-  onOpenAccount: (accountId: string) => void;
+  onOpenAccount: (
+    accountId: string,
+    source?: string,
+    targetSection?: "overview" | "prep" | "email" | "crm" | "evidence" | "evolution" | "timeline" | "reasoning" | "intelligence",
+  ) => void;
   timelineRefreshKey?: string;
 }) {
-  const [tab, setTab] = React.useState<WorkspaceTab>("overview");
   const [focus, setFocus] = React.useState<WorkspaceFocus>("summary");
   const [approvalOpen, setApprovalOpen] = React.useState(false);
+  const operationsMode = experienceMode === "operations";
   const ledgerTick = useLedgerTick();
   const accountHistory = React.useMemo(
     () => listLedgerForAccount(recommendation.account_id),
@@ -966,17 +1364,143 @@ function WorkspaceCockpit({
   );
   const cockpitRef = React.useRef<HTMLDivElement | null>(null);
   const risk = riskLevel(account);
+  const [showContextBanner, setShowContextBanner] = React.useState<boolean>(Boolean(openedFromSource));
+  const [openSections, setOpenSections] = React.useState<WorkspaceSection[]>(() => defaultWorkspaceSections(experienceMode));
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = `s2a_workspace_sections_v1:${experienceMode}`;
+    const fallback = defaultWorkspaceSections(experienceMode);
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) {
+        setOpenSections(fallback);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        setOpenSections(fallback);
+        return;
+      }
+      const valid = parsed.filter((section): section is WorkspaceSection =>
+        typeof section === "string" && WORKSPACE_SECTIONS.includes(section as WorkspaceSection),
+      );
+      setOpenSections(valid.length ? valid : fallback);
+    } catch {
+      setOpenSections(fallback);
+    }
+  }, [experienceMode, recommendation.account_id]);
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(`s2a_workspace_sections_v1:${experienceMode}`, JSON.stringify(openSections));
+    } catch {
+      /* noop */
+    }
+  }, [experienceMode, openSections]);
+  React.useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[account-routing]", {
+        stage: "Action Hero render",
+        traceStage: "action-hero-render",
+        clickedAccountId: recommendation.account_id,
+        urlAccountId: null,
+        selectedAccountId: recommendation.account_id,
+        activeAccountId: recommendation.account_id,
+        renderedAccountId: recommendation.account_id,
+        source: openedFromSource ?? "workspace-cockpit",
+        event: "workspace cockpit rendered",
+        accountId: recommendation.account_id,
+        accountName: recommendation.account_name,
+      });
+      console.info("[account-routing]", {
+        stage: "workspace-render",
+        traceStage: "workspace-render",
+        clickedAccountId: recommendation.account_id,
+        urlAccountId: null,
+        selectedAccountId: recommendation.account_id,
+        activeAccountId: recommendation.account_id,
+        renderedAccountId: recommendation.account_id,
+        source: openedFromSource ?? "workspace-cockpit",
+        event: "workspace final render",
+        accountId: recommendation.account_id,
+        accountName: recommendation.account_name,
+      });
+    }
+    setShowContextBanner(Boolean(openedFromSource));
+    if (!openedFromSource) return;
+    const t = window.setTimeout(() => setShowContextBanner(false), 6000);
+    return () => window.clearTimeout(t);
+  }, [openedFromAt, openedFromSource, recommendation.account_id]);
+  React.useEffect(() => {
+    if (!navigationTargetSection) return;
+    setOpenSections((prev) => {
+      if (operationsMode) {
+        return prev.includes(navigationTargetSection) ? prev : [...prev, navigationTargetSection];
+      }
+      return [navigationTargetSection];
+    });
+  }, [navigationTargetSection, operationsMode]);
+  React.useEffect(() => {
+    if (experienceMode !== "seller") return;
+    trackSellerMetric("workspace_loaded", {
+      account_id: recommendation.account_id,
+      recommendation_id: recommendation.recommendation_id,
+      opened_from: openedFromSource ?? null,
+    });
+  }, [experienceMode, recommendation.account_id, recommendation.recommendation_id, openedFromSource]);
+  const sectionOpen = React.useCallback((section: WorkspaceSection) => openSections.includes(section), [openSections]);
+  const toggleSection = React.useCallback(
+    (section: WorkspaceSection) => {
+      setOpenSections((prev) => {
+        if (operationsMode) {
+          return prev.includes(section) ? prev.filter((s) => s !== section) : [...prev, section];
+        }
+        return prev.includes(section) ? [] : [section];
+      });
+    },
+    [operationsMode],
+  );
+  const openSection = React.useCallback(
+    (section: WorkspaceSection) => {
+      setOpenSections((prev) => {
+        if (operationsMode) {
+          return prev.includes(section) ? prev : [...prev, section];
+        }
+        return [section];
+      });
+    },
+    [operationsMode],
+  );
+  const evidenceTop = React.useMemo(() => {
+    const items = recommendation.evidence ?? [];
+    if (!items.length) return null;
+    const score = (p: string, strength: number) => {
+      const pol = p.toLowerCase();
+      const polarityWeight = pol.startsWith("neg") ? 3 : pol.startsWith("pos") ? 1 : 2;
+      return polarityWeight * 100 + Math.round((strength || 0) * 100);
+    };
+    return [...items].sort((a, b) => score(b.polarity, b.strength) - score(a.polarity, a.strength))[0];
+  }, [recommendation.evidence]);
+  const evidenceUpdated = formatTimestamp(generatedAt) || "—";
+  const actionWhy = reasoning.reasons.slice(0, 3).map((r) => r.text);
 
   // Brief, transient focus highlight so users see the click had an effect.
   React.useEffect(() => {
     if (!focus) return;
     const t = window.setTimeout(() => setFocus(null), 2400);
     return () => window.clearTimeout(t);
-  }, [focus, tab]);
+  }, [focus, openSections]);
 
-  const goto = (next: WorkspaceTab, nextFocus: WorkspaceFocus) => {
-    setTab(next);
+  const goto = (next: WorkspaceSection, nextFocus: WorkspaceFocus) => {
+    openSection(next);
     setFocus(nextFocus);
+    if (experienceMode === "seller") {
+      if (next === "prep") {
+        trackSellerMetric("conversation_prep_opened", { account_id: recommendation.account_id, source: openedFromSource ?? null });
+      } else if (next === "crm") {
+        trackSellerMetric("crm_note_opened", { account_id: recommendation.account_id, source: openedFromSource ?? null });
+      }
+    }
     cockpitRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -984,36 +1508,39 @@ function WorkspaceCockpit({
     goto("overview", "summary");
     // Also surface the full account detail panel so deeper review + approval
     // controls remain available without changing the architecture.
-    onOpenAccount(recommendation.account_id);
+    onOpenAccount(recommendation.account_id, "Action Hero", "overview");
   };
 
   return (
     <div ref={cockpitRef} className="flex h-full flex-col rounded-xl border border-edge bg-surface2/35 p-3 ambient-glow">
-      {/* Persistent cockpit header */}
+      {/* Action Hero — first decision surface */}
       <div className="rounded-lg border border-edge-soft surface-warm p-3.5">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        {showContextBanner ? (
+          <div className="mb-2 rounded-md border border-brand-bright/35 bg-brand/[0.08] px-2.5 py-1 text-[10.5px] text-brand-bright">
+            Viewing account <span className="font-semibold">{recommendation.account_name}</span>
+            <span className="mx-1 text-edge">·</span>
+            Opened from <span className="font-semibold">{openedFromSource}</span>
+          </div>
+        ) : null}
+        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-faint">Action hero</div>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <div className="text-[19px] font-semibold leading-tight tracking-tight text-ink">{recommendation.account_name}</div>
           <Badge label={`Priority #${recommendation.priority_rank}`} tone="brand" />
           <RecommendationSeverityBadge accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
           <Badge label={`Risk ${risk}`} tone={risk === "High" ? "risk" : risk === "Medium" ? "warn" : "ok"} />
-          <Badge label={`Opportunity ${account?.growth_potential_score ?? 0}`} tone="ok" />
-          <Badge label={`Renewal ${account?.renewal_days ?? "—"}d`} tone="neutral" />
-          <Badge label={`~${reasoning.estimatedMinutes}m`} tone="neutral" />
-          <Badge label={`${recommendation.evidence.length} evidence`} tone="neutral" />
         </div>
         <p className="mt-2 text-[12.5px] text-muted">
           Recommended action: <span className="font-semibold text-ink">{reasoning.action.label}</span>
         </p>
-        <RecommendationEvolutionPanel
-          accountId={recommendation.account_id}
-          fallbackAction={reasoning.action.label}
-          fallbackRank={recommendation.priority_rank}
-          refreshKey={timelineRefreshKey}
-        />
-        <WhyRecommendationChanged accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
+        <div className="mt-2 rounded-lg border border-edge bg-bg/30 p-2.5">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">Why this account matters</div>
+          <ul className="mt-1 space-y-0.5 text-[11px] text-muted">
+            {actionWhy.map((line, idx) => (
+              <li key={`why-${idx}`}>• {line}</li>
+            ))}
+          </ul>
+        </div>
         <LifecycleRibbon state={lifecycle} />
-        {/* Primary execution CTAs — wired to in-workspace navigation +
-            transient focus. Approval opens a mock human-in-the-loop drawer. */}
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           <button type="button" onClick={onOpenAccountClick} className="btn btn-primary px-3 py-1.5 text-[12px]">
             <ArrowUpRight size={13} /> Open Account
@@ -1033,44 +1560,112 @@ function WorkspaceCockpit({
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div role="tablist" aria-label="Account execution workspace" className="mt-2.5 flex flex-wrap gap-1 border-b border-edge">
-        {WORKSPACE_TABS.map((t) => {
-          const active = t.id === tab;
-          return (
-            <button
-              key={t.id}
-              role="tab"
-              type="button"
-              aria-selected={active}
-              onClick={() => setTab(t.id)}
-              className={cx(
-                "inline-flex items-center gap-1.5 rounded-t-md px-3 py-2 text-[12.5px] font-medium transition-colors -mb-px border-b-2",
-                active
-                  ? "border-brand-bright text-ink bg-bg/35"
-                  : "border-transparent text-faint hover:text-muted hover:bg-surface2/40",
-              )}
-            >
-              {t.icon}
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Tab content */}
-      <div role="tabpanel" className="mt-2 min-h-[320px]">
-        {tab === "overview" ? <OverviewTab recommendation={recommendation} account={account} reasoning={reasoning} focused={focus === "summary"} /> : null}
-        {tab === "prep" ? <ConversationPrepTab recommendation={recommendation} account={account} reasoning={reasoning} focused={focus === "prep"} /> : null}
-        {tab === "email" ? <EmailDraftTab recommendation={recommendation} account={account} reasoning={reasoning} /> : null}
-        {tab === "crm" ? <CrmUpdateTab recommendation={recommendation} reasoning={reasoning} generatedAt={generatedAt} focused={focus === "crm"} /> : null}
-        {tab === "evidence" ? <EvidenceTab recommendation={recommendation} generatedAt={generatedAt} focused={focus === "evidence"} /> : null}
-        {tab === "timeline" ? (
-          <div className="space-y-3">
-            <AccountTimeline accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
-            <ReasoningTrail accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
+      {/* Recommendation evolution — immediately below Action Hero */}
+      <div className="mt-2 rounded-lg border border-edge bg-surface2/45 p-2.5">
+        <button
+          type="button"
+          onClick={() => toggleSection("evolution")}
+          className="flex w-full items-center justify-between text-left"
+          aria-expanded={sectionOpen("evolution")}
+        >
+          <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-faint">Recommendation evolution</div>
+          <span className="text-[10px] text-muted">{sectionOpen("evolution") ? "Collapse" : "Expand"}</span>
+        </button>
+        {sectionOpen("evolution") ? (
+          <div className="mt-2 space-y-2">
+            <RecommendationEvolutionPanel
+              accountId={recommendation.account_id}
+              fallbackAction={reasoning.action.label}
+              fallbackRank={recommendation.priority_rank}
+              refreshKey={timelineRefreshKey}
+            />
+            <WhyRecommendationChanged accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
           </div>
         ) : null}
+      </div>
+
+      {/* Focus-first accordion workspace */}
+      <div className="mt-2 space-y-2">
+        <WorkspaceAccordion
+          title="Overview"
+          summary={recommendation.priority_reason}
+          open={sectionOpen("overview")}
+          onToggle={() => toggleSection("overview")}
+        >
+          <OverviewTab recommendation={recommendation} account={account} reasoning={reasoning} focused={focus === "summary"} />
+        </WorkspaceAccordion>
+
+        <WorkspaceAccordion
+          title="Conversation prep"
+          summary="Talking points, discovery questions, and commitments"
+          open={sectionOpen("prep")}
+          onToggle={() => toggleSection("prep")}
+        >
+          <ConversationPrepTab recommendation={recommendation} account={account} reasoning={reasoning} focused={focus === "prep"} />
+        </WorkspaceAccordion>
+
+        <WorkspaceAccordion
+          title="Email draft"
+          summary="Prepared outreach message"
+          open={sectionOpen("email")}
+          onToggle={() => toggleSection("email")}
+        >
+          <EmailDraftTab recommendation={recommendation} account={account} reasoning={reasoning} />
+        </WorkspaceAccordion>
+
+        <WorkspaceAccordion
+          title="CRM update"
+          summary="Suggested note, owner, and follow-up date"
+          open={sectionOpen("crm")}
+          onToggle={() => toggleSection("crm")}
+        >
+          <CrmUpdateTab recommendation={recommendation} reasoning={reasoning} generatedAt={generatedAt} focused={focus === "crm"} />
+        </WorkspaceAccordion>
+
+        <WorkspaceAccordion
+          title="Evidence"
+          summary={`${recommendation.evidence.length} signals · highest ${evidenceTop?.label ?? "—"} · updated ${evidenceUpdated}`}
+          open={sectionOpen("evidence")}
+          onToggle={() => toggleSection("evidence")}
+        >
+          <EvidenceTab recommendation={recommendation} generatedAt={generatedAt} focused={focus === "evidence"} />
+        </WorkspaceAccordion>
+
+        <WorkspaceAccordion
+          title="Account intelligence"
+          summary={`${account?.segment ? titleCase(account.segment) : "—"} · ${account?.region ? titleCase(account.region) : "—"} · Renewal ${account?.renewal_days ?? "—"}d`}
+          open={sectionOpen("intelligence")}
+          onToggle={() => toggleSection("intelligence")}
+        >
+          <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+            <MiniStat label="Industry" value={account?.industry ? titleCase(account.industry) : "—"} />
+            <MiniStat label="Segment" value={account?.segment ? titleCase(account.segment) : "—"} />
+            <MiniStat label="Region" value={account?.region ? titleCase(account.region) : "—"} />
+            <MiniStat label="Investment" value={inrCompact(account?.current_month_spend ?? 0)} />
+            <MiniStat label="Adoption" value={`${account?.product_usage_score ?? "—"}`} />
+            <MiniStat label="Engagement" value={`${account?.engagement_score ?? "—"}`} />
+            <MiniStat label="Support risk" value={`${account?.support_risk_score ?? "—"}`} />
+            <MiniStat label="Renewal window" value={`${account?.renewal_days ?? "—"}d`} />
+          </div>
+        </WorkspaceAccordion>
+
+        <WorkspaceAccordion
+          title="Timeline"
+          summary="Chronological account events"
+          open={sectionOpen("timeline")}
+          onToggle={() => toggleSection("timeline")}
+        >
+          <AccountTimeline accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
+        </WorkspaceAccordion>
+
+        <WorkspaceAccordion
+          title="Reasoning"
+          summary="Historical reasoning trail"
+          open={sectionOpen("reasoning")}
+          onToggle={() => toggleSection("reasoning")}
+        >
+          <ReasoningTrail accountId={recommendation.account_id} refreshKey={timelineRefreshKey} />
+        </WorkspaceAccordion>
       </div>
 
       {approvalOpen ? (
@@ -1521,6 +2116,38 @@ function FocusRing({ focused, children }: { focused?: boolean; children: React.R
     >
       {children}
     </div>
+  );
+}
+
+function WorkspaceAccordion({
+  title,
+  summary,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  summary?: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="overflow-hidden rounded-lg border border-edge bg-surface2/35">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-surface2/50"
+      >
+        <div className="min-w-0">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">{title}</div>
+          {!open && summary ? <div className="mt-0.5 truncate text-[11px] text-muted">{summary}</div> : null}
+        </div>
+        <span className="text-[10px] text-muted">{open ? "Collapse" : "Expand"}</span>
+      </button>
+      {open ? <div className="border-t border-edge px-3 py-2.5">{children}</div> : null}
+    </section>
   );
 }
 
@@ -2224,7 +2851,7 @@ function CollapsibleZone({
 }) {
   const [open, toggle] = useZoneOpen(id, defaultOpen);
   return (
-    <div className="overflow-hidden rounded-xl border border-edge bg-surface/20">
+    <div id={id} className="overflow-hidden rounded-xl border border-edge bg-surface/20">
       <button type="button" onClick={toggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-surface2/30">
         <div className="min-w-0">
           <div className="text-[9px] font-semibold uppercase tracking-[0.15em] text-faint">{eyebrow}</div>
@@ -2325,6 +2952,33 @@ function TrustStat({ icon, label, value }: { icon: React.ReactNode; label: strin
         {label}
       </div>
       <div className="mt-1 text-base font-semibold text-ink">{value}</div>
+    </div>
+  );
+}
+
+function CompactKpi({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "risk" | "opp" | "warn" | "neutral";
+}) {
+  const valueTone =
+    tone === "risk"
+      ? "text-risk"
+      : tone === "opp"
+        ? "text-accent"
+        : tone === "warn"
+          ? "text-warn"
+          : "text-ink";
+  return (
+    <div className="rounded-md border border-edge/70 bg-surface1/40 px-2 py-1.5">
+      <div className="text-[8.5px] font-semibold uppercase tracking-[0.14em] text-faint">{label}</div>
+      <div className={cx("mt-0.5 truncate text-[12px] font-semibold", valueTone)} title={value}>
+        {value}
+      </div>
     </div>
   );
 }

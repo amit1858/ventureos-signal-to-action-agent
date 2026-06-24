@@ -48,14 +48,22 @@ import { NvidiaReadyCard } from "@/components/NvidiaReadyCard";
 import { KpiStrip } from "@/components/KpiStrip";
 import { CommandCenter } from "@/components/command/CommandCenter";
 import { WhyThisAccount } from "@/components/WhyThisAccount";
+import { buildAccountSelectionContext, type AccountSelectionContext } from "@/lib/accountSelectionContext";
 import { LandingView } from "@/components/landing/LandingView";
 import { EvaluationView } from "@/components/evaluation/EvaluationView";
 import { WorkspaceQuery } from "@/components/WorkspaceQuery";
 import { ThinkingSequence } from "@/components/ThinkingSequence";
 import { Card, PanelTitle } from "@/components/ui";
+import {
+  normalizePreferredSection,
+  type OpenAccountFromSurfaceInput,
+  type WorkspaceSectionTarget,
+} from "@/lib/accountNavigation";
+import { loadExperienceMode, saveExperienceMode } from "@/lib/experienceMode";
 
 const DEFAULT_QUERY = "Which SMB accounts need attention this week and why?";
 const DEMO_MODE_KEY = "s2a_demo_mode";
+const SELECTED_ACCOUNT_KEY = "s2a_selected_account_v1";
 
 // Distil one account's outside-in signal result into a single cautious takeaway
 // for the portfolio brief. Supporting context only — never a ranking driver.
@@ -73,6 +81,42 @@ function toBriefExternalContext(d: ExternalSignalsResult): BriefExternalContext 
   };
 }
 
+function normalizeAccountId(value: unknown): string | null {
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const normalized = String(value).trim().toUpperCase();
+  return normalized || null;
+}
+
+function recommendationAccountCandidates(rec: Recommendation): string[] {
+  const extended = rec as Recommendation & { account?: { id?: string }; id?: string };
+  return [
+    normalizeAccountId(rec.account_id),
+    normalizeAccountId(extended.account?.id),
+    normalizeAccountId(extended.id),
+  ].filter((v): v is string => Boolean(v));
+}
+
+function findRecommendationByAccountId(
+  recommendations: Recommendation[],
+  requestedId: string,
+  accountsById?: Record<string, Account>,
+): Recommendation | null {
+  const normalizedRequested = normalizeAccountId(requestedId);
+  if (!normalizedRequested) return null;
+  const byId = recommendations.find((r) =>
+    recommendationAccountCandidates(r).some((candidate) => candidate === normalizedRequested),
+  );
+  if (byId) return byId;
+
+  if (!accountsById) return null;
+  const accountName =
+    accountsById[requestedId]?.account_name ??
+    Object.values(accountsById).find((a) => normalizeAccountId(a.account_id) === normalizedRequested)?.account_name;
+  if (!accountName) return null;
+  const normalizedName = accountName.trim().toLowerCase();
+  return recommendations.find((r) => r.account_name.trim().toLowerCase() === normalizedName) ?? null;
+}
+
 export default function Page() {
   const [meta, setMeta] = React.useState<MetaResponse | null>(null);
   const [health, setHealth] = React.useState<HealthResponse | null>(null);
@@ -88,6 +132,15 @@ export default function Page() {
   const [result, setResult] = React.useState<RecommendationResponse | null>(null);
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = React.useState<string | null>(null);
+  const [redirectContext, setRedirectContext] = React.useState<{
+    accountId: string;
+    source: string;
+    at: number;
+  } | null>(null);
+  const [urlAccountId, setUrlAccountId] = React.useState<string | null>(null);
+  const [persistedAccountId, setPersistedAccountId] = React.useState<string | null>(null);
+  const [showWorkspaceRedirectBanner, setShowWorkspaceRedirectBanner] = React.useState(false);
   const [details, setDetails] = React.useState<Record<string, AccountDetail>>({});
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [externalSignals, setExternalSignals] = React.useState<Record<string, ExternalSignalsResult>>({});
@@ -139,6 +192,31 @@ export default function Page() {
     }
   }, []);
 
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get("accountId") ?? params.get("account") ?? params.get("account_id");
+    setUrlAccountId(fromUrl);
+    try {
+      setPersistedAccountId(window.localStorage.getItem(SELECTED_ACCOUNT_KEY));
+    } catch {
+      setPersistedAccountId(null);
+    }
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[account-routing]", {
+        stage: "URL sync",
+        clickedAccountId: null,
+        event: "url account parsed",
+        urlAccountId: normalizeAccountId(fromUrl),
+        selectedAccountId: null,
+        activeAccountId: null,
+        renderedAccountId: null,
+        source: "url:init",
+        parsedAccountId: normalizeAccountId(fromUrl),
+      });
+    }
+  }, []);
+
   function toggleDemo(v: boolean) {
     setDemoMode(v);
     try {
@@ -179,10 +257,162 @@ export default function Page() {
     }
   }, []);
 
-  const selectedRec: Recommendation | undefined = React.useMemo(
-    () => result?.recommendations.find((r) => r.recommendation_id === selectedId),
-    [result, selectedId],
+  const requestedAccountId = React.useMemo(
+    () =>
+      normalizeAccountId(
+        redirectContext?.accountId ??
+        selectedAccountId ??
+        urlAccountId ??
+        persistedAccountId ??
+        null,
+      ),
+    [redirectContext?.accountId, selectedAccountId, urlAccountId, persistedAccountId],
   );
+
+  const activeRecommendation = React.useMemo(() => {
+    if (!result) return undefined;
+    if (!requestedAccountId) {
+      if (process.env.NODE_ENV !== "production") {
+        console.info("[account-routing]", {
+          stage: "Workspace account resolution",
+          clickedAccountId: null,
+          event: "top-priority fallback executed",
+          urlAccountId: normalizeAccountId(urlAccountId),
+          selectedAccountId: normalizeAccountId(selectedAccountId),
+          activeAccountId: null,
+          renderedAccountId: normalizeAccountId(result.recommendations[0]?.account_id ?? null),
+          source: "activeRecommendation:no-requested-id",
+          reason: "no requested account id",
+          fallbackAccountId: result.recommendations[0]?.account_id ?? null,
+          fallbackAccountName: result.recommendations[0]?.account_name ?? null,
+        });
+      }
+      return result.recommendations[0];
+    }
+    const matched = findRecommendationByAccountId(result.recommendations, requestedAccountId, accounts);
+    if (matched) return matched;
+    // Redirected account should never be auto-overridden by top priority.
+    if (normalizeAccountId(redirectContext?.accountId) === requestedAccountId) return undefined;
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[account-routing]", {
+        stage: "Workspace account resolution",
+        clickedAccountId: requestedAccountId,
+        event: "top-priority fallback executed",
+        urlAccountId: normalizeAccountId(urlAccountId),
+        selectedAccountId: normalizeAccountId(selectedAccountId),
+        activeAccountId: normalizeAccountId(result.recommendations[0]?.account_id ?? null),
+        renderedAccountId: normalizeAccountId(result.recommendations[0]?.account_id ?? null),
+        source: "activeRecommendation:requested-id-missing",
+        reason: "requested id not found in recommendations",
+        requestedAccountId,
+        fallbackAccountId: result.recommendations[0]?.account_id ?? null,
+        fallbackAccountName: result.recommendations[0]?.account_name ?? null,
+      });
+    }
+    return result.recommendations[0];
+  }, [result, requestedAccountId, redirectContext?.accountId, accounts]);
+
+  const selectedRec: Recommendation | undefined = activeRecommendation;
+
+  // Phase 15C.5 — Single source of truth: app-level account selection context
+  // This context is passed to CommandCenter to eliminate duplicate selection logic.
+  const accountSelectionContext = React.useMemo<AccountSelectionContext>(
+    () =>
+      buildAccountSelectionContext(
+        redirectContext,
+        selectedAccountId,
+        urlAccountId,
+        persistedAccountId,
+        activeRecommendation,
+      ),
+    [redirectContext, selectedAccountId, urlAccountId, persistedAccountId, activeRecommendation],
+  );
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    console.info("[account-routing]", {
+      stage: "page-resolvedAccountContext",
+      traceStage: "page-resolvedAccountContext",
+      requestedAccountId: accountSelectionContext.requestedAccountId,
+      activeAccountId: accountSelectionContext.activeAccountId,
+      renderedAccountId: activeRecommendation?.account_id ?? null,
+      selectedAccountId: normalizeAccountId(selectedAccountId),
+      urlAccountId: normalizeAccountId(urlAccountId),
+      redirectedAccountId: normalizeAccountId(redirectContext?.accountId),
+      source: accountSelectionContext.redirectSource ?? "workspace",
+      isRedirected: accountSelectionContext.isRedirected,
+      event: "resolved account context",
+    });
+  }, [
+    accountSelectionContext.activeAccountId,
+    accountSelectionContext.isRedirected,
+    accountSelectionContext.redirectSource,
+    accountSelectionContext.requestedAccountId,
+    activeRecommendation?.account_id,
+    redirectContext?.accountId,
+    selectedAccountId,
+    urlAccountId,
+  ]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const persisted = requestedAccountId ?? selectedRec?.account_id ?? null;
+    if (!persisted) return;
+    try {
+      window.localStorage.setItem(SELECTED_ACCOUNT_KEY, persisted);
+      setPersistedAccountId(persisted);
+    } catch {
+      /* noop */
+    }
+  }, [requestedAccountId, selectedRec?.account_id]);
+
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (!result) return;
+    console.info("[account-routing]", {
+      stage: "Final active account render",
+      clickedAccountId: normalizeAccountId(redirectContext?.accountId),
+      redirectedAccountId: normalizeAccountId(redirectContext?.accountId),
+      urlAccountId: normalizeAccountId(urlAccountId),
+      selectedAccountId: normalizeAccountId(selectedAccountId),
+      activeAccountId: selectedRec ? normalizeAccountId(selectedRec.account_id) : null,
+      renderedAccountId: selectedRec ? normalizeAccountId(selectedRec.account_id) : null,
+      source: redirectContext?.source ?? "workspace",
+      persistedSelectedAccountId: normalizeAccountId(persistedAccountId),
+      resolvedRecommendationAccountId: selectedRec ? normalizeAccountId(selectedRec.account_id) : null,
+      resolvedRecommendationName: selectedRec?.account_name ?? null,
+    });
+  }, [result, redirectContext?.accountId, selectedAccountId, urlAccountId, persistedAccountId, selectedRec]);
+
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (!selectedRec) return;
+    console.info("[account-routing]", {
+      stage: "Right Rail render",
+      traceStage: "right-rail-render",
+      clickedAccountId: normalizeAccountId(redirectContext?.accountId),
+      event: "rightRailAccount resolved",
+      urlAccountId: normalizeAccountId(urlAccountId),
+      selectedAccountId: normalizeAccountId(selectedAccountId),
+      activeAccountId: normalizeAccountId(selectedRec.account_id),
+      renderedAccountId: normalizeAccountId(selectedRec.account_id),
+      source: redirectContext?.source ?? "workspace:right-rail",
+      accountId: normalizeAccountId(selectedRec.account_id),
+      accountName: selectedRec.account_name,
+    });
+    console.info("[account-routing]", {
+      stage: "Action Hero render",
+      traceStage: "action-hero-render",
+      clickedAccountId: normalizeAccountId(redirectContext?.accountId),
+      event: "ActionHero account resolved",
+      urlAccountId: normalizeAccountId(urlAccountId),
+      selectedAccountId: normalizeAccountId(selectedAccountId),
+      activeAccountId: normalizeAccountId(selectedRec.account_id),
+      renderedAccountId: normalizeAccountId(selectedRec.account_id),
+      source: redirectContext?.source ?? "workspace:action-hero",
+      accountId: normalizeAccountId(selectedRec.account_id),
+      accountName: selectedRec.account_name,
+    });
+  }, [selectedRec, redirectContext?.accountId, redirectContext?.source, selectedAccountId, urlAccountId]);
 
   // Whether the optional outside-in (external) signal layer is enabled on the
   // backend. Defaults to false (the layer is additive and off by default).
@@ -309,17 +539,95 @@ export default function Page() {
     [],
   );
 
-  async function runWorkflow() {
+  const applyAccountSelection = React.useCallback(
+    (
+      accountId: string | null,
+      recommendationId?: string | null,
+      opts?: { clearRedirect?: boolean; source?: string },
+    ) => {
+      const normalized = normalizeAccountId(accountId);
+      if (!normalized) return;
+      if (process.env.NODE_ENV !== "production") {
+        console.info("[account-routing]", {
+          stage: "page-applyAccountSelection",
+          traceStage: "page-applyAccountSelection",
+          clickedAccountId: normalized,
+          event: "selectedAccountId set",
+          urlAccountId: normalizeAccountId(urlAccountId),
+          selectedAccountId: normalized,
+          activeAccountId: normalizeAccountId(selectedRec?.account_id),
+          renderedAccountId: normalizeAccountId(selectedRec?.account_id),
+          source: opts?.source ?? "applyAccountSelection",
+          recommendationId: recommendationId ?? null,
+        });
+      }
+      setSelectedAccountId(normalized);
+      if (recommendationId !== undefined) {
+        setSelectedId(recommendationId);
+      }
+      if (opts?.clearRedirect !== false) {
+        setRedirectContext(null);
+      }
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(SELECTED_ACCOUNT_KEY, normalized);
+        } catch {
+          /* noop */
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.set("accountId", normalized);
+        window.history.replaceState(null, "", url.toString());
+        setUrlAccountId(normalized);
+        if (process.env.NODE_ENV !== "production") {
+          console.info("[account-routing]", {
+            stage: "URL sync",
+            clickedAccountId: normalized,
+            urlAccountId: normalized,
+            selectedAccountId: normalized,
+            activeAccountId: normalizeAccountId(selectedRec?.account_id),
+            renderedAccountId: normalizeAccountId(selectedRec?.account_id),
+            source: opts?.source ?? "applyAccountSelection",
+            event: "url account synced",
+          });
+        }
+      }
+    },
+    [selectedRec?.account_id, urlAccountId],
+  );
+
+  async function runWorkflow(limitOverride?: number) {
     if (!query.trim() || loading) return;
+    const effectiveLimit =
+      typeof limitOverride === "number" && Number.isFinite(limitOverride)
+        ? limitOverride
+        : limit;
     setLoading(true);
     setRunError(null);
     setEditing(false);
     setAiOverlay(null);
     setPortfolio(null);
     try {
-      const res = await api.recommendations(query.trim(), limit);
+      const res = await api.recommendations(query.trim(), effectiveLimit);
       setResult(res);
-      setSelectedId(res.recommendations[0]?.recommendation_id ?? null);
+      const pendingAccountId = pendingAccountRef.current;
+      const preferredId = normalizeAccountId(
+        pendingAccountId ??
+        redirectContext?.accountId ??
+        selectedAccountId ??
+        urlAccountId ??
+        persistedAccountId ??
+        null,
+      );
+      const preferredRec = preferredId
+        ? findRecommendationByAccountId(res.recommendations, preferredId, accounts)
+        : undefined;
+      const initialRec = preferredRec ?? res.recommendations[0];
+      setSelectedId(initialRec?.recommendation_id ?? null);
+      if (preferredId) {
+        setSelectedAccountId(preferredId);
+      } else {
+        setSelectedAccountId(initialRec?.account_id ?? null);
+      }
       // Phase 6 · fire-and-forget AI overlay for the top recommendations.
       // The overlay only fetches when an active BYOK provider has a session
       // key; otherwise it resolves to null and we stay on the deterministic
@@ -332,7 +640,7 @@ export default function Page() {
       // Phase 7 · fire-and-forget Portfolio (Chief-of-Staff) agent. Read-only
       // summary across the ranked output; never re-ranks. Failures swallowed.
       api
-        .multiAgentPortfolio(query.trim(), limit)
+        .multiAgentPortfolio(query.trim(), effectiveLimit)
         .then((p) => setPortfolio(p))
         .catch(() => setPortfolio(null));
     } catch (e) {
@@ -362,26 +670,197 @@ export default function Page() {
     if (!result) return;
     const acc = pendingAccountRef.current;
     if (!acc) return;
-    const rec = result.recommendations.find((r) => r.account_id === acc);
+    const rec = findRecommendationByAccountId(result.recommendations, acc, accounts);
     if (rec) {
-      setSelectedId(rec.recommendation_id);
+      applyAccountSelection(rec.account_id, rec.recommendation_id, { clearRedirect: false });
       setEditing(false);
     }
     pendingAccountRef.current = null;
-  }, [result]);
+  }, [result, applyAccountSelection, accounts]);
 
   // Open an account in the detailed workspace from the cockpit (matrix dot / row).
-  function openAccount(accountId: string) {
-    setView("workspace");
-    const rec = result?.recommendations.find((r) => r.account_id === accountId);
-    if (rec) {
-      setSelectedId(rec.recommendation_id);
-      setEditing(false);
-      pendingAccountRef.current = null;
-    } else {
-      pendingAccountRef.current = accountId;
-      if (!loading) runWorkflow();
+  const openAccountFromSurface = React.useCallback(
+    ({ accountId, source, preferredSection, mode }: OpenAccountFromSurfaceInput) => {
+      const normalizedAccountId = normalizeAccountId(accountId);
+      if (!normalizedAccountId) return;
+      if (process.env.NODE_ENV !== "production") {
+        console.info("[account-routing]", {
+          stage: "page-openAccountFromSurface",
+          traceStage: "page-openAccountFromSurface",
+          clickedAccountId: normalizedAccountId,
+          urlAccountId: normalizeAccountId(urlAccountId),
+          selectedAccountId: normalizeAccountId(selectedAccountId),
+          activeAccountId: normalizeAccountId(selectedRec?.account_id),
+          renderedAccountId: normalizeAccountId(selectedRec?.account_id),
+          source,
+          event: "redirect received",
+          redirectedAccountId: normalizedAccountId,
+          preferredSection: preferredSection ?? null,
+          mode: mode ?? null,
+        });
+      }
+      const targetSection = normalizePreferredSection(preferredSection);
+      if (mode) {
+        const previous = loadExperienceMode();
+        if (mode !== previous) saveExperienceMode(mode, previous);
+      }
+      setRedirectContext({ accountId: normalizedAccountId, source, at: Date.now() });
+      if (process.env.NODE_ENV !== "production") {
+        console.info("[account-routing]", {
+          stage: "Redirect context creation",
+          clickedAccountId: normalizedAccountId,
+          urlAccountId: normalizeAccountId(urlAccountId),
+          selectedAccountId: normalizeAccountId(selectedAccountId),
+          activeAccountId: normalizeAccountId(selectedRec?.account_id),
+          renderedAccountId: normalizeAccountId(selectedRec?.account_id),
+          source,
+          event: "redirect context created",
+          redirectedAccountId: normalizedAccountId,
+        });
+      }
+      setShowWorkspaceRedirectBanner(true);
+      setView("command");
+      const rec = result ? findRecommendationByAccountId(result.recommendations, normalizedAccountId, accounts) : null;
+      if (rec) {
+        applyAccountSelection(rec.account_id, rec.recommendation_id, { clearRedirect: false, source });
+        setEditing(false);
+        pendingAccountRef.current = null;
+      } else {
+        applyAccountSelection(normalizedAccountId, null, { clearRedirect: false, source });
+        pendingAccountRef.current = normalizedAccountId;
+        if (!loading) {
+          const fullCoverageLimit = Math.max(
+            limit,
+            50,
+            Object.keys(accounts).length,
+            meta?.dataset.accounts ?? 0,
+          );
+          const rerunLimit = Math.min(50, fullCoverageLimit);
+          if (process.env.NODE_ENV !== "production") {
+            console.info("[account-routing]", {
+              event: "redirect account missing in current recommendation set",
+              redirectedAccountId: normalizedAccountId,
+              rerunLimit,
+            });
+          }
+          runWorkflow(rerunLimit);
+        }
+      }
+      try {
+        window.localStorage.setItem(
+          "s2a_account_nav_v1",
+          JSON.stringify({
+            accountId,
+            normalizedAccountId,
+            source,
+            targetSection: targetSection ?? null,
+            mode: mode ?? null,
+            timestamp: new Date().toISOString(),
+          }),
+        );
+      } catch {
+        /* noop */
+      }
+      trackWorkflowEvent("account_opened", {
+        account_id: accountId,
+        normalized_account_id: normalizedAccountId,
+        source,
+        target_section: targetSection ?? null,
+        mode: mode ?? null,
+      });
+    },
+    [
+      accounts,
+      applyAccountSelection,
+      limit,
+      loading,
+      meta?.dataset.accounts,
+      result,
+      runWorkflow,
+      selectedAccountId,
+      selectedRec?.account_id,
+      urlAccountId,
+    ],
+  );
+
+  function openAccount(
+    accountId: string,
+    source = "Command Center",
+    targetSection?: WorkspaceSectionTarget,
+  ) {
+    openAccountFromSurface({
+      accountId,
+      source,
+      preferredSection: targetSection,
+    });
+  }
+
+  React.useEffect(() => {
+    if (view !== "workspace" || !redirectContext) return;
+    setShowWorkspaceRedirectBanner(true);
+    const t = window.setTimeout(() => setShowWorkspaceRedirectBanner(false), 6000);
+    return () => window.clearTimeout(t);
+  }, [view, redirectContext]);
+
+  const runAccountRoutingHarness = React.useCallback(() => {
+    const recommendations = result?.recommendations ?? [];
+    const cases = [
+      { accountName: "Simple", source: "Portfolio Pulse" },
+      { accountName: "Halcyon Goods", source: "Most Significant Risk" },
+      { accountName: "Summit Mart", source: "Most Significant Opportunity" },
+      { accountName: "Curefoods", source: "Recommended Actions" },
+      { accountName: "Unacademy", source: "Seller Briefing" },
+    ];
+    const results = cases.map((tc) => {
+      const requestedAccount = Object.values(accounts).find((a) => a.account_name === tc.accountName);
+      const requestedAccountId = requestedAccount?.account_id ?? null;
+      const match = requestedAccountId
+        ? recommendations.find((r) => r.account_id === requestedAccountId)
+        : null;
+      const selected = requestedAccountId;
+      const workspace = match?.account_id ?? null;
+      const rightRail = workspace;
+      const fallbackUsed = Boolean(requestedAccountId && !match);
+      return {
+        test_case: `openAccountFromSurface(${tc.accountName}, ${tc.source})`,
+        selectedAccountId_matches: selected === requestedAccountId,
+        workspaceAccount_matches: workspace === requestedAccountId,
+        rightRailAccount_matches: rightRail === requestedAccountId,
+        no_fallback_to_top_priority: requestedAccountId ? !fallbackUsed : false,
+      };
+    });
+    if (typeof console !== "undefined" && console.table) {
+      console.table(results);
     }
+    return results;
+  }, [accounts, result]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    (window as Window & { s2aRunAccountRoutingHarness?: () => unknown[] }).s2aRunAccountRoutingHarness =
+      runAccountRoutingHarness;
+    return () => {
+      delete (window as Window & { s2aRunAccountRoutingHarness?: () => unknown[] }).s2aRunAccountRoutingHarness;
+    };
+  }, [runAccountRoutingHarness]);
+
+  
+
+  function trackWorkflowEvent(
+    event: "account_opened" | "recommendation_action_clicked" | "workspace_loaded" | "conversation_prep_opened" | "crm_note_opened",
+    detail: Record<string, unknown>,
+  ) {
+    if (typeof window === "undefined") return;
+    const payload = { event, timestamp: new Date().toISOString(), ...detail };
+    try {
+      const key = "s2a_seller_metrics_v1";
+      const raw = window.localStorage.getItem(key);
+      const list = raw ? (JSON.parse(raw) as unknown[]) : [];
+      window.localStorage.setItem(key, JSON.stringify([...list, payload].slice(-200)));
+    } catch {
+      /* noop */
+    }
+    if (console?.info) console.info("[seller-metric]", payload);
   }
 
   function patchRec(updated: Recommendation) {
@@ -580,6 +1059,7 @@ export default function Page() {
             hubStatus={hubStatus}
             writebacks={writebacks}
             selectedId={selectedRec?.account_id ?? null}
+            accountSelectionContext={accountSelectionContext}
             dataSourceLabel={dataSourceLabel}
             isHubspotSource={isHubspotSource}
             externalSignalsEnabled={externalSignalsEnabled}
@@ -588,13 +1068,13 @@ export default function Page() {
             portfolio={portfolio}
             onOpenEvaluation={() => setView("evaluation")}
             onRun={runWorkflow}
-            onOpenAccount={openAccount}
+            onOpenAccount={openAccountFromSurface}
             onSelectActive={(accountId) => {
               // Phase 13.6 — lightweight active-account selection from the queue
               // / accordion. Updates the App-level selectedId without switching
               // view (Open Account = deep view; selecting = focus only).
               const rec = result?.recommendations.find((r) => r.account_id === accountId);
-              if (rec) setSelectedId(rec.recommendation_id);
+              applyAccountSelection(accountId, rec?.recommendation_id ?? null, { clearRedirect: true, source: "Workspace Queue" });
             }}
           />
         </main>
@@ -621,6 +1101,19 @@ export default function Page() {
 
           {/* CENTER */}
           <section className="min-w-0">
+            {showWorkspaceRedirectBanner && redirectContext ? (
+              <div className="mb-3 rounded-md border border-brand-bright/35 bg-brand/[0.08] px-3 py-2 text-[11px] text-brand-bright">
+                Viewing account{" "}
+                <span className="font-semibold">
+                  {accounts[redirectContext.accountId]?.account_name ??
+                    Object.values(accounts).find((a) => normalizeAccountId(a.account_id) === normalizeAccountId(redirectContext.accountId))?.account_name ??
+                    selectedRec?.account_name ??
+                    redirectContext.accountId}
+                </span>
+                <span className="mx-1 text-edge">—</span>
+                opened from <span className="font-semibold">{redirectContext.source}</span>
+              </div>
+            ) : null}
             <div className="mb-4">
               <WorkspaceQuery
                 query={query}
@@ -687,10 +1180,20 @@ export default function Page() {
                     key={rec.recommendation_id}
                     rec={rec}
                     account={accounts[rec.account_id]}
-                    selected={rec.recommendation_id === selectedId}
+                    selected={normalizeAccountId(rec.account_id) === (requestedAccountId ?? normalizeAccountId(selectedRec?.account_id))}
                     onClick={() => {
-                      setSelectedId(rec.recommendation_id);
+                      applyAccountSelection(rec.account_id, rec.recommendation_id, { clearRedirect: true, source: "Workspace Recommendations" });
+                      setShowWorkspaceRedirectBanner(false);
                       setEditing(false);
+                    }}
+                    onAction={(target) => {
+                      trackWorkflowEvent("recommendation_action_clicked", {
+                        account_id: rec.account_id,
+                        recommendation_id: rec.recommendation_id,
+                        target_section: target,
+                        source: "Today's Priorities",
+                      });
+                      openAccount(rec.account_id, "Today's Priorities", target);
                     }}
                   />
                 ))}

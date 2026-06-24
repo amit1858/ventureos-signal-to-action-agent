@@ -216,7 +216,7 @@ export function PortfolioPulseBar({ accounts, recs, onOpenAccount, onJumpToFullF
       </div>
 
       {/* Impact summary — connects drift to seller action */}
-      <ImpactSummarySection impact={impact} onOpenAccount={onOpenAccount} />
+      <ImpactSummarySection impact={impact} recs={recs} allEvents={snap.events} onOpenAccount={onOpenAccount} />
 
       {/* Activity stream */}
       <div className="border-t border-edge bg-bg/40">
@@ -260,7 +260,17 @@ export function PortfolioPulseBar({ accounts, recs, onOpenAccount, onJumpToFullF
                     {e.signalLabel}
                   </span>
                   <span className="text-faint"> · </span>
-                  <span className="text-soft">{e.account_name}</span>
+                  {onOpenAccount ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenAccount(e.account_id)}
+                      className="text-soft underline-offset-2 hover:text-accent hover:underline"
+                    >
+                      {e.account_name}
+                    </button>
+                  ) : (
+                    <span className="text-soft">{e.account_name}</span>
+                  )}
                   <span className="text-faint"> · </span>
                   <span className="text-muted">{DIM_LABEL[e.dimension]} {formatDelta(e)}</span>
                 </div>
@@ -334,10 +344,12 @@ function PulseTile({ icon, label, value, subtext, tone }: TileProps) {
 
 interface ImpactProps {
   impact: ReturnType<typeof computeImpactSummary>;
+  recs: Recommendation[];
+  allEvents: DriftEvent[];
   onOpenAccount?: (accountId: string) => void;
 }
 
-function ImpactSummarySection({ impact, onOpenAccount }: ImpactProps) {
+function ImpactSummarySection({ impact, recs, allEvents, onOpenAccount }: ImpactProps) {
   const {
     mostSignificantRisk,
     mostSignificantOpportunity,
@@ -347,11 +359,36 @@ function ImpactSummarySection({ impact, onOpenAccount }: ImpactProps) {
     cycleRiskEvents,
     cycleOpportunityEvents,
   } = impact;
+  const recIds = useMemo(() => new Set(recs.map((r) => r.account_id)), [recs]);
+
+  const preferredRisk = useMemo(() => {
+    if (mostSignificantRisk && recIds.has(mostSignificantRisk.account_id)) return mostSignificantRisk;
+    const cycleMatch = cycleEvents.find((event) => event.impact === "risk" && recIds.has(event.account_id));
+    if (cycleMatch) return cycleMatch;
+    return allEvents.find((event) => event.impact === "risk" && recIds.has(event.account_id)) ?? null;
+  }, [allEvents, cycleEvents, mostSignificantRisk, recIds]);
+
+  const preferredOpportunity = useMemo(() => {
+    if (mostSignificantOpportunity && recIds.has(mostSignificantOpportunity.account_id)) {
+      return mostSignificantOpportunity;
+    }
+    const cycleMatch = cycleEvents.find((event) => event.impact === "opportunity" && recIds.has(event.account_id));
+    if (cycleMatch) return cycleMatch;
+    return allEvents.find((event) => event.impact === "opportunity" && recIds.has(event.account_id)) ?? null;
+  }, [allEvents, cycleEvents, mostSignificantOpportunity, recIds]);
+
+  const preferredImmediateAttention = useMemo(() => {
+    const inQueue = immediateAttention.filter((event) => recIds.has(event.account_id));
+    if (inQueue.length > 0) return inQueue;
+    return allEvents
+      .filter((event) => event.impact === "risk" && event.magnitude !== "minor" && recIds.has(event.account_id))
+      .slice(0, 5);
+  }, [allEvents, immediateAttention, recIds]);
 
   const hasAny =
-    mostSignificantRisk ||
-    mostSignificantOpportunity ||
-    immediateAttention.length > 0 ||
+    preferredRisk ||
+    preferredOpportunity ||
+    preferredImmediateAttention.length > 0 ||
     highestPriorityAffected;
 
   if (!hasAny) return null;
@@ -375,33 +412,33 @@ function ImpactSummarySection({ impact, onOpenAccount }: ImpactProps) {
           tone="risk"
           icon={<ShieldAlert size={11} />}
           eyebrow="Most significant risk ↑"
-          headline={mostSignificantRisk?.account_name ?? "—"}
+          headline={preferredRisk?.account_name ?? "—"}
           line={
-            mostSignificantRisk
-              ? `${labelFor(mostSignificantRisk)} · ${mostSignificantRisk.reason}`
+            preferredRisk
+              ? `${labelFor(preferredRisk)} · ${preferredRisk.reason}`
               : "No risk movement yet"
           }
-          meta={mostSignificantRisk ? `${magLabel(mostSignificantRisk.magnitude)} · ${mostSignificantRisk.agent}` : null}
-          onClick={mostSignificantRisk && onOpenAccount ? () => onOpenAccount(mostSignificantRisk.account_id) : undefined}
+          meta={preferredRisk ? `${magLabel(preferredRisk.magnitude)} · ${preferredRisk.agent}` : null}
+          onClick={preferredRisk && onOpenAccount ? () => onOpenAccount(preferredRisk.account_id) : undefined}
         />
         <ImpactCard
           tone="opp"
           icon={<TrendingUp size={11} />}
           eyebrow="Most significant opportunity ↑"
-          headline={mostSignificantOpportunity?.account_name ?? "—"}
+          headline={preferredOpportunity?.account_name ?? "—"}
           line={
-            mostSignificantOpportunity
-              ? `${labelFor(mostSignificantOpportunity)} · ${mostSignificantOpportunity.reason}`
+            preferredOpportunity
+              ? `${labelFor(preferredOpportunity)} · ${preferredOpportunity.reason}`
               : "No expansion signal yet"
           }
           meta={
-            mostSignificantOpportunity
-              ? `${magLabel(mostSignificantOpportunity.magnitude)} · ${mostSignificantOpportunity.agent}`
+            preferredOpportunity
+              ? `${magLabel(preferredOpportunity.magnitude)} · ${preferredOpportunity.agent}`
               : null
           }
           onClick={
-            mostSignificantOpportunity && onOpenAccount
-              ? () => onOpenAccount(mostSignificantOpportunity.account_id)
+            preferredOpportunity && onOpenAccount
+              ? () => onOpenAccount(preferredOpportunity.account_id)
               : undefined
           }
         />
@@ -409,17 +446,21 @@ function ImpactSummarySection({ impact, onOpenAccount }: ImpactProps) {
           tone="attention"
           icon={<AlertTriangle size={11} />}
           eyebrow="Immediate attention"
-          headline={`${immediateAttention.length} account${immediateAttention.length === 1 ? "" : "s"}`}
+          headline={`${preferredImmediateAttention.length} account${preferredImmediateAttention.length === 1 ? "" : "s"}`}
           line={
-            immediateAttention.length === 0
+            preferredImmediateAttention.length === 0
               ? "Nothing requires intervention right now"
-              : immediateAttention.slice(0, 3).map((a) => a.account_name).join(", ") +
-                (immediateAttention.length > 3 ? ` +${immediateAttention.length - 3} more` : "")
+              : preferredImmediateAttention.slice(0, 3).map((a) => a.account_name).join(", ") +
+                (preferredImmediateAttention.length > 3 ? ` +${preferredImmediateAttention.length - 3} more` : "")
           }
-          meta={immediateAttention.length > 0 ? "Moderate or severe risk movement this cycle" : null}
-          onClick={
-            immediateAttention[0] && onOpenAccount
-              ? () => onOpenAccount(immediateAttention[0].account_id)
+          meta={preferredImmediateAttention.length > 0 ? "Moderate or severe risk movement this cycle" : null}
+          accountLinks={
+            preferredImmediateAttention.length > 0
+              ? preferredImmediateAttention.slice(0, 3).map((a) => ({
+                  accountId: a.account_id,
+                  accountName: a.account_name,
+                  onOpen: () => onOpenAccount?.(a.account_id),
+                }))
               : undefined
           }
         />
@@ -463,9 +504,10 @@ interface ImpactCardProps {
   meta?: string | null;
   cta?: string | null;
   onClick?: () => void;
+  accountLinks?: { accountId: string; accountName: string; onOpen: () => void }[];
 }
 
-function ImpactCard({ tone, icon, eyebrow, headline, line, meta, cta, onClick }: ImpactCardProps) {
+function ImpactCard({ tone, icon, eyebrow, headline, line, meta, cta, onClick, accountLinks }: ImpactCardProps) {
   const toneRing =
     tone === "risk"
       ? "border-risk/30"
@@ -510,6 +552,24 @@ function ImpactCard({ tone, icon, eyebrow, headline, line, meta, cta, onClick }:
       <div className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted" title={line}>
         {line}
       </div>
+      {accountLinks && accountLinks.length > 0 ? (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {accountLinks.map((a) => (
+            <button
+              key={`${eyebrow}-${a.accountId}`}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                a.onOpen();
+              }}
+              className="rounded-full border border-edge/70 bg-bg/45 px-2 py-0.5 text-[10px] text-muted hover:border-accent/40 hover:text-accent"
+              title={`Open ${a.accountName}`}
+            >
+              {a.accountName}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {meta ? <div className="mt-1.5 truncate text-[10px] text-faint" title={meta}>{meta}</div> : null}
       {cta ? (
         <div className={cx("mt-1.5 inline-flex items-center gap-1 text-[10.5px] font-semibold", toneText)}>
