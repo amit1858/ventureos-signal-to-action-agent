@@ -152,6 +152,28 @@ function fromDelta(d: RecommendationDelta): TimelineEntry {
 }
 
 function fromApproval(e: LedgerEntry): TimelineEntry {
+  // Phase 16A — Execution events are written into the same ledger with
+  // decision_type="review" and a "[execution]" prefix in reviewer_note. We
+  // surface them here as first-class "Execution" timeline rows instead of
+  // generic "Review requested" so the timeline tells the closed-loop story.
+  const note = e.reviewer_note ?? "";
+  const isExecution = note.startsWith("[execution]");
+  if (isExecution) {
+    const stage = note.replace(/^\[execution\]\s*/, "").trim() || "Execution event";
+    return {
+      id: `exec-${e.ledger_id}`,
+      timestamp: e.created_at,
+      kind: "approval",
+      kindLabel: "Execution",
+      severity: "medium",
+      account_id: e.account_id,
+      account_name: e.account_name,
+      headline: `${stage} — ${e.recommended_action}`,
+      detail: e.business_impact ?? null,
+      attribution: e.reviewer_name ?? "Execution Agent",
+      raw: e,
+    };
+  }
   const label =
     e.decision_type === "approved" ? "Approved" :
     e.decision_type === "rejected" ? "Rejected" : "Review requested";

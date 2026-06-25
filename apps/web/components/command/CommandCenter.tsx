@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import {
@@ -60,15 +60,16 @@ import {
 import { ExperienceModeSwitch } from "@/components/command/ExperienceModeSwitch";
 import { DisclosurePanel } from "@/components/command/DisclosurePanel";
 import { ExecutiveAttentionBrief } from "@/components/command/ExecutiveAttentionBrief";
+import { ActionExecutionPanel } from "@/components/command/ActionExecutionPanel";
 import { loadDriftSnapshot } from "@/lib/driftEngine";
 import { type AccountSelectionContext } from "@/lib/accountSelectionContext";
 import dynamic from "next/dynamic";
 
-// Phase 14C — Timeline surfaces. Heavy-ish, lazy-loaded so the home page's
+// Phase 14C â€” Timeline surfaces. Heavy-ish, lazy-loaded so the home page's
 // First Load JS stays inside the program budget.
 const AccountTimeline = dynamic(
   () => import("@/components/command/AccountTimeline").then((m) => m.AccountTimeline),
-  { ssr: false, loading: () => <div className="rounded-lg border border-edge bg-surface2/40 px-3 py-4 text-[11.5px] text-muted">Loading timeline…</div> },
+  { ssr: false, loading: () => <div className="rounded-lg border border-edge bg-surface2/40 px-3 py-4 text-[11.5px] text-muted">Loading timelineâ€¦</div> },
 );
 const ReasoningTrail = dynamic(
   () => import("@/components/command/AccountTimeline").then((m) => m.ReasoningTrail),
@@ -213,7 +214,7 @@ export function CommandCenter({
   onOpenAccount: (
     input: OpenAccountFromSurfaceInput,
   ) => void;
-  /** Phase 13.6 — lightweight active-account selection (focus, not navigate). */
+  /** Phase 13.6 â€” lightweight active-account selection (focus, not navigate). */
   onSelectActive?: (accountId: string) => void;
 }) {
   void meta;
@@ -299,7 +300,7 @@ export function CommandCenter({
     [queueRows, experienceMode],
   );
 
-  // Phase 15C.5 — Single source of truth: consume app-level account selection context.
+  // Phase 15C.5 â€” Single source of truth: consume app-level account selection context.
   // App/page.tsx owns selection logic; CommandCenter uses it for rendering only.
   const activeAccountId = accountSelectionContext.activeAccountId;
   const activeRec = accountSelectionContext.activeRecommendation ?? null;
@@ -440,11 +441,11 @@ export function CommandCenter({
   const snapAvgConfidence = recs.length
     ? Math.round((recs.reduce((sum, r) => sum + r.confidence_score, 0) / recs.length) * 100)
     : 0;
-  const snapTopAccount = recs[0]?.account_name ?? "—";
+  const snapTopAccount = recs[0]?.account_name ?? "â€”";
   const snapRenewals = accounts.filter((a) => a.renewal_days != null && a.renewal_days <= 30).length;
   const snapEffortMin = queueRows.slice(0, 6).reduce((sum, row) => sum + row.minutes, 0);
 
-  // Phase 15B — derive lightweight summary stats for accordion headers.
+  // Phase 15B â€” derive lightweight summary stats for accordion headers.
   // Pure read of existing engines; no new intelligence.
   const driftSummary = React.useMemo(() => {
     if (typeof window === "undefined") return { changed: 0, risk: 0, opportunity: 0 };
@@ -456,7 +457,7 @@ export function CommandCenter({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result?.generated_at, accounts.length]);
 
-  // Phase 15B — right-rail snapshot compression. Seller mode lands collapsed
+  // Phase 15B â€” right-rail snapshot compression. Seller mode lands collapsed
   // (compact KPI strip) to focus on action; Executive/Operations stay
   // expanded. Persists per-mode toggle in localStorage.
   const [snapshotExpanded, setSnapshotExpanded] = React.useState<boolean>(true);
@@ -538,7 +539,7 @@ export function CommandCenter({
               title={modeLabels.pulse}
               summary={
                 driftSummary.changed > 0
-                  ? `${driftSummary.changed} accounts changed · ${driftSummary.risk} risks · ${driftSummary.opportunity} opportunities`
+                  ? `${driftSummary.changed} accounts changed Â· ${driftSummary.risk} risks Â· ${driftSummary.opportunity} opportunities`
                   : "Awaiting next pulse cycle"
               }
               defaultOpen={isOpenByDefault(experienceMode, "portfolioPulse")}
@@ -746,7 +747,7 @@ export function CommandCenter({
                 <div className="mt-2 rounded-lg border border-edge bg-surface2/40 px-3 py-2 text-[11px] text-muted">
                   Open detailed governance and evaluation metrics in Evaluation Center.{" "}
                   <button type="button" className="ml-1 text-brand-bright hover:underline" onClick={onOpenEvaluation}>
-                    Open →
+                    Open â†’
                   </button>
                 </div>
               ) : null}
@@ -796,7 +797,7 @@ export function CommandCenter({
                         {activeRec.account_name}
                       </div>
                       <div className="mt-0.5 text-[10.5px] text-muted">
-                        Priority #{activeRec.priority_rank} ·{" "}
+                        Priority #{activeRec.priority_rank} Â·{" "}
                         {activeReasoning?.action.label ?? activeRec.recommended_action}
                       </div>
                     </div>
@@ -807,8 +808,8 @@ export function CommandCenter({
                     <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="Accounts requiring action" value={String(snapAttention)} />
                     <RailRow icon={<Clock size={12} className="text-muted" />} label="Renewals due" value={String(snapRenewals)} tone={snapRenewals > 0 ? "warn" : undefined} />
                     <RailRow icon={<CheckCircle2 size={12} className="text-muted" />} label="Pending approvals" value={String(snapOpenApprovals)} tone={snapOpenApprovals > 0 ? "warn" : undefined} />
-                    <RailRow icon={<Clock size={12} className="text-muted" />} label="Estimated effort" value={snapEffortMin > 0 ? `~${Math.round((snapEffortMin / 60) * 10) / 10} hrs` : "—"} />
-                    <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="AI confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "—"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? undefined : "risk"} />
+                    <RailRow icon={<Clock size={12} className="text-muted" />} label="Estimated effort" value={snapEffortMin > 0 ? `~${Math.round((snapEffortMin / 60) * 10) / 10} hrs` : "â€”"} />
+                    <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="AI confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "â€”"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? undefined : "risk"} />
                     <RailRow icon={<TrendingUp size={12} className="text-brand-bright" />} label="Top account" value={snapTopAccount} />
                   </div>
                 </>
@@ -817,7 +818,7 @@ export function CommandCenter({
                   <CompactKpi label="At risk" value={inrCompact(snapRevRisk)} tone="risk" />
                   <CompactKpi label="Expansion" value={inrCompact(snapGrowth)} tone="opp" />
                   <CompactKpi label="Approvals" value={String(snapOpenApprovals)} tone={snapOpenApprovals > 0 ? "warn" : "neutral"} />
-                  <CompactKpi label="Confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "—"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? "neutral" : "risk"} />
+                  <CompactKpi label="Confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "â€”"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? "neutral" : "risk"} />
                 </div>
               )}
             </div>
@@ -860,10 +861,10 @@ function ChiefOfStaffNarrativeCard({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className={cx("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold", isHubspotSource ? "border-accent/40 bg-accent/10 text-accent" : "border-brand/40 bg-brand/10 text-brand-bright")}>
-              {dataSourceLabel} <span className="opacity-70">·</span> {brief.analyzed}
+              {dataSourceLabel} <span className="opacity-70">Â·</span> {brief.analyzed}
             </span>
             <h2 className="text-[15px] font-semibold text-ink">AI Chief of Staff</h2>
-            <span className="text-[10px] text-faint">· sync {lastSync ?? "—"}</span>
+            <span className="text-[10px] text-faint">Â· sync {lastSync ?? "â€”"}</span>
           </div>
           <p className="mt-1 text-[12px] text-muted">
             Across {brief.analyzed} accounts: <span className="font-semibold text-risk">{inrCompact(brief.revenueAtRisk)}</span> at risk,{" "}
@@ -875,7 +876,7 @@ function ChiefOfStaffNarrativeCard({
         <div className="flex items-center gap-1.5">
           <DemoModeTrigger />
           <button type="button" onClick={onRun} disabled={loading} className={cx("btn btn-primary px-3 py-1.5 text-xs", loading && "opacity-70")}>
-            {loading ? "Analyzing…" : "Re-run"}
+            {loading ? "Analyzingâ€¦" : "Re-run"}
           </button>
         </div>
       </div>
@@ -890,7 +891,7 @@ function ChiefOfStaffNarrativeCard({
           <span className="text-[11px] text-muted">
             {topAccount ? (
               <>
-                Spend {spendChange > 0 ? "up" : "down"} {Math.abs(spendChange)}% · support risk {riskLevel(topAccount).toLowerCase()} · renewal {topAccount.renewal_days}d
+                Spend {spendChange > 0 ? "up" : "down"} {Math.abs(spendChange)}% Â· support risk {riskLevel(topAccount).toLowerCase()} Â· renewal {topAccount.renewal_days}d
               </>
             ) : (
               topRec.priority_reason
@@ -904,7 +905,7 @@ function ChiefOfStaffNarrativeCard({
         </div>
       ) : (
         <div className="relative mt-2.5 rounded-lg border border-edge bg-surface2/40 px-3 py-2 text-[12px] text-muted">
-          Run the workflow to generate today’s operating narrative.
+          Run the workflow to generate todayâ€™s operating narrative.
         </div>
       )}
     </div>
@@ -960,7 +961,7 @@ function WorkQueuePanel({
     });
   };
 
-  // Phase 13.6 — keep the selected row visible when arrow-key navigation moves
+  // Phase 13.6 â€” keep the selected row visible when arrow-key navigation moves
   // beyond the viewport. Uses nearest scrolling so the queue itself only
   // scrolls when necessary.
   React.useEffect(() => {
@@ -994,7 +995,7 @@ function WorkQueuePanel({
         <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">{titleLabel}</div>
         <div className="text-[10px] text-faint">
           {rows.length
-            ? `${rows.length} account${rows.length === 1 ? "" : "s"} · ${Math.round((effortMin / 60) * 10) / 10 || 0}h effort · ${pendingApprovals} approvals`
+            ? `${rows.length} account${rows.length === 1 ? "" : "s"} Â· ${Math.round((effortMin / 60) * 10) / 10 || 0}h effort Â· ${pendingApprovals} approvals`
             : ""}
         </div>
       </div>
@@ -1078,7 +1079,7 @@ function WorkQueuePanel({
           <div className="mt-2 rounded-lg border border-edge bg-bg/25 px-2.5 py-2 text-[11px] text-faint">
             {hovered
               ? rows.find((r) => r.recommendation.account_id === hovered)?.whyNow ?? "Hover any row to preview why now."
-              : "Use ↑/↓ keys to move selection. Click a row to focus the account workspace."}
+              : "Use â†‘/â†“ keys to move selection. Click a row to focus the account workspace."}
           </div>
 
           <div className="mt-2 rounded-lg border border-edge bg-bg/25">
@@ -1092,7 +1093,7 @@ function WorkQueuePanel({
                 Priority buckets
               </span>
               <span className="text-[10px] text-muted">
-                {mustDo.length} must do · {shouldDo.length} should do · {optional.length} optional
+                {mustDo.length} must do Â· {shouldDo.length} should do Â· {optional.length} optional
               </span>
             </button>
             {showBuckets ? (
@@ -1282,6 +1283,7 @@ type WorkspaceSection =
   | "crm"
   | "evidence"
   | "evolution"
+  | "execution"
   | "timeline"
   | "reasoning"
   | "intelligence";
@@ -1294,6 +1296,7 @@ const WORKSPACE_SECTIONS: WorkspaceSection[] = [
   "crm",
   "evidence",
   "evolution",
+  "execution",
   "timeline",
   "reasoning",
   "intelligence",
@@ -1301,12 +1304,12 @@ const WORKSPACE_SECTIONS: WorkspaceSection[] = [
 
 function defaultWorkspaceSections(mode: "executive" | "seller" | "operations"): WorkspaceSection[] {
   if (mode === "operations") {
-    return ["overview", "evidence", "timeline", "reasoning", "evolution", "intelligence"];
+    return ["overview", "evidence", "execution", "timeline", "reasoning", "evolution", "intelligence"];
   }
   if (mode === "seller") {
-    return ["prep", "evolution"];
+    return ["prep", "execution", "evolution"];
   }
-  return ["overview", "evolution"];
+  return ["overview", "execution", "evolution"];
 }
 
 interface MockApprovalEntry {
@@ -1481,7 +1484,7 @@ function WorkspaceCockpit({
     };
     return [...items].sort((a, b) => score(b.polarity, b.strength) - score(a.polarity, a.strength))[0];
   }, [recommendation.evidence]);
-  const evidenceUpdated = formatTimestamp(generatedAt) || "—";
+  const evidenceUpdated = formatTimestamp(generatedAt) || "â€”";
   const actionWhy = reasoning.reasons.slice(0, 3).map((r) => r.text);
 
   // Brief, transient focus highlight so users see the click had an effect.
@@ -1513,12 +1516,12 @@ function WorkspaceCockpit({
 
   return (
     <div ref={cockpitRef} className="flex h-full flex-col rounded-xl border border-edge bg-surface2/35 p-3 ambient-glow">
-      {/* Action Hero — first decision surface */}
+      {/* Action Hero â€” first decision surface */}
       <div className="rounded-lg border border-edge-soft surface-warm p-3.5">
         {showContextBanner ? (
           <div className="mb-2 rounded-md border border-brand-bright/35 bg-brand/[0.08] px-2.5 py-1 text-[10.5px] text-brand-bright">
             Viewing account <span className="font-semibold">{recommendation.account_name}</span>
-            <span className="mx-1 text-edge">·</span>
+            <span className="mx-1 text-edge">Â·</span>
             Opened from <span className="font-semibold">{openedFromSource}</span>
           </div>
         ) : null}
@@ -1536,7 +1539,7 @@ function WorkspaceCockpit({
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">Why this account matters</div>
           <ul className="mt-1 space-y-0.5 text-[11px] text-muted">
             {actionWhy.map((line, idx) => (
-              <li key={`why-${idx}`}>• {line}</li>
+              <li key={`why-${idx}`}>â€¢ {line}</li>
             ))}
           </ul>
         </div>
@@ -1560,7 +1563,7 @@ function WorkspaceCockpit({
         </div>
       </div>
 
-      {/* Recommendation evolution — immediately below Action Hero */}
+      {/* Recommendation evolution â€” immediately below Action Hero */}
       <div className="mt-2 rounded-lg border border-edge bg-surface2/45 p-2.5">
         <button
           type="button"
@@ -1586,6 +1589,24 @@ function WorkspaceCockpit({
 
       {/* Focus-first accordion workspace */}
       <div className="mt-2 space-y-2">
+        {/* Phase 16A â€” Action Execution Simulator. Sits immediately after the
+            Action Hero / Recommendation Evolution block so the workspace flow
+            reads: Signal â†’ Recommendation â†’ Approval â†’ Execute â†’ Outcome.
+            Persistence + ledger writes happen inside ActionExecutionPanel via
+            `@/lib/executionEngine`. No backend or contract changes. */}
+        <WorkspaceAccordion
+          title="Action execution"
+          summary="Execute the approved recommendation through a simulated outreach â†’ meeting â†’ outcome loop"
+          open={sectionOpen("execution")}
+          onToggle={() => toggleSection("execution")}
+        >
+          <ActionExecutionPanel
+            recommendation={recommendation}
+            reasoning={reasoning}
+            lifecycle={lifecycle}
+          />
+        </WorkspaceAccordion>
+
         <WorkspaceAccordion
           title="Overview"
           summary={recommendation.priority_reason}
@@ -1624,7 +1645,7 @@ function WorkspaceCockpit({
 
         <WorkspaceAccordion
           title="Evidence"
-          summary={`${recommendation.evidence.length} signals · highest ${evidenceTop?.label ?? "—"} · updated ${evidenceUpdated}`}
+          summary={`${recommendation.evidence.length} signals Â· highest ${evidenceTop?.label ?? "â€”"} Â· updated ${evidenceUpdated}`}
           open={sectionOpen("evidence")}
           onToggle={() => toggleSection("evidence")}
         >
@@ -1633,19 +1654,19 @@ function WorkspaceCockpit({
 
         <WorkspaceAccordion
           title="Account intelligence"
-          summary={`${account?.segment ? titleCase(account.segment) : "—"} · ${account?.region ? titleCase(account.region) : "—"} · Renewal ${account?.renewal_days ?? "—"}d`}
+          summary={`${account?.segment ? titleCase(account.segment) : "â€”"} Â· ${account?.region ? titleCase(account.region) : "â€”"} Â· Renewal ${account?.renewal_days ?? "â€”"}d`}
           open={sectionOpen("intelligence")}
           onToggle={() => toggleSection("intelligence")}
         >
           <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-            <MiniStat label="Industry" value={account?.industry ? titleCase(account.industry) : "—"} />
-            <MiniStat label="Segment" value={account?.segment ? titleCase(account.segment) : "—"} />
-            <MiniStat label="Region" value={account?.region ? titleCase(account.region) : "—"} />
+            <MiniStat label="Industry" value={account?.industry ? titleCase(account.industry) : "â€”"} />
+            <MiniStat label="Segment" value={account?.segment ? titleCase(account.segment) : "â€”"} />
+            <MiniStat label="Region" value={account?.region ? titleCase(account.region) : "â€”"} />
             <MiniStat label="Investment" value={inrCompact(account?.current_month_spend ?? 0)} />
-            <MiniStat label="Adoption" value={`${account?.product_usage_score ?? "—"}`} />
-            <MiniStat label="Engagement" value={`${account?.engagement_score ?? "—"}`} />
-            <MiniStat label="Support risk" value={`${account?.support_risk_score ?? "—"}`} />
-            <MiniStat label="Renewal window" value={`${account?.renewal_days ?? "—"}d`} />
+            <MiniStat label="Adoption" value={`${account?.product_usage_score ?? "â€”"}`} />
+            <MiniStat label="Engagement" value={`${account?.engagement_score ?? "â€”"}`} />
+            <MiniStat label="Support risk" value={`${account?.support_risk_score ?? "â€”"}`} />
+            <MiniStat label="Renewal window" value={`${account?.renewal_days ?? "â€”"}d`} />
           </div>
         </WorkspaceAccordion>
 
@@ -1723,9 +1744,9 @@ function OverviewTab({
         <WorkspaceCard title="Account summary" icon={<Target size={12} />}>
           <p className="text-[11px] text-muted">{recommendation.priority_reason}</p>
           <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[10px]">
-            <MiniStat label="Segment" value={account?.segment ? titleCase(account.segment) : "—"} />
-            <MiniStat label="Industry" value={account?.industry ? titleCase(account.industry) : "—"} />
-            <MiniStat label="Region" value={account?.region ? titleCase(account.region) : "—"} />
+            <MiniStat label="Segment" value={account?.segment ? titleCase(account.segment) : "â€”"} />
+            <MiniStat label="Industry" value={account?.industry ? titleCase(account.industry) : "â€”"} />
+            <MiniStat label="Region" value={account?.region ? titleCase(account.region) : "â€”"} />
             <MiniStat label="Confidence" value={pct(recommendation.confidence_score)} />
           </div>
         </WorkspaceCard>
@@ -1738,7 +1759,7 @@ function OverviewTab({
 
       <WorkspaceCard title="Opportunity" icon={<TrendingUp size={12} />}>
         <p className="text-[11px] text-muted">{recommendation.opportunity_summary}</p>
-        <p className="mt-1.5 text-[10px] text-faint">Growth potential: {account?.growth_potential_score ?? "—"}</p>
+        <p className="mt-1.5 text-[10px] text-faint">Growth potential: {account?.growth_potential_score ?? "â€”"}</p>
       </WorkspaceCard>
 
       <WorkspaceCard title="Renewal" icon={<Clock size={12} />}>
@@ -1786,7 +1807,7 @@ function ConversationPrepTab({
     <div className="space-y-2">
       {focused ? (
         <div className="rounded-md border border-brand-bright/40 bg-brand/[0.10] px-2 py-1 text-[11px] text-brand-bright">
-          Ready for seller review — Objective, Discovery questions, and Commitment to secure are highlighted below.
+          Ready for seller review â€” Objective, Discovery questions, and Commitment to secure are highlighted below.
         </div>
       ) : null}
       <WorkspaceCard title="Executive summary" icon={<Target size={12} />}>
@@ -1807,7 +1828,7 @@ function ConversationPrepTab({
         <WorkspaceCard title="Why now" icon={<Zap size={12} />}>
           <ul className="space-y-1 text-[11px] text-muted">
             {whyNow.map((s, idx) => (
-              <li key={`why-${idx}`}>• {s}</li>
+              <li key={`why-${idx}`}>â€¢ {s}</li>
             ))}
           </ul>
         </WorkspaceCard>
@@ -1816,13 +1837,13 @@ function ConversationPrepTab({
           <div className="text-[10px] font-semibold uppercase tracking-wider text-faint">Discuss</div>
           <ul className="mt-0.5 space-y-1 text-[11px] text-muted">
             {talkTrack.slice(0, 3).map((line, idx) => (
-              <li key={`talk-${idx}`}>• {line}</li>
+              <li key={`talk-${idx}`}>â€¢ {line}</li>
             ))}
           </ul>
           <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-faint">Validate</div>
           <ul className="mt-0.5 space-y-1 text-[11px] text-muted">
             {validatePoints.map((line, idx) => (
-              <li key={`val-${idx}`}>• {line}</li>
+              <li key={`val-${idx}`}>â€¢ {line}</li>
             ))}
           </ul>
           {avoidPoints.length > 0 ? (
@@ -1830,7 +1851,7 @@ function ConversationPrepTab({
               <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-faint">Avoid</div>
               <ul className="mt-0.5 space-y-1 text-[11px] text-muted">
                 {avoidPoints.map((line, idx) => (
-                  <li key={`avoid-${idx}`}>• {line}</li>
+                  <li key={`avoid-${idx}`}>â€¢ {line}</li>
                 ))}
               </ul>
             </>
@@ -1841,7 +1862,7 @@ function ConversationPrepTab({
           <WorkspaceCard title="Discovery questions" icon={<ListChecks size={12} />}>
             <ul className="space-y-1 text-[11px] text-muted">
               {discovery.map((q, idx) => (
-                <li key={`disc-${idx}`}>• {q}</li>
+                <li key={`disc-${idx}`}>â€¢ {q}</li>
               ))}
             </ul>
           </WorkspaceCard>
@@ -1851,8 +1872,8 @@ function ConversationPrepTab({
           <ul className="space-y-1.5 text-[11px] text-muted">
             {objections.map((o, idx) => (
               <li key={`obj-${idx}`} className="rounded border border-edge-soft bg-bg/30 px-1.5 py-1">
-                <div className="text-[10px] font-semibold text-ink">“{o.objection}”</div>
-                <div className="mt-0.5 text-[10px] text-muted">→ {o.response}</div>
+                <div className="text-[10px] font-semibold text-ink">â€œ{o.objection}â€</div>
+                <div className="mt-0.5 text-[10px] text-muted">â†’ {o.response}</div>
               </li>
             ))}
           </ul>
@@ -1867,7 +1888,7 @@ function ConversationPrepTab({
         <WorkspaceCard title="Success criteria" icon={<CheckCircle2 size={12} />}>
           <ul className="space-y-1 text-[11px] text-muted">
             {success.map((s, idx) => (
-              <li key={`succ-${idx}`}>• {s}</li>
+              <li key={`succ-${idx}`}>â€¢ {s}</li>
             ))}
           </ul>
         </WorkspaceCard>
@@ -1953,7 +1974,7 @@ function EmailDraftTab({
         <span className="text-[10px] uppercase tracking-wider text-faint">Approval</span>
         <ApprovalBadge status={recommendation.approval_status} />
         <span className="text-[10px] text-faint">Word count: {words}</span>
-        <span className="text-[10px] text-faint">Not auto-sent — human approval required before outreach.</span>
+        <span className="text-[10px] text-faint">Not auto-sent â€” human approval required before outreach.</span>
       </div>
     </WorkspaceCard>
   );
@@ -1986,7 +2007,7 @@ function CrmUpdateTab({
     <div className="space-y-2">
       {focused ? (
         <div className="rounded-md border border-brand-bright/40 bg-brand/[0.10] px-2 py-1 text-[11px] text-brand-bright">
-          CRM update prepared — review the note, next step, and follow-up date below.
+          CRM update prepared â€” review the note, next step, and follow-up date below.
         </div>
       ) : null}
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
@@ -2241,7 +2262,7 @@ function ApprovalDrawer({
             <div className="text-[10px] font-semibold uppercase tracking-wider text-yellow-400">Governance caveat</div>
             <ul className="mt-1 space-y-0.5 text-[11px] text-muted">
               {recommendation.governance_caveats.map((c, i) => (
-                <li key={`gc-${i}`}>• {c}</li>
+                <li key={`gc-${i}`}>â€¢ {c}</li>
               ))}
             </ul>
           </section>
@@ -2252,7 +2273,7 @@ function ApprovalDrawer({
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Add context for the audit trail…"
+            placeholder="Add context for the audit trailâ€¦"
             className="mt-1 min-h-[64px] w-full resize-vertical rounded border border-edge-soft bg-bg/40 px-2 py-1.5 text-[11px] text-ink outline-none focus:border-brand-bright"
           />
         </section>
@@ -2302,7 +2323,7 @@ function ApprovalDrawer({
             </div>
             <p className="mt-1 text-[11px] text-muted">
               CRM writeback not enabled in this demo mode. The approved action would be staged for the
-              connector pipeline (Prepared → Approved → Ready for CRM → Written → Verified).
+              connector pipeline (Prepared â†’ Approved â†’ Ready for CRM â†’ Written â†’ Verified).
             </p>
           </section>
         ) : null}
@@ -2372,7 +2393,7 @@ function ApprovalDrawer({
         </section>
 
         <p className="mt-auto text-[10px] text-faint">
-          Decisions persist in the local Decision Ledger. No backend writeback yet — Phase 14 will
+          Decisions persist in the local Decision Ledger. No backend writeback yet â€” Phase 14 will
           forward approved actions to the CRM connector.
         </p>
       </div>
@@ -2380,7 +2401,7 @@ function ApprovalDrawer({
   );
 }
 
-// -- Phase 13 lifecycle ribbon (Detected → … → Outcome captured) -------------
+// -- Phase 13 lifecycle ribbon (Detected â†’ â€¦ â†’ Outcome captured) -------------
 function LifecycleRibbon({ state, compact }: { state: LifecycleState; compact?: boolean }) {
   const idx = LIFECYCLE_ORDER.indexOf(state);
   return (
@@ -2418,7 +2439,7 @@ function LifecycleRibbon({ state, compact }: { state: LifecycleState; compact?: 
                       : "border-edge-soft text-faint",
                 )}
               >
-                {done ? "✓" : i + 1}
+                {done ? "âœ“" : i + 1}
               </span>
               <span className="truncate">{LIFECYCLE_LABEL[s]}</span>
             </div>
@@ -2430,7 +2451,7 @@ function LifecycleRibbon({ state, compact }: { state: LifecycleState; compact?: 
                   done ? "text-accent/70" : i === idx ? "text-brand-bright/60" : "text-faint/50",
                 )}
               >
-                →
+                â†’
               </span>
             ) : null}
           </React.Fragment>
@@ -2467,7 +2488,7 @@ function CopyButton({ text }: { text: string }) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
-      /* clipboard unavailable — no-op */
+      /* clipboard unavailable â€” no-op */
     }
   };
   return (
@@ -2542,7 +2563,7 @@ function customerSituationLine(rec: Recommendation, account?: Account): string {
   if (account?.industry) parts.push(titleCase(account.industry));
   if (account?.segment) parts.push(titleCase(account.segment));
   if (account?.region) parts.push(titleCase(account.region));
-  const profile = parts.length ? parts.join(" · ") : "Account";
+  const profile = parts.length ? parts.join(" Â· ") : "Account";
   const delta = account ? spendDelta(account) : 0;
   const spendBit = account
     ? delta <= -5
@@ -2562,7 +2583,7 @@ function customerSituationLine(rec: Recommendation, account?: Account): string {
     ? `renewal in ${account.renewal_days}d`
     : null;
   const tail = [spendBit, supportBit, renewalBit].filter(Boolean).join(", ");
-  return `${profile} — ${tail}. ${rec.priority_reason}`;
+  return `${profile} â€” ${tail}. ${rec.priority_reason}`;
 }
 
 // -- Phase 11 artifact derivations (UI only; no scoring impact) --------------
@@ -2571,7 +2592,7 @@ function executiveSummaryLine(
   rec: Recommendation,
   reasoning: NonNullable<ReturnType<typeof reasonForRecommendation>>,
 ): string {
-  return `Priority #${rec.priority_rank} — ${rec.account_name}. ${reasoning.action.label} to ${reasoning.action.value.toLowerCase()} (confidence ${pct(rec.confidence_score)}, ~${reasoning.estimatedMinutes}m).`;
+  return `Priority #${rec.priority_rank} â€” ${rec.account_name}. ${reasoning.action.label} to ${reasoning.action.value.toLowerCase()} (confidence ${pct(rec.confidence_score)}, ~${reasoning.estimatedMinutes}m).`;
 }
 
 interface Objection { objection: string; response: string }
@@ -2590,7 +2611,7 @@ function likelyObjections(
     }
     if (spendDelta(account) <= -10) {
       out.push({
-        objection: "We've intentionally scaled back — this isn't a priority right now.",
+        objection: "We've intentionally scaled back â€” this isn't a priority right now.",
         response: "Reframe the conversation around the outcome they care about, then show two adoption levers that protect their investment.",
       });
     }
@@ -2645,7 +2666,7 @@ function subjectLineFor(
 ): string {
   const urgency = reasoning.action.urgency;
   if (urgency === "critical")
-    return `Quick check-in on ${rec.account_name} — protecting your outcomes`;
+    return `Quick check-in on ${rec.account_name} â€” protecting your outcomes`;
   if (urgency === "opportunity")
     return `Idea for ${rec.account_name}: unlocking the next outcome`;
   if (account?.renewal_days != null && account.renewal_days <= 90)
@@ -2690,7 +2711,7 @@ function evidenceSummaryLine(rec: Recommendation): string {
   const sources = new Set(rec.evidence.map((e) => e.source_system).filter(Boolean));
   const neg = rec.evidence.filter((e) => String(e.polarity).toLowerCase().startsWith("neg")).length;
   const pos = rec.evidence.filter((e) => String(e.polarity).toLowerCase().startsWith("pos")).length;
-  return `${rec.evidence.length} signals across ${sources.size} system${sources.size === 1 ? "" : "s"} — ${neg} risk, ${pos} opportunity.`;
+  return `${rec.evidence.length} signals across ${sources.size} system${sources.size === 1 ? "" : "s"} â€” ${neg} risk, ${pos} opportunity.`;
 }
 
 // -- Phase 11 guided demo mode -----------------------------------------------
@@ -2698,12 +2719,12 @@ function evidenceSummaryLine(rec: Recommendation): string {
 interface DemoStep { id: string; title: string; body: string }
 
 const DEMO_STEPS: DemoStep[] = [
-  { id: "brief", title: "Step 1 · Review morning brief", body: "Skim the AI Chief of Staff narrative and the Executive Snapshot rail to see what changed overnight." },
-  { id: "select", title: "Step 2 · Select the top account", body: "Click the #1 row in the Work Queue to load that account's execution workspace on the right." },
-  { id: "evidence", title: "Step 3 · Review evidence", body: "Click Review Evidence in the workspace header to inspect signals, sources, and confidence behind the recommendation." },
-  { id: "prep", title: "Step 4 · Prepare outreach", body: "Click Prepare Outreach. Walk through Objective, Why Now, Discovery questions, Objections, and Commitment to secure." },
-  { id: "crm", title: "Step 5 · Review CRM note", body: "Click Draft CRM Note. Validate the suggested note, next step, owner, priority, and follow-up date." },
-  { id: "approve", title: "Step 6 · Submit for approval", body: "Click Mark for Approval to open the human-in-the-loop drawer. Approve, reject, or request review — write-back stays human-gated." },
+  { id: "brief", title: "Step 1 Â· Review morning brief", body: "Skim the AI Chief of Staff narrative and the Executive Snapshot rail to see what changed overnight." },
+  { id: "select", title: "Step 2 Â· Select the top account", body: "Click the #1 row in the Work Queue to load that account's execution workspace on the right." },
+  { id: "evidence", title: "Step 3 Â· Review evidence", body: "Click Review Evidence in the workspace header to inspect signals, sources, and confidence behind the recommendation." },
+  { id: "prep", title: "Step 4 Â· Prepare outreach", body: "Click Prepare Outreach. Walk through Objective, Why Now, Discovery questions, Objections, and Commitment to secure." },
+  { id: "crm", title: "Step 5 Â· Review CRM note", body: "Click Draft CRM Note. Validate the suggested note, next step, owner, priority, and follow-up date." },
+  { id: "approve", title: "Step 6 Â· Submit for approval", body: "Click Mark for Approval to open the human-in-the-loop drawer. Approve, reject, or request review â€” write-back stays human-gated." },
 ];
 
 const DEMO_KEY = "s2a_demo_dismissed_v1";
@@ -3020,7 +3041,7 @@ function riskLevel(account?: Account): "High" | "Medium" | "Low" {
 function parseBulletLines(value: string): string[] {
   return value
     .split(/\r?\n/)
-    .map((line) => line.replace(/^[-•\d.)\s]+/, "").trim())
+    .map((line) => line.replace(/^[-â€¢\d.)\s]+/, "").trim())
     .filter(Boolean)
     .slice(0, 5);
 }
@@ -3112,7 +3133,7 @@ function DecisionLedgerPanel({ recs }: { recs: Recommendation[] }) {
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <LedgerCount label="Awaiting approval" value={summary.awaitingApproval} />
-        <LedgerCount label="Approved � not executed" value={summary.approvedNotExecuted} />
+        <LedgerCount label="Approved ï¿½ not executed" value={summary.approvedNotExecuted} />
         <LedgerCount label="Outcome captured" value={summary.outcomeCaptured} tone="ok" />
         <LedgerCount label="Outcome pending" value={summary.outcomePending} tone="warn" />
       </div>
@@ -3152,15 +3173,15 @@ function DecisionLedgerPanel({ recs }: { recs: Recommendation[] }) {
                 </span>
               </div>
               <div className="truncate text-muted">{e.reviewer_name}</div>
-              <div className="truncate text-faint">{e.outcome ? OUTCOME_LABEL[e.outcome] : "�"}</div>
-              <div className="text-right text-faint">{formatTimestamp(e.created_at) || "�"}</div>
+              <div className="truncate text-faint">{e.outcome ? OUTCOME_LABEL[e.outcome] : "ï¿½"}</div>
+              <div className="text-right text-faint">{formatTimestamp(e.created_at) || "ï¿½"}</div>
             </div>
           ))
         )}
       </div>
       <p className="mt-2 text-[10px] text-faint">
         Ledger persists in browser storage (Phase 13 demo). The API surface is backend-swappable for
-        Phase 14 � same record shape, real database.
+        Phase 14 ï¿½ same record shape, real database.
       </p>
     </div>
   );
@@ -3214,7 +3235,7 @@ function CrmWritebackReadinessPanel({ recs }: { recs: Recommendation[] }) {
               <div className="mt-0.5 text-[14px] font-semibold tabular-nums">{s.value}</div>
             </div>
             {i < steps.length - 1 ? (
-              <span className={cx("text-[12px]", s.complete ? "text-accent" : "text-faint")}>�</span>
+              <span className={cx("text-[12px]", s.complete ? "text-accent" : "text-faint")}>ï¿½</span>
             ) : null}
           </React.Fragment>
         ))}
