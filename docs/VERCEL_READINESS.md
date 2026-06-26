@@ -92,7 +92,7 @@ GET  /api/integrations/hubspot/status?probe=true   → 200  (live connectivity c
 ```
 
 With `?probe=true` the deployed backend reports `connected: true` and
-`writeback_enabled: true` for portal `246465397`. The frontend "Test connection"
+`writeback_enabled: true` for the configured HubSpot test portal. The frontend "Test connection"
 button uses `?probe=true`.
 
 ---

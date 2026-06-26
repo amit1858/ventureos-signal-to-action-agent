@@ -3,6 +3,19 @@
 > A non-technical introduction for PMs, business leaders, hackathon
 > judges and anyone evaluating the product without diving into code.
 
+![Executive Command Center — who needs attention this week, and why](assets/screenshots/command_center_executive.png)
+
+**Live and deployed today:**
+
+| 99 | 108 | 6 | 10 | 10/10 |
+|---|---|---|---|---|
+| accounts | signals | AI agents | recommendations | evaluation checks |
+
+> Running now on Vercel (web) + Render (API) against a HubSpot test CRM —
+> with a Decision Ledger, governed write-back, BYOK provider abstraction, and a
+> voice-ready architecture. See [Roadmap](ROADMAP.md) for what is shipped vs.
+> planned for the NVIDIA hackathon.
+
 ---
 
 ## The problem
@@ -61,8 +74,8 @@ behaves like a controlled enterprise product.
 
 ## What the product can do today
 
-1. **Reads a real CRM** (HubSpot test portal, 40 demo SMB accounts plus
-   contacts, deals, and recent activity).
+1. **Reads a real CRM** (HubSpot test portal — 99 demo accounts plus
+   100 contacts, 100 deals, and 207 recent activities).
 2. **Pulls outside-in market signals** (optional, off by default) to add
    colour like funding events, leadership changes or regulatory shifts.
 3. **Ranks the entire book** every Monday morning — risk, opportunity,
@@ -158,17 +171,27 @@ A scripted 10-minute walkthrough lives in [`docs/DEMO_SCRIPT.md`](DEMO_SCRIPT.md
 
 ## What's planned next
 
-The roadmap is honest and short. See [`ROADMAP.md`](ROADMAP.md) for
-detail. Headline items:
+The roadmap is honest and organized in three horizons. See
+[`ROADMAP.md`](ROADMAP.md) for detail and
+[`NVIDIA_ALIGNMENT.md`](NVIDIA_ALIGNMENT.md) for the NVIDIA mapping.
 
-- **Phase 7 — Multi-Agent Strategic Reasoning**: agents that debate,
-  plan multi-step engagements, and reason across the whole book.
-- **Salesforce and Dynamics connectors** on the same governance
-  contract as HubSpot today.
-- **Authentication + role-based access + multi-tenant isolation** for
-  production deployments.
-- **Production-grade key vault** for organizations that want a managed
-  alternative to BYOK.
+**Now (shipped):** governed six-agent workflow, Decision Ledger, Revenue
+Execution Center, HubSpot integration, BYOK provider abstraction, adaptive
+experience modes, voice-ready architecture.
+
+**Hackathon (NVIDIA Open Hackathon):**
+
+- **NVIDIA reasoning** — Nemotron via NIM behind the existing model adapter; a
+  live deterministic-vs-NVIDIA comparison.
+- **Voice Chief of Staff** — the planned Gnani.ai speech layer (STT · SALM ·
+  TTS · multilingual), a governed voice loop that never bypasses approval. See
+  [`VOICE_CHIEF_OF_STAFF.md`](VOICE_CHIEF_OF_STAFF.md).
+- **NeMo Agent Toolkit** — map the typed agent sequence onto the toolkit.
+- **Backend Decision Ledger** persistence + automatic governed CRM write-back.
+
+**Future (vision):** Salesforce / Dynamics connectors on the same governance
+contract; authentication, RBAC, and multi-tenant isolation; a production key
+vault as a managed alternative to BYOK; a Digital Executive Assistant.
 
 Every planned item preserves the governance invariants above.
 
@@ -181,15 +204,41 @@ Every planned item preserves the governance invariants above.
 > narrative on top, and a human approval gate on every step that
 > reaches the CRM.
 
-## Decision Ledger and lifecycle (Phase 13)
+## A governed system of action — the Decision Ledger
 
 The product is no longer just a recommendation workspace; it is a governed system of action.
-Every decision a seller makes � approve, reject, request review, and the real-world outcome �
+Every decision a seller makes — approve, reject, request review, and the real-world outcome —
 is captured in a Decision Ledger. Managers see a roll-up: how many recommendations were
 reviewed, how many approved/rejected, how much revenue at risk was reviewed, how many
-opportunities advanced. The lifecycle of each recommendation (Detected -> Recommended ->
-Prepared -> Submitted -> Approved -> Executed -> Outcome captured) is visible on the
-cockpit and in the Approval Drawer.
+opportunities advanced. The lifecycle of each recommendation (Detected → Recommended →
+Prepared → Submitted → Approved → Executed → Outcome captured) is visible on the
+cockpit and in the Approval Drawer. See [`GOVERNANCE.md`](GOVERNANCE.md) and
+[`REVENUE_EXECUTION.md`](REVENUE_EXECUTION.md).
 
-CRM writeback readiness is shown but disabled in demo mode � Phase 14 will connect the
-approved-action pipeline to the existing HubSpot connector.
+CRM write-back readiness is shown but intentionally disabled in the public demo — the
+approved-action pipeline connects to the existing HubSpot connector on the hackathon horizon.
+
+---
+
+## The AI Chief of Staff vision
+
+Today the product answers "who needs attention this week, and why?" through a screen and a
+deterministic morning brief. The direction is an **enterprise AI Chief of Staff**: a governed
+assistant that proactively briefs a revenue leader, reasons over the whole book, and — through
+the planned [Voice Chief of Staff](VOICE_CHIEF_OF_STAFF.md) — can be asked and answered out
+loud, including in multilingual, code-switched conversation. Voice is **voice-ready today and a
+planned hackathon implementation** — never a claim that it already ships.
+
+This is a category shift: from systems of record, to engagement, to intelligence, to **systems
+of reasoning** — where AI reasons, humans govern, and every recommendation becomes an
+accountable business outcome.
+
+---
+
+## Related documentation
+
+- [Architecture](ARCHITECTURE.md) · [Agent Architecture](AGENT_ARCHITECTURE.md)
+- [Governance](GOVERNANCE.md) · [Revenue Execution](REVENUE_EXECUTION.md)
+- [Voice Chief of Staff](VOICE_CHIEF_OF_STAFF.md) · [NVIDIA Alignment](NVIDIA_ALIGNMENT.md)
+- [Demo Guide](DEMO_GUIDE.md) · [Quick Start](QUICK_START.md) · [Roadmap](ROADMAP.md)
+- Back to the [README](../README.md)

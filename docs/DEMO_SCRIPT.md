@@ -10,7 +10,7 @@
 ## Setup (do this before the meeting — 2 min)
 
 1. Open the production URL in a clean browser profile (incognito works).
-2. Wait until the header reads **"HubSpot test CRM · 40 accounts"**.
+2. Wait until the header reads **"HubSpot test CRM · 99 accounts"**.
 3. In **Trust & Governance → AI Decision Engines · BYOK**, paste your Anthropic
    key, click **Test**, then **Activate**. Expect:
    `✓ Connected · Anthropic Claude · claude-sonnet-4-6 · ~1,400 ms`.
@@ -138,7 +138,7 @@ Production rollout pivots on SSO + multi-tenant + your CRM of choice."*
 
 **"Latency on the LLM is ~40s — production-acceptable?"**
 *"For an executive review-board on a single account, yes. For batch
-evaluation across 40 accounts we run the governed engine — which is
+evaluation across 99 accounts we run the governed engine — which is
 sub-second — and use the LLM only on the priority shortlist."*
 
 ---
@@ -147,7 +147,7 @@ sub-second — and use the LLM only on the priority shortlist."*
 
 - [ ] Clean browser profile / incognito.
 - [ ] Production URL loads in <3s.
-- [ ] Header chip: `HubSpot test CRM · 40 accounts`.
+- [ ] Header chip: `HubSpot test CRM · 99 accounts`.
 - [ ] Curefoods is #1 in Command Center.
 - [ ] Anthropic BYOK is connected & active.
 - [ ] You've rehearsed the Act IV transition while compare is running.

@@ -14,6 +14,18 @@
 > _The backend runs on Render's free tier. The first request after a quiet
 > period can take ~50 seconds to wake. Give it a moment and refresh._
 
+> **🧭 Explore the project**
+> &nbsp;
+> 🌐 **[Product microsite](https://amit1858.github.io/ventureos-signal-to-action-agent/)**
+> &nbsp;·&nbsp; 🚀 **[Live demo](https://ventureos-signal-to-action-agent.vercel.app)**
+> &nbsp;·&nbsp; 📚 **[Documentation](#-documentation)**
+> &nbsp;·&nbsp; 🏗 **[Architecture](docs/ARCHITECTURE.md)**
+> &nbsp;·&nbsp; 📑 **[NVIDIA submission deck (PDF)](docs/submission/Signal-to-Action-Agent_NVIDIA-Deck-V4.pdf)**
+>
+> The **[product microsite](https://amit1858.github.io/ventureos-signal-to-action-agent/)** is the
+> product front door (a GitHub Pages site). This README is the **engineering entry point** — it
+> summarizes the system and links into the technical depth below.
+
 ---
 
 ## TL;DR
@@ -61,7 +73,7 @@ note, and the human's job is review, refine, approve.
    └──────────────────┘     └────────────────────┘     └──────────────────┘
 ```
 
-1. **CRM data** is pulled from a HubSpot test portal (40 demo SMB accounts).
+1. **CRM data** is pulled from a HubSpot test portal (99 demo accounts).
 2. **External intelligence** comes from a pluggable provider layer (`serper`
    or `searchapi`, optional, default off).
 3. **Governed Decision Engine** runs a deterministic, auditable ranking
@@ -113,6 +125,11 @@ provider from the browser.
 - Live model discovery: when you connect a provider, we call the
   provider's own model-list endpoint so you never have to type a model
   identifier.
+- A connected key powers the **advisory reasoning overlay** (the Executive
+  synthesis card and the Reasoning Source strip). The deterministic ranking,
+  scores, confidence, and the seller-ready drafts are unchanged — the key adds
+  narration, not control. See [Architecture §14](docs/ARCHITECTURE.md) for the
+  two model-integration paths.
 
 ---
 
@@ -178,21 +195,42 @@ NEXT_PUBLIC_API_BASE_URL=https://signal-to-action-api.onrender.com
 
 ---
 
-## Documentation
+## 📖 Documentation
 
-| File | For whom |
-|---|---|
-| [`docs/PRODUCT_OVERVIEW.md`](docs/PRODUCT_OVERVIEW.md) | PMs, business leaders, hackathon judges, non-technical reviewers |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Engineering leaders, future contributors |
-| [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) | 10-minute executive demo flow |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Strategic stakeholders, partners |
-| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | DevOps / ops |
-| [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | On-call / live demo operators |
-| [`docs/TESTING.md`](docs/TESTING.md) | QA / contributors |
-| [`docs/evaluation-plan.md`](docs/evaluation-plan.md) | Eval engineers |
-| [`docs/hubspot-integration.md`](docs/hubspot-integration.md) | CRM integration engineers |
-| [`docs/nvidia-integration-plan.md`](docs/nvidia-integration-plan.md) | NVIDIA-track reviewers |
-| [`docs/dataset-schema.md`](docs/dataset-schema.md) | Data engineers |
+The repository doubles as the product's documentation portal. Start with the
+[Product Overview](docs/PRODUCT_OVERVIEW.md), then dive into the area you care about.
+
+**Product & submission**
+- [Product microsite](https://amit1858.github.io/ventureos-signal-to-action-agent/) — the public product front door (GitHub Pages)
+- [Live demo](https://ventureos-signal-to-action-agent.vercel.app) — the deployed application
+- [NVIDIA submission deck (PDF)](docs/submission/Signal-to-Action-Agent_NVIDIA-Deck-V4.pdf) — 29-slide executive deck
+
+**Start here**
+- [Product Overview](docs/PRODUCT_OVERVIEW.md) — the business story (PMs, leaders, judges, investors)
+- [Quick Start](docs/QUICK_START.md) — run it locally in minutes (developers)
+- [Demo Guide](docs/DEMO_GUIDE.md) — 2 / 5 / 10 / 15-minute presenter scripts
+
+**Architecture & technical depth**
+- [Architecture](docs/ARCHITECTURE.md) — the flagship system document
+- [Agent Architecture](docs/AGENT_ARCHITECTURE.md) — the six-agent multi-agent runtime
+- [Governance](docs/GOVERNANCE.md) — approval gate, Decision Ledger, evidence, BYOK
+- [Revenue Execution](docs/REVENUE_EXECUTION.md) — approved decision → measured outcome
+
+**NVIDIA & voice**
+- [NVIDIA Alignment](docs/NVIDIA_ALIGNMENT.md) — NIM · Nemotron · NeMo · Triton mapping
+- [Voice Chief of Staff](docs/VOICE_CHIEF_OF_STAFF.md) — planned Gnani.ai voice layer
+- [NVIDIA Integration Plan](docs/nvidia-integration-plan.md) — the detailed phased plan
+
+**Operate & contribute**
+- [Roadmap](docs/ROADMAP.md) — Current / Hackathon / Future
+- [Deployment](docs/DEPLOYMENT.md) · [Operations](docs/OPERATIONS.md) — ship and run it
+- [Security](docs/SECURITY.md) — secrets, BYOK, responsible disclosure
+- [Contributing](docs/CONTRIBUTING.md) — standards, branches, PRs
+- [FAQ](docs/FAQ.md) — common questions, answered
+
+**Reference**
+- [Demo Script](docs/DEMO_SCRIPT.md) · [Testing](docs/TESTING.md) · [Evaluation Plan](docs/evaluation-plan.md)
+- [HubSpot Integration](docs/hubspot-integration.md) · [Dataset Schema](docs/dataset-schema.md)
 
 ---
 
@@ -204,7 +242,7 @@ cd services/api
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python generate_synthetic_data.py        # one-time synthetic dataset
+python data/generate_synthetic_data.py   # one-time synthetic dataset
 python -m uvicorn main:app --reload --port 8000
 
 # 2. Frontend (separate terminal)
@@ -234,12 +272,7 @@ What's next: see [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
 
-## License
-
-This is a hackathon project by **Team VentureOS**. Demo CRM data only.
-No real customer information.
-
-## Decision Ledger and action lifecycle (Phase 13)
+## Decision Ledger & action lifecycle
 
 Every approval, rejection, or review request in the Account Workspace is now recorded in a
 persistent Decision Ledger. Each entry captures the recommendation, the account, the reviewer,
@@ -256,10 +289,17 @@ Renewal risk reduced, Opportunity created, No response, Follow-up required). The
 visible in Trust and Governance as a Manager Summary, a Decision Ledger table, and a CRM
 Writeback Readiness lifecycle (Prepared -> Approved -> Ready for CRM -> Written -> Verified).
 
-Phase 13 stops at "Ready for CRM" � CRM writeback is not enabled in demo mode. Phase 14 will
+The lifecycle stops at "Ready for CRM" � CRM write-back is not enabled in demo mode. A future phase will
 route approved actions through the existing HubSpot connector. The ledger API surface
 (`apps/web/lib/decisionLedger.ts`) is backend-swappable; today it persists to browser
 localStorage so the demo works without auth.
 
-This phase is additive. Scoring, ranking, governance, approval logic, agents, and backend
+This section is additive. Scoring, ranking, governance, approval logic, agents, and backend
 contracts are unchanged.
+
+---
+
+## License
+
+This is a hackathon project by **Team VentureOS**. Demo CRM data only.
+No real customer information.

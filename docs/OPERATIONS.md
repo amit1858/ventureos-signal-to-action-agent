@@ -60,7 +60,7 @@ HubSpot auto-sync enabled; starting background sync thread.
 Background refresh scheduler started: every 900 seconds.   (only if enabled)
 Backend ready.
 HubSpot connection configured; synchronizing companies, contacts and deals...
-Loaded 40 companies, 71 contacts, 28 deals, 83 activities from HubSpot.
+Loaded 99 companies, 100 contacts, 100 deals, 207 activities from HubSpot.
 Active source is now the HubSpot test CRM.
 ```
 

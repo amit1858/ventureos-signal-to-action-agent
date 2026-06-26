@@ -30,8 +30,8 @@ The product feels like a Revenue Command Center, not a developer dashboard.
 Live URL loads. Above the fold, in order:
 
 1. **Executive Daily Briefing** (Phase 14F) — urgency badge + one-line headline + three pillars (*What changed · Why it matters · What to do next*) + ranked action list with estimated minutes per item.
-2. **AI Chief of Staff** — *"Across 40 accounts: ₹X at risk · ₹Y expansion · Z need attention. Start with Curefoods."*
-3. **Portfolio Pulse** with "Data Source: HubSpot test CRM · 40 records · synced 2m ago".
+2. **AI Chief of Staff** — *"Across 99 accounts: ₹X at risk · ₹Y expansion · Z need attention. Start with Curefoods."*
+3. **Portfolio Pulse** with "Data Source: HubSpot test CRM · 99 records · synced 2m ago".
 
 > **What to say:** *"This is the leadership view. The Daily Briefing tells me what changed overnight, why I should care, and the five things I should do today. The AI Chief of Staff puts a face on the topline numbers. Everything below is supporting evidence."*
 
