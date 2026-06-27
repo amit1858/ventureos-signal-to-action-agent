@@ -10,6 +10,11 @@ everything *after* the recommendation: preparing the action, getting a human to
 approve it, executing it, and measuring whether it worked. The Revenue Execution
 Center owns that lifecycle.
 
+The Revenue Execution Center is live today. It is designed to pair with Decision
+Intelligence (pre-action scenario reading) and Trend Intelligence (change context) —
+both **Next / In Review** — so users can understand why an action is recommended
+before they approve and execute it.
+
 ---
 
 ## 1. The execution lifecycle

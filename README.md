@@ -37,7 +37,7 @@
 | **Why it matters** | A VP signing off on outbound to 40 accounts a week needs the same answer every Monday from the same data. LLMs help explain; the governed engine decides. |
 | **Trust posture** | AI helps explain and recommend. **AI does not determine priority, change governance, or execute CRM actions.** |
 | **BYOK** | Users connect OpenAI, Anthropic, or NVIDIA from the browser. Keys live only in `sessionStorage`. Nothing is persisted server-side. |
-| **Status** | Phase 6 complete · deployed · executive-demo ready. |
+| **Status** | Release 1.2 deployed · public artifacts refreshed · Release 1.3 not started. |
 
 ---
 
@@ -53,6 +53,21 @@ Where this is heading: the seller / CSM opens their browser on Monday,
 the assistant has already triaged the book overnight, every priority
 account has a recommended action with cited evidence and a draft CRM
 note, and the human's job is review, refine, approve.
+
+---
+
+## Current production capabilities (Release 1.2)
+
+The deployed product combines these confirmed layers inside the same existing experience:
+
+1. **Executive Narrative Layer** — AI Chief of Staff briefing, Executive Daily Briefing, and Executive Attention framing.
+2. **Executive Change Brief** — what changed and why across risk, opportunity, and queue movement.
+3. **Portfolio Pulse** — risk/opportunity movement across the full book of accounts.
+4. **Revenue Execution Center** — approved recommendation to measured outcome, linked to the Decision Ledger lifecycle.
+
+**Next / In Review (not yet confirmed in the deployed build):** Decision Intelligence Studio (what-if scenario planning) and Trend Intelligence (Portfolio Trend Read + account-level trend intelligence). See [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+Design boundary remains unchanged: **ranking, recommendation logic, governance, approval workflow, backend contracts, and ledger schema are unchanged**.
 
 ---
 
@@ -267,6 +282,40 @@ to point the frontend at your local backend.
 | 5.0A–C | Decision provider framework · true BYOK UI · live model discovery · production validation |
 | 5.1 | Executive demo hardening (business language, Provider Consensus, Production Readiness matrix) |
 | **6** | **AI Reasoning Experience & Transparency Layer** |
+| **14D–14F** | **Executive Change Brief, Portfolio Timeline, Executive Daily Briefing (narrative layer)** |
+| **15A–15C.5** | **Adaptive Experience Modes + navigation/routing hardening** |
+| **16A** | **Revenue Execution Center + closed-loop outcomes + Decision Ledger integration polish** |
+
+### Roadmap snapshot
+
+**Implemented today**
+- Executive Command Center
+- Executive Daily Briefing
+- Executive Change Brief
+- Portfolio Pulse
+- Revenue Execution Center
+- Decision Ledger
+- Governance
+- Adaptive Experience Modes
+- HubSpot integration
+
+**Next / In Review (not yet confirmed in the deployed build)**
+- Decision Intelligence Studio
+- Trend Intelligence (Portfolio Trend Read + account-level trend intelligence)
+- AI Chief of Staff conversation
+- Portfolio memory
+- Natural-language timeline
+- Meeting prep
+
+**Planned hackathon implementation**
+- Voice Chief of Staff
+- Gnani.ai speech integration (STT / SALM / TTS)
+- SALM-powered conversational interface
+
+**Future vision**
+- Digital Executive Avatar
+- Meeting Coach
+- Enterprise multimodal workspace
 
 What's next: see [`docs/ROADMAP.md`](docs/ROADMAP.md).
 

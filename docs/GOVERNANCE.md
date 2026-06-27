@@ -9,6 +9,11 @@ The governing principle of the product fits on one line:
 
 > **AI assists. Humans decide. Every decision is logged.**
 
+This same boundary applies to the planned Decision Intelligence Studio and Trend
+Intelligence surfaces (**Next / In Review**): they are designed to improve explanation
+and scenario readability, and will not alter ranking, scoring, approval requirements, or
+ledger schema.
+
 Nothing the AI produces is ever auto-executed. The system is engineered so that
 governance is not a policy bolted on top — it is an agent in the workflow and a
 gate in the data flow.

@@ -50,6 +50,18 @@ BYOK (Bring Your Own Key) lets a user optionally connect their own OpenAI, Anthr
 
 It is the governed lifecycle surface where recommendations move toward execution. CRM write-back within it is gated by human approval and disabled in demo mode.
 
+### What is Decision Intelligence Studio?
+
+Decision Intelligence Studio is the scenario-planning layer that helps a seller or manager inspect likely business impact before action. It compares alternatives (for example, act now vs delay) and shows projected outcomes, assumptions, confidence, and agent reasoning. It is additive and does not change deterministic ranking. **Status: Next / In Review — not yet confirmed in the deployed build.**
+
+### What is Trend Intelligence?
+
+Trend Intelligence is the narrative + visual change layer over existing portfolio signals. It includes portfolio trend read, account-level trend intelligence, and executive change views that explain what changed, whether it is one-time or recurring, and why the recommendation moved. **Status: Next / In Review — not yet confirmed in the deployed build.**
+
+### Is trend/decision intelligence changing the core recommendation engine?
+
+No. Ranking, scoring, governance, approval flow, backend contracts, and Decision Ledger schema remain unchanged. Decision/Trend Intelligence is an explanatory layer over existing evidence, drift, delta, timeline, and ledger data.
+
 ### Is CRM write-back automatic?
 
 No. CRM write-back (HubSpot tasks/notes) happens only after a human clicks Approve, and it is gated/disabled in demo mode.
@@ -80,7 +92,14 @@ See [DEMO_GUIDE.md](DEMO_GUIDE.md) for a guided walkthrough.
 
 ### What's on the roadmap?
 
-Work is organized into three horizons: Current (built and deployed), Hackathon (planned during the NVIDIA Open Hackathon, including the Voice Chief of Staff and NVIDIA NIM/NeMo integration), and Future (vision items such as additional CRM connectors, auth/RBAC, and an on-prem sovereign stack). See [ROADMAP.md](ROADMAP.md).
+Work is organized into four public states:
+
+- **Implemented**: Executive Command Center, Executive Daily Briefing, Executive Change Brief, Portfolio Pulse, Revenue Execution Center, Decision Ledger, Governance, Adaptive Experience Modes, HubSpot integration.
+- **Next / In Review**: Decision Intelligence Studio, Trend Intelligence, AI Chief of Staff Conversation, Portfolio Memory, Natural-Language Timeline, Meeting Prep.
+- **Planned Hackathon Implementation**: Voice Chief of Staff with planned Gnani.ai STT/SALM/TTS integration.
+- **Future**: Digital Executive Avatar, Meeting Coach, Enterprise Multimodal Workspace.
+
+See [ROADMAP.md](ROADMAP.md).
 
 ## Related documentation
 

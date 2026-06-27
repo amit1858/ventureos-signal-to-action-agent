@@ -12,6 +12,12 @@ language model **explains**; it never **decides**.
 Source of truth: `services/api/agents/` (orchestrator + six agents) and
 `services/api/schemas/agent_outputs.py` (the typed contracts).
 
+Release 1.2 shipped surfaces (Executive Daily Briefing, Executive Change Brief) are
+composed from this runtime's existing outputs plus client-side telemetry (drift/delta/timeline/
+ledger). The Next / In Review surfaces (Decision Intelligence Studio, Trend Intelligence) follow
+the same additive pattern. No new decision-making agent was added, and core recommendation contracts
+remain unchanged.
+
 ---
 
 ## 1. The workflow at a glance

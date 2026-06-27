@@ -45,14 +45,15 @@ Say what it is **not**, too: not a dashboard, not a CRM, not a chatbot. It is an
 |---|---|---|
 | 1 | **Executive Command Center** | "One screen: who needs attention this week, and why." |
 | 2 | **Executive Brief / AI Chief of Staff** | "A morning brief — what changed, the biggest risk, the biggest opportunity, what to do first." |
-| 3 | **Portfolio Pulse** | "Signals drift live; agents react and attribute the change." |
+| 3 | **Portfolio Pulse** | "Risk and opportunity movement across the full book of accounts, ranked for focus." |
 | 4 | **Priority queue + Workspace** | "Drill into one account: evidence, why now, the draft." |
 | 5 | **Evidence Intelligence** (Evidence tab) | "Every claim is sourced — agent and system of record." |
-| 6 | **Recommendation Evolution** | "Why the recommendation changed, over time." |
-| 7 | **Revenue Execution Center** | "Approved decisions move through a five-step pipeline to a measured outcome." |
-| 8 | **Decision Ledger + Governance** | "Every decision is logged; a human approves everything." |
-| 9 | **HubSpot integration** | "Live test-CRM data in, governed write-back gated behind approval." |
-| 10 | **Adaptive Experience Modes** | "Executive, Seller, Operations — one product, three lenses." |
+| 6 | **Decision Intelligence Studio** *(Next / In Review)* | "Planned: before acting, compare scenario outcomes, confidence, assumptions, and reasoning." |
+| 7 | **Executive Change Brief + Recommendation Evolution** | "Why recommendations moved, with timeline context." |
+| 8 | **Revenue Execution Center** | "Approved decisions move through a five-step pipeline to a measured outcome." |
+| 9 | **Decision Ledger + Governance** | "Every decision is logged; a human approves everything." |
+| 10 | **HubSpot integration** | "Live test-CRM data in, governed write-back gated behind approval." |
+| 11 | **Adaptive Experience Modes** | "Executive, Seller, Operations — one product, three lenses." |
 
 ---
 
@@ -76,12 +77,15 @@ Do the 2-minute script, then:
 
 5. **(2:00) Evidence.** Open the Evidence tab on the top account: source agent +
    source system + polarity per item. "No black box."
-6. **(3:00) Execution.** Open the Revenue Execution Center: walk the five-step
+6. **(3:00) Change context.** Open the Executive Change Brief: "This is what
+   changed and why it changed since the last review window." *(Decision Intelligence
+   Studio and Trend Intelligence are Next / In Review and may not be in the demo build.)*
+7. **(3:45) Execution.** Open the Revenue Execution Center: walk the five-step
    pipeline (Prepared → Approved → Ready for CRM → Written → Verified). "It
    stops at Ready for CRM in the demo — by design — write-back is gated."
-7. **(4:00) The brief.** Show the Executive Brief / AI Chief of Staff: "This is
+8. **(4:15) The brief.** Show the Executive Brief / AI Chief of Staff: "This is
    the morning brief a revenue leader reads first."
-8. **(4:30) NVIDIA + Voice.** "The model layer is provider-abstracted and
+9. **(4:35) NVIDIA + Voice.** "The model layer is provider-abstracted and
    NVIDIA-ready — Nemotron via NIM. And it's voice-ready: a planned Voice Chief of
    Staff with Gnani.ai, built during the hackathon."
 

@@ -283,6 +283,7 @@
     <nav class="links">
       <a class="nl" href="#overview">Overview</a>
       <a class="nl" href="#features">Features</a>
+      <a class="nl" href="#decision-intelligence">Intelligence</a>
       <a class="nl" href="#architecture">Architecture</a>
       <a class="nl" href="#nvidia">NVIDIA</a>
       <a class="nl" href="#docs">Docs</a>
@@ -365,70 +366,52 @@
 <section class="band" id="features">
   <div class="wrap">
     <span class="kicker reveal">The Product, Already Built</span>
-    <h2 class="sec-h reveal">A deployed, demo-ready Enterprise Revenue OS</h2>
-    <p class="sec-p reveal">Not mockups &mdash; live screenshots from the production application. Each surface ties an AI capability to a number a revenue leader already owns.</p>
+    <h2 class="sec-h reveal">Shipped surfaces in production</h2>
+    <p class="sec-p reveal">Production screenshots from the live app. These are the surfaces confirmed in the deployed build today. Decision Intelligence and Trend Intelligence are shown further down as <strong>Next / In Review</strong>.</p>
     <div class="feat-grid">
 
       <article class="card reveal">
         <div class="shot"><img src="assets/screenshots/command_center_executive.png" alt="Executive Command Center" loading="lazy" /></div>
         <div class="body">
-          <div class="val">Focus this week</div>
-          <div class="ttl">Executive Command Center</div>
-          <p class="desc">Your Monday-morning portfolio, ranked &mdash; the accounts that need attention this week, each with a reason.</p>
+          <div class="val">Executive attention required</div>
+          <div class="ttl">Executive Attention Required</div>
+          <p class="desc">The highest-priority accounts for this week with ranked urgency, reason, and evidence-aware focus.</p>
         </div>
       </article>
 
       <article class="card reveal">
-        <div class="shot"><img src="assets/screenshots/workspace_conversation.png" alt="AI Chief of Staff" loading="lazy" /></div>
+        <div class="shot"><img src="submission/screenshots/mode_executive_full.png" alt="Executive Daily Briefing" loading="lazy" /></div>
         <div class="body">
-          <div class="val">Ask in plain English</div>
-          <div class="ttl">AI Chief of Staff</div>
-          <p class="desc">&ldquo;Which accounts need attention this week and why?&rdquo; &mdash; one governed workspace that briefs, reasons, and drafts.</p>
+          <div class="val">AI Chief of Staff narrative</div>
+          <div class="ttl">Executive Daily Briefing</div>
+          <p class="desc">AI Chief of Staff narrative of what changed across the portfolio, what is recurring, and what requires action now.</p>
         </div>
       </article>
 
       <article class="card reveal">
         <div class="shot"><img src="assets/screenshots/command_center_full.jpg" alt="Portfolio Pulse" loading="lazy" /></div>
         <div class="body">
-          <div class="val">Whole-book view</div>
+          <div class="val">Portfolio risk + opportunity</div>
           <div class="ttl">Portfolio Pulse</div>
-          <p class="desc">Risk and opportunity across the entire book at a glance, so nothing slips silently through the cracks.</p>
+          <p class="desc">Risk and opportunity movement across the full book of accounts, ranked for executive focus.</p>
         </div>
       </article>
 
       <article class="card reveal">
-        <div class="shot"><img src="assets/screenshots/workspace_evidence.png" alt="Evidence Intelligence" loading="lazy" /></div>
+        <div class="shot"><img src="submission/screenshots/mode_executive_hero.png" alt="Executive Change Brief" loading="lazy" /></div>
         <div class="body">
-          <div class="val">Every claim sourced</div>
-          <div class="ttl">Evidence Intelligence</div>
-          <p class="desc">Each recommendation is backed by traceable signals and notes &mdash; no black-box scores, only evidence you can inspect.</p>
+          <div class="val">What changed and why</div>
+          <div class="ttl">Executive Change Brief</div>
+          <p class="desc">Change narrative for risk increases, opportunity moves, and queue movement since the last review window.</p>
         </div>
       </article>
 
       <article class="card reveal">
-        <div class="shot"><img src="assets/screenshots/revenue_execution_progress.png" alt="Recommendation Evolution" loading="lazy" /></div>
+        <div class="shot"><img src="assets/screenshots/workspace_overview.png" alt="Account Workspace" loading="lazy" /></div>
         <div class="body">
-          <div class="val">Watch reasoning form</div>
-          <div class="ttl">Recommendation Evolution</div>
-          <p class="desc">See how a recommendation progresses from detected to prepared &mdash; confidence, caveats, and next best action.</p>
-        </div>
-      </article>
-
-      <article class="card reveal">
-        <div class="shot"><img src="assets/screenshots/approval_drawer.png" alt="Governance" loading="lazy" /></div>
-        <div class="body">
-          <div class="val">Human in the loop</div>
-          <div class="ttl">Governance</div>
-          <p class="desc">A hard approval gate with governance caveats. AI recommends; <b>humans decide</b>. Nothing executes unattended.</p>
-        </div>
-      </article>
-
-      <article class="card reveal">
-        <div class="shot"><img src="assets/screenshots/workspace_timeline.png" alt="Decision Ledger" loading="lazy" /></div>
-        <div class="body">
-          <div class="val">Fully auditable</div>
-          <div class="ttl">Decision Ledger</div>
-          <p class="desc">Every decision &mdash; evidence used, confidence, caveats, approval &mdash; recorded as an immutable, replayable trace.</p>
+          <div class="val">Account-level execution workspace</div>
+          <div class="ttl">Account Workspace</div>
+          <p class="desc">Per-account cockpit with recommendation evolution, evidence, conversation prep, CRM note draft, governance checks, and timeline.</p>
         </div>
       </article>
 
@@ -437,7 +420,7 @@
         <div class="body">
           <div class="val">Decisions &rarr; outcomes</div>
           <div class="ttl">Revenue Execution Center</div>
-          <p class="desc">Approved decisions become measured outcomes &mdash; meeting booked, renewal risk reduced &mdash; tagged to the ledger.</p>
+          <p class="desc">Execution layer of the governed loop: approved decisions move to measurable outcomes and are tracked in the Decision Ledger.</p>
         </div>
       </article>
 
@@ -452,6 +435,71 @@
       </article>
 
     </div>
+  </div>
+</section>
+
+<!-- ===================== DECISION INTELLIGENCE ===================== -->
+<section class="band" id="decision-intelligence">
+  <div class="wrap">
+    <span class="kicker reveal">Decision Intelligence &middot; Next / In Review</span>
+    <h2 class="sec-h reveal">Understand impact before you act</h2>
+    <p class="sec-p reveal"><strong>Status: Next / In Review &mdash; not yet confirmed in the deployed production build.</strong> Decision Intelligence Studio is designed to help sellers and managers test decisions before approval. It is advisory and additive: it explains impact scenarios without changing ranking, governance, or backend contracts.</p>
+    <div class="flow reveal">
+      <div class="flow-node"><div class="ic">&#129300;</div><div class="t">What-if scenarios</div><div class="d">Act now vs delay, approve vs ignore, escalate vs monitor, outreach vs executive escalation.</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-node"><div class="ic">&#128200;</div><div class="t">Projected impact</div><div class="d">Projected risk/opportunity movement and expected business outcomes.</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-node"><div class="ic">&#129488;</div><div class="t">Reasoning + confidence</div><div class="d">Agent reasoning, confidence, assumptions, and caveats surfaced explicitly.</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-node"><div class="ic">&#128220;</div><div class="t">Projected trace</div><div class="d">Expected Decision Ledger and timeline events before action is executed.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TREND INTELLIGENCE ===================== -->
+<section class="band" id="trend-intelligence">
+  <div class="wrap">
+    <span class="kicker reveal">Trend Intelligence &middot; Next / In Review</span>
+    <h2 class="sec-h reveal">Briefing with visual proof</h2>
+    <p class="sec-p reveal"><strong>Status: Next / In Review &mdash; not yet confirmed in the deployed production build.</strong> Trend Intelligence is designed to combine executive narrative with trend-aware visual context so teams can separate one-time events from recurring or directional change.</p>
+    <div class="tri">
+      <div class="hcol hack reveal">
+        <div class="ph">Portfolio trend layer</div>
+        <h3>Whole-book trend read</h3>
+        <ul>
+          <li>Portfolio Pulse with trend read context</li>
+          <li>Executive Daily Briefing with trend-aware narrative</li>
+          <li>Compact visualizations for risk/opportunity movement</li>
+        </ul>
+      </div>
+      <div class="hcol hack reveal">
+        <div class="ph">Account-level trends</div>
+        <h3>Natural timeline</h3>
+        <ul>
+          <li>Recommendation evolution over time</li>
+          <li>Drift + delta + timeline + ledger linkage</li>
+          <li>Clear "what changed before this action" context</li>
+        </ul>
+      </div>
+      <div class="hcol hack reveal">
+        <div class="ph">Signal classes</div>
+        <h3>Readable pattern detection</h3>
+        <ul>
+          <li>One-time signal movement</li>
+          <li>Recurring signal patterns</li>
+          <li>Directional trend shifts</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== AI CHIEF OF STAFF ===================== -->
+<section class="band" id="ai-chief-of-staff">
+  <div class="wrap">
+    <span class="kicker reveal">AI Chief of Staff</span>
+    <h2 class="sec-h reveal">The experience layer across briefing, decisions, and execution</h2>
+    <p class="sec-p reveal">The AI Chief of Staff is the positioning that ties Executive Daily Briefing, Governance, the Decision Ledger, and the Revenue Execution Center into one governed operating flow. A conversational AI Chief of Staff layer &mdash; together with Decision and Trend Intelligence &mdash; is <strong>Next / In Review</strong>.</p>
   </div>
 </section>
 
@@ -609,33 +657,33 @@
     <p class="sec-p reveal">Where the product is today, what we build at the hackathon, and where it goes next.</p>
     <div class="tri">
       <div class="hcol now reveal">
-        <div class="ph">Current &mdash; shipped</div>
-        <h3>Deployed today</h3>
+        <div class="ph">Implemented</div>
+        <h3>Shipped in production</h3>
         <ul>
-          <li>Executive Command Center &amp; Portfolio Intelligence</li>
-          <li>Six-agent governed workflow with evidence &amp; confidence</li>
-          <li>Revenue Execution Center &amp; Decision Ledger</li>
-          <li>BYOK provider abstraction &middot; HubSpot test connector</li>
+          <li>Executive Command Center, Executive Daily Briefing, Executive Change Brief</li>
+          <li>Portfolio Pulse, Revenue Execution Center, Decision Ledger</li>
+          <li>Governance + Adaptive Experience Modes</li>
+          <li>HubSpot integration</li>
         </ul>
       </div>
       <div class="hcol hack reveal">
-        <div class="ph">Hackathon &mdash; voice</div>
-        <h3>Voice + NVIDIA runtime</h3>
+        <div class="ph">Next / In Review + Planned Hackathon</div>
+        <h3>Intelligence deepening + Voice layer</h3>
         <ul>
-          <li>Voice Chief of Staff with Gnani.ai (STT / SALM / TTS)</li>
-          <li>Multilingual support &amp; spoken portfolio reviews</li>
-          <li>NVIDIA NIM + Nemotron reasoning via the adapter</li>
-          <li>NeMo Agent Toolkit orchestration patterns</li>
+          <li>Next / In Review: Decision Intelligence Studio, Trend Intelligence</li>
+          <li>Next / In Review: AI Chief of Staff Conversation, Portfolio Memory, Natural-Language Timeline, Meeting Prep</li>
+          <li>Planned hackathon: Voice Chief of Staff + Gnani.ai STT/SALM/TTS</li>
+          <li>Planned hackathon: NVIDIA NIM + Nemotron + NeMo orchestration patterns</li>
         </ul>
       </div>
       <div class="hcol future reveal">
         <div class="ph">Future &mdash; vision</div>
         <h3>Enterprise AI Chief of Staff</h3>
         <ul>
-          <li>Digital executive avatar &amp; live meeting coach</li>
-          <li>Enterprise multimodal workspace</li>
-          <li>Triton + GPU optimization across the workflow</li>
-          <li>Reusable VentureOS action-layer runtime</li>
+          <li>Digital Executive Avatar</li>
+          <li>Meeting Coach</li>
+          <li>Enterprise Multimodal Workspace</li>
+          <li>Triton/GPU optimization across the workflow</li>
         </ul>
       </div>
     </div>

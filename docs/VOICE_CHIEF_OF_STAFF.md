@@ -15,6 +15,11 @@ Voice is an **enhancement**, not a replacement. It does not introduce a second
 brain. It speaks the same evidence, the same confidence, and the same
 human-approval gate the rest of the product already enforces.
 
+Release 1.2 context: Executive Daily Briefing, Executive Change Brief, and Revenue
+Execution Center are shipped in the screen-first product today (Decision Intelligence
+Studio and Trend Intelligence are Next / In Review). Voice is the planned interaction
+layer over those same governed capabilities, not a separate decision system.
+
 ---
 
 ## 1. Why voice matters for this product

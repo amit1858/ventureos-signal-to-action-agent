@@ -95,6 +95,26 @@ behaves like a controlled enterprise product.
 8. **Writes back to HubSpot** as tasks and notes — but only after the
    user clicks *Approve*.
 
+### Intelligence layer (Release 1.2 + Next / In Review)
+
+The current build adds an intelligence layer across existing surfaces (no dashboard sprawl).
+
+**Shipped today:**
+
+- **Executive Daily Briefing** — combines what changed, why it changed, and where to act first.
+- **Executive Change Brief improvements** — clearer risk increases, opportunity
+  moves, and queue movement context.
+- **Revenue Execution Center integration** — decision-to-outcome loop connected to
+  lifecycle and ledger evidence.
+
+**Next / In Review (not yet confirmed in the deployed build):**
+
+- **Decision Intelligence Studio** — scenario-style decision support with projected
+  risk/opportunity impact, assumptions, confidence, reasoning, and expected
+  business outcomes before action.
+- **Trend Intelligence** — portfolio trend read, account-level trend intelligence,
+  and explicit change narratives powered by drift + delta + timeline + ledger.
+
 ---
 
 ## How trust is handled
@@ -176,8 +196,18 @@ The roadmap is honest and organized in three horizons. See
 [`NVIDIA_ALIGNMENT.md`](NVIDIA_ALIGNMENT.md) for the NVIDIA mapping.
 
 **Now (shipped):** governed six-agent workflow, Decision Ledger, Revenue
-Execution Center, HubSpot integration, BYOK provider abstraction, adaptive
-experience modes, voice-ready architecture.
+Execution Center, Executive Daily Briefing, Executive Change Brief, HubSpot
+integration, BYOK provider abstraction, adaptive experience modes, voice-ready
+architecture.
+
+**Next / In Review:** Decision Intelligence Studio, Trend Intelligence.
+
+**Next (Release 1.3 planning):**
+
+- **AI Chief of Staff conversation** (text-first conversational layer)
+- **Portfolio memory** ("what changed since yesterday/last session")
+- **Natural-language timeline** ("why rank moved from #18 to #3")
+- **Meeting prep mode** ("brief me before this account meeting")
 
 **Hackathon (NVIDIA Open Hackathon):**
 

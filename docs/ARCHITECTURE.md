@@ -86,6 +86,9 @@ The frontend tells a story by scrolling through one continuous journey:
 | → Portfolio Map (Risk vs Opportunity) | "Where should I focus?" |
 | → Priority Accounts | "Who is the ranked shortlist?" |
 | → Executive Briefing | "What are the top risks and opportunities?" |
+| → Executive Daily Briefing | "What changed, what is recurring, and what is directional?" |
+| → Executive Change Brief | "Why did rank/recommendation move since the last review?" |
+| → Decision Intelligence Studio *(Next / In Review)* | "What is the likely impact if we act now vs delay?" |
 | → Governed Pipeline | "Can I trust how this was decided?" |
 | **Workspace** | "Why does the AI think this?" (conversational query) |
 | **Human Approval controls** | "Do I approve, reject, or edit?" |
@@ -96,6 +99,13 @@ Key points:
 - A small UI-side helper library (`apps/web/lib`) reshapes and formats the backend response for
   display (e.g. portfolio summaries, the risk/opportunity map). It does not invent recommendations.
 - Animations and the "reasoning sequence" shown while analysis runs are **presentation only**.
+
+### Release 1.2 architecture note
+
+Decision Intelligence and Trend Intelligence are **Next / In Review** (not yet confirmed in the
+deployed build). They are designed as **additive read layers** on top of existing deterministic
+outputs and telemetry streams (recommendations, drift, delta, timeline, and decision ledger). They
+do not mutate ranking/scoring/governance contracts and do not introduce new backend write paths.
 
 ---
 

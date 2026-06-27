@@ -20,6 +20,8 @@ assets/
 | `architecture/` | `architecture_voice.png` | Architecture, Voice Chief of Staff |
 | `screenshots/` | `command_center_executive.png` | Product Overview, Demo Guide |
 | `screenshots/` | `command_center_full.jpg` | Product Overview |
+| `submission/screenshots/` | `mode_executive_full.png` | Microsite: Executive Daily Briefing |
+| `submission/screenshots/` | `mode_executive_hero.png` | Microsite: Executive Change Brief |
 | `screenshots/` | `mode_seller.png`, `mode_operations.png` | Product Overview (Adaptive Modes) |
 | `screenshots/` | `workspace_overview.png`, `workspace_full.jpg` | Architecture, Demo Guide |
 | `screenshots/` | `workspace_evidence.png` | Governance, Agent Architecture |
@@ -29,7 +31,7 @@ assets/
 | `screenshots/` | `revenue_execution_center.png`, `revenue_execution_full.jpg`, `revenue_execution_progress.png` | Revenue Execution |
 | `screenshots/` | `approval_drawer.png` | Governance, Revenue Execution |
 
-> Higher-resolution originals live in `docs/submission/screenshots/` alongside
+> Higher-resolution originals also live in `docs/submission/screenshots/` alongside
 > the NVIDIA submission deck. The optimized copies here keep the documentation
 > portal lightweight.
 

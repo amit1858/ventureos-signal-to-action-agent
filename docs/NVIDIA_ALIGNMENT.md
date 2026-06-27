@@ -9,6 +9,12 @@ than retrofitted. The model layer is provider-abstracted, the agents are
 typed and framework-free, and the reasoning workload is exactly the kind of
 governed, multi-step inference NVIDIA's agentic stack is built to accelerate.
 
+Current shipped context (Release 1.2): Executive Narrative Layer, Executive Daily
+Briefing, Executive Change Brief, Revenue Execution Center, and Decision Ledger are
+live. Decision Intelligence Studio and Trend Intelligence are **Next / In Review**.
+NVIDIA acceleration targets the explanatory/conversational layer without changing
+deterministic governance.
+
 This document distinguishes three horizons for every technology:
 
 - ✅ **Implemented** — running in the codebase today.
