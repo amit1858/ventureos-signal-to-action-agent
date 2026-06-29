@@ -3,7 +3,7 @@ import { Activity, LayoutDashboard, Columns3, Database, Gauge, Sparkles } from "
 import { cx } from "@/lib/format";
 import { AIReasoningChip } from "@/components/AIReasoningStatus";
 
-export type AppView = "landing" | "command" | "workspace" | "evaluation";
+export type AppView = "landing" | "brief" | "command" | "workspace" | "evaluation";
 
 // Slim, quiet product header (P4): brand mark (returns home) + the
 // Landing → Command Center → Workspace journey + a single calm source
@@ -64,6 +64,12 @@ export function Header({
           <ViewTab
             active={view === "landing"}
             onClick={onHome}
+            icon={<Sparkles size={13} />}
+            label="Platform"
+          />
+          <ViewTab
+            active={view === "brief"}
+            onClick={() => onViewChange("brief")}
             icon={<Sparkles size={13} />}
             label="Morning Brief"
           />

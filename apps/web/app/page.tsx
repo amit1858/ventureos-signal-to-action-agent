@@ -51,6 +51,7 @@ import { CommandCenter } from "@/components/command/CommandCenter";
 import { WhyThisAccount } from "@/components/WhyThisAccount";
 import { buildAccountSelectionContext, type AccountSelectionContext } from "@/lib/accountSelectionContext";
 import { ExecutiveMorningLanding } from "@/components/landing/ExecutiveMorningLanding";
+import { LandingView } from "@/components/landing/LandingView";
 import { EvaluationView } from "@/components/evaluation/EvaluationView";
 import { WorkspaceQuery } from "@/components/WorkspaceQuery";
 import { ThinkingSequence } from "@/components/ThinkingSequence";
@@ -659,7 +660,7 @@ export default function Page() {
   // Read-only generation against the local API.
   React.useEffect(() => {
     if (autoRanRef.current) return;
-    if (!demoMode && view !== "command" && view !== "evaluation") return;
+    if (!demoMode && view !== "command" && view !== "evaluation" && view !== "brief") return;
     if (!meta || result || loading) return;
     autoRanRef.current = true;
     runWorkflow();
@@ -1032,6 +1033,19 @@ export default function Page() {
 
       {view === "landing" ? (
         <div key="landing" className="scene">
+          <LandingView
+            meta={meta}
+            recommendationCount={result?.recommendations.length ?? limit}
+            dataSourceLabel={dataSourceLabel}
+            isHubspotSource={isHubspotSource}
+            onEnter={() => setView("brief")}
+            onOpenWorkspace={() => setView("workspace")}
+          />
+        </div>
+      ) : null}
+
+      {view === "brief" ? (
+        <div key="brief" className="scene">
           <ExecutiveMorningLanding
             meta={meta}
             accounts={accountsList}
