@@ -173,15 +173,8 @@ export function ExecutiveMorningLanding({
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-faint">
               Since your last session
             </div>
-            <span
-              className={cx(
-                "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-                isHubspotSource
-                  ? "border-accent/40 bg-accent/10 text-accent"
-                  : "border-brand/40 bg-brand/10 text-brand-bright",
-              )}
-            >
-              {dataSourceLabel}
+            <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-faint/70">
+              Executive entry
             </span>
           </div>
 

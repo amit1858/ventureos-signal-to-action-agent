@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Activity, LayoutDashboard, Columns3, Database, Gauge } from "lucide-react";
+import { Activity, LayoutDashboard, Columns3, Database, Gauge, Sparkles } from "lucide-react";
 import { cx } from "@/lib/format";
 import { AIReasoningChip } from "@/components/AIReasoningStatus";
 
@@ -58,38 +58,41 @@ export function Header({
           </div>
         </button>
 
-        {/* Journey: Command Center → Workspace (hidden on the landing screen) */}
-        {view !== "landing" ? (
-          <div className="flex items-center rounded-lg border border-edge bg-surface2/60 p-0.5">
-            <ViewTab
-              active={view === "command"}
-              onClick={() => onViewChange("command")}
-              icon={<LayoutDashboard size={13} />}
-              label="Command Center"
-            />
-            <ViewTab
-              active={view === "workspace"}
-              onClick={() => onViewChange("workspace")}
-              icon={<Columns3 size={13} />}
-              label="Workspace"
-            />
-            <ViewTab
-              active={view === "evaluation"}
-              onClick={() => onViewChange("evaluation")}
-              icon={<Gauge size={13} />}
-              label="Trust & Governance"
-            />
-          </div>
-        ) : null}
+        {/* Journey: always visible so users know they're inside the platform.
+            Morning Brief is the entry experience, then Command Center → Workspace. */}
+        <div className="flex items-center rounded-lg border border-edge bg-surface2/60 p-0.5">
+          <ViewTab
+            active={view === "landing"}
+            onClick={onHome}
+            icon={<Sparkles size={13} />}
+            label="Morning Brief"
+          />
+          <ViewTab
+            active={view === "command"}
+            onClick={() => onViewChange("command")}
+            icon={<LayoutDashboard size={13} />}
+            label="Command Center"
+          />
+          <ViewTab
+            active={view === "workspace"}
+            onClick={() => onViewChange("workspace")}
+            icon={<Columns3 size={13} />}
+            label="Workspace"
+          />
+          <ViewTab
+            active={view === "evaluation"}
+            onClick={() => onViewChange("evaluation")}
+            icon={<Gauge size={13} />}
+            label="Trust & Governance"
+          />
+        </div>
 
         {/* Phase 6 · persistent AI reasoning status + single calm source indicator */}
         <div className="flex items-center gap-2">
-          {view !== "landing" ? (
-            <AIReasoningChip
-              overlayProvider={overlayProvider}
-              overlayModel={overlayModel}
-            />
-          ) : null}
+          <AIReasoningChip
+            overlayProvider={overlayProvider}
+            overlayModel={overlayModel}
+          />
           <span
             className="inline-flex items-center gap-2 rounded-full border border-edge bg-surface2/70 px-3 py-1 text-[11px] font-medium text-muted"
             title={dataReady ? `Active data source: ${dataSourceLabel}` : "Dataset not generated"}
