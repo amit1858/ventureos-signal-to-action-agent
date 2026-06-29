@@ -4,6 +4,7 @@ import * as React from "react";
 import { ChevronUp, Gauge, Cpu, Workflow, Server, ArrowRight } from "lucide-react";
 import type { DecisionLedger } from "@/lib/types";
 import { cx } from "@/lib/format";
+import { useExperienceMode } from "@/lib/experienceMode";
 
 export function RuntimeTrace({
   ledger,
@@ -17,6 +18,8 @@ export function RuntimeTrace({
   lastSyncedAt?: string | null;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [experienceMode] = useExperienceMode();
+  const showEngineering = experienceMode === "operations";
   const isMock = (ledger?.model_provider ?? "mock").toLowerCase().includes("mock");
   const ran = !!ledger;
   const source = ledger?.data_source ?? dataSource ?? "Synthetic local dataset";
@@ -141,21 +144,29 @@ export function RuntimeTrace({
             />
             {ran ? "Workflow completed" : "Workflow idle"}
           </span>
-          <span className="flex items-center gap-1.5 text-muted">
-            <Cpu size={13} className="text-cyan" />
-            Provider <span className="font-mono text-cyan">{ledger?.model_provider ?? "mock"}</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-muted">
-            <Gauge size={13} className="text-accent" />
-            <span className="font-mono text-ink">{ledger?.latency_ms ?? "—"} ms</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-muted">
-            <Workflow size={13} className="text-faint" />
-            <span className="font-mono text-ink">{ledger?.agents_invoked.length ?? 0}</span> agents
-          </span>
-          <span className="hidden items-center gap-1.5 text-faint sm:flex">
-            Runtime trace · NVIDIA integration path
-          </span>
+          {showEngineering ? (
+            <>
+              <span className="flex items-center gap-1.5 text-muted">
+                <Cpu size={13} className="text-cyan" />
+                Provider <span className="font-mono text-cyan">{ledger?.model_provider ?? "mock"}</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-muted">
+                <Gauge size={13} className="text-accent" />
+                <span className="font-mono text-ink">{ledger?.latency_ms ?? "—"} ms</span>
+              </span>
+              <span className="flex items-center gap-1.5 text-muted">
+                <Workflow size={13} className="text-faint" />
+                <span className="font-mono text-ink">{ledger?.agents_invoked.length ?? 0}</span> agents
+              </span>
+              <span className="hidden items-center gap-1.5 text-faint sm:flex">
+                Runtime trace · NVIDIA integration path
+              </span>
+            </>
+          ) : (
+            <span className="hidden items-center gap-1.5 text-faint sm:flex">
+              Governed decision engine · {ledger?.agents_invoked.length ?? 0} agents reviewed your portfolio
+            </span>
+          )}
         </div>
         <span className="flex items-center gap-1.5 text-[11px] text-faint">
           {open ? "Hide" : "Details"}

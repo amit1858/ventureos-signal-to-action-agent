@@ -36,6 +36,7 @@ import { MultiAgentPanel } from "@/components/MultiAgentPanel";
 import { OutsideInSignals } from "@/components/OutsideInSignals";
 import { EvidenceLedger } from "@/components/EvidenceChips";
 import { ConfidenceRing } from "@/components/ConfidenceMeter";
+import { ConfidenceExplain } from "@/components/ConfidenceExplain";
 import { GovernanceBadge, GovernanceAssurance } from "@/components/GovernanceBadge";
 import { ApprovalControls } from "@/components/ApprovalControls";
 import { DraftPanel } from "@/components/DraftPanel";
@@ -49,7 +50,7 @@ import { KpiStrip } from "@/components/KpiStrip";
 import { CommandCenter } from "@/components/command/CommandCenter";
 import { WhyThisAccount } from "@/components/WhyThisAccount";
 import { buildAccountSelectionContext, type AccountSelectionContext } from "@/lib/accountSelectionContext";
-import { LandingView } from "@/components/landing/LandingView";
+import { ExecutiveMorningLanding } from "@/components/landing/ExecutiveMorningLanding";
 import { EvaluationView } from "@/components/evaluation/EvaluationView";
 import { WorkspaceQuery } from "@/components/WorkspaceQuery";
 import { ThinkingSequence } from "@/components/ThinkingSequence";
@@ -1031,13 +1032,24 @@ export default function Page() {
 
       {view === "landing" ? (
         <div key="landing" className="scene">
-          <LandingView
+          <ExecutiveMorningLanding
             meta={meta}
-            recommendationCount={result?.recommendations.length ?? limit}
-            isHubspotSource={isHubspotSource}
+            accounts={accountsList}
+            accountsById={accounts}
+            recs={result?.recommendations ?? []}
+            hasResult={!!result}
+            loading={loading}
             dataSourceLabel={dataSourceLabel}
+            isHubspotSource={isHubspotSource}
+            lastSync={result?.generated_at ?? hubStatus?.last_synced_at ?? null}
+            externalEnabled={externalSignalsEnabled}
+            externalContext={briefExternalContext}
+            portfolio={portfolio}
+            recommendationCount={result?.recommendations.length ?? limit}
+            onRun={runWorkflow}
             onEnter={() => setView("command")}
             onOpenWorkspace={() => setView("workspace")}
+            onOpenAccount={(accountId) => openAccountFromSurface({ accountId, source: "Morning Brief" })}
           />
         </div>
       ) : null}
@@ -1247,7 +1259,15 @@ export default function Page() {
                       </div>
                     </div>
 
-                    <ConfidenceRing value={selectedRec.confidence_score} />
+                    <div>
+                      <ConfidenceRing value={selectedRec.confidence_score} />
+                      <div className="mt-2">
+                        <ConfidenceExplain
+                          rec={selectedRec}
+                          account={accounts[selectedRec.account_id]}
+                        />
+                      </div>
+                    </div>
 
                     {/* Governance checks */}
                     <div>

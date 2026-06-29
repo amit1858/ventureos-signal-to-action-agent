@@ -39,6 +39,7 @@ export function LandingView({
   dataSourceLabel,
   onEnter,
   onOpenWorkspace,
+  hideHero = false,
 }: {
   meta: MetaResponse | null;
   recommendationCount: number;
@@ -46,6 +47,7 @@ export function LandingView({
   dataSourceLabel: string;
   onEnter: () => void;
   onOpenWorkspace: () => void;
+  hideHero?: boolean;
 }) {
   const accounts = meta?.dataset.accounts ?? 40;
   const signals = meta?.dataset.signals ?? 132;
@@ -58,6 +60,7 @@ export function LandingView({
   return (
     <main className="relative mx-auto w-full max-w-[1180px] flex-1 px-5 pb-24">
       {/* ---------------------------------------------------------------- HERO */}
+      {hideHero ? null : (
       <section className="relative pt-16 text-center sm:pt-24">
         <div
           className="grid-dots pointer-events-none absolute inset-x-0 top-0 h-[420px] opacity-[0.10]"
@@ -122,9 +125,10 @@ export function LandingView({
           />
         </div>
       </section>
+      )}
 
       {/* ------------------------------------------------- CRM vs SIGNAL-TO-ACTION */}
-      <section className="mt-28">
+      <section className={hideHero ? "mt-4" : "mt-28"}>
         <SectionHead
           eyebrow="Why it's different"
           heading="Beyond a system of record"

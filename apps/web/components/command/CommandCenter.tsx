@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import {
@@ -51,25 +51,29 @@ import {
 } from "@/lib/recommendationDelta";
 import { recordExternalSnapshot } from "@/lib/externalChangeMonitor";
 import { buildExecutiveDailyBriefing } from "@/lib/executiveDailyBriefing";
-import { useExperienceMode, isSectionVisible, isOpenByDefault } from "@/lib/experienceMode";
-import {
+import { useExperienceMode, isSectionVisible, isOpenByDefault } from "@/lib/experienceMode";import {
   normalizePreferredSection,
   type OpenAccountFromSurfaceInput,
   type WorkspaceSectionTarget,
 } from "@/lib/accountNavigation";
 import { ExperienceModeSwitch } from "@/components/command/ExperienceModeSwitch";
+import { useFocusMode, isFocusVisible } from "@/lib/focusMode";
+import { Focus as FocusIcon } from "lucide-react";
 import { DisclosurePanel } from "@/components/command/DisclosurePanel";
+import { ConfidenceExplain } from "@/components/ConfidenceExplain";
+import { displayConfidence } from "@/lib/confidence";
+import { Sparkline } from "@/components/Sparkline";
 import { ExecutiveAttentionBrief } from "@/components/command/ExecutiveAttentionBrief";
 import { ActionExecutionPanel } from "@/components/command/ActionExecutionPanel";
 import { loadDriftSnapshot } from "@/lib/driftEngine";
 import { type AccountSelectionContext } from "@/lib/accountSelectionContext";
 import dynamic from "next/dynamic";
 
-// Phase 14C â€” Timeline surfaces. Heavy-ish, lazy-loaded so the home page's
+// Phase 14C — Timeline surfaces. Heavy-ish, lazy-loaded so the home page's
 // First Load JS stays inside the program budget.
 const AccountTimeline = dynamic(
   () => import("@/components/command/AccountTimeline").then((m) => m.AccountTimeline),
-  { ssr: false, loading: () => <div className="rounded-lg border border-edge bg-surface2/40 px-3 py-4 text-[11.5px] text-muted">Loading timelineâ€¦</div> },
+  { ssr: false, loading: () => <div className="rounded-lg border border-edge bg-surface2/40 px-3 py-4 text-[11.5px] text-muted">Loading timeline…</div> },
 );
 const ReasoningTrail = dynamic(
   () => import("@/components/command/AccountTimeline").then((m) => m.ReasoningTrail),
@@ -214,7 +218,7 @@ export function CommandCenter({
   onOpenAccount: (
     input: OpenAccountFromSurfaceInput,
   ) => void;
-  /** Phase 13.6 â€” lightweight active-account selection (focus, not navigate). */
+  /** Phase 13.6 — lightweight active-account selection (focus, not navigate). */
   onSelectActive?: (accountId: string) => void;
 }) {
   void meta;
@@ -251,6 +255,14 @@ export function CommandCenter({
 
   // ---- Phase 15A: experience mode ----
   const [experienceMode, setExperienceMode] = useExperienceMode();
+
+  // ---- Release 1.4A: Executive Focus Mode (presentation overlay) ----
+  const [focusMode, , toggleFocusMode] = useFocusMode();
+  const sectionVisible = React.useCallback(
+    (key: Parameters<typeof isSectionVisible>[1]) =>
+      isSectionVisible(experienceMode, key) && (!focusMode || isFocusVisible(key)),
+    [experienceMode, focusMode],
+  );
 
   // ---- Phase 14F: executive daily briefing ----
   // Pure composer reads from drift / deltas / external events / ledger and
@@ -300,7 +312,7 @@ export function CommandCenter({
     [queueRows, experienceMode],
   );
 
-  // Phase 15C.5 â€” Single source of truth: consume app-level account selection context.
+  // Phase 15C.5 — Single source of truth: consume app-level account selection context.
   // App/page.tsx owns selection logic; CommandCenter uses it for rendering only.
   const activeAccountId = accountSelectionContext.activeAccountId;
   const activeRec = accountSelectionContext.activeRecommendation ?? null;
@@ -439,13 +451,13 @@ export function CommandCenter({
   const snapAttention = React.useMemo(() => countAttention(accounts), [accounts]);
   const snapOpenApprovals = recs.filter((r) => r.approval_status === "pending").length;
   const snapAvgConfidence = recs.length
-    ? Math.round((recs.reduce((sum, r) => sum + r.confidence_score, 0) / recs.length) * 100)
+    ? Math.round((recs.reduce((sum, r) => sum + displayConfidence(r), 0) / recs.length) * 100)
     : 0;
-  const snapTopAccount = recs[0]?.account_name ?? "â€”";
+  const snapTopAccount = recs[0]?.account_name ?? "—";
   const snapRenewals = accounts.filter((a) => a.renewal_days != null && a.renewal_days <= 30).length;
   const snapEffortMin = queueRows.slice(0, 6).reduce((sum, row) => sum + row.minutes, 0);
 
-  // Phase 15B â€” derive lightweight summary stats for accordion headers.
+  // Phase 15B — derive lightweight summary stats for accordion headers.
   // Pure read of existing engines; no new intelligence.
   const driftSummary = React.useMemo(() => {
     if (typeof window === "undefined") return { changed: 0, risk: 0, opportunity: 0 };
@@ -457,7 +469,7 @@ export function CommandCenter({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result?.generated_at, accounts.length]);
 
-  // Phase 15B â€” right-rail snapshot compression. Seller mode lands collapsed
+  // Phase 15B — right-rail snapshot compression. Seller mode lands collapsed
   // (compact KPI strip) to focus on action; Executive/Operations stay
   // expanded. Persists per-mode toggle in localStorage.
   const [snapshotExpanded, setSnapshotExpanded] = React.useState<boolean>(true);
@@ -484,15 +496,36 @@ export function CommandCenter({
   }, [experienceMode]);
 
   return (
-    <div className="animate-fade-in pb-8">
-      <div className="flex items-start gap-5">
+    <div className={cx("animate-fade-in pb-8", focusMode && "focus-stage")}>
+      <div className="relative flex items-start gap-5">
         <div className="min-w-0 flex-1 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <ExperienceModeSwitch value={experienceMode} onChange={setExperienceMode} />
-            <span className="text-[10.5px] uppercase tracking-[0.14em] text-faint">{dataSourceLabel}</span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={toggleFocusMode}
+                aria-pressed={focusMode}
+                title={
+                  focusMode
+                    ? "Exit Focus Mode — show the full Command Center"
+                    : "Focus Mode — show only the brief, today's priorities and execution"
+                }
+                className={cx(
+                  "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  focusMode
+                    ? "border-brand/55 bg-brand/15 text-brand-bright"
+                    : "border-edge bg-surface2 text-muted hover:border-faint hover:text-ink",
+                )}
+              >
+                <FocusIcon size={13} />
+                {focusMode ? "Focus on" : "Focus"}
+              </button>
+              <span className="text-[10.5px] uppercase tracking-[0.14em] text-faint">{dataSourceLabel}</span>
+            </div>
           </div>
 
-          {isSectionVisible(experienceMode, "chiefOfStaff") ? (
+          {sectionVisible("chiefOfStaff") ? (
             <ChiefOfStaffNarrativeCard
               brief={brief}
               topRec={recs[0] ?? null}
@@ -506,7 +539,7 @@ export function CommandCenter({
             />
           ) : null}
 
-          {isSectionVisible(experienceMode, "attentionBrief") && hasResult ? (
+          {sectionVisible("attentionBrief") && hasResult ? (
             <ExecutiveAttentionBrief
               accounts={accounts}
               accountsById={accountsById}
@@ -517,7 +550,7 @@ export function CommandCenter({
             />
           ) : null}
 
-          {isSectionVisible(experienceMode, "dailyBriefing") ? (
+          {sectionVisible("dailyBriefing") ? (
             <ExecutiveDailyBriefingPanel
               briefing={briefing}
               titleLabel={modeLabels.dailyBriefing}
@@ -532,14 +565,14 @@ export function CommandCenter({
             />
           ) : null}
 
-          {isSectionVisible(experienceMode, "portfolioPulse") ? (
+          {sectionVisible("portfolioPulse") ? (
             <DisclosurePanel
               id="portfolio-pulse"
               eyebrow="Portfolio intelligence"
               title={modeLabels.pulse}
               summary={
                 driftSummary.changed > 0
-                  ? `${driftSummary.changed} accounts changed Â· ${driftSummary.risk} risks Â· ${driftSummary.opportunity} opportunities`
+                  ? `${driftSummary.changed} accounts changed · ${driftSummary.risk} risks · ${driftSummary.opportunity} opportunities`
                   : "Awaiting next pulse cycle"
               }
               defaultOpen={isOpenByDefault(experienceMode, "portfolioPulse")}
@@ -552,7 +585,7 @@ export function CommandCenter({
             </DisclosurePanel>
           ) : null}
 
-          {isSectionVisible(experienceMode, "executiveChangeBrief") ? (
+          {sectionVisible("executiveChangeBrief") ? (
             <DisclosurePanel
               id="executive-change-brief"
               eyebrow="Executive intelligence"
@@ -576,7 +609,7 @@ export function CommandCenter({
             </DisclosurePanel>
           ) : null}
 
-          {isSectionVisible(experienceMode, "deltaCompact") && deltas.length > 0 ? (
+          {sectionVisible("deltaCompact") && deltas.length > 0 ? (
             <DisclosurePanel
               id="recommendation-deltas"
               eyebrow="Operations intelligence"
@@ -588,7 +621,7 @@ export function CommandCenter({
             </DisclosurePanel>
           ) : null}
 
-          {isSectionVisible(experienceMode, "workbench") ? (
+          {sectionVisible("workbench") ? (
           <CollapsibleZone
             id="workbench"
             defaultOpen={true}
@@ -639,7 +672,7 @@ export function CommandCenter({
           </CollapsibleZone>
           ) : null}
 
-          {isSectionVisible(experienceMode, "portfolioIntelligence") ? (
+          {sectionVisible("portfolioIntelligence") ? (
           <CollapsibleZone
             id="portfolio"
             defaultOpen={false}
@@ -713,7 +746,7 @@ export function CommandCenter({
           </CollapsibleZone>
           ) : null}
 
-          {isSectionVisible(experienceMode, "trustGovernance") ? (
+          {sectionVisible("trustGovernance") ? (
           <CollapsibleZone
             id="governance"
             defaultOpen={false}
@@ -747,7 +780,7 @@ export function CommandCenter({
                 <div className="mt-2 rounded-lg border border-edge bg-surface2/40 px-3 py-2 text-[11px] text-muted">
                   Open detailed governance and evaluation metrics in Evaluation Center.{" "}
                   <button type="button" className="ml-1 text-brand-bright hover:underline" onClick={onOpenEvaluation}>
-                    Open â†’
+                    Open →
                   </button>
                 </div>
               ) : null}
@@ -797,20 +830,20 @@ export function CommandCenter({
                         {activeRec.account_name}
                       </div>
                       <div className="mt-0.5 text-[10.5px] text-muted">
-                        Priority #{activeRec.priority_rank} Â·{" "}
+                        Priority #{activeRec.priority_rank} ·{" "}
                         {activeReasoning?.action.label ?? activeRec.recommended_action}
                       </div>
                     </div>
                   ) : null}
                   <div className="space-y-1.5">
-                    <RailRow icon={<ShieldAlert size={12} className="text-risk" />} label="Revenue at risk" value={inrCompact(snapRevRisk)} tone="risk" />
-                    <RailRow icon={<TrendingUp size={12} className="text-accent" />} label="Expansion opportunity" value={inrCompact(snapGrowth)} tone="opp" />
+                    <RailRow icon={<ShieldAlert size={13} className="text-risk" />} label="Revenue at risk" value={inrCompact(snapRevRisk)} tone="risk" emphasis spark={<Sparkline seed={`risk-${snapRevRisk}`} trend="up" tone="risk" />} />
+                    <RailRow icon={<TrendingUp size={13} className="text-accent" />} label="Expansion opportunity" value={inrCompact(snapGrowth)} tone="opp" emphasis spark={<Sparkline seed={`grow-${snapGrowth}`} trend="up" />} />
+                    <div className="!my-2 h-px bg-edge/50" />
                     <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="Accounts requiring action" value={String(snapAttention)} />
-                    <RailRow icon={<Clock size={12} className="text-muted" />} label="Renewals due" value={String(snapRenewals)} tone={snapRenewals > 0 ? "warn" : undefined} />
                     <RailRow icon={<CheckCircle2 size={12} className="text-muted" />} label="Pending approvals" value={String(snapOpenApprovals)} tone={snapOpenApprovals > 0 ? "warn" : undefined} />
-                    <RailRow icon={<Clock size={12} className="text-muted" />} label="Estimated effort" value={snapEffortMin > 0 ? `~${Math.round((snapEffortMin / 60) * 10) / 10} hrs` : "â€”"} />
-                    <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="AI confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "â€”"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? undefined : "risk"} />
-                    <RailRow icon={<TrendingUp size={12} className="text-brand-bright" />} label="Top account" value={snapTopAccount} />
+                    <RailRow icon={<Clock size={12} className="text-muted" />} label="Renewals due" value={String(snapRenewals)} tone={snapRenewals > 0 ? "warn" : undefined} />
+                    <RailRow icon={<Clock size={12} className="text-muted" />} label="Estimated effort" value={snapEffortMin > 0 ? `~${Math.round((snapEffortMin / 60) * 10) / 10} hrs` : "—"} />
+                    <RailRow icon={<Zap size={12} className="text-brand-bright" />} label="AI confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "—"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? undefined : "risk"} />
                   </div>
                 </>
               ) : (
@@ -818,7 +851,7 @@ export function CommandCenter({
                   <CompactKpi label="At risk" value={inrCompact(snapRevRisk)} tone="risk" />
                   <CompactKpi label="Expansion" value={inrCompact(snapGrowth)} tone="opp" />
                   <CompactKpi label="Approvals" value={String(snapOpenApprovals)} tone={snapOpenApprovals > 0 ? "warn" : "neutral"} />
-                  <CompactKpi label="Confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "â€”"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? "neutral" : "risk"} />
+                  <CompactKpi label="Confidence" value={snapAvgConfidence > 0 ? `${snapAvgConfidence}%` : "—"} tone={snapAvgConfidence >= 80 ? "opp" : snapAvgConfidence >= 60 ? "neutral" : "risk"} />
                 </div>
               )}
             </div>
@@ -861,10 +894,10 @@ function ChiefOfStaffNarrativeCard({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className={cx("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold", isHubspotSource ? "border-accent/40 bg-accent/10 text-accent" : "border-brand/40 bg-brand/10 text-brand-bright")}>
-              {dataSourceLabel} <span className="opacity-70">Â·</span> {brief.analyzed}
+              {dataSourceLabel} <span className="opacity-70">·</span> {brief.analyzed}
             </span>
             <h2 className="text-[15px] font-semibold text-ink">AI Chief of Staff</h2>
-            <span className="text-[10px] text-faint">Â· sync {lastSync ?? "â€”"}</span>
+            <span className="text-[10px] text-faint">· synced {lastSync ?? "—"}</span>
           </div>
           <p className="mt-1 text-[12px] text-muted">
             Across {brief.analyzed} accounts: <span className="font-semibold text-risk">{inrCompact(brief.revenueAtRisk)}</span> at risk,{" "}
@@ -876,7 +909,7 @@ function ChiefOfStaffNarrativeCard({
         <div className="flex items-center gap-1.5">
           <DemoModeTrigger />
           <button type="button" onClick={onRun} disabled={loading} className={cx("btn btn-primary px-3 py-1.5 text-xs", loading && "opacity-70")}>
-            {loading ? "Analyzingâ€¦" : "Re-run"}
+            {loading ? "Analyzing…" : "Re-run"}
           </button>
         </div>
       </div>
@@ -891,7 +924,7 @@ function ChiefOfStaffNarrativeCard({
           <span className="text-[11px] text-muted">
             {topAccount ? (
               <>
-                Spend {spendChange > 0 ? "up" : "down"} {Math.abs(spendChange)}% Â· support risk {riskLevel(topAccount).toLowerCase()} Â· renewal {topAccount.renewal_days}d
+                Spend {spendChange > 0 ? "up" : "down"} {Math.abs(spendChange)}% · support risk {riskLevel(topAccount).toLowerCase()} · renewal {topAccount.renewal_days}d
               </>
             ) : (
               topRec.priority_reason
@@ -899,13 +932,16 @@ function ChiefOfStaffNarrativeCard({
           </span>
           <span className="hidden h-3.5 w-px bg-edge sm:block" aria-hidden />
           <span className="text-[11px] text-muted">{reasoning.expectedOutcome}</span>
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand/5 px-2 py-0.5 text-[10px] font-semibold text-brand-bright">
-            <Clock size={10} /> ~{reasoning.estimatedMinutes} min
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <ConfidenceExplain rec={topRec} account={topAccount} align="right" />
+            <span className="inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand/5 px-2 py-0.5 text-[10px] font-semibold text-brand-bright">
+              <Clock size={10} /> ~{reasoning.estimatedMinutes} min
+            </span>
+          </div>
         </div>
       ) : (
         <div className="relative mt-2.5 rounded-lg border border-edge bg-surface2/40 px-3 py-2 text-[12px] text-muted">
-          Run the workflow to generate todayâ€™s operating narrative.
+          Run the workflow to generate today’s operating narrative.
         </div>
       )}
     </div>
@@ -961,7 +997,7 @@ function WorkQueuePanel({
     });
   };
 
-  // Phase 13.6 â€” keep the selected row visible when arrow-key navigation moves
+  // Phase 13.6 — keep the selected row visible when arrow-key navigation moves
   // beyond the viewport. Uses nearest scrolling so the queue itself only
   // scrolls when necessary.
   React.useEffect(() => {
@@ -995,7 +1031,7 @@ function WorkQueuePanel({
         <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">{titleLabel}</div>
         <div className="text-[10px] text-faint">
           {rows.length
-            ? `${rows.length} account${rows.length === 1 ? "" : "s"} Â· ${Math.round((effortMin / 60) * 10) / 10 || 0}h effort Â· ${pendingApprovals} approvals`
+            ? `${rows.length} account${rows.length === 1 ? "" : "s"} · ${Math.round((effortMin / 60) * 10) / 10 || 0}h effort · ${pendingApprovals} approvals`
             : ""}
         </div>
       </div>
@@ -1079,7 +1115,7 @@ function WorkQueuePanel({
           <div className="mt-2 rounded-lg border border-edge bg-bg/25 px-2.5 py-2 text-[11px] text-faint">
             {hovered
               ? rows.find((r) => r.recommendation.account_id === hovered)?.whyNow ?? "Hover any row to preview why now."
-              : "Use â†‘/â†“ keys to move selection. Click a row to focus the account workspace."}
+              : "Use ↑/↓ keys to move selection. Click a row to focus the account workspace."}
           </div>
 
           <div className="mt-2 rounded-lg border border-edge bg-bg/25">
@@ -1093,7 +1129,7 @@ function WorkQueuePanel({
                 Priority buckets
               </span>
               <span className="text-[10px] text-muted">
-                {mustDo.length} must do Â· {shouldDo.length} should do Â· {optional.length} optional
+                {mustDo.length} must do · {shouldDo.length} should do · {optional.length} optional
               </span>
             </button>
             {showBuckets ? (
@@ -1484,7 +1520,7 @@ function WorkspaceCockpit({
     };
     return [...items].sort((a, b) => score(b.polarity, b.strength) - score(a.polarity, a.strength))[0];
   }, [recommendation.evidence]);
-  const evidenceUpdated = formatTimestamp(generatedAt) || "â€”";
+  const evidenceUpdated = formatTimestamp(generatedAt) || "—";
   const actionWhy = reasoning.reasons.slice(0, 3).map((r) => r.text);
 
   // Brief, transient focus highlight so users see the click had an effect.
@@ -1516,12 +1552,12 @@ function WorkspaceCockpit({
 
   return (
     <div ref={cockpitRef} className="flex h-full flex-col rounded-xl border border-edge bg-surface2/35 p-3 ambient-glow">
-      {/* Action Hero â€” first decision surface */}
+      {/* Action Hero — first decision surface */}
       <div className="rounded-lg border border-edge-soft surface-warm p-3.5">
         {showContextBanner ? (
           <div className="mb-2 rounded-md border border-brand-bright/35 bg-brand/[0.08] px-2.5 py-1 text-[10.5px] text-brand-bright">
             Viewing account <span className="font-semibold">{recommendation.account_name}</span>
-            <span className="mx-1 text-edge">Â·</span>
+            <span className="mx-1 text-edge">·</span>
             Opened from <span className="font-semibold">{openedFromSource}</span>
           </div>
         ) : null}
@@ -1539,7 +1575,7 @@ function WorkspaceCockpit({
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-faint">Why this account matters</div>
           <ul className="mt-1 space-y-0.5 text-[11px] text-muted">
             {actionWhy.map((line, idx) => (
-              <li key={`why-${idx}`}>â€¢ {line}</li>
+              <li key={`why-${idx}`}>• {line}</li>
             ))}
           </ul>
         </div>
@@ -1563,7 +1599,7 @@ function WorkspaceCockpit({
         </div>
       </div>
 
-      {/* Recommendation evolution â€” immediately below Action Hero */}
+      {/* Recommendation evolution — immediately below Action Hero */}
       <div className="mt-2 rounded-lg border border-edge bg-surface2/45 p-2.5">
         <button
           type="button"
@@ -1589,14 +1625,14 @@ function WorkspaceCockpit({
 
       {/* Focus-first accordion workspace */}
       <div className="mt-2 space-y-2">
-        {/* Phase 16A â€” Action Execution Simulator. Sits immediately after the
+        {/* Phase 16A — Action Execution Simulator. Sits immediately after the
             Action Hero / Recommendation Evolution block so the workspace flow
-            reads: Signal â†’ Recommendation â†’ Approval â†’ Execute â†’ Outcome.
+            reads: Signal → Recommendation → Approval → Execute → Outcome.
             Persistence + ledger writes happen inside ActionExecutionPanel via
             `@/lib/executionEngine`. No backend or contract changes. */}
         <WorkspaceAccordion
           title="Action execution"
-          summary="Execute the approved recommendation through a simulated outreach â†’ meeting â†’ outcome loop"
+          summary="Execute the approved recommendation through a simulated outreach → meeting → outcome loop"
           open={sectionOpen("execution")}
           onToggle={() => toggleSection("execution")}
         >
@@ -1645,7 +1681,7 @@ function WorkspaceCockpit({
 
         <WorkspaceAccordion
           title="Evidence"
-          summary={`${recommendation.evidence.length} signals Â· highest ${evidenceTop?.label ?? "â€”"} Â· updated ${evidenceUpdated}`}
+          summary={`${recommendation.evidence.length} signals · highest ${evidenceTop?.label ?? "—"} · updated ${evidenceUpdated}`}
           open={sectionOpen("evidence")}
           onToggle={() => toggleSection("evidence")}
         >
@@ -1654,19 +1690,19 @@ function WorkspaceCockpit({
 
         <WorkspaceAccordion
           title="Account intelligence"
-          summary={`${account?.segment ? titleCase(account.segment) : "â€”"} Â· ${account?.region ? titleCase(account.region) : "â€”"} Â· Renewal ${account?.renewal_days ?? "â€”"}d`}
+          summary={`${account?.segment ? titleCase(account.segment) : "—"} · ${account?.region ? titleCase(account.region) : "—"} · Renewal ${account?.renewal_days ?? "—"}d`}
           open={sectionOpen("intelligence")}
           onToggle={() => toggleSection("intelligence")}
         >
           <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-            <MiniStat label="Industry" value={account?.industry ? titleCase(account.industry) : "â€”"} />
-            <MiniStat label="Segment" value={account?.segment ? titleCase(account.segment) : "â€”"} />
-            <MiniStat label="Region" value={account?.region ? titleCase(account.region) : "â€”"} />
+            <MiniStat label="Industry" value={account?.industry ? titleCase(account.industry) : "—"} />
+            <MiniStat label="Segment" value={account?.segment ? titleCase(account.segment) : "—"} />
+            <MiniStat label="Region" value={account?.region ? titleCase(account.region) : "—"} />
             <MiniStat label="Investment" value={inrCompact(account?.current_month_spend ?? 0)} />
-            <MiniStat label="Adoption" value={`${account?.product_usage_score ?? "â€”"}`} />
-            <MiniStat label="Engagement" value={`${account?.engagement_score ?? "â€”"}`} />
-            <MiniStat label="Support risk" value={`${account?.support_risk_score ?? "â€”"}`} />
-            <MiniStat label="Renewal window" value={`${account?.renewal_days ?? "â€”"}d`} />
+            <MiniStat label="Adoption" value={`${account?.product_usage_score ?? "—"}`} />
+            <MiniStat label="Engagement" value={`${account?.engagement_score ?? "—"}`} />
+            <MiniStat label="Support risk" value={`${account?.support_risk_score ?? "—"}`} />
+            <MiniStat label="Renewal window" value={`${account?.renewal_days ?? "—"}d`} />
           </div>
         </WorkspaceAccordion>
 
@@ -1744,10 +1780,10 @@ function OverviewTab({
         <WorkspaceCard title="Account summary" icon={<Target size={12} />}>
           <p className="text-[11px] text-muted">{recommendation.priority_reason}</p>
           <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[10px]">
-            <MiniStat label="Segment" value={account?.segment ? titleCase(account.segment) : "â€”"} />
-            <MiniStat label="Industry" value={account?.industry ? titleCase(account.industry) : "â€”"} />
-            <MiniStat label="Region" value={account?.region ? titleCase(account.region) : "â€”"} />
-            <MiniStat label="Confidence" value={pct(recommendation.confidence_score)} />
+            <MiniStat label="Segment" value={account?.segment ? titleCase(account.segment) : "—"} />
+            <MiniStat label="Industry" value={account?.industry ? titleCase(account.industry) : "—"} />
+            <MiniStat label="Region" value={account?.region ? titleCase(account.region) : "—"} />
+            <MiniStat label="Confidence" value={pct(displayConfidence(recommendation, account))} />
           </div>
         </WorkspaceCard>
       </FocusRing>
@@ -1759,7 +1795,7 @@ function OverviewTab({
 
       <WorkspaceCard title="Opportunity" icon={<TrendingUp size={12} />}>
         <p className="text-[11px] text-muted">{recommendation.opportunity_summary}</p>
-        <p className="mt-1.5 text-[10px] text-faint">Growth potential: {account?.growth_potential_score ?? "â€”"}</p>
+        <p className="mt-1.5 text-[10px] text-faint">Growth potential: {account?.growth_potential_score ?? "—"}</p>
       </WorkspaceCard>
 
       <WorkspaceCard title="Renewal" icon={<Clock size={12} />}>
@@ -1807,7 +1843,7 @@ function ConversationPrepTab({
     <div className="space-y-2">
       {focused ? (
         <div className="rounded-md border border-brand-bright/40 bg-brand/[0.10] px-2 py-1 text-[11px] text-brand-bright">
-          Ready for seller review â€” Objective, Discovery questions, and Commitment to secure are highlighted below.
+          Ready for seller review — Objective, Discovery questions, and Commitment to secure are highlighted below.
         </div>
       ) : null}
       <WorkspaceCard title="Executive summary" icon={<Target size={12} />}>
@@ -1828,7 +1864,7 @@ function ConversationPrepTab({
         <WorkspaceCard title="Why now" icon={<Zap size={12} />}>
           <ul className="space-y-1 text-[11px] text-muted">
             {whyNow.map((s, idx) => (
-              <li key={`why-${idx}`}>â€¢ {s}</li>
+              <li key={`why-${idx}`}>• {s}</li>
             ))}
           </ul>
         </WorkspaceCard>
@@ -1837,13 +1873,13 @@ function ConversationPrepTab({
           <div className="text-[10px] font-semibold uppercase tracking-wider text-faint">Discuss</div>
           <ul className="mt-0.5 space-y-1 text-[11px] text-muted">
             {talkTrack.slice(0, 3).map((line, idx) => (
-              <li key={`talk-${idx}`}>â€¢ {line}</li>
+              <li key={`talk-${idx}`}>• {line}</li>
             ))}
           </ul>
           <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-faint">Validate</div>
           <ul className="mt-0.5 space-y-1 text-[11px] text-muted">
             {validatePoints.map((line, idx) => (
-              <li key={`val-${idx}`}>â€¢ {line}</li>
+              <li key={`val-${idx}`}>• {line}</li>
             ))}
           </ul>
           {avoidPoints.length > 0 ? (
@@ -1851,7 +1887,7 @@ function ConversationPrepTab({
               <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-faint">Avoid</div>
               <ul className="mt-0.5 space-y-1 text-[11px] text-muted">
                 {avoidPoints.map((line, idx) => (
-                  <li key={`avoid-${idx}`}>â€¢ {line}</li>
+                  <li key={`avoid-${idx}`}>• {line}</li>
                 ))}
               </ul>
             </>
@@ -1862,7 +1898,7 @@ function ConversationPrepTab({
           <WorkspaceCard title="Discovery questions" icon={<ListChecks size={12} />}>
             <ul className="space-y-1 text-[11px] text-muted">
               {discovery.map((q, idx) => (
-                <li key={`disc-${idx}`}>â€¢ {q}</li>
+                <li key={`disc-${idx}`}>• {q}</li>
               ))}
             </ul>
           </WorkspaceCard>
@@ -1872,8 +1908,8 @@ function ConversationPrepTab({
           <ul className="space-y-1.5 text-[11px] text-muted">
             {objections.map((o, idx) => (
               <li key={`obj-${idx}`} className="rounded border border-edge-soft bg-bg/30 px-1.5 py-1">
-                <div className="text-[10px] font-semibold text-ink">â€œ{o.objection}â€</div>
-                <div className="mt-0.5 text-[10px] text-muted">â†’ {o.response}</div>
+                <div className="text-[10px] font-semibold text-ink">“{o.objection}”</div>
+                <div className="mt-0.5 text-[10px] text-muted">→ {o.response}</div>
               </li>
             ))}
           </ul>
@@ -1888,7 +1924,7 @@ function ConversationPrepTab({
         <WorkspaceCard title="Success criteria" icon={<CheckCircle2 size={12} />}>
           <ul className="space-y-1 text-[11px] text-muted">
             {success.map((s, idx) => (
-              <li key={`succ-${idx}`}>â€¢ {s}</li>
+              <li key={`succ-${idx}`}>• {s}</li>
             ))}
           </ul>
         </WorkspaceCard>
@@ -1974,7 +2010,7 @@ function EmailDraftTab({
         <span className="text-[10px] uppercase tracking-wider text-faint">Approval</span>
         <ApprovalBadge status={recommendation.approval_status} />
         <span className="text-[10px] text-faint">Word count: {words}</span>
-        <span className="text-[10px] text-faint">Not auto-sent â€” human approval required before outreach.</span>
+        <span className="text-[10px] text-faint">Not auto-sent — human approval required before outreach.</span>
       </div>
     </WorkspaceCard>
   );
@@ -2007,7 +2043,7 @@ function CrmUpdateTab({
     <div className="space-y-2">
       {focused ? (
         <div className="rounded-md border border-brand-bright/40 bg-brand/[0.10] px-2 py-1 text-[11px] text-brand-bright">
-          CRM update prepared â€” review the note, next step, and follow-up date below.
+          CRM update prepared — review the note, next step, and follow-up date below.
         </div>
       ) : null}
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
@@ -2121,7 +2157,7 @@ function EvidenceTab({
             <p className="text-[11px] text-faint">No evidence snippets available.</p>
           )}
         </div>
-        <div className="mt-1.5 text-[10px] text-faint">Overall confidence: {pct(recommendation.confidence_score)}</div>
+        <div className="mt-1.5 text-[10px] text-faint">Overall confidence: {pct(displayConfidence(recommendation))}</div>
       </WorkspaceCard>
     </FocusRing>
   );
@@ -2227,7 +2263,7 @@ function ApprovalDrawer({
 
         <div className="grid grid-cols-2 gap-1.5 text-[10px]">
           <MiniStat label="Recommendation" value={reasoning.action.label} />
-          <MiniStat label="Confidence" value={pct(recommendation.confidence_score)} />
+          <MiniStat label="Confidence" value={pct(displayConfidence(recommendation, account))} />
           <MiniStat label="Risk" value={risk} />
           <MiniStat label="Evidence" value={`${recommendation.evidence.length} items`} />
         </div>
@@ -2262,7 +2298,7 @@ function ApprovalDrawer({
             <div className="text-[10px] font-semibold uppercase tracking-wider text-yellow-400">Governance caveat</div>
             <ul className="mt-1 space-y-0.5 text-[11px] text-muted">
               {recommendation.governance_caveats.map((c, i) => (
-                <li key={`gc-${i}`}>â€¢ {c}</li>
+                <li key={`gc-${i}`}>• {c}</li>
               ))}
             </ul>
           </section>
@@ -2273,7 +2309,7 @@ function ApprovalDrawer({
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Add context for the audit trailâ€¦"
+            placeholder="Add context for the audit trail…"
             className="mt-1 min-h-[64px] w-full resize-vertical rounded border border-edge-soft bg-bg/40 px-2 py-1.5 text-[11px] text-ink outline-none focus:border-brand-bright"
           />
         </section>
@@ -2323,7 +2359,7 @@ function ApprovalDrawer({
             </div>
             <p className="mt-1 text-[11px] text-muted">
               CRM writeback not enabled in this demo mode. The approved action would be staged for the
-              connector pipeline (Prepared â†’ Approved â†’ Ready for CRM â†’ Written â†’ Verified).
+              connector pipeline (Prepared → Approved → Ready for CRM → Written → Verified).
             </p>
           </section>
         ) : null}
@@ -2393,7 +2429,7 @@ function ApprovalDrawer({
         </section>
 
         <p className="mt-auto text-[10px] text-faint">
-          Decisions persist in the local Decision Ledger. No backend writeback yet â€” Phase 14 will
+          Decisions persist in the local Decision Ledger. No backend writeback yet — Phase 14 will
           forward approved actions to the CRM connector.
         </p>
       </div>
@@ -2401,7 +2437,7 @@ function ApprovalDrawer({
   );
 }
 
-// -- Phase 13 lifecycle ribbon (Detected â†’ â€¦ â†’ Outcome captured) -------------
+// -- Phase 13 lifecycle ribbon (Detected → … → Outcome captured) -------------
 function LifecycleRibbon({ state, compact }: { state: LifecycleState; compact?: boolean }) {
   const idx = LIFECYCLE_ORDER.indexOf(state);
   return (
@@ -2451,7 +2487,7 @@ function LifecycleRibbon({ state, compact }: { state: LifecycleState; compact?: 
                   done ? "text-accent/70" : i === idx ? "text-brand-bright/60" : "text-faint/50",
                 )}
               >
-                â†’
+                →
               </span>
             ) : null}
           </React.Fragment>
@@ -2488,7 +2524,7 @@ function CopyButton({ text }: { text: string }) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
-      /* clipboard unavailable â€” no-op */
+      /* clipboard unavailable — no-op */
     }
   };
   return (
@@ -2563,7 +2599,7 @@ function customerSituationLine(rec: Recommendation, account?: Account): string {
   if (account?.industry) parts.push(titleCase(account.industry));
   if (account?.segment) parts.push(titleCase(account.segment));
   if (account?.region) parts.push(titleCase(account.region));
-  const profile = parts.length ? parts.join(" Â· ") : "Account";
+  const profile = parts.length ? parts.join(" · ") : "Account";
   const delta = account ? spendDelta(account) : 0;
   const spendBit = account
     ? delta <= -5
@@ -2583,7 +2619,7 @@ function customerSituationLine(rec: Recommendation, account?: Account): string {
     ? `renewal in ${account.renewal_days}d`
     : null;
   const tail = [spendBit, supportBit, renewalBit].filter(Boolean).join(", ");
-  return `${profile} â€” ${tail}. ${rec.priority_reason}`;
+  return `${profile} — ${tail}. ${rec.priority_reason}`;
 }
 
 // -- Phase 11 artifact derivations (UI only; no scoring impact) --------------
@@ -2592,7 +2628,7 @@ function executiveSummaryLine(
   rec: Recommendation,
   reasoning: NonNullable<ReturnType<typeof reasonForRecommendation>>,
 ): string {
-  return `Priority #${rec.priority_rank} â€” ${rec.account_name}. ${reasoning.action.label} to ${reasoning.action.value.toLowerCase()} (confidence ${pct(rec.confidence_score)}, ~${reasoning.estimatedMinutes}m).`;
+  return `Priority #${rec.priority_rank} — ${rec.account_name}. ${reasoning.action.label} to ${reasoning.action.value.toLowerCase()} (confidence ${pct(displayConfidence(rec))}, ~${reasoning.estimatedMinutes}m).`;
 }
 
 interface Objection { objection: string; response: string }
@@ -2611,7 +2647,7 @@ function likelyObjections(
     }
     if (spendDelta(account) <= -10) {
       out.push({
-        objection: "We've intentionally scaled back â€” this isn't a priority right now.",
+        objection: "We've intentionally scaled back — this isn't a priority right now.",
         response: "Reframe the conversation around the outcome they care about, then show two adoption levers that protect their investment.",
       });
     }
@@ -2666,7 +2702,7 @@ function subjectLineFor(
 ): string {
   const urgency = reasoning.action.urgency;
   if (urgency === "critical")
-    return `Quick check-in on ${rec.account_name} â€” protecting your outcomes`;
+    return `Quick check-in on ${rec.account_name} — protecting your outcomes`;
   if (urgency === "opportunity")
     return `Idea for ${rec.account_name}: unlocking the next outcome`;
   if (account?.renewal_days != null && account.renewal_days <= 90)
@@ -2703,7 +2739,7 @@ function businessImpactLine(
   const monthly = account?.current_month_spend ?? 0;
   const annualized = monthly * 12;
   const valueHint = annualized > 0 ? `${inrCompact(annualized)} ARR exposure` : "Recurring revenue exposure";
-  return `${valueHint}. ${reasoning.expectedOutcome} (Confidence ${pct(rec.confidence_score)}.)`;
+  return `${valueHint}. ${reasoning.expectedOutcome} (Confidence ${pct(displayConfidence(rec))}.)`;
 }
 
 function evidenceSummaryLine(rec: Recommendation): string {
@@ -2711,7 +2747,7 @@ function evidenceSummaryLine(rec: Recommendation): string {
   const sources = new Set(rec.evidence.map((e) => e.source_system).filter(Boolean));
   const neg = rec.evidence.filter((e) => String(e.polarity).toLowerCase().startsWith("neg")).length;
   const pos = rec.evidence.filter((e) => String(e.polarity).toLowerCase().startsWith("pos")).length;
-  return `${rec.evidence.length} signals across ${sources.size} system${sources.size === 1 ? "" : "s"} â€” ${neg} risk, ${pos} opportunity.`;
+  return `${rec.evidence.length} signals across ${sources.size} system${sources.size === 1 ? "" : "s"} — ${neg} risk, ${pos} opportunity.`;
 }
 
 // -- Phase 11 guided demo mode -----------------------------------------------
@@ -2719,12 +2755,12 @@ function evidenceSummaryLine(rec: Recommendation): string {
 interface DemoStep { id: string; title: string; body: string }
 
 const DEMO_STEPS: DemoStep[] = [
-  { id: "brief", title: "Step 1 Â· Review morning brief", body: "Skim the AI Chief of Staff narrative and the Executive Snapshot rail to see what changed overnight." },
-  { id: "select", title: "Step 2 Â· Select the top account", body: "Click the #1 row in the Work Queue to load that account's execution workspace on the right." },
-  { id: "evidence", title: "Step 3 Â· Review evidence", body: "Click Review Evidence in the workspace header to inspect signals, sources, and confidence behind the recommendation." },
-  { id: "prep", title: "Step 4 Â· Prepare outreach", body: "Click Prepare Outreach. Walk through Objective, Why Now, Discovery questions, Objections, and Commitment to secure." },
-  { id: "crm", title: "Step 5 Â· Review CRM note", body: "Click Draft CRM Note. Validate the suggested note, next step, owner, priority, and follow-up date." },
-  { id: "approve", title: "Step 6 Â· Submit for approval", body: "Click Mark for Approval to open the human-in-the-loop drawer. Approve, reject, or request review â€” write-back stays human-gated." },
+  { id: "brief", title: "Step 1 · Review morning brief", body: "Skim the AI Chief of Staff narrative and the Executive Snapshot rail to see what changed overnight." },
+  { id: "select", title: "Step 2 · Select the top account", body: "Click the #1 row in the Work Queue to load that account's execution workspace on the right." },
+  { id: "evidence", title: "Step 3 · Review evidence", body: "Click Review Evidence in the workspace header to inspect signals, sources, and confidence behind the recommendation." },
+  { id: "prep", title: "Step 4 · Prepare outreach", body: "Click Prepare Outreach. Walk through Objective, Why Now, Discovery questions, Objections, and Commitment to secure." },
+  { id: "crm", title: "Step 5 · Review CRM note", body: "Click Draft CRM Note. Validate the suggested note, next step, owner, priority, and follow-up date." },
+  { id: "approve", title: "Step 6 · Submit for approval", body: "Click Mark for Approval to open the human-in-the-loop drawer. Approve, reject, or request review — write-back stays human-gated." },
 ];
 
 const DEMO_KEY = "s2a_demo_dismissed_v1";
@@ -2940,11 +2976,15 @@ function RailRow({
   label,
   value,
   tone,
+  emphasis,
+  spark,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   tone?: "risk" | "opp" | "warn";
+  emphasis?: boolean;
+  spark?: React.ReactNode;
 }) {
   const valClass =
     tone === "risk"
@@ -2955,12 +2995,25 @@ function RailRow({
           ? "text-yellow-400"
           : "text-brand-bright";
   return (
-    <div className="flex items-center justify-between gap-2 rounded-md border border-edge/60 bg-bg/30 px-2.5 py-1.5">
-      <span className="flex items-center gap-1.5 text-[11.5px] text-faint">
+    <div
+      className={cx(
+        "flex items-center justify-between gap-2 rounded-md border px-2.5",
+        emphasis ? "border-edge bg-bg/50 py-2" : "border-edge/60 bg-bg/30 py-1.5",
+      )}
+    >
+      <span
+        className={cx(
+          "flex items-center gap-1.5 text-faint",
+          emphasis ? "text-[11px] uppercase tracking-wide" : "text-[11.5px]",
+        )}
+      >
         {icon}
         <span className="leading-tight">{label}</span>
       </span>
-      <span className={cx("text-[13px] font-semibold tabular-nums", valClass)}>{value}</span>
+      <span className={cx("flex items-center gap-2 font-semibold tabular-nums", emphasis ? "text-[16px]" : "text-[13px]", valClass)}>
+        {emphasis && spark ? spark : null}
+        {value}
+      </span>
     </div>
   );
 }
@@ -3041,7 +3094,7 @@ function riskLevel(account?: Account): "High" | "Medium" | "Low" {
 function parseBulletLines(value: string): string[] {
   return value
     .split(/\r?\n/)
-    .map((line) => line.replace(/^[-â€¢\d.)\s]+/, "").trim())
+    .map((line) => line.replace(/^[-•\d.)\s]+/, "").trim())
     .filter(Boolean)
     .slice(0, 5);
 }

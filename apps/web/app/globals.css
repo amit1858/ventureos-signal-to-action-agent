@@ -203,6 +203,104 @@ body {
   animation: sceneIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Release 1.4A — Executive micro-interactions.
+   Staggered "rise + fade" for sequential reveal (briefing lines, focus cards,
+   confidence factors). Pair with an inline animation-delay to cascade. */
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.reveal-stagger {
+  animation: riseIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Calm breathing dot used on "live"/"watching" affordances. Slower + softer
+   than a ping so it reads as attentive, never noisy. */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.breathe {
+  animation: breathe 3.4s ease-in-out infinite;
+}
+
+/* Focus Mode backdrop: a gentle vignette that draws the eye to the centre of
+   the decision surface during executive presentation. */
+.focus-stage {
+  position: relative;
+}
+.focus-stage::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    1100px 720px at 50% 12%,
+    transparent 38%,
+    rgba(6, 7, 9, 0.55) 100%
+  );
+}
+
+/* Premium underline sweep used on primary CTAs in the morning brief. */
+@keyframes sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.14),
+    transparent 80%
+  );
+}
+.sheen:hover::after {
+  animation: sweep 0.9s ease-out;
+}
+
+/* Confidence "Why?" popover: a calm rise + slight scale so it feels placed,
+   not popped. Universal reduced-motion guard below already neutralises it. */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.pop-in {
+  animation: popIn 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: top right;
+}
+
 /* Honour reduced-motion: disable counters, lifts and looping animations. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -221,6 +319,19 @@ body {
   .reveal {
     opacity: 1 !important;
     transform: none !important;
+  }
+  .reveal-stagger {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .breathe {
+    animation: none !important;
+    opacity: 0.85 !important;
+    transform: none !important;
+  }
+  .sheen:hover::after {
+    animation: none !important;
   }
 }
 
