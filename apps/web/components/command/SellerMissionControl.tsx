@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import type { Account, Recommendation } from "@/lib/types";
 import type { RecommendationReasoning } from "@/lib/reasoning";
+import type { ExperienceMode } from "@/lib/experienceMode";
 import { cx, pct, titleCase } from "@/lib/format";
 import {
   LIFECYCLE_LABEL,
@@ -169,7 +170,7 @@ export interface SellerMissionControlProps {
   recommendation: Recommendation;
   account?: Account;
   reasoning: RecommendationReasoning;
-  experienceMode: "executive" | "seller" | "operations";
+  experienceMode: ExperienceMode;
   generatedAt?: string;
   nextAccount?: NextMissionPreview | null;
   onOpenAccount: (accountId: string, source?: string) => void;

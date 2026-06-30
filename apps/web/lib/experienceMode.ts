@@ -9,25 +9,28 @@
 
 import { useEffect, useState } from "react";
 
-export type ExperienceMode = "executive" | "seller" | "operations";
+export type ExperienceMode = "executive" | "seller" | "manager" | "operations";
 
-export const EXPERIENCE_MODES: ExperienceMode[] = ["executive", "seller", "operations"];
+export const EXPERIENCE_MODES: ExperienceMode[] = ["executive", "seller", "manager", "operations"];
 
 export const MODE_LABEL: Record<ExperienceMode, string> = {
   executive: "Executive",
   seller: "Seller",
+  manager: "Manager",
   operations: "Operations",
 };
 
 export const MODE_TAGLINE: Record<ExperienceMode, string> = {
   executive: "What needs attention?",
   seller: "What should I do next?",
+  manager: "Who needs my help?",
   operations: "How is the system operating?",
 };
 
 export const MODE_DESCRIPTION: Record<ExperienceMode, string> = {
   executive: "Portfolio overview and prioritization",
   seller: "Account execution and outreach",
+  manager: "Coaching, follow-up and team execution",
   operations: "System monitoring and governance",
 };
 
@@ -40,6 +43,7 @@ export type SectionKey =
   | "portfolioPulse"         // PortfolioPulseBar (Executive Snapshot)
   | "executiveChangeBrief"   // ExecutiveChangeBriefPanel
   | "deltaCompact"           // RecommendationDeltaCompact
+  | "managerCoach"           // Release 2.0 Manager AI Coach surface
   | "workbench"              // Work Queue + Account Workspace
   | "portfolioIntelligence"  // drift, timeline, external changes, rankings, matrix, health, trends
   | "trustGovernance";       // workflow rail, ledger, manager, CRM readiness
@@ -55,6 +59,7 @@ export const VISIBILITY: Record<ExperienceMode, Record<SectionKey, boolean>> = {
     portfolioPulse:        true,
     executiveChangeBrief:  true,
     deltaCompact:          false,
+    managerCoach:          false,
     workbench:             true,   // Top 5 actions + Open Account drill-down
     portfolioIntelligence: false,
     trustGovernance:       false,
@@ -70,7 +75,24 @@ export const VISIBILITY: Record<ExperienceMode, Record<SectionKey, boolean>> = {
     portfolioPulse:        true,
     executiveChangeBrief:  true,
     deltaCompact:          false,
+    managerCoach:          false,
     workbench:             true,
+    portfolioIntelligence: false,
+    trustGovernance:       false,
+  },
+  // Manager: coaching operating system. A focused surface that answers "who
+  // needs my help, what intervention helps most, and did it work?". Keeps the
+  // Chief-of-Staff hero for context, then the Manager AI Coach. Everything
+  // operational/technical stays hidden.
+  manager: {
+    chiefOfStaff:          true,
+    attentionBrief:        false,
+    dailyBriefing:         false,
+    portfolioPulse:        false,
+    executiveChangeBrief:  false,
+    deltaCompact:          false,
+    managerCoach:          true,
+    workbench:             false,
     portfolioIntelligence: false,
     trustGovernance:       false,
   },
@@ -82,6 +104,7 @@ export const VISIBILITY: Record<ExperienceMode, Record<SectionKey, boolean>> = {
     portfolioPulse:        true,
     executiveChangeBrief:  true,
     deltaCompact:          true,
+    managerCoach:          false,
     workbench:             true,
     portfolioIntelligence: true,
     trustGovernance:       true,
@@ -101,6 +124,13 @@ export const MODE_DEFAULT_OPEN: Record<ExperienceMode, Partial<Record<SectionKey
   },
   // Seller lands focused on action — intelligence accordions start collapsed.
   seller: {
+    attentionBrief:        false,
+    portfolioPulse:        false,
+    executiveChangeBrief:  false,
+    deltaCompact:          false,
+  },
+  // Manager lands directly on the coaching surface.
+  manager: {
     attentionBrief:        false,
     portfolioPulse:        false,
     executiveChangeBrief:  false,
@@ -131,7 +161,7 @@ export function loadExperienceMode(): ExperienceMode {
   if (!isBrowser()) return "executive";
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw === "executive" || raw === "seller" || raw === "operations") return raw;
+    if (raw === "executive" || raw === "seller" || raw === "manager" || raw === "operations") return raw;
   } catch {
     /* fall through */
   }

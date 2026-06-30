@@ -5,7 +5,7 @@
 
 "use client";
 
-import { Briefcase, Crown, Wrench } from "lucide-react";
+import { Briefcase, Crown, Users, Wrench } from "lucide-react";
 
 import { cx } from "@/lib/format";
 import {
@@ -18,6 +18,7 @@ import {
 const MODE_ICON: Record<ExperienceMode, React.ReactNode> = {
   executive: <Crown size={11} />,
   seller: <Briefcase size={11} />,
+  manager: <Users size={11} />,
   operations: <Wrench size={11} />,
 };
 

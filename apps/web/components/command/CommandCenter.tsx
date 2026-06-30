@@ -52,13 +52,14 @@ import {
 } from "@/lib/recommendationDelta";
 import { recordExternalSnapshot } from "@/lib/externalChangeMonitor";
 import { buildExecutiveDailyBriefing } from "@/lib/executiveDailyBriefing";
-import { useExperienceMode, isSectionVisible, isOpenByDefault } from "@/lib/experienceMode";
+import { useExperienceMode, isSectionVisible, isOpenByDefault, type ExperienceMode } from "@/lib/experienceMode";
 import {
   normalizePreferredSection,
   type OpenAccountFromSurfaceInput,
   type WorkspaceSectionTarget,
 } from "@/lib/accountNavigation";
 import { ExperienceModeSwitch } from "@/components/command/ExperienceModeSwitch";
+import { ManagerAICoach } from "@/components/command/ManagerAICoach";
 import { DisclosurePanel } from "@/components/command/DisclosurePanel";
 import { ExecutiveAttentionBrief } from "@/components/command/ExecutiveAttentionBrief";
 import { ActionExecutionPanel } from "@/components/command/ActionExecutionPanel";
@@ -525,6 +526,10 @@ export function CommandCenter({
             />
           ) : null}
 
+          {isSectionVisible(experienceMode, "managerCoach") ? (
+            <ManagerAICoach accounts={accounts} />
+          ) : null}
+
           {isSectionVisible(experienceMode, "attentionBrief") && hasResult ? (
             <ExecutiveAttentionBrief
               accounts={accounts}
@@ -953,7 +958,7 @@ function WorkQueuePanel({
 }: {
   rows: QueueRow[];
   activeAccountId: string | null;
-  experienceMode: "executive" | "seller" | "operations";
+  experienceMode: ExperienceMode;
   titleLabel: string;
   onSelect: (accountId: string) => void;
   onStartMission?: (accountId: string) => void;
@@ -1270,7 +1275,7 @@ function AccountWorkspacePanel({
   recommendation: Recommendation | null;
   account?: Account;
   reasoning: ReturnType<typeof reasonForRecommendation> | null;
-  experienceMode: "executive" | "seller" | "operations";
+  experienceMode: ExperienceMode;
   requestedAccountId?: string | null;
   isRedirected?: boolean;
   redirectSource?: string | null;
@@ -1354,7 +1359,7 @@ const WORKSPACE_SECTIONS: WorkspaceSection[] = [
   "intelligence",
 ];
 
-function defaultWorkspaceSections(mode: "executive" | "seller" | "operations"): WorkspaceSection[] {
+function defaultWorkspaceSections(mode: ExperienceMode): WorkspaceSection[] {
   if (mode === "operations") {
     return ["overview", "evidence", "execution", "timeline", "reasoning", "evolution", "intelligence"];
   }
@@ -1395,7 +1400,7 @@ function WorkspaceCockpit({
   recommendation: Recommendation;
   account?: Account;
   reasoning: NonNullable<ReturnType<typeof reasonForRecommendation>>;
-  experienceMode: "executive" | "seller" | "operations";
+  experienceMode: ExperienceMode;
   openedFromSource?: string | null;
   openedFromAt?: number | null;
   navigationTargetSection?: "overview" | "prep" | "email" | "crm" | "evidence" | "evolution" | "timeline" | "reasoning" | "intelligence" | null;
