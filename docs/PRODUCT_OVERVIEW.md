@@ -95,20 +95,22 @@ behaves like a controlled enterprise product.
 8. **Writes back to HubSpot** as tasks and notes — but only after the
    user clicks *Approve*.
 
-### Intelligence layer (Release 1.2 + Next / In Review)
+### Experience layer (Release 1.4B + Next / In Review)
 
-The current build adds an intelligence layer across existing surfaces (no dashboard sprawl).
+The current build adds a guided experience layer across existing surfaces (no dashboard sprawl). Each persona begins the day differently — then the seller is guided through the work.
 
 **Shipped today:**
 
-- **Executive Daily Briefing** — combines what changed, why it changed, and where to act first.
-- **Executive Change Brief improvements** — clearer risk increases, opportunity
-  moves, and queue movement context.
-- **Revenue Execution Center integration** — decision-to-outcome loop connected to
-  lifecycle and ledger evidence.
+- **Persona-specific Morning Brief** — Executive ("What changed?"), Seller ("What should I do first?"), Operations ("What needs attention?") — one operating system, three first experiences.
+- **Seller Morning Brief** — an AI Chief of Staff work briefing: this mission's effort, an action narrative, and a Now / Next / Later timeline (not a dashboard).
+- **Today's Mission + first-class Mission Mode** — a guided seven-step flow (Review → Evidence → Outreach → CRM Note → Approval → Execution → Outcome) ending in Mission Complete and a next-mission handoff.
+- **Command Center repositioned as the power view**; **Workspace** is Explain Mode, reachable from any mission step.
+- **Executive Daily Briefing**, **Executive Change Brief**, and **Revenue Execution Center** integration — decision-to-outcome loop connected to lifecycle and ledger evidence.
 
 **Next / In Review (not yet confirmed in the deployed build):**
 
+- **Manager execution / adoption view** — missions started/completed, drop-off step, pending approvals, outcomes captured, accounts untouched, seller follow-through.
+- **Meeting Intelligence** and **Visual reasoning enhancements**.
 - **Decision Intelligence Studio** — scenario-style decision support with projected
   risk/opportunity impact, assumptions, confidence, reasoning, and expected
   business outcomes before action.
@@ -196,18 +198,14 @@ The roadmap is honest and organized in three horizons. See
 [`NVIDIA_ALIGNMENT.md`](NVIDIA_ALIGNMENT.md) for the NVIDIA mapping.
 
 **Now (shipped):** governed six-agent workflow, Decision Ledger, Revenue
-Execution Center, Executive Daily Briefing, Executive Change Brief, HubSpot
-integration, BYOK provider abstraction, adaptive experience modes, voice-ready
-architecture.
+Execution Center, persona-specific Morning Brief, Seller Mission Control (first-class
+guided 7-step Mission Mode + Mission Complete handoff), Executive Command Center,
+Executive Daily Briefing, Executive Change Brief, HubSpot integration, BYOK provider
+abstraction, voice-ready architecture.
 
-**Next / In Review:** Decision Intelligence Studio, Trend Intelligence.
-
-**Next (Release 1.3 planning):**
-
-- **AI Chief of Staff conversation** (text-first conversational layer)
-- **Portfolio memory** ("what changed since yesterday/last session")
-- **Natural-language timeline** ("why rank moved from #18 to #3")
-- **Meeting prep mode** ("brief me before this account meeting")
+**Next / In Review:** Manager execution / adoption view, Meeting Intelligence, Visual
+reasoning enhancements, Decision Intelligence Studio, Trend Intelligence, AI Chief of
+Staff conversation.
 
 **Hackathon (NVIDIA Open Hackathon):**
 

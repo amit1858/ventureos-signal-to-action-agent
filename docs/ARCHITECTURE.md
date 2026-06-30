@@ -79,7 +79,10 @@ The frontend tells a story by scrolling through one continuous journey:
 | Surface | Executive question it answers |
 |---------|-------------------------------|
 | **Landing page** | "What is this product?" |
-| **Command Center** | "What should I pay attention to?" |
+| **Morning Brief (persona entry)** | "What changed / what should I do first / what needs attention?" — Executive, Seller, or Operations |
+| → Seller Morning Brief | "What's my first mission today, and how long will it take?" |
+| **Today's Mission (Mission Mode)** | "Guide me step by step from recommendation to outcome." |
+| **Command Center** (power view) | "What should I pay attention to?" |
 | → Executive Morning Brief | "What changed overnight, and where should I spend today across my whole book?" |
 | → Portfolio Health | "Should I worry?" |
 | → Today's Priorities | "What should I do today?" |
@@ -100,12 +103,27 @@ Key points:
   display (e.g. portfolio summaries, the risk/opportunity map). It does not invent recommendations.
 - Animations and the "reasoning sequence" shown while analysis runs are **presentation only**.
 
-### Release 1.2 architecture note
+### Experience architecture (Release 1.4B)
 
-Decision Intelligence and Trend Intelligence are **Next / In Review** (not yet confirmed in the
-deployed build). They are designed as **additive read layers** on top of existing deterministic
-outputs and telemetry streams (recommendations, drift, delta, timeline, and decision ledger). They
-do not mutate ranking/scoring/governance contracts and do not introduce new backend write paths.
+VentureOS separates **identity** ("who am I?") from **surface** ("what am I doing?"). Identity selects a persona's *first experience*; it does not hide functionality. The shipped journey is:
+
+```
+Platform landing
+   → Persona-specific Morning Brief   (Executive / Seller / Operations entry)
+       → AI Chief of Staff             (narrates + plans the day)
+           → Guided Mission            (first-class Mission Mode, 7 steps)
+               → Workspace             (Explain Mode — reachable from any step)
+                   → Command Center    (power view)
+                       → Governance    (approval gate + Decision Ledger)
+```
+
+- **Persona-specific Morning Brief** (`components/command/MorningBriefView.tsx`) renders one of three entries from the same governed runtime. Seller mode opens the **Seller Morning Brief**: a work briefing with a *this mission* effort headline, an action narrative (recover / prepare / follow up), and a **Now / Next / Later** mission timeline — not a dashboard.
+- **Mission Mode is a first-class top-level surface** (`view="mission"`, `components/command/SellerMissionControl.tsx`), *not* a drawer, modal, or flyout. It guides the seller through **Review Account → Evidence → Outreach → CRM Note → Approval → Execution → Outcome**, then a **Mission Complete** state with a next-mission handoff. Mission state is session-scoped (`lib/missionState.ts`); there is no new backend persistence.
+- **Workspace is Explain Mode.** Every mission step exposes *Open Full Workspace*; the seller can explore the per-account cockpit and return to the mission.
+- **Command Center is repositioned as the power view** — still in navigation, no longer the seller's default home. Executive and Operations users still spend most of their time there.
+- The **Execute step hands off into the existing Revenue Execution Center** (`lib/executionEngine.ts`) — no execution logic is duplicated, and all events flow to the Decision Ledger.
+
+This is a frontend experience layer. **Ranking, recommendation logic, scoring, governance, approval workflow, provider abstraction, backend contracts, and the Decision Ledger schema are unchanged.** Decision Intelligence and Trend Intelligence remain **Next / In Review**; a Manager execution / adoption view is **Next / In Review** and the mission state is structured to feed it later (missions started/completed, drop-off step, pending approvals, outcomes captured, accounts untouched).
 
 ---
 

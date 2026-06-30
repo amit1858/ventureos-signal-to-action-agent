@@ -43,17 +43,20 @@ Say what it is **not**, too: not a dashboard, not a CRM, not a chatbot. It is an
 
 | # | Surface | The one thing to say |
 |---|---|---|
-| 1 | **Executive Command Center** | "One screen: who needs attention this week, and why." |
-| 2 | **Executive Brief / AI Chief of Staff** | "A morning brief — what changed, the biggest risk, the biggest opportunity, what to do first." |
-| 3 | **Portfolio Pulse** | "Risk and opportunity movement across the full book of accounts, ranked for focus." |
-| 4 | **Priority queue + Workspace** | "Drill into one account: evidence, why now, the draft." |
-| 5 | **Evidence Intelligence** (Evidence tab) | "Every claim is sourced — agent and system of record." |
-| 6 | **Decision Intelligence Studio** *(Next / In Review)* | "Planned: before acting, compare scenario outcomes, confidence, assumptions, and reasoning." |
-| 7 | **Executive Change Brief + Recommendation Evolution** | "Why recommendations moved, with timeline context." |
-| 8 | **Revenue Execution Center** | "Approved decisions move through a five-step pipeline to a measured outcome." |
-| 9 | **Decision Ledger + Governance** | "Every decision is logged; a human approves everything." |
-| 10 | **HubSpot integration** | "Live test-CRM data in, governed write-back gated behind approval." |
-| 11 | **Adaptive Experience Modes** | "Executive, Seller, Operations — one product, three lenses." |
+| 1 | **Persona-specific Morning Brief** | "One operating system, three first experiences — Executive sees what changed, Seller sees what to do first, Operations sees what needs attention." |
+| 2 | **Seller Morning Brief** | "Not a dashboard — a work briefing. This mission's effort, today's action narrative, and a Now / Next / Later timeline." |
+| 3 | **Today's Mission (Mission Mode)** | "A first-class guided flow: Review → Evidence → Outreach → CRM Note → Approval → Execution → Outcome. The seller never wonders what to click next." |
+| 4 | **Mission Complete** | "What was accomplished, business impact, and the next recommended mission — one CTA to keep going." |
+| 5 | **Executive Command Center** | "The power view: who needs attention this week, and why." |
+| 6 | **Executive Brief / AI Chief of Staff** | "A morning brief — what changed, the biggest risk, the biggest opportunity, what to do first." |
+| 7 | **Portfolio Pulse** | "Risk and opportunity movement across the full book of accounts, ranked for focus." |
+| 8 | **Workspace (Explain Mode)** | "Open Full Workspace from any mission step: evidence, why now, the draft — then return to the mission." |
+| 9 | **Evidence Intelligence** (Evidence tab) | "Every claim is sourced — agent and system of record." |
+| 10 | **Executive Change Brief + Recommendation Evolution** | "Why recommendations moved, with timeline context." |
+| 11 | **Revenue Execution Center** | "Approved decisions move through a five-step pipeline to a measured outcome." |
+| 12 | **Decision Ledger + Governance** | "Every decision is logged; a human approves everything." |
+| 13 | **HubSpot integration** | "Live test-CRM data in, governed write-back gated behind approval." |
+| 14 | **Adaptive Experience Modes** | "Executive, Seller, Operations — one product, three first experiences." |
 
 ---
 
@@ -87,7 +90,17 @@ Do the 2-minute script, then:
    the morning brief a revenue leader reads first."
 9. **(4:35) NVIDIA + Voice.** "The model layer is provider-abstracted and
    NVIDIA-ready — Nemotron via NIM. And it's voice-ready: a planned Voice Chief of
-   Staff with Gnani.ai, built during the hackathon."
+   Staff with Gnani.ai."
+
+### ⏱️ Seller Mission walkthrough (drop-in, ~3 minutes)
+
+Use this to show **Seller mode** specifically — the guided work experience. Switch the mode toggle to **Seller**.
+
+1. **Open the Seller Morning Brief.** "This isn't a dashboard — it's a work briefing. *This mission: ~43 min*, the day's action narrative (*recover / prepare / follow up*), and a Now / Next / Later timeline."
+2. **Click *Begin Today's Mission*.** "One mission, one recommendation, one CTA — no decision fatigue."
+3. **Walk the stepper.** Step through Review → Evidence → Outreach → CRM Note → Approval → Execution → Outcome. "The seller always knows where they are, what to do next, and why it matters. *Open Full Workspace* is one click away on every step — that's Explain Mode."
+4. **Land the Execute step.** "Execution hands off into the existing Revenue Execution Center — no logic is duplicated, every event hits the Decision Ledger."
+5. **Show Mission Complete.** "What was accomplished, business impact, governance and execution status — and the next recommended mission with a single *Start next mission* CTA. The seller naturally continues."
 
 ### ⏱️ 10 minutes — the technical demo
 

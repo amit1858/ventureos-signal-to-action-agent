@@ -37,7 +37,7 @@
 | **Why it matters** | A VP signing off on outbound to 40 accounts a week needs the same answer every Monday from the same data. LLMs help explain; the governed engine decides. |
 | **Trust posture** | AI helps explain and recommend. **AI does not determine priority, change governance, or execute CRM actions.** |
 | **BYOK** | Users connect OpenAI, Anthropic, or NVIDIA from the browser. Keys live only in `sessionStorage`. Nothing is persisted server-side. |
-| **Status** | Release 1.2 deployed · public artifacts refreshed · Release 1.3 not started. |
+| **Status** | Release 1.4B deployed — Seller Mission Control & the guided work experience · public artifacts refreshed. |
 
 ---
 
@@ -56,18 +56,44 @@ note, and the human's job is review, refine, approve.
 
 ---
 
-## Current production capabilities (Release 1.2)
+## Current production capabilities (Release 1.4B)
 
-The deployed product combines these confirmed layers inside the same existing experience:
+VentureOS now begins each persona's day differently, then guides the seller through the work. The deployed product combines these confirmed surfaces inside one governed runtime:
 
-1. **Executive Narrative Layer** — AI Chief of Staff briefing, Executive Daily Briefing, and Executive Attention framing.
-2. **Executive Change Brief** — what changed and why across risk, opportunity, and queue movement.
-3. **Portfolio Pulse** — risk/opportunity movement across the full book of accounts.
-4. **Revenue Execution Center** — approved recommendation to measured outcome, linked to the Decision Ledger lifecycle.
+1. **Platform landing** — the product front door: what the system is and the governed signal → decision → outcome loop.
+2. **Persona-specific Morning Brief** — one operating system, three first experiences. Executive sees *"What changed?"*, Seller sees *"What should I do first?"*, Operations sees *"What requires attention?"*
+3. **Seller Morning Brief** — an AI Chief of Staff work briefing (not a dashboard): this mission's effort, an action narrative (recover / prepare / follow up), and a Now / Next / Later mission timeline.
+4. **Today's Mission** — one mission, one recommendation, one clear CTA. No decision fatigue.
+5. **Seller Mission Control** — a first-class guided surface that walks the seller through the seven-step flow: **Review Account → Evidence → Outreach → CRM Note → Approval → Execution → Outcome**, ending in a Mission Complete state and a next-mission handoff.
+6. **Executive Command Center** — repositioned as the power view: AI Chief of Staff briefing, Executive Attention Required, Executive Daily Briefing, Executive Change Brief, and Portfolio Pulse.
+7. **Workspace (Explain Mode)** — the per-account cockpit, reachable from any mission step via *Open Full Workspace*.
+8. **Revenue Execution Center** — approved recommendation to measured outcome; the mission Execute step hands off into this existing flow with no duplicated execution logic.
 
-**Next / In Review (not yet confirmed in the deployed build):** Decision Intelligence Studio (what-if scenario planning) and Trend Intelligence (Portfolio Trend Read + account-level trend intelligence). See [`docs/ROADMAP.md`](docs/ROADMAP.md).
+The product journey reads:
 
-Design boundary remains unchanged: **ranking, recommendation logic, governance, approval workflow, backend contracts, and ledger schema are unchanged**.
+> **Platform → Persona-specific Morning Experience → AI Chief of Staff → Guided Mission → Workspace → Command Center → Governance**
+
+Release 1.4B is a **frontend experience layer**. Design boundary remains unchanged: **ranking, recommendation logic, scoring, governance, approval workflow, backend contracts, provider abstraction, and the Decision Ledger schema are unchanged**. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+---
+
+## Seller Mission Control — the guided work experience (Release 1.4B)
+
+Executive mode says **"Brief me."** Seller mode says **"Guide me."** Instead of dropping a seller into a dashboard, VentureOS opens with a work briefing and walks them through one mission at a time.
+
+**Seller Morning Brief** — an AI Chief of Staff briefing: this mission's effort, the day's action narrative, and a Now / Next / Later timeline.
+
+![Seller Morning Brief](docs/assets/screenshots/seller_morning_brief.png)
+
+**Today's Mission** — a first-class guided surface. The seller moves step by step through Review → Evidence → Outreach → CRM Note → Approval → Execution → Outcome, always knowing where they are, what to do next, and why it matters.
+
+![Today's Mission — guided seller flow](docs/assets/screenshots/todays_mission.png)
+
+**Mission Complete** — a rewarding close: what was accomplished, business impact, governance/execution status, and the next recommended mission with a single CTA to continue.
+
+![Mission Complete](docs/assets/screenshots/mission_complete.png)
+
+Workspace remains **Explain Mode** (reachable from any step via *Open Full Workspace*); the Command Center is repositioned as the **power view**; the Revenue Execution Center still **executes**; the Decision Ledger still **audits**. Mission Control only **guides** — it adds no new engine, governance, ledger, CRM, or backend logic.
 
 ---
 
@@ -285,37 +311,39 @@ to point the frontend at your local backend.
 | **14D–14F** | **Executive Change Brief, Portfolio Timeline, Executive Daily Briefing (narrative layer)** |
 | **15A–15C.5** | **Adaptive Experience Modes + navigation/routing hardening** |
 | **16A** | **Revenue Execution Center + closed-loop outcomes + Decision Ledger integration polish** |
+| **1.4A** | **Product journey correction: landing = Product, Morning Brief = Experience, Command Center = Operating System** |
+| **1.4B** | **Seller Mission Control: persona-first Morning Brief, Seller Morning Brief, Today's Mission, first-class guided 7-step Mission Mode, Mission Complete + next-mission handoff** |
 
 ### Roadmap snapshot
 
 **Implemented today**
-- Executive Command Center
-- Executive Daily Briefing
-- Executive Change Brief
-- Portfolio Pulse
+- Platform landing
+- Morning Brief (persona-specific: Executive / Seller / Operations)
+- Seller Morning Brief + Today's Mission
+- Seller Mission Control (guided 7-step mission, Mission Complete, next-mission handoff)
+- Executive Command Center (power view)
+- Workspace (Explain Mode)
 - Revenue Execution Center
 - Decision Ledger
 - Governance
-- Adaptive Experience Modes
 - HubSpot integration
 
 **Next / In Review (not yet confirmed in the deployed build)**
+- Manager execution / adoption view
+- Meeting Intelligence
+- Visual reasoning enhancements
 - Decision Intelligence Studio
-- Trend Intelligence (Portfolio Trend Read + account-level trend intelligence)
-- AI Chief of Staff conversation
-- Portfolio memory
-- Natural-language timeline
-- Meeting prep
+- Trend Intelligence
+- AI Chief of Staff Conversation
 
-**Planned hackathon implementation**
-- Voice Chief of Staff
-- Gnani.ai speech integration (STT / SALM / TTS)
-- SALM-powered conversational interface
+**Planned**
+- Voice Chief of Staff with Gnani.ai (STT / SALM / TTS)
+- Digital avatar
 
 **Future vision**
-- Digital Executive Avatar
 - Meeting Coach
 - Enterprise multimodal workspace
+- Coach + Delegate stages of the AI Chief of Staff
 
 What's next: see [`docs/ROADMAP.md`](docs/ROADMAP.md).
 

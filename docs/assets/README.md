@@ -15,10 +15,13 @@ assets/
 
 | Folder | File | Used by |
 |---|---|---|
-| `hero/` | `landing_cover.png` | README, Product Overview |
+| `hero/` | `landing_cover.png` | README, Product Overview, microsite hero |
 | `hero/` | `landing_full.png` | Product Overview |
 | `architecture/` | `architecture_voice.png` | Architecture, Voice Chief of Staff |
-| `screenshots/` | `command_center_executive.png` | Product Overview, Demo Guide |
+| `screenshots/` | `seller_morning_brief.png` | README, microsite (Seller Mission Control) |
+| `screenshots/` | `todays_mission.png` | README, microsite (Today's Mission / Mission Mode) |
+| `screenshots/` | `mission_complete.png` | README, microsite (Mission Complete) |
+| `screenshots/` | `command_center_executive.png` | README, Architecture, Product Overview, Demo Guide |
 | `screenshots/` | `command_center_full.jpg` | Product Overview |
 | `submission/screenshots/` | `mode_executive_full.png` | Microsite: Executive Daily Briefing |
 | `submission/screenshots/` | `mode_executive_hero.png` | Microsite: Executive Change Brief |
@@ -30,6 +33,10 @@ assets/
 | `screenshots/` | `workspace_timeline.png` | Revenue Execution (Recommendation Evolution) |
 | `screenshots/` | `revenue_execution_center.png`, `revenue_execution_full.jpg`, `revenue_execution_progress.png` | Revenue Execution |
 | `screenshots/` | `approval_drawer.png` | Governance, Revenue Execution |
+
+> The Seller Morning Brief, Today's Mission, Mission Complete, Command Center, and
+> Revenue Execution Center captures were refreshed from production after **Release 1.4B
+> (Seller Mission Control)**.
 
 > Higher-resolution originals also live in `docs/submission/screenshots/` alongside
 > the NVIDIA submission deck. The optimized copies here keep the documentation
