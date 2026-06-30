@@ -1,9 +1,18 @@
 import * as React from "react";
-import { Activity, LayoutDashboard, Columns3, Database, Gauge } from "lucide-react";
+import { Activity, LayoutDashboard, Columns3, Database, Gauge, Sunrise, Rocket } from "lucide-react";
 import { cx } from "@/lib/format";
 import { AIReasoningChip } from "@/components/AIReasoningStatus";
 
-export type AppView = "landing" | "command" | "workspace" | "evaluation";
+// Release 1.4B — the journey is now persona-first:
+//   Platform → Morning Brief (entry) → Today's Mission (work mode) →
+//   Command Center (power view) → Workspace (explain) → Trust & Governance.
+export type AppView =
+  | "landing"
+  | "brief"
+  | "mission"
+  | "command"
+  | "workspace"
+  | "evaluation";
 
 // Slim, quiet product header (P4): brand mark (returns home) + the
 // Landing → Command Center → Workspace journey + a single calm source
@@ -58,9 +67,22 @@ export function Header({
           </div>
         </button>
 
-        {/* Journey: Command Center → Workspace (hidden on the landing screen) */}
+        {/* Journey: Morning Brief → Today's Mission → Command Center → Workspace
+            (hidden on the landing screen) */}
         {view !== "landing" ? (
           <div className="flex items-center rounded-lg border border-edge bg-surface2/60 p-0.5">
+            <ViewTab
+              active={view === "brief"}
+              onClick={() => onViewChange("brief")}
+              icon={<Sunrise size={13} />}
+              label="Morning Brief"
+            />
+            <ViewTab
+              active={view === "mission"}
+              onClick={() => onViewChange("mission")}
+              icon={<Rocket size={13} />}
+              label="Today's Mission"
+            />
             <ViewTab
               active={view === "command"}
               onClick={() => onViewChange("command")}

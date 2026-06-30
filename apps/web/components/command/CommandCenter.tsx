@@ -15,6 +15,7 @@ import {
   ListChecks,
   Mail,
   MessageSquare,
+  Rocket,
   ShieldAlert,
   Target,
   TrendingUp,
@@ -61,6 +62,8 @@ import { ExperienceModeSwitch } from "@/components/command/ExperienceModeSwitch"
 import { DisclosurePanel } from "@/components/command/DisclosurePanel";
 import { ExecutiveAttentionBrief } from "@/components/command/ExecutiveAttentionBrief";
 import { ActionExecutionPanel } from "@/components/command/ActionExecutionPanel";
+import { SellerMissionControl } from "@/components/command/SellerMissionControl";
+import { consumeMissionRequest, requestMission, subscribeMissionRequests } from "@/lib/missionState";
 import { loadDriftSnapshot } from "@/lib/driftEngine";
 import { type AccountSelectionContext } from "@/lib/accountSelectionContext";
 import dynamic from "next/dynamic";
@@ -193,6 +196,7 @@ export function CommandCenter({
   onRun,
   onOpenAccount,
   onSelectActive,
+  onLaunchMission,
 }: {
   meta: MetaResponse | null;
   accounts: Account[];
@@ -216,6 +220,8 @@ export function CommandCenter({
   ) => void;
   /** Phase 13.6 â€” lightweight active-account selection (focus, not navigate). */
   onSelectActive?: (accountId: string) => void;
+  /** Release 1.4B â€” promote Start Mission to the top-level Mission surface. */
+  onLaunchMission?: (accountId: string, recommendationId?: string | null) => void;
 }) {
   void meta;
   const recs = result?.recommendations ?? [];
@@ -306,6 +312,19 @@ export function CommandCenter({
   const activeRec = accountSelectionContext.activeRecommendation ?? null;
   const activeAccount = activeRec ? accountsById[activeRec.account_id] : undefined;
   const activeReasoning = activeRec ? reasonForRecommendation(activeRec, activeAccount) : null;
+
+  // Release 1.4B — the next recommended account after the active one (wraps to
+  // the top of the queue). Powers the Mission Complete "Start next mission" CTA.
+  const nextRecommendedAccount = React.useMemo<{ account_id: string; account_name: string } | null>(() => {
+    if (queueRows.length === 0) return null;
+    const idx = queueRows.findIndex((r) => r.recommendation.account_id === activeRec?.account_id);
+    const nextRow = idx === -1 ? queueRows[0] : queueRows[(idx + 1) % queueRows.length];
+    if (!nextRow || nextRow.recommendation.account_id === activeRec?.account_id) return null;
+    return {
+      account_id: nextRow.recommendation.account_id,
+      account_name: nextRow.recommendation.account_name,
+    };
+  }, [queueRows, activeRec?.account_id]);
   React.useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
     console.info("[account-routing]", {
@@ -613,6 +632,14 @@ export function CommandCenter({
                   // Phase 15C.5: activeAccountId update delegated to app-level onSelectActive
                   onSelectActive?.(accountId);
                 }}
+                onStartMission={(accountId) => {
+                  onSelectActive?.(accountId);
+                  if (onLaunchMission) {
+                    onLaunchMission(accountId);
+                  } else {
+                    requestMission(accountId);
+                  }
+                }}
                 loading={loading}
                 onRun={onRun}
               />
@@ -626,6 +653,8 @@ export function CommandCenter({
                 redirectSource={accountSelectionContext.redirectSource}
                 generatedAt={result?.generated_at}
                 onOpenAccount={openAccountWithContext}
+                nextRecommendedAccount={nextRecommendedAccount}
+                onLaunchMission={onLaunchMission}
                 openedFromSource={navigationContext?.source ?? null}
                 openedFromAt={navigationContext?.at ?? null}
                 navigationTargetSection={navigationContext?.targetSection ?? null}
@@ -918,6 +947,7 @@ function WorkQueuePanel({
   experienceMode,
   titleLabel,
   onSelect,
+  onStartMission,
   loading,
   onRun,
 }: {
@@ -926,6 +956,7 @@ function WorkQueuePanel({
   experienceMode: "executive" | "seller" | "operations";
   titleLabel: string;
   onSelect: (accountId: string) => void;
+  onStartMission?: (accountId: string) => void;
   loading?: boolean;
   onRun?: () => void;
 }) {
@@ -1076,10 +1107,25 @@ function WorkQueuePanel({
             </table>
           </div>
 
-          <div className="mt-2 rounded-lg border border-edge bg-bg/25 px-2.5 py-2 text-[11px] text-faint">
-            {hovered
-              ? rows.find((r) => r.recommendation.account_id === hovered)?.whyNow ?? "Hover any row to preview why now."
-              : "Use â†‘/â†“ keys to move selection. Click a row to focus the account workspace."}
+          <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-edge bg-bg/25 px-2.5 py-2 text-[11px] text-faint">
+            <span className="min-w-0 truncate">
+              {hovered
+                ? rows.find((r) => r.recommendation.account_id === hovered)?.whyNow ?? "Hover any row to preview why now."
+                : "Use \u2191/\u2193 keys to move selection. Click a row to focus the account workspace."}
+            </span>
+            {onStartMission && activeAccountId ? (
+              <button
+                type="button"
+                onClick={() => onStartMission(activeAccountId)}
+                className={cx(
+                  "btn shrink-0 px-2.5 py-1 text-[11px]",
+                  experienceMode === "seller" ? "btn-primary" : "btn-outline-primary",
+                )}
+                title="Begin the guided seller mission for the selected account"
+              >
+                <Rocket size={12} /> Start Mission
+              </button>
+            ) : null}
           </div>
 
           <div className="mt-2 rounded-lg border border-edge bg-bg/25">
@@ -1215,9 +1261,11 @@ function AccountWorkspacePanel({
   navigationTargetSection,
   generatedAt,
   onOpenAccount,
+  nextRecommendedAccount,
   loading,
   onRun,
   timelineRefreshKey,
+  onLaunchMission,
 }: {
   recommendation: Recommendation | null;
   account?: Account;
@@ -1235,9 +1283,11 @@ function AccountWorkspacePanel({
     source?: string,
     targetSection?: "overview" | "prep" | "email" | "crm" | "evidence" | "evolution" | "timeline" | "reasoning" | "intelligence",
   ) => void;
+  nextRecommendedAccount?: { account_id: string; account_name: string } | null;
   loading?: boolean;
   onRun?: () => void;
   timelineRefreshKey?: string;
+  onLaunchMission?: (accountId: string, recommendationId?: string | null) => void;
 }) {
   if (!recommendation || !reasoning) {
     if (loading) {
@@ -1271,7 +1321,9 @@ function AccountWorkspacePanel({
       navigationTargetSection={navigationTargetSection}
       generatedAt={generatedAt}
       onOpenAccount={onOpenAccount}
+      nextRecommendedAccount={nextRecommendedAccount}
       timelineRefreshKey={timelineRefreshKey}
+      onLaunchMission={onLaunchMission}
     />
   );
 }
@@ -1336,7 +1388,9 @@ function WorkspaceCockpit({
   navigationTargetSection,
   generatedAt,
   onOpenAccount,
+  nextRecommendedAccount,
   timelineRefreshKey,
+  onLaunchMission,
 }: {
   recommendation: Recommendation;
   account?: Account;
@@ -1351,10 +1405,22 @@ function WorkspaceCockpit({
     source?: string,
     targetSection?: "overview" | "prep" | "email" | "crm" | "evidence" | "evolution" | "timeline" | "reasoning" | "intelligence",
   ) => void;
+  nextRecommendedAccount?: { account_id: string; account_name: string } | null;
   timelineRefreshKey?: string;
+  onLaunchMission?: (accountId: string, recommendationId?: string | null) => void;
 }) {
   const [focus, setFocus] = React.useState<WorkspaceFocus>("summary");
   const [approvalOpen, setApprovalOpen] = React.useState(false);
+  const [missionOpen, setMissionOpen] = React.useState(false);
+  // Release 1.4B — prefer the top-level Mission surface; fall back to the legacy
+  // in-cockpit overlay only when no surface-launch handler is wired.
+  const launchMission = React.useCallback(() => {
+    if (onLaunchMission) {
+      onLaunchMission(recommendation.account_id, recommendation.recommendation_id);
+    } else {
+      setMissionOpen(true);
+    }
+  }, [onLaunchMission, recommendation.account_id, recommendation.recommendation_id]);
   const operationsMode = experienceMode === "operations";
   const ledgerTick = useLedgerTick();
   const accountHistory = React.useMemo(
@@ -1451,6 +1517,18 @@ function WorkspaceCockpit({
       opened_from: openedFromSource ?? null,
     });
   }, [experienceMode, recommendation.account_id, recommendation.recommendation_id, openedFromSource]);
+  // Release 1.4B — open the guided mission when this account's workspace mounts
+  // in response to a "Start Mission" request from the queue/another surface, and
+  // react to live requests for the already-rendered account.
+  React.useEffect(() => {
+    if (consumeMissionRequest(recommendation.account_id)) setMissionOpen(true);
+    return subscribeMissionRequests((accountId) => {
+      if (accountId === recommendation.account_id) {
+        consumeMissionRequest(accountId);
+        setMissionOpen(true);
+      }
+    });
+  }, [recommendation.account_id]);
   const sectionOpen = React.useCallback((section: WorkspaceSection) => openSections.includes(section), [openSections]);
   const toggleSection = React.useCallback(
     (section: WorkspaceSection) => {
@@ -1545,7 +1623,21 @@ function WorkspaceCockpit({
         </div>
         <LifecycleRibbon state={lifecycle} />
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <button type="button" onClick={onOpenAccountClick} className="btn btn-primary px-3 py-1.5 text-[12px]">
+          <button
+            type="button"
+            onClick={launchMission}
+            className={cx(
+              "px-3 py-1.5 text-[12px]",
+              experienceMode === "seller" ? "btn btn-primary" : "btn btn-outline-primary",
+            )}
+            title="Begin the guided seller mission for this account"
+          >
+            <Rocket size={13} /> Start Mission
+          </button>
+          <button type="button" onClick={onOpenAccountClick} className={cx(
+            "px-3 py-1.5 text-[12px]",
+            experienceMode === "seller" ? "btn btn-outline-primary" : "btn btn-primary",
+          )}>
             <ArrowUpRight size={13} /> Open Account
           </button>
           <button type="button" onClick={() => goto("prep", "prep")} className="btn btn-outline-primary px-3 py-1.5 text-[12px]">
@@ -1721,6 +1813,19 @@ function WorkspaceCockpit({
             recordOutcome(recommendation.account_id, outcome, outcomeNote);
           }}
           onClose={() => setApprovalOpen(false)}
+        />
+      ) : null}
+
+      {missionOpen ? (
+        <SellerMissionControl
+          recommendation={recommendation}
+          account={account}
+          reasoning={reasoning}
+          experienceMode={experienceMode}
+          generatedAt={generatedAt}
+          nextAccount={nextRecommendedAccount ?? null}
+          onOpenAccount={(accountId, source) => onOpenAccount(accountId, source ?? "Mission Complete", "overview")}
+          onClose={() => setMissionOpen(false)}
         />
       ) : null}
     </div>

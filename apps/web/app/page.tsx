@@ -21,7 +21,7 @@ import type {
   SystemConfigResponse,
 } from "@/lib/types";
 import { cx } from "@/lib/format";
-import { briefFocusAccountIds, type BriefExternalContext } from "@/lib/reasoning";
+import { briefFocusAccountIds, reasonForRecommendation, type BriefExternalContext } from "@/lib/reasoning";
 import { LOADING_PHASES } from "@/lib/evaluation";
 import { fetchOverlay, overlayFor, type AIOverlayMap } from "@/lib/aiOverlay";
 import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
@@ -47,6 +47,8 @@ import { DecisionWorkspacePreview } from "@/components/DecisionWorkspacePreview"
 import { NvidiaReadyCard } from "@/components/NvidiaReadyCard";
 import { KpiStrip } from "@/components/KpiStrip";
 import { CommandCenter } from "@/components/command/CommandCenter";
+import { MorningBriefView } from "@/components/command/MorningBriefView";
+import { SellerMissionControl, type NextMissionPreview } from "@/components/command/SellerMissionControl";
 import { WhyThisAccount } from "@/components/WhyThisAccount";
 import { buildAccountSelectionContext, type AccountSelectionContext } from "@/lib/accountSelectionContext";
 import { LandingView } from "@/components/landing/LandingView";
@@ -59,7 +61,7 @@ import {
   type OpenAccountFromSurfaceInput,
   type WorkspaceSectionTarget,
 } from "@/lib/accountNavigation";
-import { loadExperienceMode, saveExperienceMode } from "@/lib/experienceMode";
+import { loadExperienceMode, saveExperienceMode, useExperienceMode } from "@/lib/experienceMode";
 
 const DEFAULT_QUERY = "Which SMB accounts need attention this week and why?";
 const DEMO_MODE_KEY = "s2a_demo_mode";
@@ -151,8 +153,12 @@ export default function Page() {
   const [demoMode, setDemoMode] = React.useState(false);
   const autoRanRef = React.useRef(false);
 
-  // App journey (P10): Landing → Command Center → detailed Workspace.
+  // App journey (Release 1.4B): Platform → Morning Brief (persona entry) →
+  // Today's Mission (work mode) → Command Center (power) → Workspace (explain).
   const [view, setView] = React.useState<AppView>("landing");
+  // Persona identity drives the entry experience (Morning Brief) and mission
+  // routing. Shared with the Command Center via the same persisted preference.
+  const [experienceMode, setExperienceMode] = useExperienceMode();
   // When opening an account from the cockpit before a run completes, remember
   // which account to select once recommendations arrive.
   const pendingAccountRef = React.useRef<string | null>(null);
@@ -658,7 +664,7 @@ export default function Page() {
   // Read-only generation against the local API.
   React.useEffect(() => {
     if (autoRanRef.current) return;
-    if (!demoMode && view !== "command" && view !== "evaluation") return;
+    if (!demoMode && view !== "command" && view !== "evaluation" && view !== "brief" && view !== "mission") return;
     if (!meta || result || loading) return;
     autoRanRef.current = true;
     runWorkflow();
@@ -794,6 +800,52 @@ export default function Page() {
       preferredSection: targetSection,
     });
   }
+
+  // Release 1.4B — launch the top-level Mission surface for an account. Mission
+  // is the seller's work mode, so we select the account, switch to Seller
+  // identity, and route to the dedicated Mission view (never a drawer/overlay).
+  const launchMission = React.useCallback(
+    (accountId: string, recommendationId?: string | null) => {
+      const normalized = normalizeAccountId(accountId);
+      if (!normalized) return;
+      const rec = result
+        ? findRecommendationByAccountId(result.recommendations, normalized, accounts)
+        : null;
+      applyAccountSelection(normalized, recommendationId ?? rec?.recommendation_id ?? null, {
+        clearRedirect: true,
+        source: "Today's Mission",
+      });
+      const previous = loadExperienceMode();
+      if (previous !== "seller") saveExperienceMode("seller", previous);
+      setEditing(false);
+      setView("mission");
+    },
+    [accounts, applyAccountSelection, result],
+  );
+
+  // Next recommended account after the active one — powers the Mission Complete
+  // "Start next mission" hand-off without re-ranking anything. Enriched with the
+  // next mission's action + estimated effort so completion can preview it.
+  const nextRecommendedAccount = React.useMemo<NextMissionPreview | null>(() => {
+    const recs = result?.recommendations ?? [];
+    if (recs.length === 0) return null;
+    const idx = selectedRec ? recs.findIndex((r) => r.account_id === selectedRec.account_id) : -1;
+    const next = recs[idx + 1] ?? recs.find((r) => r.account_id !== selectedRec?.account_id) ?? null;
+    if (!next) return null;
+    const nextReason = reasonForRecommendation(next, accounts[next.account_id]);
+    return {
+      account_id: next.account_id,
+      account_name: next.account_name,
+      action_label: nextReason.action.label,
+      estimated_minutes: nextReason.estimatedMinutes,
+    };
+  }, [result, selectedRec, accounts]);
+
+  // Account-specific reasoning bundle for the Mission surface (presentation only).
+  const missionReasoning = React.useMemo(
+    () => (selectedRec ? reasonForRecommendation(selectedRec, accounts[selectedRec.account_id]) : null),
+    [selectedRec, accounts],
+  );
 
   React.useEffect(() => {
     if (view !== "workspace" || !redirectContext) return;
@@ -1036,10 +1088,75 @@ export default function Page() {
             recommendationCount={result?.recommendations.length ?? limit}
             isHubspotSource={isHubspotSource}
             dataSourceLabel={dataSourceLabel}
-            onEnter={() => setView("command")}
+            onEnter={() => setView("brief")}
             onOpenWorkspace={() => setView("workspace")}
           />
         </div>
+      ) : null}
+
+      {view === "brief" ? (
+        <div key="brief" className="scene flex flex-1 flex-col">
+          {runError ? (
+            <div className="mx-auto mt-4 flex w-full max-w-[1040px] items-center gap-2 rounded-lg border border-risk/40 bg-risk/10 px-4 py-3 text-sm text-risk">
+              <AlertTriangle size={16} />
+              {runError}
+            </div>
+          ) : null}
+          <MorningBriefView
+            accounts={accountsList}
+            accountsById={accounts}
+            recs={result?.recommendations ?? []}
+            hasResult={Boolean(result && result.recommendations.length > 0)}
+            loading={loading}
+            experienceMode={experienceMode}
+            onChangeMode={setExperienceMode}
+            externalEnabled={externalSignalsEnabled}
+            externalContext={briefExternalContext}
+            onBeginMission={(accountId, recommendationId) => launchMission(accountId, recommendationId)}
+            onOpenCommand={() => setView("command")}
+            onOpenAccount={(accountId, source) => openAccount(accountId, source, "overview")}
+            onRun={runWorkflow}
+          />
+        </div>
+      ) : null}
+
+      {view === "mission" ? (
+        <main key="mission" className="scene flex flex-1 flex-col">
+          {selectedRec && missionReasoning ? (
+            <SellerMissionControl
+              variant="page"
+              recommendation={selectedRec}
+              account={accounts[selectedRec.account_id]}
+              reasoning={missionReasoning}
+              experienceMode={experienceMode}
+              generatedAt={result?.generated_at}
+              nextAccount={nextRecommendedAccount}
+              onOpenAccount={(accountId, source) => {
+                applyAccountSelection(accountId, null, { clearRedirect: true, source: source ?? "Mission" });
+                launchMission(accountId);
+              }}
+              onOpenWorkspace={(accountId) => {
+                applyAccountSelection(accountId, null, { clearRedirect: true, source: "Mission" });
+                setView("workspace");
+              }}
+              onClose={() => setView("brief")}
+            />
+          ) : (
+            <div className="mx-auto mt-10 w-full max-w-[640px] rounded-2xl border border-edge bg-surface2/40 p-8 text-center">
+              <p className="text-[15px] font-medium text-ink">No mission selected yet.</p>
+              <p className="mt-1 text-[12px] text-muted">
+                Start from your Morning Brief to begin today's first mission.
+              </p>
+              <button
+                type="button"
+                onClick={() => setView("brief")}
+                className="btn btn-primary mt-4 px-4 py-2 text-[13px]"
+              >
+                Go to Morning Brief
+              </button>
+            </div>
+          )}
+        </main>
       ) : null}
 
       {view === "command" ? (
@@ -1069,6 +1186,7 @@ export default function Page() {
             onOpenEvaluation={() => setView("evaluation")}
             onRun={runWorkflow}
             onOpenAccount={openAccountFromSurface}
+            onLaunchMission={launchMission}
             onSelectActive={(accountId) => {
               // Phase 13.6 — lightweight active-account selection from the queue
               // / accordion. Updates the App-level selectedId without switching
