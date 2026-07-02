@@ -193,35 +193,55 @@ A scripted 10-minute walkthrough lives in [`docs/DEMO_SCRIPT.md`](DEMO_SCRIPT.md
 
 ## What's planned next
 
-The roadmap is honest and organized in three horizons. See
+The roadmap is organized in four claim-safe horizons. See
 [`ROADMAP.md`](ROADMAP.md) for detail and
 [`NVIDIA_ALIGNMENT.md`](NVIDIA_ALIGNMENT.md) for the NVIDIA mapping.
 
-**Now (shipped):** governed six-agent workflow, Decision Ledger, Revenue
-Execution Center, persona-specific Morning Brief, Seller Mission Control (first-class
-guided 7-step Mission Mode + Mission Complete handoff), Executive Command Center,
-Executive Daily Briefing, Executive Change Brief, HubSpot integration, BYOK provider
-abstraction, voice-ready architecture.
+**Implemented**
 
-**Next / In Review:** Manager execution / adoption view, Meeting Intelligence, Visual
-reasoning enhancements, Decision Intelligence Studio, Trend Intelligence, AI Chief of
-Staff conversation.
+- Platform landing
+- Persona-specific Morning Brief
+- Executive Command Center
+- Seller Mission Control
+- Today's Mission
+- Mission completion and next-mission handoff
+- AI Sales Director / Manager AI Coach
+- Release 2.1 Memory Foundation Stage 1 *(implemented in feature branch / pending production publish)*
+- Deterministic local memory, continuity ribbon, memory timeline, conversation context, explainability layer *(feature branch / pending production publish)*
 
-**Hackathon (NVIDIA Open Hackathon):**
+**Next**
 
-- **NVIDIA reasoning** — Nemotron via NIM behind the existing model adapter; a
-  live deterministic-vs-NVIDIA comparison.
-- **Voice Chief of Staff** — the planned Gnani.ai speech layer (STT · SALM ·
-  TTS · multilingual), a governed voice loop that never bypasses approval. See
-  [`VOICE_CHIEF_OF_STAFF.md`](VOICE_CHIEF_OF_STAFF.md).
-- **NeMo Agent Toolkit** — map the typed agent sequence onto the toolkit.
-- **Backend Decision Ledger** persistence + automatic governed CRM write-back.
+- Voice Adapter
+- Gnani.ai STT/TTS integration
+- Voice-first AI Sales Director
+- Voice summaries from existing persona responses
 
-**Future (vision):** Salesforce / Dynamics connectors on the same governance
-contract; authentication, RBAC, and multi-tenant isolation; a production key
-vault as a managed alternative to BYOK; a Digital Executive Assistant.
+**Planned**
 
-Every planned item preserves the governance invariants above.
+- AI Companion Layer
+- Split-screen narrated enterprise workspace
+- Left side: AI companion / voice / optional avatar
+- Right side: live workspace / command center / account details
+- AI speaks, UI follows
+- Workspace navigation driven by deterministic intents
+
+**Future**
+
+- NVIDIA Audio2Face avatar adapter
+- Digital human presentation layer
+- Multi-persona AI Workforce
+- Executive Advisor, Mission Guide, AI Sales Director, Operations Advisor
+- Cross-persona collaboration
+- Teams / Copilot / Digital Human interfaces
+
+**Narrated Enterprise Workspace concept**
+
+The AI companion speaks and guides the user while the right-side workspace updates in real time with accounts, evidence, recommendations, approvals, and execution steps.
+
+Architecture:
+**AI Persona → Conversation Engine → Memory Foundation → Intent Router → Workspace Controller → Governed Workspace → Voice Adapter / Avatar Adapter**
+
+Voice and avatar are presentation adapters layered on top of deterministic memory, conversation, governance, and execution.
 
 ---
 

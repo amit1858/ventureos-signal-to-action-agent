@@ -1,88 +1,72 @@
-# Roadmap — Signal-to-Action Agent
+# Roadmap — VentureOS
 
-> Public roadmap aligned to the **currently deployed** product state. Labels are explicit: **Implemented**, **Next / In Review**, **Planned**, and **Future**. Items are only listed as Implemented once confirmed in the deployed production build.
+> Direction arc: **Signal-to-Action Agent → Enterprise AI Workforce → Narrated Enterprise Workspace**
 
-The product direction remains governed:
+Public roadmap labels are explicit and claim-safe: **Implemented**, **Next**, **Planned**, **Future**.
 
-> **AI helps explain and recommend. AI does not determine ranking, bypass governance, or execute CRM actions without human approval.**
+## ✅ Implemented
 
----
-
-## ✅ Implemented (deployed today)
-
-Live at **https://ventureos-signal-to-action-agent.vercel.app** with backend on Render. Latest shipped: **Release 1.4B — Seller Mission Control & the guided work experience.**
+Deployed production baseline remains Release 1.4B.  
+**Release 2.1 Memory Foundation Stage 1 is implemented in feature branch and pending production publish.**
 
 - Platform landing
-- Morning Brief (persona-specific entry: Executive / Seller / Operations)
+- Persona-specific Morning Brief
 - Executive Command Center
 - Seller Mission Control
-- Workspace
-- Revenue Execution Center
-- Governance
-- HubSpot integration
+- Today's Mission
+- Mission completion and next-mission handoff
+- AI Sales Director / Manager AI Coach
+- Release 2.1 Memory Foundation Stage 1 *(implemented in feature branch / pending production publish)*
+- Deterministic local memory *(feature branch / pending production publish)*
+- Continuity ribbon *(feature branch / pending production publish)*
+- Memory timeline *(feature branch / pending production publish)*
+- Conversation context *(feature branch / pending production publish)*
+- Explainability layer *(feature branch / pending production publish)*
 
-The product now follows one continuous journey:
+## 🔜 Next
 
-> **Platform → Persona-specific Morning Experience → AI Chief of Staff → Guided Mission → Workspace → Command Center → Governance**
-
-### Implemented capability map
-
-| Capability | What it delivers |
-|---|---|
-| Platform landing | Product front door — what the system is and the governed value loop, before sign-in |
-| Morning Brief | Persona-specific morning entry: Executive Brief, Seller Morning Brief, or Operations Overview |
-| Seller Morning Brief | AI Chief of Staff work briefing — "this mission" effort, action narrative, and a Now / Next / Later timeline |
-| Today's Mission | The seller's single, clear next mission with one recommendation and one CTA |
-| Seller Mission Control | First-class guided mission surface — the seven-step Review → Evidence → Outreach → CRM Note → Approval → Execution → Outcome flow with a Mission Complete and next-mission handoff |
-| Executive Command Center | AI Chief of Staff narrative framing, Executive Attention Required, Executive Daily Briefing, Executive Change Brief, and Portfolio Pulse — repositioned as the power view |
-| Workspace | Explain Mode — the per-account cockpit; reachable from any mission step via "Open Full Workspace" |
-| Revenue Execution Center | Approved action lifecycle from prepared to outcome captured; the mission Execute step hands off here |
-| Decision Ledger | Auditable decision and outcome trail |
-| Governance | Hard human approval gate, evidence visibility, caveat-first trust model |
-| Adaptive Experience Modes | Executive / Seller / Operations entry model on the same governed runtime |
-| HubSpot integration | Test CRM sync and approval-gated writeback pathway |
-
----
-
-## 🔜 Next / In Review (not yet confirmed in production)
-
-These are designed or in review and are **not yet confirmed in the deployed production build**.
-
-- Manager execution / adoption view — missions started, completed, drop-off step, pending approvals, outcomes captured, accounts untouched, seller follow-through
-- Meeting Intelligence — meeting prep and capture connected to the mission and ledger
-- Visual reasoning enhancements — richer evidence, trend, and decision visualizations across the surfaces
-
-### Also in review
-
-- Decision Intelligence Studio — scenario-led decision support with projected impact, assumptions, confidence, and reasoning
-- Trend Intelligence — Portfolio Trend Read, Account-Level Trend Intelligence, and trend-aware executive briefing
-- AI Chief of Staff Conversation — text-first conversational layer over the existing surfaces
-
----
+- Voice Adapter
+- Gnani.ai STT/TTS integration
+- Voice-first AI Sales Director
+- Voice summaries from existing persona responses
 
 ## 🟢 Planned
 
-- Voice Chief of Staff with Gnani.ai (STT / SALM / TTS)
-- Digital avatar
-
-### Voice status
-
-| Item | Status |
-|---|---|
-| Voice-ready architecture | Implemented today |
-| Voice Chief of Staff experience | Planned |
-| Gnani.ai STT/SALM/TTS integration | Planned |
-| Digital avatar | Planned |
-
----
+- AI Companion Layer
+- Split-screen narrated enterprise workspace
+- Left side: AI companion / voice / optional avatar
+- Right side: live workspace / command center / account details
+- AI speaks, UI follows
+- Workspace navigation driven by deterministic intents
 
 ## 🔮 Future
 
-- Meeting Coach
-- Enterprise Multimodal Workspace
-- Coach + Delegate stages of the AI Chief of Staff (learns from outcomes; prepares low-risk work for human approval)
+- NVIDIA Audio2Face avatar adapter
+- Digital human presentation layer
+- Multi-persona AI Workforce
+- Executive Advisor, Mission Guide, AI Sales Director, Operations Advisor
+- Cross-persona collaboration
+- Teams / Copilot / Digital Human interfaces
 
----
+## Narrated Enterprise Workspace
+
+The AI companion speaks and guides the user through work while the right-side workspace updates in real time with accounts, evidence, recommendations, approvals, and execution steps.
+
+Architecture model:
+
+**AI Persona → Conversation Engine → Memory Foundation → Intent Router → Workspace Controller → Governed Workspace → Voice Adapter / Avatar Adapter**
+
+Positioning:
+
+- Voice and avatar are **presentation adapters**.
+- They do **not** replace deterministic intelligence.
+- They sit on top of memory, conversation, governance, and execution.
+
+Adapter roadmap notes:
+
+- **Gnani.ai** will be evaluated as the STT/TTS voice adapter layer.
+- **NVIDIA Audio2Face** will be evaluated as the avatar/lip-sync adapter layer.
+- Both are planned adapter integrations, not core business logic.
 
 ## Related documents
 

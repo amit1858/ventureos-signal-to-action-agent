@@ -1,8 +1,10 @@
-# Architecture — Signal-to-Action Agent
+# Architecture — VentureOS
 
 This document explains how the product works, in plain English, for product managers, engineering
 managers, hackathon judges, and executives. You should be able to understand the system without
 reading any source code.
+
+Direction arc: **Signal-to-Action Agent → Enterprise AI Workforce → Narrated Enterprise Workspace**.
 
 ![Signal-to-Action Agent — Executive Command Center](assets/screenshots/command_center_executive.png)
 
@@ -786,6 +788,28 @@ that are pure read-only views over the ledger module: Manager Summary, Decision 
 (with counts + last 10 entries), and CRM Writeback Readiness (a 5-step pipeline that stops
 at "Ready for CRM"). None of these panels alter ranking, scoring, governance status, or the
 approval gate. The deterministic engine remains the single source of truth.
+
+---
+
+## Narrated Enterprise Workspace (planned architecture layer)
+
+This is the long-term presentation direction: the AI companion narrates and guides the user while
+the workspace renders governed execution state in real time.
+
+Architecture chain:
+
+**AI Persona → Conversation Engine → Memory Foundation → Intent Router → Workspace Controller → Governed Workspace → Voice Adapter / Avatar Adapter**
+
+Adapter policy:
+
+- Voice and avatar are presentation adapters, not decision logic.
+- **Gnani.ai** is planned for STT/TTS adapter evaluation.
+- **NVIDIA Audio2Face** is planned for avatar/lip-sync adapter evaluation.
+- Both sit on top of deterministic memory, conversation, governance, and execution.
+
+Release note:
+
+- Memory Foundation Stage 1 is implemented in feature branch and pending production publish.
 
 ---
 

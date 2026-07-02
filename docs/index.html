@@ -268,6 +268,61 @@
   .reveal{opacity:1;transform:none}
   .js .reveal{opacity:0;transform:translateY(18px)}
   .js .reveal.in{opacity:1;transform:none;transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+
+  /* ---------- STATUS BADGES ---------- */
+  .status-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .sbadge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:999px;border:1px solid transparent}
+  .sbadge.live{background:rgba(118,185,0,.1);border-color:rgba(118,185,0,.35);color:var(--green-bright)}
+  .sbadge.branch{background:rgba(91,141,239,.1);border-color:rgba(91,141,239,.35);color:#7ba9f5}
+  .sbadge.planned{background:rgba(245,177,61,.1);border-color:rgba(245,177,61,.35);color:var(--amber)}
+  .sbadge.future{background:rgba(150,150,150,.08);border-color:rgba(150,150,150,.25);color:var(--muted)}
+
+  /* ---------- PERSONA GRID ---------- */
+  .persona-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .pcard{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:22px 18px;transition:.22s;position:relative;overflow:hidden}
+  .pcard::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+  .pcard.live-p::before{background:var(--green)}
+  .pcard.branch-p::before{background:var(--blue)}
+  .pcard.future-p::before{background:var(--amber)}
+  .pcard:hover{border-color:var(--green-dim);transform:translateY(-4px)}
+  .pcard .picon{font-size:28px;margin-bottom:10px}
+  .pcard .ptitle{font-size:15.5px;font-weight:800;margin-bottom:5px}
+  .pcard .pq{font-size:13px;font-style:italic;color:var(--green-bright);margin-bottom:9px}
+  .pcard .pdesc{font-size:13px;color:var(--muted);line-height:1.5}
+  .pcard .pstatus{margin-top:13px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  @media(max-width:900px){.persona-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:500px){.persona-grid{grid-template-columns:1fr}}
+
+  /* ---------- MEMORY MODULES ---------- */
+  .mem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+  .mmod{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:18px 16px;transition:.18s}
+  .mmod:hover{border-color:#2b56a8;transform:translateY(-2px)}
+  .mmod .mtitle{font-size:14px;font-weight:800;margin-bottom:4px;color:var(--text)}
+  .mmod .mdesc{font-size:12.5px;color:var(--muted);line-height:1.45}
+  @media(max-width:700px){.mem-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:440px){.mem-grid{grid-template-columns:1fr}}
+
+  /* ---------- NARRATED WORKSPACE CHAIN ---------- */
+  .nchain{display:flex;flex-direction:column;align-items:center;gap:0;margin:28px auto;max-width:420px}
+  .nchain-node{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 24px;text-align:center;font-weight:700;font-size:14.5px;width:100%;position:relative}
+  .nchain-node .ns{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px}
+  .nchain-node.live-n{border-color:var(--green);background:linear-gradient(180deg,rgba(118,185,0,.14),rgba(118,185,0,.04))}
+  .nchain-node.live-n .ns{color:var(--green-bright)}
+  .nchain-node.branch-n{border-color:#2b56a8;background:linear-gradient(180deg,rgba(43,82,160,.18),rgba(43,82,160,.04))}
+  .nchain-node.branch-n .ns{color:#7ba9f5}
+  .nchain-node.plan-n{border-style:dashed;border-color:var(--amber)}
+  .nchain-node.plan-n .ns{color:var(--amber)}
+  .nchain-node.future-n{border-style:dashed;border-color:var(--muted-2)}
+  .nchain-node.future-n .ns{color:var(--muted)}
+  .nchain-arrow{color:var(--green);font-size:18px;font-weight:900;padding:6px 0}
+
+  /* ---------- ROADMAP 4-COLUMN ---------- */
+  .quad{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:980px){.quad{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:500px){.quad{grid-template-columns:1fr}}
+  .hcol.next-p::before{background:var(--blue)}
+  .hcol.next-p .ph{color:#7ba9f5}
+  .hcol.next-p li::before{background:var(--blue)}
 </style>
 </head>
 <body>
@@ -283,11 +338,11 @@
     <nav class="links">
       <a class="nl" href="#overview">Overview</a>
       <a class="nl" href="#features">Features</a>
-      <a class="nl" href="#decision-intelligence">Intelligence</a>
+      <a class="nl" href="#ai-workforce">AI Workforce</a>
+      <a class="nl" href="#memory-foundation">Memory</a>
       <a class="nl" href="#architecture">Architecture</a>
       <a class="nl" href="#nvidia">NVIDIA</a>
       <a class="nl" href="#docs">Docs</a>
-      <a class="nl" href="#demo">Demo</a>
       <a class="nl" href="#roadmap">Roadmap</a>
     </nav>
     <div class="nav-cta">
@@ -305,9 +360,9 @@
       <span class="pill">NVIDIA Open Hackathon 2026</span>
       <span class="pill">Built by Team VentureOS</span>
     </div>
-    <h1 class="reveal">Signal-to-Action Agent<span class="sub">Enterprise AI Revenue Operating System</span></h1>
+    <h1 class="reveal">Signal-to-Action Agent<span class="sub">Evolving into Enterprise AI Workforce &rarr; Narrated Enterprise Workspace</span></h1>
     <p class="tag reveal">Signals in. Governed, evidence-backed, human-approved revenue action out.</p>
-    <p class="lede reveal">Enterprises don&rsquo;t need another dashboard or chatbot. They need a governed operating system that moves safely from <b>signal &rarr; decision &rarr; human-approved business outcome</b> &mdash; a controlled multi-agent workflow that ranks accounts, explains why with evidence, recommends the next best action, and drafts the outreach. Provider-abstracted today; NVIDIA-ready by configuration.</p>
+    <p class="lede reveal">Enterprises don&rsquo;t need another dashboard or chatbot. They need a governed operating system that moves safely from <b>signal &rarr; decision &rarr; human-approved business outcome</b>. VentureOS is evolving into an <b>Enterprise AI Workforce</b> where AI personas remember context, speak first, guide work, and drive governed execution &mdash; while human approval remains non-negotiable at every step.</p>
 
     <div class="cta-row reveal">
       <a class="btn btn-green btn-lg" href="https://ventureos-signal-to-action-agent.vercel.app" target="_blank" rel="noopener">&#128640; Launch Live Demo</a>
@@ -526,7 +581,76 @@
   <div class="wrap">
     <span class="kicker reveal">AI Chief of Staff</span>
     <h2 class="sec-h reveal">The experience layer across briefing, decisions, and execution</h2>
-    <p class="sec-p reveal">The AI Chief of Staff is the positioning that ties Executive Daily Briefing, Governance, the Decision Ledger, and the Revenue Execution Center into one governed operating flow. A conversational AI Chief of Staff layer &mdash; together with Decision and Trend Intelligence &mdash; is <strong>Next / In Review</strong>.</p>
+    <p class="sec-p reveal">The AI Chief of Staff ties Executive Daily Briefing, Governance, the Decision Ledger, and the Revenue Execution Center into one governed operating flow. This is expanding into a full <strong>Enterprise AI Workforce</strong> &mdash; multiple specialized AI personas working together.</p>
+  </div>
+</section>
+
+<!-- ===================== ENTERPRISE AI WORKFORCE ===================== -->
+<section class="band" id="ai-workforce">
+  <div class="wrap">
+    <span class="kicker reveal">Enterprise AI Workforce</span>
+    <h2 class="sec-h reveal">Four AI personas. One governed operating system.</h2>
+    <p class="sec-p reveal">Each persona begins the day differently, remembers what happened yesterday, and guides the user through today&rsquo;s most important work. Human approval is required before anything reaches the customer or the CRM.</p>
+    <div class="persona-grid">
+
+      <div class="pcard live-p reveal">
+        <div class="picon">&#128081;</div>
+        <div class="ptitle">Executive Advisor</div>
+        <div class="pq">&ldquo;What changed overnight?&rdquo;</div>
+        <p class="pdesc">Delivers a portfolio-level morning brief with ranked risks, opportunity movement, and a sequenced action plan. Explains what changed and why.</p>
+        <div class="pstatus" style="color:var(--green-bright)">&#9679; Live in production</div>
+      </div>
+
+      <div class="pcard live-p reveal">
+        <div class="picon">&#127919;</div>
+        <div class="ptitle">Mission Guide</div>
+        <div class="pq">&ldquo;What should I do first?&rdquo;</div>
+        <p class="pdesc">Guides the seller through a seven-step mission: Review, Evidence, Outreach, CRM Note, Approval, Execution, Outcome. Remembers completed missions and hands off to the next.</p>
+        <div class="pstatus" style="color:var(--green-bright)">&#9679; Live in production (Seller Mission Control)</div>
+      </div>
+
+      <div class="pcard branch-p reveal">
+        <div class="picon">&#128200;</div>
+        <div class="ptitle">AI Sales Director</div>
+        <div class="pq">&ldquo;Where should I intervene?&rdquo;</div>
+        <p class="pdesc">Gives managers a coaching view: which sellers are executing, which are stalling, and where to intervene. Tracks coaching assignment effectiveness with evidence.</p>
+        <div class="pstatus" style="color:#7ba9f5">&#9679; Built on feature branch &middot; pending production publish</div>
+      </div>
+
+      <div class="pcard future-p reveal">
+        <div class="picon">&#9881;&#65039;</div>
+        <div class="ptitle">Operations Advisor</div>
+        <div class="pq">&ldquo;Is everything healthy?&rdquo;</div>
+        <p class="pdesc">Monitors operational health: approval queue, CRM writeback readiness, outstanding missions, backlog trend. Reports what needs resolution today.</p>
+        <div class="pstatus" style="color:var(--amber)">&#9679; Operational surface live &middot; deepening planned</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MEMORY FOUNDATION ===================== -->
+<section class="band" id="memory-foundation">
+  <div class="wrap">
+    <span class="kicker reveal">Memory Foundation &middot; Release 2.1</span>
+    <h2 class="sec-h reveal">VentureOS now remembers. AI is no longer stateless.</h2>
+    <div class="status-row reveal">
+      <span class="sbadge branch">&#9679; Implemented on feature branch</span>
+      <span class="sbadge planned">Pending production publish</span>
+      <span class="sbadge live">No backend dependency</span>
+      <span class="sbadge live">No LLM dependency</span>
+    </div>
+    <p class="sec-p reveal">The target experience: <em>&ldquo;Yesterday we discussed Rahul. The coaching appears to be working. Recommendation adoption has increased. Today I recommend focusing on Aman.&rdquo;</em></p>
+    <p class="sec-p reveal">Memory is deterministic, client-side, explainable, and safe. Protected engines &mdash; ranking, governance, decision ledger schema &mdash; are untouched. Memory reads from existing systems. It never changes them.</p>
+    <div class="mem-grid reveal">
+      <div class="mmod"><div class="mtitle">&#128203; Deterministic Local Memory</div><div class="mdesc">Event-sourced memory records with confidence, importance, provenance, and lifecycle. No hallucinated memory. Every record is traceable to a real event.</div></div>
+      <div class="mmod"><div class="mtitle">&#127775; Continuity Ribbon</div><div class="mdesc">Lightweight surface that shows what AI remembers from yesterday at the top of each persona session &mdash; additive, never intrusive.</div></div>
+      <div class="mmod"><div class="mtitle">&#128337; Memory Timeline</div><div class="mdesc">A visual trace of recalled events, coaching moments, and mission outcomes over time. Every entry cites its source.</div></div>
+      <div class="mmod"><div class="mtitle">&#128172; Conversation Context</div><div class="mdesc">Session-scoped context tracking current entity, persona, topic, mission, recommendation, and follow-up state. Feeds memory ingestion cleanly.</div></div>
+      <div class="mmod"><div class="mtitle">&#128270; Explainability Layer</div><div class="mdesc">Every memory surface shows why it was recalled: the event that created it, when it happened, and the evidence trail behind it.</div></div>
+      <div class="mmod"><div class="mtitle">&#128274; Protected Engine Boundary</div><div class="mdesc">Recommendation engine, ranking, decision engine, governance, and CRM abstraction are untouched. Memory is purely additive.</div></div>
+    </div>
+    <p class="arch-note reveal" style="margin-top:22px">Persona continuity examples &mdash; <span class="green">Executive:</span> &ldquo;Yesterday we reviewed three renewal risks. Two have moved.&rdquo; &middot; <span class="green">Seller:</span> &ldquo;You completed three missions yesterday. One outcome is still open.&rdquo; &middot; <span class="green">Manager:</span> &ldquo;Rahul&rsquo;s coaching is working. Today I recommend focusing on Aman.&rdquo;</p>
   </div>
 </section>
 
@@ -534,18 +658,18 @@
 <section class="band" id="architecture">
   <div class="wrap">
     <span class="kicker reveal">Architecture</span>
-    <h2 class="sec-h reveal">A controlled multi-agent runtime &mdash; not a single model</h2>
-    <p class="sec-p reveal">A provider-neutral orchestrator drives six typed agents through a fixed workflow graph. Governance, the Decision Ledger, and human approval are first-class, not afterthoughts.</p>
+    <h2 class="sec-h reveal">Deterministic core. Adapter-ready presentation. Human approval always.</h2>
+    <p class="sec-p reveal">The full product architecture runs from AI persona through governed workspace. Voice and avatar sit on top as presentation adapters &mdash; not inside the decision logic.</p>
 
     <div class="arch reveal">
       <div class="arch-flow">
-        <div class="arow"><div class="anode">&#128100; Seller / Revenue Leader<span class="s">Asks in natural language</span></div></div>
+        <div class="arow"><div class="anode green">&#129518; AI Personas<span class="s">Executive Advisor &middot; Mission Guide &middot; AI Sales Director &middot; Operations Advisor &middot; Live in production</span></div></div>
         <div class="adown">&#8595;</div>
-        <div class="arow"><div class="anode plan">&#127908; Voice Layer &mdash; Gnani.ai SALM<span class="s">Planned &middot; NVIDIA Hackathon</span></div></div>
+        <div class="arow"><div class="anode green">&#128172; Conversation Engine<span class="s">Session context &middot; topic &middot; entity &middot; recommendation &middot; Live in production</span></div></div>
         <div class="adown">&#8595;</div>
-        <div class="arow"><div class="anode navy">&#129518; Persona Morning Brief &rarr; Guided Mission<span class="s">Executive / Seller / Operations entry &middot; first-class Mission Mode</span></div></div>
+        <div class="arow"><div class="anode navy">&#129504; Memory Foundation<span class="s">Deterministic local memory &middot; continuity &middot; provenance &middot; Feature branch &middot; pending publish</span></div></div>
         <div class="adown">&#8595;</div>
-        <div class="arow"><div class="anode green">&#9881;&#65039; Signal-to-Action Orchestrator<span class="s">Fixed workflow graph &middot; typed contracts</span></div></div>
+        <div class="arow"><div class="anode green">&#9881;&#65039; Signal-to-Action Orchestrator<span class="s">Fixed workflow graph &middot; typed contracts &middot; deterministic ranking</span></div></div>
         <div class="adown">&#8595;</div>
         <div class="agroup">
           <div class="anode">Signal Ingestion<span class="s">Normalize &amp; group</span></div>
@@ -556,19 +680,27 @@
           <div class="anode">Communication<span class="s">Draft outreach</span></div>
         </div>
         <div class="adown">&#8595;</div>
-        <div class="arow"><div class="anode green">&#128737;&#65039; Governance Engine<span class="s">Confidence threshold &middot; human approval gate</span></div></div>
+        <div class="arow"><div class="anode green">&#128737;&#65039; Governance Engine<span class="s">Confidence threshold &middot; hard human approval gate</span></div></div>
         <div class="adown">&#8595;</div>
-        <div class="arow"><div class="anode navy">&#128220; Decision Ledger<span class="s">Immutable, replayable trace</span></div></div>
+        <div class="arow"><div class="anode navy">&#128220; Decision Ledger<span class="s">Immutable, replayable trace &middot; every decision logged</span></div></div>
         <div class="adown">&#8595;</div>
         <div class="arow">
           <div class="anode">&#128640; Revenue Execution<span class="s">Guided, event-driven flow</span></div>
           <div class="anode">&#128202; Business Outcomes<span class="s">Measured, ledger-tagged</span></div>
           <div class="anode">&#128260; Continuous Learning<span class="s">Outcomes feed back</span></div>
         </div>
+        <div class="adown">&#8595;</div>
+        <div class="arow">
+          <div class="anode plan">&#127908; Voice Adapter &mdash; Gnani.ai STT/TTS<span class="s">Planned &middot; adapter evaluation</span></div>
+          <div class="anode plan" style="border-color:#888">&#129399; Avatar Adapter &mdash; NVIDIA Audio2Face<span class="s">Future &middot; adapter evaluation</span></div>
+        </div>
       </div>
-      <p class="arch-note">NVIDIA green = NVIDIA-ready runtime &amp; governed core &middot; Dashed = planned Gnani.ai voice layer &middot;
-        <a class="green" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener">Read the full Architecture doc &rarr;</a>
+      <p class="arch-note" style="margin-top:18px">
+        <span style="margin-right:18px">&#9679; <span class="green">Green border</span> = live in production</span>
+        <span style="margin-right:18px">&#9679; <span style="color:#7ba9f5">Blue border</span> = feature branch / pending publish</span>
+        <span>&#9679; <span style="color:var(--amber)">Dashed</span> = planned adapter / future</span>
       </p>
+      <p class="arch-note"><a class="green" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener">Read the full Architecture doc &rarr;</a></p>
     </div>
   </div>
 </section>
@@ -653,7 +785,7 @@
       <a class="doc reveal" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/NVIDIA_ALIGNMENT.md" target="_blank" rel="noopener"><span class="di">&#9889;</span><span><span class="dt">NVIDIA Alignment</span><br><span class="dd">NIM, Nemotron, NeMo</span></span></a>
       <a class="doc reveal" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/DEMO_GUIDE.md" target="_blank" rel="noopener"><span class="di">&#127916;</span><span><span class="dt">Demo Guide</span><br><span class="dd">2 / 5 / 10 / 15 min</span></span></a>
       <a class="doc reveal" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/QUICK_START.md" target="_blank" rel="noopener"><span class="di">&#9881;&#65039;</span><span><span class="dt">Quick Start</span><br><span class="dd">Run it locally</span></span></a>
-      <a class="doc reveal" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/ROADMAP.md" target="_blank" rel="noopener"><span class="di">&#128506;&#65039;</span><span><span class="dt">Roadmap</span><br><span class="dd">Three horizons</span></span></a>
+      <a class="doc reveal" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/ROADMAP.md" target="_blank" rel="noopener"><span class="di">&#128506;&#65039;</span><span><span class="dt">Roadmap</span><br><span class="dd">Implemented &rarr; Future arc</span></span></a>
       <a class="doc reveal" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/SECURITY.md" target="_blank" rel="noopener"><span class="di">&#128274;</span><span><span class="dt">Security</span><br><span class="dd">BYOK &amp; disclosure</span></span></a>
       <a class="doc reveal" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/FAQ.md" target="_blank" rel="noopener"><span class="di">&#10067;</span><span><span class="dt">FAQ</span><br><span class="dd">Common questions</span></span></a>
     </div>
@@ -680,41 +812,107 @@
 <section class="band" id="roadmap">
   <div class="wrap">
     <span class="kicker reveal">Roadmap</span>
-    <h2 class="sec-h reveal">Three horizons, one continuous arc</h2>
-    <p class="sec-p reveal">Where the product is today, what we build at the hackathon, and where it goes next.</p>
-    <div class="tri">
-      <div class="hcol now reveal">
-        <div class="ph">Implemented</div>
-        <h3>Shipped in production</h3>
+    <h2 class="sec-h reveal">Signal-to-Action Agent &rarr; Enterprise AI Workforce &rarr; Narrated Enterprise Workspace</h2>
+    <p class="sec-p reveal">Status labels are explicit and claim-safe. Nothing is listed as Implemented unless it is confirmed built. Feature-branch items are clearly marked pending production publish.</p>
+
+    <div class="quad reveal">
+
+      <div class="hcol now">
+        <div class="ph">Implemented in production</div>
+        <h3>Shipped</h3>
         <ul>
-          <li>Platform landing + persona-specific Morning Brief</li>
-          <li>Seller Morning Brief, Today's Mission, first-class Mission Mode (guided 7-step flow)</li>
-          <li>Executive Command Center, Workspace, Revenue Execution Center</li>
-          <li>Governance + Decision Ledger + HubSpot integration</li>
+          <li>Platform landing</li>
+          <li>Persona-specific Morning Brief</li>
+          <li>Seller Morning Brief</li>
+          <li>Today&rsquo;s Mission</li>
+          <li>Guided 7-step Mission Mode</li>
+          <li>Mission Complete &rarr; Next Mission</li>
+          <li>Executive Command Center</li>
+          <li>Revenue Execution Center</li>
+          <li>Governance + human approval gate</li>
+          <li>Decision Ledger</li>
+          <li>HubSpot test CRM integration</li>
         </ul>
       </div>
-      <div class="hcol hack reveal">
-        <div class="ph">Next / In Review + Planned</div>
-        <h3>Manager view, intelligence + Voice</h3>
+
+      <div class="hcol next-p">
+        <div class="ph">Feature branch &middot; pending publish</div>
+        <h3>Built, not yet in production</h3>
         <ul>
-          <li>Next / In Review: Manager execution / adoption view</li>
-          <li>Next / In Review: Meeting Intelligence, Visual reasoning enhancements</li>
-          <li>Next / In Review: Decision Intelligence Studio, Trend Intelligence</li>
-          <li>Planned: Voice Chief of Staff with Gnani.ai (STT/SALM/TTS) &middot; Digital avatar</li>
+          <li>AI Sales Director</li>
+          <li>Manager AI Coach</li>
+          <li>Coaching assignment workflow</li>
+          <li>Coaching effectiveness view</li>
+          <li>Release 2.1 Memory Foundation Stage 1</li>
+          <li>Deterministic local memory</li>
+          <li>Continuity ribbon</li>
+          <li>Memory timeline</li>
+          <li>Conversation context</li>
+          <li>Explainability layer</li>
         </ul>
       </div>
-      <div class="hcol future reveal">
+
+      <div class="hcol hack">
+        <div class="ph">Planned next</div>
+        <h3>Voice adapter layer</h3>
+        <ul>
+          <li>Voice Adapter</li>
+          <li>Gnani.ai STT/TTS integration</li>
+          <li>Voice-first AI Sales Director</li>
+          <li>Spoken portfolio summaries</li>
+          <li>Spoken coaching summaries</li>
+        </ul>
+      </div>
+
+      <div class="hcol future">
         <div class="ph">Future &mdash; vision</div>
-        <h3>Enterprise AI Chief of Staff</h3>
+        <h3>Enterprise AI Workforce</h3>
         <ul>
-          <li>Meeting Coach</li>
-          <li>Enterprise Multimodal Workspace</li>
-          <li>Coach + Delegate stages of the AI Chief of Staff</li>
-          <li>Triton/GPU optimization across the workflow</li>
+          <li>AI Companion Layer</li>
+          <li>Split-screen Narrated Enterprise Workspace</li>
+          <li>NVIDIA Audio2Face avatar adapter</li>
+          <li>Digital human presentation layer</li>
+          <li>Multi-persona AI Workforce</li>
+          <li>Copilot / Teams / Digital Human interfaces</li>
         </ul>
       </div>
+
     </div>
-    <p class="arch-note reveal"><a class="green" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/ROADMAP.md" target="_blank" rel="noopener">Read the full Roadmap &rarr;</a></p>
+    <p class="arch-note reveal" style="margin-top:22px"><a class="green" href="https://github.com/amit1858/ventureos-signal-to-action-agent/blob/main/docs/ROADMAP.md" target="_blank" rel="noopener">Read the full Roadmap &rarr;</a></p>
+  </div>
+</section>
+
+<!-- ===================== NARRATED WORKSPACE ===================== -->
+<section class="band" id="narrated-workspace">
+  <div class="wrap">
+    <span class="kicker reveal">Narrated Enterprise Workspace &middot; Planned</span>
+    <h2 class="sec-h reveal">AI speaks. Workspace follows. Human decides.</h2>
+    <p class="sec-p reveal">The next product horizon: the AI companion narrates and guides the user through work on the left, while the right-side workspace updates in real time to show accounts, evidence, recommendations, approvals, and execution steps. One continuous flow. No tab-switching. No manual CRM lookup.</p>
+    <div class="status-row reveal">
+      <span class="sbadge planned">&#9679; Planned architecture layer</span>
+      <span class="sbadge future">Voice Adapter: Gnani.ai evaluation</span>
+      <span class="sbadge future">Avatar Adapter: NVIDIA Audio2Face evaluation</span>
+    </div>
+
+    <div class="nchain reveal">
+      <div class="nchain-node live-n">AI Personas<span class="ns">Executive Advisor &middot; Mission Guide &middot; AI Sales Director &middot; Operations Advisor &middot; Live</span></div>
+      <div class="nchain-arrow">&#8595;</div>
+      <div class="nchain-node live-n">Conversation Engine<span class="ns">Session context &middot; topic &middot; entity &middot; recommendation &middot; Live</span></div>
+      <div class="nchain-arrow">&#8595;</div>
+      <div class="nchain-node branch-n">Memory Foundation<span class="ns">Deterministic local memory &middot; provenance &middot; Feature branch</span></div>
+      <div class="nchain-arrow">&#8595;</div>
+      <div class="nchain-node plan-n">Intent Router<span class="ns">Planned &middot; maps spoken / text intent to workspace action</span></div>
+      <div class="nchain-arrow">&#8595;</div>
+      <div class="nchain-node plan-n">Workspace Controller<span class="ns">Planned &middot; drives right-side workspace from deterministic intents</span></div>
+      <div class="nchain-arrow">&#8595;</div>
+      <div class="nchain-node live-n">Governed Workspace<span class="ns">Governance + Decision Ledger + human approval gate &middot; Live</span></div>
+      <div class="nchain-arrow">&#8595;</div>
+      <div class="nchain-node plan-n">Voice Adapter &mdash; Gnani.ai STT/TTS<span class="ns">Planned adapter evaluation &middot; not core business logic</span></div>
+      <div class="nchain-arrow">&#8595;</div>
+      <div class="nchain-node future-n">Avatar Adapter &mdash; NVIDIA Audio2Face<span class="ns">Future adapter evaluation &middot; not core business logic</span></div>
+    </div>
+
+    <p class="arch-note reveal" style="margin-top:28px">Voice and avatar are <strong>presentation adapters only</strong>. They do not replace the deterministic intelligence, memory, governance, or execution layers. The AI Workforce operates fully without them &mdash; voice and avatar make it narrated.</p>
   </div>
 </section>
 
@@ -723,14 +921,17 @@
   <div class="wrap">
     <div class="foot-top">
       <div class="foot-brand">
-        <a class="brand" href="#top"><span class="logo">S</span><span>Signal-to-Action<small>Enterprise AI Revenue OS</small></span></a>
-        <p>A governed, explainable multi-agent workflow that turns fragmented customer signals into human-approved revenue actions. Built by Team VentureOS for the NVIDIA Open Hackathon 2026.</p>
+        <a class="brand" href="#top"><span class="logo">S</span><span>Signal-to-Action<small>Enterprise AI Workforce &middot; VentureOS</small></span></a>
+        <p>VentureOS is evolving from Signal-to-Action Agent into an Enterprise AI Workforce &mdash; memory-aware AI personas that remember context, guide work, and drive governed execution. Built by Team VentureOS for the NVIDIA Open Hackathon 2026.</p>
       </div>
       <div class="foot-cols">
         <div class="fcol">
           <h5>Product</h5>
           <a href="https://ventureos-signal-to-action-agent.vercel.app" target="_blank" rel="noopener">Live Demo</a>
           <a href="#features">Features</a>
+          <a href="#ai-workforce">Enterprise AI Workforce</a>
+          <a href="#memory-foundation">Memory Foundation</a>
+          <a href="#narrated-workspace">Narrated Workspace</a>
           <a href="#architecture">Architecture</a>
           <a href="submission/Signal-to-Action-Agent_NVIDIA-Deck-V4.pdf" target="_blank" rel="noopener">Submission Deck (PDF)</a>
         </div>

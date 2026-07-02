@@ -316,34 +316,49 @@ to point the frontend at your local backend.
 
 ### Roadmap snapshot
 
-**Implemented today**
-- Platform landing
-- Morning Brief (persona-specific: Executive / Seller / Operations)
-- Seller Morning Brief + Today's Mission
-- Seller Mission Control (guided 7-step mission, Mission Complete, next-mission handoff)
-- Executive Command Center (power view)
-- Workspace (Explain Mode)
-- Revenue Execution Center
-- Decision Ledger
-- Governance
-- HubSpot integration
+Direction arc: **Signal-to-Action Agent → Enterprise AI Workforce → Narrated Enterprise Workspace**
 
-**Next / In Review (not yet confirmed in the deployed build)**
-- Manager execution / adoption view
-- Meeting Intelligence
-- Visual reasoning enhancements
-- Decision Intelligence Studio
-- Trend Intelligence
-- AI Chief of Staff Conversation
+**Implemented**
+- Platform landing
+- Persona-specific Morning Brief
+- Executive Command Center
+- Seller Mission Control
+- Today's Mission
+- Mission completion and next-mission handoff
+- AI Sales Director / Manager AI Coach
+- Release 2.1 Memory Foundation Stage 1 *(implemented in feature branch / pending production publish)*
+- Deterministic local memory *(feature branch / pending production publish)*
+- Continuity ribbon *(feature branch / pending production publish)*
+- Memory timeline *(feature branch / pending production publish)*
+- Conversation context *(feature branch / pending production publish)*
+- Explainability layer *(feature branch / pending production publish)*
+
+**Next**
+- Voice Adapter
+- Gnani.ai STT/TTS integration
+- Voice-first AI Sales Director
+- Voice summaries from existing persona responses
 
 **Planned**
-- Voice Chief of Staff with Gnani.ai (STT / SALM / TTS)
-- Digital avatar
+- AI Companion Layer
+- Split-screen narrated enterprise workspace
+- Left side: AI companion / voice / optional avatar
+- Right side: live workspace / command center / account details
+- AI speaks, UI follows
+- Workspace navigation driven by deterministic intents
 
-**Future vision**
-- Meeting Coach
-- Enterprise multimodal workspace
-- Coach + Delegate stages of the AI Chief of Staff
+**Future**
+- NVIDIA Audio2Face avatar adapter
+- Digital human presentation layer
+- Multi-persona AI Workforce
+- Executive Advisor, Mission Guide, AI Sales Director, Operations Advisor
+- Cross-persona collaboration
+- Teams / Copilot / Digital Human interfaces
+
+**Narrated Enterprise Workspace**
+- AI companion guidance on the left, governed live workspace on the right.
+- Architecture: **AI Persona → Conversation Engine → Memory Foundation → Intent Router → Workspace Controller → Governed Workspace → Voice Adapter / Avatar Adapter**
+- Gnani.ai and Audio2Face are planned adapter evaluations, not implemented core business logic.
 
 What's next: see [`docs/ROADMAP.md`](docs/ROADMAP.md).
 

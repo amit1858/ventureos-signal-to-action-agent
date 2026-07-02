@@ -9,16 +9,19 @@ than retrofitted. The model layer is provider-abstracted, the agents are
 typed and framework-free, and the reasoning workload is exactly the kind of
 governed, multi-step inference NVIDIA's agentic stack is built to accelerate.
 
-Current shipped context (Release 1.2): Executive Narrative Layer, Executive Daily
-Briefing, Executive Change Brief, Revenue Execution Center, and Decision Ledger are
-live. Decision Intelligence Studio and Trend Intelligence are **Next / In Review**.
-NVIDIA acceleration targets the explanatory/conversational layer without changing
+Current public direction arc:
+**Signal-to-Action Agent → Enterprise AI Workforce → Narrated Enterprise Workspace**.
+
+Current shipped context (production baseline: Release 1.4B): persona-specific Morning Brief,
+Executive Command Center, Seller Mission Control, Decision Ledger, and governed execution flow are live.
+Release 2.1 Memory Foundation Stage 1 is implemented in feature branch and pending production publish.
+NVIDIA acceleration targets the explanatory/conversational presentation layer without changing
 deterministic governance.
 
-This document distinguishes three horizons for every technology:
+This document distinguishes status horizons for every technology:
 
 - ✅ **Implemented** — running in the codebase today.
-- 🟢 **Hackathon** — to be implemented during the NVIDIA Open Hackathon.
+- 🔜 **Next / Planned** — next adapter work and hackathon implementation targets.
 - 🔭 **Future** — vision beyond the hackathon.
 
 For the deeper phased engineering plan, see
@@ -160,7 +163,8 @@ Every one of these preserves the human-approval gate and the Decision Ledger.
 | "Runs on Nemotron today" | ❌ No — default is the deterministic mock; Nemotron is the hackathon target |
 | "Uses NeMo Agent Toolkit" | ❌ Not yet — the architecture is *designed* to map onto it |
 | "Provider-abstracted, no lock-in" | ✅ True — mock / NIM / OpenAI / Anthropic all behind one interface |
-| "Voice is built" | ❌ No — voice is a **planned hackathon implementation** |
+| "Voice is built" | ❌ No — voice is a planned adapter implementation (Gnani.ai evaluation target) |
+| "Audio2Face avatar is built" | ❌ No — Audio2Face is a future adapter evaluation target |
 
 We would rather under-claim and over-deliver. The architecture is real and
 NVIDIA-ready; the NVIDIA-accelerated experience is what the hackathon delivers.
