@@ -1,0 +1,12 @@
+{
+  // Release 2.1C — scoped strict type-check for the Conversation Runtime.
+  // Extends the app tsconfig so path aliases (@/*), libs (DOM), and strict
+  // settings match the real build. `include` is limited to this folder; the
+  // memory + retrieval types it consumes are pulled in transitively.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts"]
+}
