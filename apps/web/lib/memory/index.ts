@@ -86,8 +86,59 @@ export {
   type CompressionHook,
 } from "./store";
 
-// -- retrieval (placeholder) -----------------------------------------------
-export { retrieve, type RetrievalQuery, type RetrievalResult } from "./retrieval";
+// -- retrieval intelligence (Release 2.1B) ---------------------------------
+// Deterministic retrieval over the store: recall, ranking, anti-repetition,
+// decay, and explainability. Consumed by the future 2.1C Conversation Runtime.
+export {
+  retrieve,
+  RetrievalError,
+  type RetrievalQuery,
+  type RetrievalResult,
+  type RankedMemory,
+  type SuppressedMemory,
+  type ServedRecord,
+  type RetrievalFactor,
+  type RetrievalDimension,
+  type RetrievalExplanation,
+  type RetrievalDiagnostics,
+} from "./retrieval";
+
+// Published retrieval constants + pure sub-engines (stable, explainable knobs).
+export {
+  RETRIEVAL_WEIGHTS,
+  NEUTRAL_MATCH,
+  DEFAULT_RETRIEVAL_LIMIT,
+  buildBaseFactors,
+  sumContributions,
+  compareRanked,
+} from "./retrieval/ranking";
+
+export {
+  RETRIEVAL_DECAY,
+  retrievalDecayScore,
+  explainDecay,
+} from "./retrieval/decay";
+
+export {
+  REPEAT_WINDOW_TURNS,
+  REPEAT_RECOVERY_TURNS,
+  REPEAT_PENALTY_BY_DISTANCE,
+  MAX_PER_CATEGORY,
+  MAX_PER_SUBJECT,
+  repeatPenalty,
+  evaluateAntiRepetition,
+  applyDiversityCaps,
+  type AntiRepetitionDecision,
+} from "./retrieval/antiRepetition";
+
+export {
+  recall,
+  DEFAULT_EXCLUDED_LIFECYCLES,
+  type RetrievalCandidate,
+  type RecallOutcome,
+} from "./retrieval/recall";
+
+export { assembleExplanation, narrateFactors } from "./retrieval/explain";
 
 // -- read-only ingestion adapters ------------------------------------------
 export * as adapters from "./adapters";
