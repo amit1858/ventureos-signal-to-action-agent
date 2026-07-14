@@ -316,3 +316,45 @@ __all__ += [
     "MissionAuditBundle",
     "MissionAuditLedger",
 ]
+
+# -- Commit 7: deterministic mission evaluation -----------------------------
+
+from harness.evaluation import (  # noqa: E402
+    FAIL_AMBIGUOUS_IDENTITY,
+    FAIL_APPROVAL_PAYLOAD_MISMATCH,
+    FAIL_APPROVAL_REJECTED,
+    FAIL_NO_MATCHING_TEMPLATE,
+    FAIL_POLICY,
+    FAIL_VERIFICATION,
+    STATUS_BLOCKED,
+    STATUS_FAILED,
+    STATUS_PASSED,
+    STATUS_REJECTED,
+    STATUS_REVISION_REQUIRED,
+    MissionEvaluationResult,
+    MissionScenario,
+    MissionScorecard,
+    default_injected_timestamps,
+    default_scenarios,
+    evaluate_mission_scenario,
+)
+
+__all__ += [
+    "STATUS_PASSED",
+    "STATUS_BLOCKED",
+    "STATUS_REJECTED",
+    "STATUS_REVISION_REQUIRED",
+    "STATUS_FAILED",
+    "FAIL_AMBIGUOUS_IDENTITY",
+    "FAIL_NO_MATCHING_TEMPLATE",
+    "FAIL_POLICY",
+    "FAIL_VERIFICATION",
+    "FAIL_APPROVAL_PAYLOAD_MISMATCH",
+    "FAIL_APPROVAL_REJECTED",
+    "MissionScenario",
+    "MissionScorecard",
+    "MissionEvaluationResult",
+    "evaluate_mission_scenario",
+    "default_scenarios",
+    "default_injected_timestamps",
+]
