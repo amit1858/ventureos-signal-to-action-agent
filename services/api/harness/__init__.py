@@ -206,3 +206,31 @@ __all__ += [
     "ambiguous_source_records",
     "resolve_demo_account",
 ]
+
+# -- Commit 4: mission lifecycle state machine ------------------------------
+
+from harness.state_machine import (  # noqa: E402
+    GuardResult,
+    IllegalTransitionError,
+    MissionEventType,
+    MissionLifecycle,
+    StateMachineError,
+    TERMINAL_STATES,
+    TransitionContext,
+    TransitionResult,
+    evaluate_transition,
+    transition_table,
+)
+
+__all__ += [
+    "StateMachineError",
+    "IllegalTransitionError",
+    "MissionEventType",
+    "TERMINAL_STATES",
+    "TransitionContext",
+    "GuardResult",
+    "TransitionResult",
+    "transition_table",
+    "evaluate_transition",
+    "MissionLifecycle",
+]
