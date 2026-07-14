@@ -266,3 +266,53 @@ __all__ += [
     "SimulationOutput",
     "SimulationSandbox",
 ]
+
+# -- Commit 6: append-only Mission Audit Ledger -----------------------------
+
+from harness.audit_ledger import (  # noqa: E402
+    GENESIS_HASH,
+    RECORD_TYPES,
+    SCHEMA_VERSION,
+    ApprovalMismatchError as AuditApprovalMismatchError,
+    AuditLedgerError,
+    ChainVerification,
+    DuplicateRecordError,
+    DuplicateSequenceError,
+    IdempotencyConflictError as AuditIdempotencyConflictError,
+    InvalidMissionVersionError,
+    InvalidRecordTypeError,
+    LedgerRecord,
+    MalformedPayloadError,
+    MissingMissionIdError,
+    MissionAuditBundle,
+    MissionAuditLedger,
+    NonSimulatedReceiptError,
+    PayloadHashMismatchError as AuditPayloadHashMismatchError,
+    ReceiptAppendResult,
+    RejectedApprovalError,
+    TransactionError,
+)
+
+__all__ += [
+    "SCHEMA_VERSION",
+    "GENESIS_HASH",
+    "RECORD_TYPES",
+    "AuditLedgerError",
+    "MissingMissionIdError",
+    "InvalidMissionVersionError",
+    "InvalidRecordTypeError",
+    "DuplicateRecordError",
+    "DuplicateSequenceError",
+    "MalformedPayloadError",
+    "AuditIdempotencyConflictError",
+    "AuditApprovalMismatchError",
+    "AuditPayloadHashMismatchError",
+    "RejectedApprovalError",
+    "NonSimulatedReceiptError",
+    "TransactionError",
+    "LedgerRecord",
+    "ChainVerification",
+    "ReceiptAppendResult",
+    "MissionAuditBundle",
+    "MissionAuditLedger",
+]
