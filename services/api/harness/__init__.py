@@ -86,3 +86,64 @@ __all__ = [
     "VerificationCheck",
     "VerificationResult",
 ]
+
+# -- Commit 2: registries, templates, selection, planning, policy ----------
+
+from harness.registries import (  # noqa: E402
+    AgentEntry,
+    AgentRegistry,
+    DuplicateIdError,
+    InactiveError,
+    MissionTemplateRegistry,
+    RegistryError,
+    ToolEntry,
+    ToolRegistry,
+    UnknownIdError,
+    default_agent_registry,
+    default_tool_registry,
+)
+from harness.templates import (  # noqa: E402
+    RENEWAL_RISK_PARALLEL_V1,
+    SUPPORT_ESCALATION_SEQUENTIAL_V1,
+    AgentStep,
+    MissionTemplate,
+    TemplateBudgets,
+    default_template_registry,
+    renewal_risk_parallel_v1,
+    support_escalation_sequential_v1,
+)
+from harness.selector import SelectionResult, select  # noqa: E402
+from harness.planner import MissionPlan, PlannedTask, plan_mission  # noqa: E402
+from harness.policy_validator import PolicyValidationResult, validate  # noqa: E402
+
+__all__ += [
+    # registries
+    "RegistryError",
+    "DuplicateIdError",
+    "UnknownIdError",
+    "InactiveError",
+    "AgentEntry",
+    "ToolEntry",
+    "MissionTemplateRegistry",
+    "AgentRegistry",
+    "ToolRegistry",
+    "default_agent_registry",
+    "default_tool_registry",
+    # templates
+    "RENEWAL_RISK_PARALLEL_V1",
+    "SUPPORT_ESCALATION_SEQUENTIAL_V1",
+    "AgentStep",
+    "TemplateBudgets",
+    "MissionTemplate",
+    "renewal_risk_parallel_v1",
+    "support_escalation_sequential_v1",
+    "default_template_registry",
+    # selection / planning / policy
+    "SelectionResult",
+    "select",
+    "PlannedTask",
+    "MissionPlan",
+    "plan_mission",
+    "PolicyValidationResult",
+    "validate",
+]
