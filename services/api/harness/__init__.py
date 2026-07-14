@@ -127,6 +127,30 @@ from harness.policy_validator import (  # noqa: E402
     validate,
 )
 
+# -- Commit 3: Customer Context Fabric -------------------------------------
+
+from harness.fabric import (  # noqa: E402
+    CanonicalAccount,
+    ConflictValue,
+    FieldConflict,
+    FieldProvenance,
+    IdentityResolution,
+    MatchEvidence,
+    RESOLUTION_THRESHOLD,
+    SourceAccountRecord,
+    ambiguous_source_records,
+    cluster_records,
+    default_source_records,
+    dynamics_fixtures,
+    hubspot_fixtures,
+    name_key,
+    normalize_account_name,
+    normalize_domain,
+    resolve_demo_account,
+    resolve_identity,
+    salesforce_fixtures,
+)
+
 __all__ += [
     # registries
     "RegistryError",
@@ -161,4 +185,24 @@ __all__ += [
     "result_for_unsupported_selection",
     "NO_MATCHING_TEMPLATE",
     "validate",
+    # customer context fabric
+    "RESOLUTION_THRESHOLD",
+    "normalize_account_name",
+    "name_key",
+    "normalize_domain",
+    "SourceAccountRecord",
+    "MatchEvidence",
+    "FieldProvenance",
+    "ConflictValue",
+    "FieldConflict",
+    "CanonicalAccount",
+    "IdentityResolution",
+    "cluster_records",
+    "resolve_identity",
+    "hubspot_fixtures",
+    "salesforce_fixtures",
+    "dynamics_fixtures",
+    "default_source_records",
+    "ambiguous_source_records",
+    "resolve_demo_account",
 ]
