@@ -234,3 +234,35 @@ __all__ += [
     "evaluate_transition",
     "MissionLifecycle",
 ]
+
+# -- Commit 5: deterministic simulation sandbox -----------------------------
+
+from harness.sandbox import (  # noqa: E402
+    ActionRequest,
+    ApprovalMismatchError,
+    ApprovalRequiredError,
+    IdempotencyConflictError,
+    IllegalExecutionStateError,
+    InactiveToolError,
+    PayloadHashMismatchError,
+    SandboxError,
+    SimulationOutput,
+    SimulationSandbox,
+    UnsupportedToolError,
+    payload_hash,
+)
+
+__all__ += [
+    "SandboxError",
+    "UnsupportedToolError",
+    "InactiveToolError",
+    "IllegalExecutionStateError",
+    "ApprovalRequiredError",
+    "ApprovalMismatchError",
+    "PayloadHashMismatchError",
+    "IdempotencyConflictError",
+    "payload_hash",
+    "ActionRequest",
+    "SimulationOutput",
+    "SimulationSandbox",
+]
