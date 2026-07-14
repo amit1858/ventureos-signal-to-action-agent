@@ -358,3 +358,53 @@ __all__ += [
     "default_scenarios",
     "default_injected_timestamps",
 ]
+
+# -- Commit 8: in-process mission service boundary --------------------------
+
+from harness.service import (  # noqa: E402
+    ERR_AMBIGUOUS_IDENTITY,
+    ERR_APPROVAL_PAYLOAD_MISMATCH,
+    ERR_APPROVAL_REJECTED,
+    ERR_AUDIT_FAILURE,
+    ERR_IDEMPOTENCY_CONFLICT,
+    ERR_INTERNAL,
+    ERR_INVALID_REQUEST,
+    ERR_NO_MATCHING_TEMPLATE,
+    ERR_POLICY_BLOCKED,
+    ERR_VERIFICATION_FAILED,
+    SVC_BLOCKED,
+    SVC_COMPLETED,
+    SVC_FAILED,
+    SVC_REJECTED,
+    SVC_REVISION_REQUIRED,
+    HarnessServiceDependencies,
+    HarnessServiceRequest,
+    HarnessServiceResponse,
+    LedgerReference,
+    ServiceError,
+    execute_mission,
+)
+
+__all__ += [
+    "SVC_COMPLETED",
+    "SVC_BLOCKED",
+    "SVC_REJECTED",
+    "SVC_REVISION_REQUIRED",
+    "SVC_FAILED",
+    "ERR_INVALID_REQUEST",
+    "ERR_AMBIGUOUS_IDENTITY",
+    "ERR_NO_MATCHING_TEMPLATE",
+    "ERR_POLICY_BLOCKED",
+    "ERR_VERIFICATION_FAILED",
+    "ERR_APPROVAL_REJECTED",
+    "ERR_APPROVAL_PAYLOAD_MISMATCH",
+    "ERR_IDEMPOTENCY_CONFLICT",
+    "ERR_AUDIT_FAILURE",
+    "ERR_INTERNAL",
+    "HarnessServiceRequest",
+    "HarnessServiceResponse",
+    "HarnessServiceDependencies",
+    "ServiceError",
+    "LedgerReference",
+    "execute_mission",
+]

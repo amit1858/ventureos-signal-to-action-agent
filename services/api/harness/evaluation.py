@@ -235,12 +235,22 @@ def evaluate_mission_scenario(
     scenario: MissionScenario,
     ledger: MissionAuditLedger,
     injected_timestamps: Mapping[str, str],
+    *,
+    correlation_id: Optional[str] = None,
+    agent_registry=None,
+    tool_registry=None,
+    template_registry=None,
 ) -> MissionEvaluationResult:
     """Deterministically evaluate one mission scenario end to end.
 
     Coordinates the existing harness components and records the governed lifecycle
     into ``ledger``. Fails closed at the earliest invalid stage; every timestamp is
     taken from ``injected_timestamps``.
+
+    ``correlation_id`` and the registry arguments are additive, optional injection
+    points for callers (e.g. the in-process service facade). When omitted the
+    evaluator uses its standard deterministic defaults, so existing behaviour is
+    unchanged.
     """
     at = _clock(injected_timestamps)
     result = MissionEvaluationResult(
@@ -251,7 +261,9 @@ def evaluate_mission_scenario(
     score = result.scorecard
 
     try:
-        return _run(scenario, ledger, at, result, score)
+        return _run(scenario, ledger, at, result, score,
+                    correlation_id=correlation_id, agent_registry=agent_registry,
+                    tool_registry=tool_registry, template_registry=template_registry)
     except SandboxError as exc:
         # A sandbox governance failure is an expected fail-closed outcome.
         score.lifecycle_valid = False
@@ -268,10 +280,12 @@ def evaluate_mission_scenario(
 
 
 def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
-         result: MissionEvaluationResult, score: MissionScorecard) -> MissionEvaluationResult:
+         result: MissionEvaluationResult, score: MissionScorecard,
+         *, correlation_id: Optional[str] = None, agent_registry=None,
+         tool_registry=None, template_registry=None) -> MissionEvaluationResult:
     mission_id = scenario.mission_id
     mission_version = scenario.mission_version
-    correlation_id = f"corr-{mission_id}"
+    correlation_id = correlation_id or f"corr-{mission_id}"
 
     # -- Stage 0: mission intake (every scenario is audited from the start) ---
     ledger.append_mission_intake(
@@ -353,9 +367,9 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
         return _finalize(result)
 
     # -- Stage 3: mission planning (no execution) ----------------------------
-    agent_registry = default_agent_registry()
-    tool_registry = default_tool_registry()
-    template_registry = default_template_registry()
+    agent_registry = agent_registry or default_agent_registry()
+    tool_registry = tool_registry or default_tool_registry()
+    template_registry = template_registry or default_template_registry()
     template = template_registry.get_active(selection.selected_template_id)
 
     plan = plan_mission(
