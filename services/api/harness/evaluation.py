@@ -88,8 +88,9 @@ FAIL_INTERNAL = "internal_error"
 # Deterministic timestamp stages. Every stage time is injected; there is no
 # clock and no hardcoded time. A caller must supply at least ``default``.
 _STAGES = (
-    "opened", "gathering", "proposed", "verifying", "verified", "verification",
-    "approval_request", "approval_decision", "execution", "outcome", "closed",
+    "intake", "identity", "selection", "blocked", "opened", "gathering", "proposed",
+    "verifying", "verified", "verification", "approval_request", "approval_decision",
+    "execution", "outcome", "closed",
 )
 
 # Per-mission-type action wiring (declarative, deterministic).
@@ -272,6 +273,13 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
     mission_version = scenario.mission_version
     correlation_id = f"corr-{mission_id}"
 
+    # -- Stage 0: mission intake (every scenario is audited from the start) ---
+    ledger.append_mission_intake(
+        mission_id=mission_id, mission_version=mission_version, correlation_id=correlation_id,
+        occurred_at=at("intake"), actor="system", created_at=at("intake"),
+        scenario_id=scenario.scenario_id, signals=dict(scenario.signals or {}),
+    )
+
     # -- Stage 1: Customer Context Fabric (identity before planning) ---------
     records = scenario.source_records if scenario.source_records is not None else default_source_records()
     resolution: IdentityResolution = resolve_identity(records)
@@ -279,11 +287,37 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
     score.evidence_present = len(resolution.evidence) > 0
     score.provenance_present = len(resolution.provenance) > 0
 
+    # Persist the identity-resolution result. The canonical account is null when
+    # identity fails to resolve -- it is never fabricated.
+    resolved_canonical = (
+        resolution.canonical_account.model_dump(by_alias=True)
+        if resolution.resolved and resolution.canonical_account is not None else None
+    )
+    ledger.append_identity_resolution(
+        mission_id=mission_id, mission_version=mission_version, correlation_id=correlation_id,
+        occurred_at=at("identity"), actor="system", created_at=at("identity"),
+        resolved=resolution.resolved, blocked=resolution.blocked, block_reason=resolution.block_reason,
+        clusters_found=resolution.clusters_found, confidence=resolution.confidence,
+        canonical_account=resolved_canonical,
+        evidence=[e.model_dump(by_alias=True) for e in resolution.evidence],
+        provenance=[p.model_dump(by_alias=True) for p in resolution.provenance],
+        conflicts=[c.model_dump(by_alias=True) for c in resolution.conflicts],
+        source_record_refs=[r.ref for r in records],
+    )
+
     if not resolution.resolved or resolution.canonical_account is None:
         result.identity_resolution_status = "blocked"
         result.final_status = STATUS_BLOCKED
         result.failure_code = FAIL_AMBIGUOUS_IDENTITY
         result.selector_explanation = resolution.block_reason or "identity could not be resolved"
+        ledger.append_mission_blocked(
+            mission_id=mission_id, mission_version=mission_version, correlation_id=correlation_id,
+            occurred_at=at("blocked"), actor="system", created_at=at("blocked"),
+            failure_code=FAIL_AMBIGUOUS_IDENTITY,
+            blocked_reason=resolution.block_reason or "identity could not be resolved",
+            stage="identity_resolution", final_status=STATUS_BLOCKED,
+        )
+        _attach_audit(result, ledger, mission_id, score)
         return _finalize(result)
 
     canonical = resolution.canonical_account
@@ -297,10 +331,25 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
     result.selector_explanation = selection.rationale
     score.template_selected = selection.selected_template_id is not None
 
+    ledger.append_template_selection(
+        mission_id=mission_id, mission_version=mission_version, correlation_id=correlation_id,
+        occurred_at=at("selection"), actor="system", created_at=at("selection"),
+        selected_template_id=selection.selected_template_id, matched_rule_id=selection.matched_rule_id,
+        matched_rules=list(selection.matched_rules), rationale=selection.rationale,
+        blocked=selection.blocked, is_fallback=selection.is_fallback,
+    )
+
     if selection.blocked or selection.selected_template_id is None:
         # Fail closed BEFORE planning: no plan, agents, tools, approval or execution.
         result.final_status = STATUS_BLOCKED
         result.failure_code = FAIL_NO_MATCHING_TEMPLATE
+        ledger.append_mission_blocked(
+            mission_id=mission_id, mission_version=mission_version, correlation_id=correlation_id,
+            occurred_at=at("blocked"), actor="system", created_at=at("blocked"),
+            failure_code=FAIL_NO_MATCHING_TEMPLATE, blocked_reason=selection.rationale,
+            stage="template_selection", final_status=STATUS_BLOCKED,
+        )
+        _attach_audit(result, ledger, mission_id, score)
         return _finalize(result)
 
     # -- Stage 3: mission planning (no execution) ----------------------------
@@ -356,6 +405,12 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
         result.lifecycle_events = list(life.events)
         result.final_status = STATUS_BLOCKED
         result.failure_code = FAIL_POLICY
+        ledger.append_mission_blocked(
+            mission_id=mission_id, mission_version=mission_version, correlation_id=correlation_id,
+            occurred_at=at("blocked"), actor="system", created_at=at("blocked"),
+            failure_code=FAIL_POLICY, blocked_reason="; ".join(policy.errors) or "policy validation failed",
+            stage="policy_validation", final_status=STATUS_BLOCKED,
+        )
         _attach_audit(result, ledger, mission_id, score)
         return _finalize(result)
 
@@ -391,6 +446,12 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
             result.final_status = STATUS_REVISION_REQUIRED
         else:
             result.final_status = STATUS_BLOCKED
+            ledger.append_mission_blocked(
+                mission_id=mission_id, mission_version=mission_version, correlation_id=correlation_id,
+                occurred_at=at("blocked"), actor="system", created_at=at("blocked"),
+                failure_code=FAIL_VERIFICATION, blocked_reason="verification did not pass",
+                stage="verification", final_status=STATUS_BLOCKED,
+            )
         result.failure_code = FAIL_VERIFICATION
         result.lifecycle_status = life.state.value
         result.lifecycle_events = list(life.events)
@@ -429,6 +490,12 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
         result.failure_code = FAIL_APPROVAL_REJECTED
         result.lifecycle_status = life.state.value
         result.lifecycle_events = list(life.events)
+        ledger.append_mission_blocked(
+            mission_id=mission_id, mission_version=mission_version, correlation_id=correlation_id,
+            occurred_at=at("blocked"), actor="system", created_at=at("blocked"),
+            failure_code=FAIL_APPROVAL_REJECTED, blocked_reason="no approval decision supplied",
+            stage="approval", final_status=STATUS_BLOCKED,
+        )
         _attach_audit(result, ledger, mission_id, score)
         return _finalize(result)
 
@@ -480,6 +547,13 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
         result.failure_code = FAIL_APPROVAL_PAYLOAD_MISMATCH
         result.lifecycle_status = life.state.value
         result.lifecycle_events = list(life.events)
+        ledger.append_mission_blocked(
+            mission_id=mission_id, mission_version=mission_version, correlation_id=correlation_id,
+            occurred_at=at("blocked"), actor="system", created_at=at("blocked"),
+            failure_code=FAIL_APPROVAL_PAYLOAD_MISMATCH,
+            blocked_reason="approval not bound to the reviewed payload hash",
+            stage="approval", final_status=STATUS_BLOCKED,
+        )
         _attach_audit(result, ledger, mission_id, score)
         return _finalize(result)
 
@@ -559,19 +633,51 @@ def _attach_audit(result: MissionEvaluationResult, ledger: MissionAuditLedger,
     result.audit_bundle = bundle.model_dump(by_alias=True)
     result.audit_chain_valid = bundle.chain.valid
     score.audit_chain_valid = bundle.chain.valid
-    # Audit is "complete" for a passed mission when every lifecycle stage persisted.
-    required = {
-        "mission_opened", "mission_transition", "verification_result",
-        "approval_request", "approval_decision", "simulated_action_receipt",
-        "outcome_verification", "mission_closed",
-    }
     present = {rec.record_type for rec in bundle.records}
-    if result.final_status == STATUS_PASSED:
-        score.audit_complete = required.issubset(present)
+    status = result.final_status
+    if status == STATUS_PASSED:
+        # A passed mission must persist the full governed lifecycle.
+        required = {
+            "mission_intake", "identity_resolution_result", "template_selection_result",
+            "mission_opened", "mission_transition", "verification_result",
+            "approval_request", "approval_decision", "simulated_action_receipt",
+            "outcome_verification", "mission_closed",
+        }
+        score.audit_complete = bundle.chain.valid and required.issubset(present)
+    elif status == STATUS_BLOCKED:
+        # Every blocked path is fully recorded: intake + a terminal mission_blocked.
+        score.audit_complete = (
+            bundle.chain.valid
+            and "mission_intake" in present
+            and "mission_blocked" in present
+        )
+    elif status == STATUS_REJECTED:
+        score.audit_complete = (
+            bundle.chain.valid
+            and "mission_intake" in present
+            and "approval_decision" in present
+        )
+    elif status == STATUS_REVISION_REQUIRED:
+        # The corrective path is auditable via the recorded transitions.
+        transition_types = {
+            _payload_event_type(rec) for rec in bundle.records
+            if rec.record_type == "mission_transition"
+        }
+        score.audit_complete = (
+            bundle.chain.valid
+            and "mission_intake" in present
+            and "verification_failed" in transition_types
+            and "revision_requested" in transition_types
+        )
     else:
-        # For non-passed missions, audit is complete when whatever occurred was
-        # persisted and the chain still verifies.
         score.audit_complete = bundle.chain.valid and len(bundle.records) > 0
+
+
+def _payload_event_type(rec) -> Optional[str]:
+    try:
+        return json.loads(rec.canonical_payload).get("eventType")
+    except Exception:  # noqa: BLE001
+        return None
 
 
 # -- deterministic scenario matrix ------------------------------------------
@@ -666,6 +772,10 @@ def default_injected_timestamps() -> dict:
     base = "2026-07-14T10:00:00Z"
     return {
         "default": base,
+        "intake": "2026-07-14T09:59:45Z",
+        "identity": "2026-07-14T09:59:50Z",
+        "selection": "2026-07-14T09:59:55Z",
+        "blocked": "2026-07-14T09:59:59Z",
         "opened": "2026-07-14T10:00:00Z",
         "gathering": "2026-07-14T10:00:05Z",
         "proposed": "2026-07-14T10:00:10Z",

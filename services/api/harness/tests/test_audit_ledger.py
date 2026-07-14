@@ -514,6 +514,77 @@ def _raises(exc_type, fn) -> bool:
         return True
 
 
+def test_early_stage_record_types_append_and_chain() -> None:
+    # Commit 7b: pre-planning governance record types persist, sequence, and chain.
+    led = _ledger()
+    mid = "M-EARLY-1"
+    led.append_mission_intake(
+        mission_id=mid, mission_version=_VERSION, correlation_id="corr-early",
+        occurred_at=_TS, actor="system", created_at=_TS,
+        scenario_id="unsupported-signal-blocked", signals={"kind": "unknown"},
+    )
+    led.append_identity_resolution(
+        mission_id=mid, mission_version=_VERSION, correlation_id="corr-early",
+        occurred_at=_TS, actor="system", created_at=_TS,
+        resolved=False, blocked=True, block_reason="ambiguous",
+        clusters_found=2, confidence=0.4, canonical_account=None,
+        evidence=[{"field": "domain"}], conflicts=[{"reason": "multi-cluster"}],
+        source_record_refs=["hubspot:1", "salesforce:2"],
+    )
+    led.append_template_selection(
+        mission_id=mid, mission_version=_VERSION, correlation_id="corr-early",
+        occurred_at=_TS, actor="system", created_at=_TS,
+        selected_template_id=None, matched_rule_id="R_no_matching_template",
+        matched_rules=["R_no_matching_template"], rationale="no template", blocked=True,
+    )
+    led.append_mission_blocked(
+        mission_id=mid, mission_version=_VERSION, correlation_id="corr-early",
+        occurred_at=_TS, actor="system", created_at=_TS,
+        failure_code="no_matching_template", blocked_reason="unsupported signal",
+        stage="template_selection", final_status="blocked",
+    )
+    recs = led.list_mission_records(mid)
+    types = [r.record_type for r in recs]
+    _check("7b early record types persisted in order",
+           types == ["mission_intake", "identity_resolution_result",
+                     "template_selection_result", "mission_blocked"], str(types))
+    _check("7b early sequence numbers are contiguous",
+           [r.sequence_number for r in recs]
+           == list(range(recs[0].sequence_number, recs[0].sequence_number + 4)))
+    chain = led.verify_mission_chain(mid)
+    _check("7b early chain valid", chain.valid and chain.length == 4)
+    # identity block must not fabricate a canonical account
+    id_rec = [r for r in recs if r.record_type == "identity_resolution_result"][0]
+    _check("7b identity record canonical null",
+           '"canonicalAccount": null' in id_rec.canonical_payload
+           or '"canonicalAccount":null' in id_rec.canonical_payload)
+    led.close()
+
+
+def test_early_stage_records_survive_reopen() -> None:
+    path = _tmp_db()
+    led = MissionAuditLedger(path)
+    mid = "M-EARLY-REOPEN"
+    led.append_mission_intake(
+        mission_id=mid, mission_version=_VERSION, correlation_id="c",
+        occurred_at=_TS, actor="system", created_at=_TS, scenario_id="s", signals={},
+    )
+    led.append_mission_blocked(
+        mission_id=mid, mission_version=_VERSION, correlation_id="c",
+        occurred_at=_TS, actor="system", created_at=_TS,
+        failure_code="ambiguous_identity", blocked_reason="x", stage="identity_resolution",
+    )
+    before = [r.record_hash for r in led.list_mission_records(mid)]
+    led.close()
+    led2 = MissionAuditLedger(path)
+    after = [r.record_hash for r in led2.list_mission_records(mid)]
+    chain = led2.verify_mission_chain(mid)
+    _check("7b early records survive reopen", before == after and len(after) == 2)
+    _check("7b early reopened chain valid", chain.valid)
+    led2.close()
+    os.remove(path)
+
+
 _TESTS = [
     test_append_and_retrieve_each_record_type,
     test_deterministic_sequence_numbering,
@@ -537,6 +608,8 @@ _TESTS = [
     test_full_renewal_persisted_and_chain_valid,
     test_deterministic_bundle_export,
     test_blocked_revision_path_persisted,
+    test_early_stage_record_types_append_and_chain,
+    test_early_stage_records_survive_reopen,
     test_no_protected_or_network_or_clock_in_source,
 ]
 

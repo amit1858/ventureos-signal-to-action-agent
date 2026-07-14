@@ -43,6 +43,12 @@ SCHEMA_VERSION = "1.0"
 GENESIS_HASH = "0" * 64
 
 RECORD_TYPES = (
+    # Pre-planning governance (Commit 7b): every scenario is audited from intake,
+    # including failures that occur before a mission is planned or opened.
+    "mission_intake",
+    "identity_resolution_result",
+    "template_selection_result",
+    # Governed mission lifecycle.
     "mission_opened",
     "mission_transition",
     "verification_result",
@@ -51,6 +57,8 @@ RECORD_TYPES = (
     "simulated_action_receipt",
     "outcome_verification",
     "mission_closed",
+    # Terminal negative outcome marker (blocked before or during the lifecycle).
+    "mission_blocked",
 )
 
 
@@ -168,6 +176,9 @@ class MissionAuditBundle(HarnessModel):
     schema_version: str = SCHEMA_VERSION
     mission_id: str
     mission_version: Optional[str] = None
+    intake: Optional[dict] = None
+    identity_resolution: Optional[dict] = None
+    template_selection: Optional[dict] = None
     canonical_account: Optional[dict] = None
     selected_template_id: Optional[str] = None
     evidence_refs: List[dict] = Field(default_factory=list)
@@ -177,6 +188,8 @@ class MissionAuditBundle(HarnessModel):
     approval_decision: Optional[dict] = None
     action_receipt: Optional[dict] = None
     outcome_verification: Optional[dict] = None
+    blocked: Optional[dict] = None
+    failure_code: Optional[str] = None
     decision_ledger_ref: Optional[str] = None
     records: List[LedgerRecord] = Field(default_factory=list)
     chain: ChainVerification
@@ -371,6 +384,90 @@ class MissionAuditLedger:
         return model.model_dump(by_alias=True, mode="json")
 
     # -- typed append APIs ---------------------------------------------------
+
+    def append_mission_intake(
+        self, *, mission_id: str, mission_version: str, correlation_id: str, occurred_at: str,
+        actor: str, created_at: str, scenario_id: Optional[str] = None,
+        signals: Optional[dict] = None, decision_ref: Optional[str] = None,
+    ) -> LedgerRecord:
+        payload = {"scenarioId": scenario_id, "signals": signals or {}}
+        with self._conn:
+            return self._insert_record(
+                self._conn.cursor(), mission_id=mission_id, mission_version=mission_version,
+                record_type="mission_intake", correlation_id=correlation_id, occurred_at=occurred_at,
+                actor=actor, payload=payload, created_at=created_at, decision_ref=decision_ref,
+            )
+
+    def append_identity_resolution(
+        self, *, mission_id: str, mission_version: str, correlation_id: str, occurred_at: str,
+        actor: str, created_at: str, resolved: bool, blocked: bool,
+        block_reason: Optional[str] = None, clusters_found: int = 0, confidence: float = 0.0,
+        canonical_account: Optional[dict] = None, evidence: Optional[List[dict]] = None,
+        provenance: Optional[List[dict]] = None, conflicts: Optional[List[dict]] = None,
+        source_record_refs: Optional[List[str]] = None, decision_ref: Optional[str] = None,
+    ) -> LedgerRecord:
+        payload = {
+            "resolved": resolved,
+            "blocked": blocked,
+            "blockReason": block_reason,
+            "clustersFound": clusters_found,
+            "confidence": confidence,
+            "canonicalAccount": canonical_account,  # null when identity fails to resolve
+            "evidence": evidence or [],
+            "provenance": provenance or [],
+            "conflicts": conflicts or [],
+            "sourceRecordRefs": source_record_refs or [],
+        }
+        with self._conn:
+            return self._insert_record(
+                self._conn.cursor(), mission_id=mission_id, mission_version=mission_version,
+                record_type="identity_resolution_result", correlation_id=correlation_id,
+                occurred_at=occurred_at, actor=actor, payload=payload, created_at=created_at,
+                decision_ref=decision_ref,
+            )
+
+    def append_template_selection(
+        self, *, mission_id: str, mission_version: str, correlation_id: str, occurred_at: str,
+        actor: str, created_at: str, selected_template_id: Optional[str], matched_rule_id: str,
+        matched_rules: Optional[List[str]] = None, rationale: str = "", blocked: bool = False,
+        is_fallback: bool = False, decision_ref: Optional[str] = None,
+    ) -> LedgerRecord:
+        payload = {
+            "selectedTemplateId": selected_template_id,  # null when no template matches
+            "matchedRuleId": matched_rule_id,
+            "matchedRules": matched_rules or [],
+            "rationale": rationale,
+            "blocked": blocked,
+            "isFallback": is_fallback,
+            "agents": [],
+            "tools": [],
+            "permittedActions": [],
+        }
+        with self._conn:
+            return self._insert_record(
+                self._conn.cursor(), mission_id=mission_id, mission_version=mission_version,
+                record_type="template_selection_result", correlation_id=correlation_id,
+                occurred_at=occurred_at, actor=actor, payload=payload, created_at=created_at,
+                decision_ref=decision_ref,
+            )
+
+    def append_mission_blocked(
+        self, *, mission_id: str, mission_version: str, correlation_id: str, occurred_at: str,
+        actor: str, created_at: str, failure_code: str, blocked_reason: str = "",
+        stage: str = "", final_status: str = "blocked", decision_ref: Optional[str] = None,
+    ) -> LedgerRecord:
+        payload = {
+            "failureCode": failure_code,
+            "blockedReason": blocked_reason,
+            "stage": stage,
+            "finalStatus": final_status,
+        }
+        with self._conn:
+            return self._insert_record(
+                self._conn.cursor(), mission_id=mission_id, mission_version=mission_version,
+                record_type="mission_blocked", correlation_id=correlation_id, occurred_at=occurred_at,
+                actor=actor, payload=payload, created_at=created_at, decision_ref=decision_ref,
+            )
 
     def append_mission_opened(
         self, *, mission_id: str, mission_version: str, correlation_id: str, occurred_at: str,
@@ -615,6 +712,10 @@ class MissionAuditLedger:
             return None
 
         opened = _first("mission_opened")
+        intake_rec = _first("mission_intake")
+        identity_rec = _first("identity_resolution_result")
+        selection_rec = _first("template_selection_result")
+        blocked_rec = _first("mission_blocked")
         approval_req = _first("approval_request")
         approval_dec = _first("approval_decision")
         receipt_rec = _first("simulated_action_receipt")
@@ -638,18 +739,43 @@ class MissionAuditLedger:
             if rec.record_type in ("verification_result", "outcome_verification")
         ]
 
+        identity_payload = _payload(identity_rec) if identity_rec else None
+        # Canonical account is taken from the opened mission when available; otherwise
+        # from a *resolved* identity result. It is never fabricated for a blocked
+        # identity (the identity result carries a null canonical account).
+        canonical_account = None
+        if opened is not None:
+            canonical_account = _payload(opened).get("canonicalAccount")
+        elif identity_payload is not None:
+            canonical_account = identity_payload.get("canonicalAccount")
+        selected_template_id = None
+        if opened is not None:
+            selected_template_id = _payload(opened).get("selectedTemplateId")
+        elif selection_rec is not None:
+            selected_template_id = _payload(selection_rec).get("selectedTemplateId")
+        evidence_refs = []
+        if opened is not None:
+            evidence_refs = _payload(opened).get("evidenceRefs", [])
+        elif identity_payload is not None:
+            evidence_refs = identity_payload.get("evidence", [])
+
         return MissionAuditBundle(
             mission_id=mission_id,
             mission_version=mission_version,
-            canonical_account=(_payload(opened).get("canonicalAccount") if opened else None),
-            selected_template_id=(_payload(opened).get("selectedTemplateId") if opened else None),
-            evidence_refs=(_payload(opened).get("evidenceRefs", []) if opened else []),
+            intake=(_payload(intake_rec) if intake_rec else None),
+            identity_resolution=identity_payload,
+            template_selection=(_payload(selection_rec) if selection_rec else None),
+            canonical_account=canonical_account,
+            selected_template_id=selected_template_id,
+            evidence_refs=evidence_refs,
             lifecycle_events=lifecycle,
             verification_results=verifications,
             approval_request=(_payload(approval_req) if approval_req else None),
             approval_decision=(_payload(approval_dec) if approval_dec else None),
             action_receipt=(_payload(receipt_rec) if receipt_rec else None),
             outcome_verification=(_payload(outcome_rec) if outcome_rec else None),
+            blocked=(_payload(blocked_rec) if blocked_rec else None),
+            failure_code=(_payload(blocked_rec).get("failureCode") if blocked_rec else None),
             decision_ledger_ref=decision_ref,
             records=records,
             chain=self.verify_mission_chain(mission_id),

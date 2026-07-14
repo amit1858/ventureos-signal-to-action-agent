@@ -10,8 +10,10 @@ Run directly:  python services/api/harness/tests/test_evaluation.py
 
 from __future__ import annotations
 
+import json
 import os
 import sys
+import tempfile
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _API_DIR = os.path.abspath(os.path.join(_HERE, "..", ".."))
@@ -101,7 +103,13 @@ def test_unsupported_signal_stops_before_planning() -> None:
     _check("C no plan built", r.mission_plan is None)
     _check("C no approval request", r.approval_request is None)
     _check("C no receipt", r.simulated_action_receipt is None)
-    _check("C nothing persisted to ledger", len(led.list_mission_records("M-UNSUPPORTED-1")) == 0)
+    present = {x.record_type for x in led.list_mission_records("M-UNSUPPORTED-1")}
+    _check("C intake persisted", "mission_intake" in present)
+    _check("C template selection persisted", "template_selection_result" in present)
+    _check("C mission_blocked persisted", "mission_blocked" in present)
+    _check("C no mission_opened persisted", "mission_opened" not in present)
+    _check("C no approval_request persisted", "approval_request" not in present)
+    _check("C no receipt persisted", "simulated_action_receipt" not in present)
     led.close()
 
 
@@ -117,7 +125,14 @@ def test_ambiguous_identity_stops_before_selection() -> None:
     _check("D no plan built", r.mission_plan is None)
     _check("D no approval or receipt",
            r.approval_request is None and r.simulated_action_receipt is None)
-    _check("D nothing persisted to ledger", len(led.list_mission_records("M-AMBIGUOUS-1")) == 0)
+    present = {x.record_type for x in led.list_mission_records("M-AMBIGUOUS-1")}
+    _check("D intake persisted", "mission_intake" in present)
+    _check("D identity resolution persisted", "identity_resolution_result" in present)
+    _check("D mission_blocked persisted", "mission_blocked" in present)
+    _check("D stops before selection (no template_selection_result)",
+           "template_selection_result" not in present)
+    _check("D no mission_opened persisted", "mission_opened" not in present)
+    _check("D no receipt persisted", "simulated_action_receipt" not in present)
     led.close()
 
 
@@ -364,6 +379,125 @@ def test_receipt_is_action_receipt_not_persona() -> None:
     led.close()
 
 
+# --- Commit 7b: durable audit for early / blocked mission outcomes -------------
+
+
+def _record_types(led, mission_id) -> list[str]:
+    return [x.record_type for x in led.list_mission_records(mission_id)]
+
+
+def test_unsupported_creates_durable_audit_bundle() -> None:
+    r, led = _evaluate(unsupported_signal_blocked())
+    _check("7b C audit_bundle present", r.audit_bundle is not None)
+    _check("7b C audit_chain_valid", r.audit_chain_valid is True)
+    _check("7b C audit_complete", r.scorecard.audit_complete is True)
+    bundle = r.audit_bundle or {}
+    _check("7b C bundle failure_code no_matching_template",
+           bundle.get("failureCode") == FAIL_NO_MATCHING_TEMPLATE, str(bundle.get("failureCode")))
+    _check("7b C bundle no plan/agents/tools/approval/receipt",
+           bundle.get("missionPlan") in (None, {})
+           and bundle.get("approvalRequest") is None
+           and bundle.get("simulatedActionReceipt") is None)
+    led.close()
+
+
+def test_ambiguous_creates_durable_audit_bundle() -> None:
+    r, led = _evaluate(ambiguous_account_blocked())
+    _check("7b D audit_bundle present", r.audit_bundle is not None)
+    _check("7b D audit_chain_valid", r.audit_chain_valid is True)
+    _check("7b D audit_complete", r.scorecard.audit_complete is True)
+    bundle = r.audit_bundle or {}
+    _check("7b D bundle failure_code ambiguous_identity",
+           bundle.get("failureCode") == FAIL_AMBIGUOUS_IDENTITY, str(bundle.get("failureCode")))
+    _check("7b D identity evidence/conflicts present",
+           bundle.get("identityResolution") is not None)
+    _check("7b D no fabricated canonical account",
+           bundle.get("canonicalAccount") is None, str(bundle.get("canonicalAccount")))
+    _check("7b D stops before template selection",
+           bundle.get("templateSelection") is None)
+    led.close()
+
+
+def test_early_blocked_paths_have_valid_hash_chains() -> None:
+    for scenario in (unsupported_signal_blocked(), ambiguous_account_blocked()):
+        r, led = _evaluate(scenario)
+        chain = led.verify_mission_chain(scenario.mission_id)
+        _check(f"7b {scenario.scenario_id} chain valid",
+               chain.valid and chain.length > 0, f"len={chain.length}")
+        led.close()
+
+
+def test_no_blocked_path_executes_sandbox() -> None:
+    for scenario in (unsupported_signal_blocked(), ambiguous_account_blocked(),
+                     approval_rejected(), approval_payload_mismatch(),
+                     verification_failed_revision()):
+        r, led = _evaluate(scenario)
+        present = set(_record_types(led, scenario.mission_id))
+        _check(f"7b {scenario.scenario_id} no receipt record",
+               "simulated_action_receipt" not in present)
+        _check(f"7b {scenario.scenario_id} no receipt object",
+               r.simulated_action_receipt is None)
+        led.close()
+
+
+def test_blocked_bundle_survives_ledger_reopen() -> None:
+    ts = default_injected_timestamps()
+    tmp = tempfile.mkdtemp()
+    db_path = os.path.join(tmp, "audit_reopen.sqlite")
+    scenario = unsupported_signal_blocked()
+    led = MissionAuditLedger(db_path)
+    r1 = evaluate_mission_scenario(scenario, led, ts)
+    before = r1.audit_bundle
+    led.close()
+
+    led2 = MissionAuditLedger(db_path)
+    bundle2 = led2.export_mission_audit_bundle(scenario.mission_id)
+    after = bundle2.model_dump(by_alias=True)
+    chain = led2.verify_mission_chain(scenario.mission_id)
+    _check("7b reopen chain valid", chain.valid and chain.length > 0)
+    _check("7b reopen bundle byte-identical",
+           json.dumps(before, sort_keys=True) == json.dumps(after, sort_keys=True))
+    led2.close()
+
+
+def test_rejected_and_mismatch_remain_auditable() -> None:
+    for scenario, code in ((approval_rejected(), FAIL_APPROVAL_REJECTED),
+                           (approval_payload_mismatch(), FAIL_APPROVAL_PAYLOAD_MISMATCH),
+                           (verification_failed_revision(), FAIL_VERIFICATION)):
+        r, led = _evaluate(scenario)
+        _check(f"7b {scenario.scenario_id} audit_complete", r.scorecard.audit_complete is True)
+        _check(f"7b {scenario.scenario_id} chain valid", r.audit_chain_valid is True)
+        _check(f"7b {scenario.scenario_id} failure_code", r.failure_code == code, r.failure_code)
+        present = set(_record_types(led, scenario.mission_id))
+        _check(f"7b {scenario.scenario_id} intake recorded", "mission_intake" in present)
+        led.close()
+
+
+def test_successful_scenarios_still_reach_closed() -> None:
+    for scenario in (renewal_risk_happy_path(), support_escalation_happy_path(),
+                     idempotent_replay()):
+        r, led = _evaluate(scenario)
+        _check(f"7b {scenario.scenario_id} still passed", r.final_status == STATUS_PASSED,
+               r.final_status)
+        _check(f"7b {scenario.scenario_id} audit_complete", r.scorecard.audit_complete is True)
+        led.close()
+
+
+def test_determinism_with_early_audit_records() -> None:
+    scenario = unsupported_signal_blocked()
+    ts = default_injected_timestamps()
+    led_a = MissionAuditLedger(":memory:")
+    led_b = MissionAuditLedger(":memory:")
+    ra = evaluate_mission_scenario(scenario, led_a, ts)
+    rb = evaluate_mission_scenario(scenario, led_b, ts)
+    _check("7b deterministic result hash", ra.result_hash == rb.result_hash)
+    _check("7b deterministic bundle",
+           json.dumps(ra.audit_bundle, sort_keys=True)
+           == json.dumps(rb.audit_bundle, sort_keys=True))
+    led_a.close()
+    led_b.close()
+
+
 _TESTS = [
     test_renewal_happy_path_reaches_closed,
     test_support_happy_path_reaches_closed,
@@ -385,6 +519,14 @@ _TESTS = [
     test_no_personaresponse_in_output,
     test_no_forbidden_imports_in_source,
     test_receipt_is_action_receipt_not_persona,
+    test_unsupported_creates_durable_audit_bundle,
+    test_ambiguous_creates_durable_audit_bundle,
+    test_early_blocked_paths_have_valid_hash_chains,
+    test_no_blocked_path_executes_sandbox,
+    test_blocked_bundle_survives_ledger_reopen,
+    test_rejected_and_mismatch_remain_auditable,
+    test_successful_scenarios_still_reach_closed,
+    test_determinism_with_early_audit_records,
 ]
 
 
