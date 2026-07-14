@@ -227,30 +227,71 @@ class MissionEvaluation(HarnessModel):
 
 
 class ApprovalRequest(HarnessModel):
-    """A request for a human to approve a verified mission action."""
+    """A request for a human to approve a verified mission action.
 
+    The request pins the exact mission version, the reviewed action payload (by
+    reference and by hash) and the verification that made the action eligible, so
+    the human is approving one specific, verified thing -- never a moving target.
+    """
+
+    schema_version: Literal["1.0"] = "1.0"
     mission_id: str
+    mission_version: str = Field(..., description="Mission version this approval is scoped to")
     recommendation_id: str
     action_type: str
+    permitted_actions: List[str] = Field(
+        default_factory=list, description="Actions the mission is allowed to take"
+    )
+    action_payload_ref: str = Field(..., description="Reference to the reviewed action payload")
+    action_payload_hash: str = Field(..., description="Hash of the reviewed action payload")
+    verification_ref: str = Field(..., description="Verification record that cleared this action")
     requires_human_approval: Literal[True] = True
+    simulated: Literal[True] = True
     prompt: str = Field(..., description="Human-facing approval prompt")
+
+    @field_validator("simulated")
+    @classmethod
+    def _must_be_simulated(cls, value: bool) -> bool:
+        if value is not True:
+            raise ValueError("ApprovalRequest.simulated must be True (Release 2.2 is simulated-only).")
+        return value
 
 
 class ApprovalDecision(HarnessModel):
-    """A human's decision. A spoken 'approve' still produces this same object and
-    (for the voice channel) carries an explicit ``confirm_token``.
+    """A human's decision, bound to one mission version and one reviewed action.
+
+    A spoken 'approve' still produces this same object and (for the voice channel)
+    carries an explicit ``confirm_token``. ``approved_action_ref`` and
+    ``approved_payload_hash`` bind the decision to exactly the payload that was
+    verified and presented, so an approval cannot be replayed against a different
+    action or an unversioned mission.
     """
 
+    schema_version: Literal["1.0"] = "1.0"
     decision_id: str
     mission_id: str
+    mission_version: str = Field(..., description="Mission version this decision is bound to")
     outcome: ApprovalOutcome
     actor: str = Field(..., description="Identity of the approving human")
+    actor_role: str = Field(..., description="Role of the approving human (e.g. seller | manager)")
     channel: ApprovalChannel = ApprovalChannel.screen
+    approved_action_ref: str = Field(..., description="Reference to the action being approved")
+    approved_payload_hash: str = Field(
+        ..., description="Hash of the approved payload (must match the ApprovalRequest)"
+    )
     confirm_token: Optional[str] = Field(
         None, description="Explicit confirmation token (required for voice approvals)"
     )
+    simulated: Literal[True] = True
     reason: Optional[str] = None
     decided_at: str = Field(..., description="ISO-8601 timestamp (caller-supplied)")
+
+    @field_validator("simulated")
+    @classmethod
+    def _must_be_simulated(cls, value: bool) -> bool:
+        if value is not True:
+            raise ValueError("ApprovalDecision.simulated must be True (Release 2.2 is simulated-only).")
+        return value
 
 
 # -- ActionReceipt (simulated-only) -----------------------------------------
@@ -260,16 +301,29 @@ class ActionReceipt(HarnessModel):
     """Proof that an approved action was executed in the local deterministic
     sandbox. Release 2.2 is simulated-only: ``simulated`` is always ``True`` and
     nothing is written to any external CRM or network target.
+
+    The receipt is bound to the approved payload (``approved_payload_hash``) and
+    to the Mission Audit chain (``audit_ref``), and records the sandbox
+    before/after state so the simulated effect is fully inspectable.
     """
 
+    schema_version: Literal["1.0"] = "1.0"
     receipt_id: str
     mission_id: str
     recommendation_id: str
     action_type: str
+    target_type: str = Field(..., description="Kind of entity the action targets (e.g. account | ticket)")
+    target_id: str = Field(..., description="Identifier of the targeted entity")
     tool_id: str = Field(..., description="Registered sandbox tool that produced this receipt")
+    approved_payload_hash: str = Field(
+        ..., description="Hash of the approved payload this receipt executed (binds to ApprovalDecision)"
+    )
+    before_state: dict = Field(default_factory=dict, description="Sandbox state before the simulated action")
+    after_state: dict = Field(default_factory=dict, description="Sandbox state after the simulated action")
     simulated: Literal[True] = True
     summary: str
     details: dict = Field(default_factory=dict)
+    audit_ref: str = Field(..., description="Mission Audit entry this receipt is recorded under")
     created_at: str = Field(..., description="ISO-8601 timestamp (caller-supplied)")
 
     @field_validator("simulated")
@@ -326,6 +380,20 @@ class RecommendationRef(HarnessModel):
     requires_human_approval: Literal[True] = True
 
 
+class EvidenceRef(HarnessModel):
+    """A reference-only summary of one piece of evidence backing the mission.
+
+    Points at a retrieved memory/record by id and category; the full record is
+    materialised by the TypeScript MemoryStore. Python passes references, not
+    memory contents, across the boundary.
+    """
+
+    record_id: str = Field(..., description="MemoryStore / source record id (reference only)")
+    category: str
+    source: str = Field(..., description="Provenance of the evidence (e.g. memory | crm | signal)")
+    summary: str
+
+
 class SuccessCriterionBrief(HarnessModel):
     criterion_id: str
     description: str
@@ -349,6 +417,12 @@ class MissionExecutionPayload(HarnessModel):
     """Python -> Next.js Mission BFF. A decision-closed instruction: the TS side
     executes retrieval and composes language, but never overrides mission state,
     verification, approval policy, or the allowed action.
+
+    Carries the selected template, the governed recommendation, the verification
+    verdict (by value and by reference), the permitted actions, evidence
+    references, and -- once the mission is awaiting approval -- the bound
+    ``ApprovalRequest``. It intentionally carries NO PersonaResponse: language is
+    composed on the TypeScript side and appears only on ``MissionTurn``.
     """
 
     schema_version: Literal["1.0"] = "1.0"
@@ -358,14 +432,32 @@ class MissionExecutionPayload(HarnessModel):
     canonical_account: CanonicalAccountRef
     intent: str = Field(..., description="ConversationIntent (resume|status|risk_review|next_step|recap)")
     persona_id: str
+    selected_template_id: str = Field(..., description="Deterministically selected mission template id")
     retrieval_query: RetrievalQuerySpec
     recommendation: RecommendationRef
+    permitted_actions: List[str] = Field(
+        default_factory=list, description="Actions the mission is allowed to take"
+    )
+    evidence_refs: List[EvidenceRef] = Field(
+        default_factory=list, description="Reference-only evidence summary backing the mission"
+    )
     verification: VerificationResult
+    verification_ref: str = Field(..., description="Verification record id (Mission Audit reference)")
+    approval_request: Optional[ApprovalRequest] = Field(
+        None, description="Present once the mission is awaiting approval; bound to this action/version"
+    )
     mission_definition: Optional[MissionDefinitionBrief] = Field(
         None, description="Additive Mission Brief projection (display-only)"
     )
     audit_ref: str = Field(..., description="Mission Audit entry id for this turn")
     simulated: Literal[True] = True
+
+    @field_validator("simulated")
+    @classmethod
+    def _must_be_simulated(cls, value: bool) -> bool:
+        if value is not True:
+            raise ValueError("MissionExecutionPayload.simulated must be True (Release 2.2 is simulated-only).")
+        return value
 
 
 # -- MissionTurn.v1 (cross-language: BFF -> presentation) -------------------
@@ -417,3 +509,34 @@ class MissionTurn(HarnessModel):
     approval: Optional[MissionTurnApproval] = None
     audit_ref: str
     simulated: Literal[True] = True
+
+
+# -- MissionEvent.v1 (cross-language: lifecycle transitions) -----------------
+
+
+class MissionEvent(HarnessModel):
+    """A minimal, additive record of one mission lifecycle transition.
+
+    Used to represent the governed state machine on the wire and in the Mission
+    Audit chain. ``from_state`` / ``to_state`` are optional so pure events (e.g.
+    ``revision_requested``) that gate a return transition can be recorded
+    explicitly -- there is no implicit retry. For example, recovering a blocked
+    mission is three explicit events:
+
+        blocked  --(revision_requested)-->  gathering
+
+    modelled as an event with ``event_type='revision_requested'``,
+    ``from_state='blocked'`` and ``to_state='gathering'``.
+    """
+
+    schema_version: Literal["1.0"] = "1.0"
+    event_id: str
+    mission_id: str
+    mission_version: str
+    event_type: str = Field(..., description="e.g. opened | verified | blocked | revision_requested | approved")
+    from_state: Optional[MissionState] = None
+    to_state: Optional[MissionState] = None
+    actor: str = Field(..., description="Who/what raised the event (human id or 'system')")
+    reason: Optional[str] = None
+    correlation_id: str = Field(..., description="Correlates events belonging to the same mission thread")
+    occurred_at: str = Field(..., description="ISO-8601 timestamp (caller-supplied, deterministic)")
