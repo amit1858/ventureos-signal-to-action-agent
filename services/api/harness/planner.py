@@ -29,7 +29,8 @@ from harness.contracts import (
     RiskLevel,
     SuccessCriterion,
 )
-from harness.registries import AgentRegistry, ToolRegistry
+from harness.registries import AgentRegistry, MissionTemplateRegistry, ToolRegistry
+from harness.selector import SelectionResult, select
 from harness.templates import MissionTemplate, TemplateBudgets
 
 _SEVERITY_TO_RISK = {
@@ -68,6 +69,20 @@ class MissionPlan(HarnessModel):
     tasks: List[PlannedTask]
     budgets: TemplateBudgets
     requires_human_approval: bool = True
+
+
+class NoMatchingMissionTemplate(Exception):
+    """Raised when signals match no approved mission template.
+
+    Carries the signal classification and the selector explanation so the caller
+    can surface a precise, auditable reason. No plan is produced: no agents, no
+    tools, and no permitted actions are ever assigned in this case.
+    """
+
+    def __init__(self, selection: SelectionResult, signal_context: Mapping[str, object]) -> None:
+        self.selection = selection
+        self.signal_context = dict(signal_context or {})
+        super().__init__(selection.rationale)
 
 
 def _lower(value: object) -> str:
@@ -183,4 +198,41 @@ def plan_mission(
     )
 
 
-__all__ = ["PlannedTask", "MissionPlan", "plan_mission"]
+def plan_mission_for_signals(
+    *,
+    mission_id: str,
+    signals: Mapping[str, object],
+    canonical_account: CanonicalAccountRef,
+    agent_registry: AgentRegistry,
+    tool_registry: ToolRegistry,
+    template_registry: MissionTemplateRegistry,
+    trigger_signal_id: Optional[str] = None,
+) -> MissionPlan:
+    """Select a template for ``signals`` and plan the mission -- failing closed.
+
+    If selection is blocked (no approved template matches), raises
+    ``NoMatchingMissionTemplate`` and builds NOTHING: no agents, no tools, no
+    permitted actions. Otherwise delegates to :func:`plan_mission`.
+    """
+    selection = select(signals, None)
+    if selection.blocked or selection.selected_template_id is None:
+        raise NoMatchingMissionTemplate(selection, signals)
+    template = template_registry.get_active(selection.selected_template_id)
+    return plan_mission(
+        mission_id=mission_id,
+        template=template,
+        signal_context=signals,
+        canonical_account=canonical_account,
+        agent_registry=agent_registry,
+        tool_registry=tool_registry,
+        trigger_signal_id=trigger_signal_id,
+    )
+
+
+__all__ = [
+    "PlannedTask",
+    "MissionPlan",
+    "NoMatchingMissionTemplate",
+    "plan_mission",
+    "plan_mission_for_signals",
+]

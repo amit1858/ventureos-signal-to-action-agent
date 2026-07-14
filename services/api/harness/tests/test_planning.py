@@ -19,8 +19,17 @@ if _API_DIR not in sys.path:
 from pydantic import ValidationError  # noqa: E402
 
 from harness.contracts import CanonicalAccountRef  # noqa: E402
-from harness.planner import MissionPlan, plan_mission  # noqa: E402
-from harness.policy_validator import validate  # noqa: E402
+from harness.planner import (  # noqa: E402
+    MissionPlan,
+    NoMatchingMissionTemplate,
+    plan_mission,
+    plan_mission_for_signals,
+)
+from harness.policy_validator import (  # noqa: E402
+    NO_MATCHING_TEMPLATE,
+    result_for_unsupported_selection,
+    validate,
+)
 from harness.registries import (  # noqa: E402
     AgentEntry,
     AgentRegistry,
@@ -32,7 +41,7 @@ from harness.registries import (  # noqa: E402
     default_agent_registry,
     default_tool_registry,
 )
-from harness.selector import FALLBACK_TEMPLATE_ID, select  # noqa: E402
+from harness.selector import NO_MATCHING_TEMPLATE_RULE, select  # noqa: E402
 from harness.templates import (  # noqa: E402
     RENEWAL_RISK_PARALLEL_V1,
     SUPPORT_ESCALATION_SEQUENTIAL_V1,
@@ -150,10 +159,30 @@ def test_selector_different_signals_diverge_topology() -> None:
            f"{topo_renewal} vs {topo_support}")
 
 
-def test_selector_fallback() -> None:
+def test_selector_no_matching_template_fails_closed() -> None:
     result = select({"mission_type": "unknown_thing"}, None)
-    _check("unmatched signal selects deterministic fallback",
-           result.selected_template_id == FALLBACK_TEMPLATE_ID and result.is_fallback is True)
+    _check("unmatched signal selects no template (None)", result.selected_template_id is None)
+    _check("unmatched signal is blocked", result.blocked is True)
+    _check("unmatched signal is marked fallback", result.is_fallback is True)
+    _check("unmatched signal uses R_no_matching_template rule",
+           result.matched_rule_id == NO_MATCHING_TEMPLATE_RULE)
+
+
+def test_selector_unmatched_never_selects_renewal() -> None:
+    for signals in ({"mission_type": "unknown_thing"}, {}, {"signal_type": "weather"}, {"severity": "low"}):
+        result = select(signals, None)
+        _check(f"unmatched {signals} never selects renewal-risk-parallel-v1",
+               result.selected_template_id != RENEWAL_RISK_PARALLEL_V1
+               and result.selected_template_id is None,
+               str(result.selected_template_id))
+
+
+def test_selector_no_match_explanation_stable() -> None:
+    a = select({"mission_type": "unknown_thing"}, None)
+    b = select({"mission_type": "unknown_thing"}, None)
+    _check("no-match selection is identical for identical input", a == b)
+    _check("no-match explanation is stable",
+           a.rationale == b.rationale and a.matched_rules == b.matched_rules)
 
 
 def test_selector_explanation_stability() -> None:
@@ -319,6 +348,58 @@ def test_policy_unknown_template_blocked() -> None:
            not result.passed and any("template" in e for e in result.errors), str(result.errors))
 
 
+# -- fail-closed on unsupported signals -------------------------------------
+
+
+def test_planner_for_signals_renewal_happy_path() -> None:
+    agents, tools, templates = _registries()
+    plan = plan_mission_for_signals(
+        mission_id="MSN-R", signals={"mission_type": "renewal_risk", "signal_id": "SIG-1", "severity": "high"},
+        canonical_account=_account(), agent_registry=agents, tool_registry=tools, template_registry=templates,
+    )
+    _check("signal-driven planner builds renewal plan",
+           plan.template_id == RENEWAL_RISK_PARALLEL_V1 and len(plan.tasks) == 6)
+
+
+def test_planner_for_signals_support_happy_path() -> None:
+    agents, tools, templates = _registries()
+    plan = plan_mission_for_signals(
+        mission_id="MSN-S", signals={"mission_type": "support_escalation", "severity": "critical", "signal_id": "SIG-2"},
+        canonical_account=_account(), agent_registry=agents, tool_registry=tools, template_registry=templates,
+    )
+    _check("signal-driven planner builds support plan",
+           plan.template_id == SUPPORT_ESCALATION_SEQUENTIAL_V1)
+
+
+def test_planner_fails_closed_on_unsupported_signal() -> None:
+    agents, tools, templates = _registries()
+    err = None
+    try:
+        plan_mission_for_signals(
+            mission_id="MSN-U", signals={"mission_type": "unknown_thing"},
+            canonical_account=_account(), agent_registry=agents, tool_registry=tools, template_registry=templates,
+        )
+    except NoMatchingMissionTemplate as exc:
+        err = exc
+    _check("planner raises NoMatchingMissionTemplate on unsupported signal", err is not None)
+    if err is not None:
+        _check("error carries the blocked selection (no template)",
+               err.selection.selected_template_id is None and err.selection.blocked is True)
+        _check("error carries signal classification",
+               err.signal_context.get("mission_type") == "unknown_thing")
+        _check("error carries selector explanation (rationale non-empty)", bool(err.selection.rationale))
+
+
+def test_policy_unsupported_selection_result() -> None:
+    unsupported = select({"mission_type": "unknown_thing"}, None)
+    result = result_for_unsupported_selection(unsupported)
+    _check("unsupported selection: passed is False", result.passed is False)
+    _check("unsupported selection: execution_eligible is False", result.execution_eligible is False)
+    _check("unsupported selection: error code no_matching_template",
+           NO_MATCHING_TEMPLATE in result.error_codes)
+    _check("unsupported selection: has human-readable explanation", bool(result.errors))
+
+
 _TESTS = [
     test_registry_duplicate_rejection,
     test_registry_unknown_rejection,
@@ -328,7 +409,9 @@ _TESTS = [
     test_selector_renewal,
     test_selector_support_escalation_critical,
     test_selector_different_signals_diverge_topology,
-    test_selector_fallback,
+    test_selector_no_matching_template_fails_closed,
+    test_selector_unmatched_never_selects_renewal,
+    test_selector_no_match_explanation_stable,
     test_selector_explanation_stability,
     test_planner_determinism,
     test_planner_stable_task_ids_and_order,
@@ -341,6 +424,10 @@ _TESTS = [
     test_policy_approval_false_blocked,
     test_policy_budget_overflow_blocked,
     test_policy_unknown_template_blocked,
+    test_planner_for_signals_renewal_happy_path,
+    test_planner_for_signals_support_happy_path,
+    test_planner_fails_closed_on_unsupported_signal,
+    test_policy_unsupported_selection_result,
 ]
 
 

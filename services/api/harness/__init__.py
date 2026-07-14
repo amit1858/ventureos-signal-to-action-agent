@@ -113,8 +113,19 @@ from harness.templates import (  # noqa: E402
     support_escalation_sequential_v1,
 )
 from harness.selector import SelectionResult, select  # noqa: E402
-from harness.planner import MissionPlan, PlannedTask, plan_mission  # noqa: E402
-from harness.policy_validator import PolicyValidationResult, validate  # noqa: E402
+from harness.planner import (  # noqa: E402
+    MissionPlan,
+    NoMatchingMissionTemplate,
+    PlannedTask,
+    plan_mission,
+    plan_mission_for_signals,
+)
+from harness.policy_validator import (  # noqa: E402
+    NO_MATCHING_TEMPLATE,
+    PolicyValidationResult,
+    result_for_unsupported_selection,
+    validate,
+)
 
 __all__ += [
     # registries
@@ -143,7 +154,11 @@ __all__ += [
     "select",
     "PlannedTask",
     "MissionPlan",
+    "NoMatchingMissionTemplate",
     "plan_mission",
+    "plan_mission_for_signals",
     "PolicyValidationResult",
+    "result_for_unsupported_selection",
+    "NO_MATCHING_TEMPLATE",
     "validate",
 ]

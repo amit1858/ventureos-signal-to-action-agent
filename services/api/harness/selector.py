@@ -22,18 +22,24 @@ from harness.templates import (
     SUPPORT_ESCALATION_SEQUENTIAL_V1,
 )
 
-# Explicit deterministic fallback: the fully-implemented renewal template.
-FALLBACK_TEMPLATE_ID = RENEWAL_RISK_PARALLEL_V1
+# Rule id emitted when no approved mission template matches the signal.
+NO_MATCHING_TEMPLATE_RULE = "R_no_matching_template"
 
 
 class SelectionResult(HarnessModel):
-    """The deterministic outcome of template selection."""
+    """The deterministic outcome of template selection.
 
-    selected_template_id: str
+    ``selected_template_id`` is ``None`` when no approved template matches; in that
+    case ``blocked`` is ``True`` and the Harness fails closed -- it never silently
+    substitutes a business template.
+    """
+
+    selected_template_id: Optional[str] = None
     matched_rule_id: str
     matched_rules: List[str] = Field(default_factory=list)
     rationale: str
     is_fallback: bool = False
+    blocked: bool = False
 
 
 Signals = Mapping[str, object]
@@ -89,7 +95,11 @@ _RULES: List[Rule] = [
 
 
 def select(signals: Signals, canonical_account_context: AccountContext = None) -> SelectionResult:
-    """Deterministically select a mission template for the given signals."""
+    """Deterministically select a mission template for the given signals.
+
+    Fails closed: when no rule matches, returns a blocked result with
+    ``selected_template_id = None`` rather than substituting any business template.
+    """
     if signals is None:
         signals = {}
     matched: List[str] = []
@@ -102,15 +112,17 @@ def select(signals: Signals, canonical_account_context: AccountContext = None) -
                 matched_rules=matched,
                 rationale=rationale,
                 is_fallback=False,
+                blocked=False,
             )
     return SelectionResult(
-        selected_template_id=FALLBACK_TEMPLATE_ID,
-        matched_rule_id="R_fallback",
-        matched_rules=["R_fallback"],
-        rationale="No specific rule matched -> deterministic fallback to "
-        f"{FALLBACK_TEMPLATE_ID}.",
+        selected_template_id=None,
+        matched_rule_id=NO_MATCHING_TEMPLATE_RULE,
+        matched_rules=[NO_MATCHING_TEMPLATE_RULE],
+        rationale="No approved mission template matches the signal; the Harness fails "
+        "closed and selects no template. Human triage / a new approved template is required.",
         is_fallback=True,
+        blocked=True,
     )
 
 
-__all__ = ["FALLBACK_TEMPLATE_ID", "SelectionResult", "select"]
+__all__ = ["NO_MATCHING_TEMPLATE_RULE", "SelectionResult", "select"]

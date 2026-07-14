@@ -33,7 +33,11 @@ from harness.registries import (
     RegistryError,
     ToolRegistry,
 )
+from harness.selector import SelectionResult
 from harness.templates import BUDGET_LIMITS, REQUIRED_VERIFICATION_CHECKS
+
+# Structured error codes.
+NO_MATCHING_TEMPLATE = "no_matching_template"
 
 
 class PolicyValidationResult(HarnessModel):
@@ -42,7 +46,22 @@ class PolicyValidationResult(HarnessModel):
     passed: bool
     warnings: List[str] = Field(default_factory=list)
     errors: List[str] = Field(default_factory=list)
+    error_codes: List[str] = Field(default_factory=list)
     execution_eligible: bool = False
+
+
+def result_for_unsupported_selection(selection: SelectionResult) -> PolicyValidationResult:
+    """Blocked policy verdict for a selection that matched no approved template."""
+    return PolicyValidationResult(
+        passed=False,
+        warnings=[],
+        errors=[
+            "No approved mission template matches the signal; mission is not eligible "
+            f"for execution. {selection.rationale}"
+        ],
+        error_codes=[NO_MATCHING_TEMPLATE],
+        execution_eligible=False,
+    )
 
 
 def _tasks_acyclic(plan: MissionPlan) -> bool:
@@ -149,4 +168,9 @@ def validate(
     )
 
 
-__all__ = ["PolicyValidationResult", "validate"]
+__all__ = [
+    "NO_MATCHING_TEMPLATE",
+    "PolicyValidationResult",
+    "result_for_unsupported_selection",
+    "validate",
+]
