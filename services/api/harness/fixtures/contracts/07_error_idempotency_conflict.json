@@ -1,0 +1,295 @@
+{
+  "description": "A genuine durable idempotency collision maps to a typed idempotency_conflict service error (HTTP 409), with no executable payload and no leaked stack trace, path, or SQL.",
+  "name": "error_idempotency_conflict",
+  "request": {
+    "actor": "amit",
+    "actorRole": "manager",
+    "approval": "approved",
+    "approvalChannel": "screen",
+    "correlationId": "CORR-idempotency-conflict",
+    "idempotencyKey": "IDEMP-M-IDEMPOTENCY-CONFLICT",
+    "injectPayloadMismatch": false,
+    "injectedTimestamps": {
+      "approval_decision": "2026-07-14T10:00:35Z",
+      "approval_request": "2026-07-14T10:00:30Z",
+      "blocked": "2026-07-14T09:59:59Z",
+      "closed": "2026-07-14T10:00:50Z",
+      "default": "2026-07-14T10:00:00Z",
+      "execution": "2026-07-14T10:00:40Z",
+      "gathering": "2026-07-14T10:00:05Z",
+      "identity": "2026-07-14T09:59:50Z",
+      "intake": "2026-07-14T09:59:45Z",
+      "opened": "2026-07-14T10:00:00Z",
+      "outcome": "2026-07-14T10:00:45Z",
+      "proposed": "2026-07-14T10:00:10Z",
+      "selection": "2026-07-14T09:59:55Z",
+      "verification": "2026-07-14T10:00:20Z",
+      "verified": "2026-07-14T10:00:25Z",
+      "verifying": "2026-07-14T10:00:15Z"
+    },
+    "missionId": "M-IDEMPOTENCY-CONFLICT",
+    "missionVersion": "v1",
+    "outputMode": "full",
+    "protectedDecisionRef": null,
+    "replayExecution": false,
+    "requestId": "REQ-idempotency-conflict",
+    "requestRevisionAfterBlock": false,
+    "scenarioId": "support-escalation-happy-path",
+    "schemaVersion": "1.0",
+    "signals": {
+      "mission_type": "support_escalation",
+      "severity": "critical",
+      "signal_id": "SIG-SUP-1",
+      "signal_type": "support_escalation"
+    },
+    "sourceRecords": null,
+    "verificationOutcome": "verified"
+  },
+  "response": {
+    "correlationId": "CORR-idempotency-conflict",
+    "executionEligible": false,
+    "ledgerReference": {
+      "chainValid": true,
+      "latestLedgerRecordId": "LR-7faf3b1f8a7f8f8e",
+      "missionId": "M-IDEMPOTENCY-CONFLICT",
+      "recordCount": 32
+    },
+    "missionEvaluationResult": {
+      "approvalDecision": {
+        "actor": "amit",
+        "actorRole": "manager",
+        "approvedActionRef": "payload://M-IDEMPOTENCY-CONFLICT/REC-M-IDEMPOTENCY-CONFLICT",
+        "approvedPayloadHash": "sha256:70948d81cd7d3f01cfcf642533af1447f47e9c0742beb294bf9e92af32697416",
+        "channel": "screen",
+        "confirmToken": "confirm-1",
+        "decidedAt": "2026-07-14T10:00:35Z",
+        "decisionId": "DEC-M-IDEMPOTENCY-CONFLICT",
+        "missionId": "M-IDEMPOTENCY-CONFLICT",
+        "missionVersion": "v1",
+        "outcome": "approved",
+        "reason": null,
+        "schemaVersion": "1.0",
+        "simulated": true
+      },
+      "approvalRequest": {
+        "actionPayloadHash": "sha256:70948d81cd7d3f01cfcf642533af1447f47e9c0742beb294bf9e92af32697416",
+        "actionPayloadRef": "payload://M-IDEMPOTENCY-CONFLICT/REC-M-IDEMPOTENCY-CONFLICT",
+        "actionType": "support_escalation",
+        "missionId": "M-IDEMPOTENCY-CONFLICT",
+        "missionVersion": "v1",
+        "permittedActions": [
+          "simulate_support_escalation",
+          "simulate_stakeholder_brief"
+        ],
+        "prompt": "Approve simulated support_escalation for Curefoods?",
+        "recommendationId": "REC-M-IDEMPOTENCY-CONFLICT",
+        "requiresHumanApproval": true,
+        "schemaVersion": "1.0",
+        "simulated": true,
+        "verificationRef": "verify://M-IDEMPOTENCY-CONFLICT"
+      },
+      "auditBundle": null,
+      "auditChainValid": true,
+      "canonicalAccount": {
+        "arr": 260000.0,
+        "canonicalName": "Curefoods",
+        "domain": "curefoods.com",
+        "industry": "Foodtech",
+        "normalizedName": "curefoods",
+        "owner": "A. Rao",
+        "region": "India",
+        "sourceRecordIds": [
+          "dynamics:DY-7777",
+          "hubspot:HS-1001",
+          "salesforce:SF-5555"
+        ],
+        "ventureOsId": "VOS-CUREFOODS"
+      },
+      "executionEligible": false,
+      "failureCode": "idempotency_conflict",
+      "finalStatus": "failed",
+      "identityResolutionStatus": "resolved",
+      "lifecycleEvents": [],
+      "lifecycleStatus": null,
+      "missionId": "M-IDEMPOTENCY-CONFLICT",
+      "missionPlan": {
+        "budgets": {
+          "maxCost": 0.5,
+          "maxRetries": 2,
+          "maxRuntimeMs": 45000
+        },
+        "missionDefinition": {
+          "canonicalAccount": {
+            "canonicalName": "Curefoods",
+            "ventureOsId": "VOS-CUREFOODS"
+          },
+          "constraints": [],
+          "expectedOutcome": "Approved simulated support_escalation action for Curefoods.",
+          "missionId": "M-IDEMPOTENCY-CONFLICT",
+          "missionType": "support_escalation",
+          "objective": "Escalate a critical support situation through a strict sequential chain with governed action prep and stakeholder communication.",
+          "permittedActions": [
+            "simulate_support_escalation",
+            "simulate_stakeholder_brief"
+          ],
+          "rationale": "Signal SIG-SUP-1 selected template support-escalation-sequential-v1 for Curefoods.",
+          "requiredEvidence": [
+            {
+              "category": "support_history",
+              "mandatory": true
+            },
+            {
+              "category": "account_health",
+              "mandatory": true
+            }
+          ],
+          "requiresHumanApproval": true,
+          "riskLevel": "critical",
+          "schemaVersion": "1.0",
+          "selectedTemplateId": "support-escalation-sequential-v1",
+          "successCriteria": [
+            {
+              "criterionId": "SC1",
+              "description": "support_escalation mission objective prepared and approved for Curefoods.",
+              "measurementType": "boolean",
+              "target": "true"
+            }
+          ],
+          "triggerSignalId": "SIG-SUP-1"
+        },
+        "missionId": "M-IDEMPOTENCY-CONFLICT",
+        "requiresHumanApproval": true,
+        "tasks": [
+          {
+            "agentId": "signal_ingestion",
+            "agentName": "Signal Ingestion Agent",
+            "dependsOn": [],
+            "orderIndex": 0,
+            "stepId": "ingest",
+            "taskId": "M-IDEMPOTENCY-CONFLICT:ingest",
+            "toolIds": []
+          },
+          {
+            "agentId": "account_health",
+            "agentName": "Account Health Agent",
+            "dependsOn": [
+              "M-IDEMPOTENCY-CONFLICT:ingest"
+            ],
+            "orderIndex": 1,
+            "stepId": "health",
+            "taskId": "M-IDEMPOTENCY-CONFLICT:health",
+            "toolIds": []
+          },
+          {
+            "agentId": "governance",
+            "agentName": "Governance Agent",
+            "dependsOn": [
+              "M-IDEMPOTENCY-CONFLICT:health"
+            ],
+            "orderIndex": 2,
+            "stepId": "governance",
+            "taskId": "M-IDEMPOTENCY-CONFLICT:governance",
+            "toolIds": []
+          },
+          {
+            "agentId": "action",
+            "agentName": "Action Agent",
+            "dependsOn": [
+              "M-IDEMPOTENCY-CONFLICT:governance"
+            ],
+            "orderIndex": 3,
+            "stepId": "action",
+            "taskId": "M-IDEMPOTENCY-CONFLICT:action",
+            "toolIds": [
+              "simulate_support_escalation"
+            ]
+          },
+          {
+            "agentId": "communication",
+            "agentName": "Communication Agent",
+            "dependsOn": [
+              "M-IDEMPOTENCY-CONFLICT:action"
+            ],
+            "orderIndex": 4,
+            "stepId": "communicate",
+            "taskId": "M-IDEMPOTENCY-CONFLICT:communicate",
+            "toolIds": [
+              "simulate_stakeholder_brief"
+            ]
+          }
+        ],
+        "templateId": "support-escalation-sequential-v1",
+        "topology": "sequential"
+      },
+      "missionVersion": "v1",
+      "outcomeVerification": null,
+      "policyValidation": {
+        "errorCodes": [],
+        "errors": [],
+        "executionEligible": true,
+        "passed": true,
+        "warnings": []
+      },
+      "resultHash": "sha256:37f03a0a5b69a394b92df9ad04f15de737011514518bf06f16ab60553399ebdb",
+      "scenarioId": "support-escalation-happy-path",
+      "schemaVersion": "1.0",
+      "scorecard": {
+        "approvalRequired": true,
+        "approvalValid": true,
+        "auditChainValid": true,
+        "auditComplete": false,
+        "deterministicOutput": true,
+        "evidencePresent": true,
+        "identityResolved": true,
+        "lifecycleValid": false,
+        "noExternalAction": true,
+        "payloadBindingValid": false,
+        "policyPassed": true,
+        "provenancePresent": true,
+        "simulatedOnly": true,
+        "templateSelected": true,
+        "verificationPassed": true
+      },
+      "selectedTemplateId": "support-escalation-sequential-v1",
+      "selectorExplanation": "Signal indicates a critical/high support escalation -> support-escalation-sequential-v1 (sequential chain).",
+      "simulatedActionReceipt": null,
+      "verificationSummary": {
+        "checks": [
+          {
+            "detail": "canonical account resolved",
+            "name": "identity_resolved",
+            "passed": true
+          },
+          {
+            "detail": "required evidence present",
+            "name": "evidence_sufficient",
+            "passed": true
+          },
+          {
+            "detail": "policy validation",
+            "name": "policy_passed",
+            "passed": true
+          }
+        ],
+        "status": "verified"
+      }
+    },
+    "missionExecutionPayload": null,
+    "requestId": "REQ-idempotency-conflict",
+    "resultHash": "sha256:48ef252c4ac9034272ae958767a903b10a9ba3130f652822c9b31ef06274cc99",
+    "schemaVersion": "1.0",
+    "serviceErrors": [
+      {
+        "code": "idempotency_conflict",
+        "details": {
+          "failureCode": "idempotency_conflict"
+        },
+        "message": "A durable idempotency conflict was detected; the idempotency key was reused with a different action payload and no new receipt was created.",
+        "retryable": false,
+        "stage": "audit"
+      }
+    ],
+    "status": "failed",
+    "warnings": []
+  }
+}

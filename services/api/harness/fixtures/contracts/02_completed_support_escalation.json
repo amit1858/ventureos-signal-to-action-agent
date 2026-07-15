@@ -1,0 +1,1309 @@
+{
+  "description": "A governance-valid support-escalation mission: completed, execution-eligible, with a MissionExecutionPayload.",
+  "name": "completed_support_escalation",
+  "request": {
+    "actor": "amit",
+    "actorRole": "manager",
+    "approval": "approved",
+    "approvalChannel": "screen",
+    "correlationId": "CORR-completed_support_escalation",
+    "idempotencyKey": "IDEMP-M-SUPPORT-1",
+    "injectPayloadMismatch": false,
+    "injectedTimestamps": {
+      "approval_decision": "2026-07-14T10:00:35Z",
+      "approval_request": "2026-07-14T10:00:30Z",
+      "blocked": "2026-07-14T09:59:59Z",
+      "closed": "2026-07-14T10:00:50Z",
+      "default": "2026-07-14T10:00:00Z",
+      "execution": "2026-07-14T10:00:40Z",
+      "gathering": "2026-07-14T10:00:05Z",
+      "identity": "2026-07-14T09:59:50Z",
+      "intake": "2026-07-14T09:59:45Z",
+      "opened": "2026-07-14T10:00:00Z",
+      "outcome": "2026-07-14T10:00:45Z",
+      "proposed": "2026-07-14T10:00:10Z",
+      "selection": "2026-07-14T09:59:55Z",
+      "verification": "2026-07-14T10:00:20Z",
+      "verified": "2026-07-14T10:00:25Z",
+      "verifying": "2026-07-14T10:00:15Z"
+    },
+    "missionId": "M-SUPPORT-1",
+    "missionVersion": "v1",
+    "outputMode": "full",
+    "protectedDecisionRef": null,
+    "replayExecution": false,
+    "requestId": "REQ-completed_support_escalation",
+    "requestRevisionAfterBlock": false,
+    "scenarioId": "support-escalation-happy-path",
+    "schemaVersion": "1.0",
+    "signals": {
+      "mission_type": "support_escalation",
+      "severity": "critical",
+      "signal_id": "SIG-SUP-1",
+      "signal_type": "support_escalation"
+    },
+    "sourceRecords": null,
+    "verificationOutcome": "verified"
+  },
+  "response": {
+    "correlationId": "CORR-completed_support_escalation",
+    "executionEligible": true,
+    "ledgerReference": {
+      "chainValid": true,
+      "latestLedgerRecordId": "LR-c7dcded693610406",
+      "missionId": "M-SUPPORT-1",
+      "recordCount": 19
+    },
+    "missionEvaluationResult": {
+      "approvalDecision": {
+        "actor": "amit",
+        "actorRole": "manager",
+        "approvedActionRef": "payload://M-SUPPORT-1/REC-M-SUPPORT-1",
+        "approvedPayloadHash": "sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a",
+        "channel": "screen",
+        "confirmToken": "confirm-1",
+        "decidedAt": "2026-07-14T10:00:35Z",
+        "decisionId": "DEC-M-SUPPORT-1",
+        "missionId": "M-SUPPORT-1",
+        "missionVersion": "v1",
+        "outcome": "approved",
+        "reason": null,
+        "schemaVersion": "1.0",
+        "simulated": true
+      },
+      "approvalRequest": {
+        "actionPayloadHash": "sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a",
+        "actionPayloadRef": "payload://M-SUPPORT-1/REC-M-SUPPORT-1",
+        "actionType": "support_escalation",
+        "missionId": "M-SUPPORT-1",
+        "missionVersion": "v1",
+        "permittedActions": [
+          "simulate_support_escalation",
+          "simulate_stakeholder_brief"
+        ],
+        "prompt": "Approve simulated support_escalation for Curefoods?",
+        "recommendationId": "REC-M-SUPPORT-1",
+        "requiresHumanApproval": true,
+        "schemaVersion": "1.0",
+        "simulated": true,
+        "verificationRef": "verify://M-SUPPORT-1"
+      },
+      "auditBundle": {
+        "actionReceipt": {
+          "actionType": "support_escalation",
+          "afterState": {
+            "proposals": 2,
+            "support_stage": "escalation_prepared"
+          },
+          "approvedPayloadHash": "sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a",
+          "auditRef": "audit://M-SUPPORT-1/REC-M-SUPPORT-1",
+          "beforeState": {
+            "support_stage": "escalation_requested"
+          },
+          "createdAt": "2026-07-14T10:00:40Z",
+          "details": {
+            "follow_up_task_proposal": {
+              "owner_role": "support_engineer",
+              "title": "Follow up on escalated support case for Curefoods",
+              "type": "task",
+              "write": false
+            },
+            "internal_escalation_proposal": {
+              "notify_external": false,
+              "severity": "high",
+              "to_role": "support_lead",
+              "type": "internal_escalation"
+            }
+          },
+          "missionId": "M-SUPPORT-1",
+          "receiptId": "RCP-eb5c33ff65e8",
+          "recommendationId": "REC-M-SUPPORT-1",
+          "schemaVersion": "1.0",
+          "simulated": true,
+          "summary": "Prepared simulated support-escalation package for Curefoods.",
+          "targetId": "VOS-CUREFOODS",
+          "targetType": "account",
+          "toolId": "simulate_support_escalation"
+        },
+        "approvalDecision": {
+          "actor": "amit",
+          "actorRole": "manager",
+          "approvedActionRef": "payload://M-SUPPORT-1/REC-M-SUPPORT-1",
+          "approvedPayloadHash": "sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a",
+          "channel": "screen",
+          "confirmToken": "confirm-1",
+          "decidedAt": "2026-07-14T10:00:35Z",
+          "decisionId": "DEC-M-SUPPORT-1",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "outcome": "approved",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "simulated": true
+        },
+        "approvalRequest": {
+          "actionPayloadHash": "sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a",
+          "actionPayloadRef": "payload://M-SUPPORT-1/REC-M-SUPPORT-1",
+          "actionType": "support_escalation",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "permittedActions": [
+            "simulate_support_escalation",
+            "simulate_stakeholder_brief"
+          ],
+          "prompt": "Approve simulated support_escalation for Curefoods?",
+          "recommendationId": "REC-M-SUPPORT-1",
+          "requiresHumanApproval": true,
+          "schemaVersion": "1.0",
+          "simulated": true,
+          "verificationRef": "verify://M-SUPPORT-1"
+        },
+        "blocked": null,
+        "canonicalAccount": {
+          "arr": 260000.0,
+          "canonicalName": "Curefoods",
+          "domain": "curefoods.com",
+          "industry": "Foodtech",
+          "normalizedName": "curefoods",
+          "owner": "A. Rao",
+          "region": "India",
+          "sourceRecordIds": [
+            "dynamics:DY-7777",
+            "hubspot:HS-1001",
+            "salesforce:SF-5555"
+          ],
+          "ventureOsId": "VOS-CUREFOODS"
+        },
+        "chain": {
+          "brokenAtSequence": null,
+          "detail": "chain valid",
+          "length": 19,
+          "valid": true
+        },
+        "decisionLedgerRef": null,
+        "evidenceRefs": [
+          {
+            "matchedValue": "duns=8899-CF",
+            "signalType": "crosswalk",
+            "sourceRecords": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "weight": 0.5
+          },
+          {
+            "matchedValue": "curefoods.com",
+            "signalType": "domain",
+            "sourceRecords": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "weight": 0.3
+          },
+          {
+            "matchedValue": "curefoods",
+            "signalType": "name",
+            "sourceRecords": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "weight": 0.2
+          }
+        ],
+        "failureCode": null,
+        "identityResolution": {
+          "blockReason": null,
+          "blocked": false,
+          "canonicalAccount": {
+            "arr": 260000.0,
+            "canonicalName": "Curefoods",
+            "domain": "curefoods.com",
+            "industry": "Foodtech",
+            "normalizedName": "curefoods",
+            "owner": "A. Rao",
+            "region": "India",
+            "sourceRecordIds": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "ventureOsId": "VOS-CUREFOODS"
+          },
+          "clustersFound": 1,
+          "confidence": 1.0,
+          "conflicts": [
+            {
+              "field": "industry",
+              "values": [
+                {
+                  "sourceRecordId": "DY-7777",
+                  "sourceSystem": "dynamics",
+                  "value": "Food & Beverage"
+                },
+                {
+                  "sourceRecordId": "HS-1001",
+                  "sourceSystem": "hubspot",
+                  "value": "Food & Beverage"
+                },
+                {
+                  "sourceRecordId": "SF-5555",
+                  "sourceSystem": "salesforce",
+                  "value": "Foodtech"
+                }
+              ]
+            },
+            {
+              "field": "region",
+              "values": [
+                {
+                  "sourceRecordId": "HS-1001",
+                  "sourceSystem": "hubspot",
+                  "value": "APAC"
+                },
+                {
+                  "sourceRecordId": "SF-5555",
+                  "sourceSystem": "salesforce",
+                  "value": "India"
+                }
+              ]
+            },
+            {
+              "field": "arr",
+              "values": [
+                {
+                  "sourceRecordId": "DY-7777",
+                  "sourceSystem": "dynamics",
+                  "value": "250000.0"
+                },
+                {
+                  "sourceRecordId": "HS-1001",
+                  "sourceSystem": "hubspot",
+                  "value": "250000.0"
+                },
+                {
+                  "sourceRecordId": "SF-5555",
+                  "sourceSystem": "salesforce",
+                  "value": "260000.0"
+                }
+              ]
+            }
+          ],
+          "evidence": [
+            {
+              "matchedValue": "duns=8899-CF",
+              "signalType": "crosswalk",
+              "sourceRecords": [
+                "dynamics:DY-7777",
+                "hubspot:HS-1001",
+                "salesforce:SF-5555"
+              ],
+              "weight": 0.5
+            },
+            {
+              "matchedValue": "curefoods.com",
+              "signalType": "domain",
+              "sourceRecords": [
+                "dynamics:DY-7777",
+                "hubspot:HS-1001",
+                "salesforce:SF-5555"
+              ],
+              "weight": 0.3
+            },
+            {
+              "matchedValue": "curefoods",
+              "signalType": "name",
+              "sourceRecords": [
+                "dynamics:DY-7777",
+                "hubspot:HS-1001",
+                "salesforce:SF-5555"
+              ],
+              "weight": 0.2
+            }
+          ],
+          "provenance": [
+            {
+              "field": "canonical_name",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "Curefoods"
+            },
+            {
+              "field": "domain",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "curefoods.com"
+            },
+            {
+              "field": "industry",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "Foodtech"
+            },
+            {
+              "field": "region",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "India"
+            },
+            {
+              "field": "arr",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "260000.0"
+            },
+            {
+              "field": "owner",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "A. Rao"
+            }
+          ],
+          "resolved": true,
+          "sourceRecordRefs": [
+            "hubspot:HS-1001",
+            "salesforce:SF-5555",
+            "dynamics:DY-7777"
+          ]
+        },
+        "intake": {
+          "scenarioId": "support-escalation-happy-path",
+          "signals": {
+            "mission_type": "support_escalation",
+            "severity": "critical",
+            "signal_id": "SIG-SUP-1",
+            "signal_type": "support_escalation"
+          }
+        },
+        "lifecycleEvents": [
+          {
+            "eventType": null,
+            "fromState": null,
+            "occurredAt": "2026-07-14T10:00:00Z",
+            "recordType": "mission_opened",
+            "sequenceNumber": 4,
+            "toState": null
+          },
+          {
+            "eventType": "begin_gathering",
+            "fromState": "opened",
+            "occurredAt": "2026-07-14T10:00:05Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 5,
+            "toState": "gathering"
+          },
+          {
+            "eventType": "propose",
+            "fromState": "gathering",
+            "occurredAt": "2026-07-14T10:00:10Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 6,
+            "toState": "proposed"
+          },
+          {
+            "eventType": "begin_verification",
+            "fromState": "proposed",
+            "occurredAt": "2026-07-14T10:00:15Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 7,
+            "toState": "verifying"
+          },
+          {
+            "eventType": "verification_passed",
+            "fromState": "verifying",
+            "occurredAt": "2026-07-14T10:00:25Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 9,
+            "toState": "verified"
+          },
+          {
+            "eventType": "request_approval",
+            "fromState": "verified",
+            "occurredAt": "2026-07-14T10:00:25Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 11,
+            "toState": "awaiting_approval"
+          },
+          {
+            "eventType": "approve",
+            "fromState": "awaiting_approval",
+            "occurredAt": "2026-07-14T10:00:35Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 13,
+            "toState": "approved"
+          },
+          {
+            "eventType": "execute_simulated",
+            "fromState": "approved",
+            "occurredAt": "2026-07-14T10:00:40Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 15,
+            "toState": "simulated_executed"
+          },
+          {
+            "eventType": "verify_outcome",
+            "fromState": "simulated_executed",
+            "occurredAt": "2026-07-14T10:00:45Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 17,
+            "toState": "verified_outcome"
+          },
+          {
+            "eventType": null,
+            "fromState": null,
+            "occurredAt": "2026-07-14T10:00:50Z",
+            "recordType": "mission_closed",
+            "sequenceNumber": 18,
+            "toState": null
+          },
+          {
+            "eventType": "close",
+            "fromState": "verified_outcome",
+            "occurredAt": "2026-07-14T10:00:50Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 19,
+            "toState": "closed"
+          }
+        ],
+        "missionId": "M-SUPPORT-1",
+        "missionVersion": "v1",
+        "outcomeVerification": {
+          "checks": [
+            {
+              "detail": "sandbox produced a simulated receipt",
+              "name": "simulated_effect_present",
+              "passed": true
+            }
+          ],
+          "status": "verified"
+        },
+        "records": [
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"scenarioId\":\"support-escalation-happy-path\",\"signals\":{\"mission_type\":\"support_escalation\",\"severity\":\"critical\",\"signal_id\":\"SIG-SUP-1\",\"signal_type\":\"support_escalation\"}}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T09:59:45Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-b1bba3ff7b751735",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:45Z",
+            "payloadHash": "sha256:37b45da2fd8f334215a1db58baa3ef6f93bf0c135438443d6ac39346abbe853e",
+            "previousRecordHash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "recordHash": "92168232d3fe982f8738c9c3a996a57ee5c257467d14e769a10580692e96fe6e",
+            "recordType": "mission_intake",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 1
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"blockReason\":null,\"blocked\":false,\"canonicalAccount\":{\"arr\":260000.0,\"canonicalName\":\"Curefoods\",\"domain\":\"curefoods.com\",\"industry\":\"Foodtech\",\"normalizedName\":\"curefoods\",\"owner\":\"A. Rao\",\"region\":\"India\",\"sourceRecordIds\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"ventureOsId\":\"VOS-CUREFOODS\"},\"clustersFound\":1,\"confidence\":1.0,\"conflicts\":[{\"field\":\"industry\",\"values\":[{\"sourceRecordId\":\"DY-7777\",\"sourceSystem\":\"dynamics\",\"value\":\"Food & Beverage\"},{\"sourceRecordId\":\"HS-1001\",\"sourceSystem\":\"hubspot\",\"value\":\"Food & Beverage\"},{\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"Foodtech\"}]},{\"field\":\"region\",\"values\":[{\"sourceRecordId\":\"HS-1001\",\"sourceSystem\":\"hubspot\",\"value\":\"APAC\"},{\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"India\"}]},{\"field\":\"arr\",\"values\":[{\"sourceRecordId\":\"DY-7777\",\"sourceSystem\":\"dynamics\",\"value\":\"250000.0\"},{\"sourceRecordId\":\"HS-1001\",\"sourceSystem\":\"hubspot\",\"value\":\"250000.0\"},{\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"260000.0\"}]}],\"evidence\":[{\"matchedValue\":\"duns=8899-CF\",\"signalType\":\"crosswalk\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.5},{\"matchedValue\":\"curefoods.com\",\"signalType\":\"domain\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.3},{\"matchedValue\":\"curefoods\",\"signalType\":\"name\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.2}],\"provenance\":[{\"field\":\"canonical_name\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"Curefoods\"},{\"field\":\"domain\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"curefoods.com\"},{\"field\":\"industry\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"Foodtech\"},{\"field\":\"region\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"India\"},{\"field\":\"arr\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"260000.0\"},{\"field\":\"owner\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"A. Rao\"}],\"resolved\":true,\"sourceRecordRefs\":[\"hubspot:HS-1001\",\"salesforce:SF-5555\",\"dynamics:DY-7777\"]}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T09:59:50Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-9410199245031cea",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:50Z",
+            "payloadHash": "sha256:e0a80b18630d079ced207fab0f2cb314d9c6d73c258da6e7f45ac934afc6f275",
+            "previousRecordHash": "92168232d3fe982f8738c9c3a996a57ee5c257467d14e769a10580692e96fe6e",
+            "recordHash": "b9275d116a075bc0a07498e7d92c6da025d560ec4df79be8e7b064522d2a6553",
+            "recordType": "identity_resolution_result",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 2
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"agents\":[],\"blocked\":false,\"isFallback\":false,\"matchedRuleId\":\"R2_support_escalation_critical\",\"matchedRules\":[\"R2_support_escalation_critical\"],\"permittedActions\":[],\"rationale\":\"Signal indicates a critical/high support escalation -> support-escalation-sequential-v1 (sequential chain).\",\"selectedTemplateId\":\"support-escalation-sequential-v1\",\"tools\":[]}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T09:59:55Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-a6e7e4a780c8cc03",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:55Z",
+            "payloadHash": "sha256:01c34df5ff13821e3bf18733b3882957025f4d12f364071e1050de9a1b3097d9",
+            "previousRecordHash": "b9275d116a075bc0a07498e7d92c6da025d560ec4df79be8e7b064522d2a6553",
+            "recordHash": "6d88f7745c5ffea94513bc05aec9fa6d2bc7888d6dc9705f4f33166eb0a8e6f4",
+            "recordType": "template_selection_result",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 3
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"canonicalAccount\":{\"arr\":260000.0,\"canonicalName\":\"Curefoods\",\"domain\":\"curefoods.com\",\"industry\":\"Foodtech\",\"normalizedName\":\"curefoods\",\"owner\":\"A. Rao\",\"region\":\"India\",\"sourceRecordIds\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"ventureOsId\":\"VOS-CUREFOODS\"},\"evidenceRefs\":[{\"matchedValue\":\"duns=8899-CF\",\"signalType\":\"crosswalk\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.5},{\"matchedValue\":\"curefoods.com\",\"signalType\":\"domain\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.3},{\"matchedValue\":\"curefoods\",\"signalType\":\"name\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.2}],\"selectedTemplateId\":\"support-escalation-sequential-v1\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:00Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-b0b0e3fe737e89fc",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:00Z",
+            "payloadHash": "sha256:f7c7604e6887e3303a2564c15fad8a8a88c686add3820dccfc0647cecf67f7c0",
+            "previousRecordHash": "6d88f7745c5ffea94513bc05aec9fa6d2bc7888d6dc9705f4f33166eb0a8e6f4",
+            "recordHash": "471f234ea2c457c0773d2c3b216844f54aa0128a6eb5eafbf93fc24df1844b20",
+            "recordType": "mission_opened",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 4
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-completed_support_escalation\",\"eventId\":\"EVT-44359548b076\",\"eventType\":\"begin_gathering\",\"fromState\":\"opened\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:05Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"gathering\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:05Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-5bc50125fd059f7f",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:05Z",
+            "payloadHash": "sha256:ceb4ac9df4a4e09d25cc48e109be84175deeb73df03aecebcfadd2b272ad9679",
+            "previousRecordHash": "471f234ea2c457c0773d2c3b216844f54aa0128a6eb5eafbf93fc24df1844b20",
+            "recordHash": "b322bd4ac2fc00677f8752e40f745d4f6dde337088b3912ff4691b42abf5ef45",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 5
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-completed_support_escalation\",\"eventId\":\"EVT-3a5796bffaaf\",\"eventType\":\"propose\",\"fromState\":\"gathering\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:10Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"proposed\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:10Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-5df382905065ea56",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:10Z",
+            "payloadHash": "sha256:7b742d68a2629a0435ec73c1b9dc1388066a6bc60996f28a52bacfbbd7c61a03",
+            "previousRecordHash": "b322bd4ac2fc00677f8752e40f745d4f6dde337088b3912ff4691b42abf5ef45",
+            "recordHash": "a2f4bc19d0dfc70dfeb3915bbf5aa28941cd2bd32a860bb1d1b17b26b331a682",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 6
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-completed_support_escalation\",\"eventId\":\"EVT-b74729b6e9d4\",\"eventType\":\"begin_verification\",\"fromState\":\"proposed\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:15Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"verifying\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:15Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-53ebe4d87fd9b7e9",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:15Z",
+            "payloadHash": "sha256:928b49af6936f36e38853480531641bff2d04f74b40220edbc0a2fe154a3613f",
+            "previousRecordHash": "a2f4bc19d0dfc70dfeb3915bbf5aa28941cd2bd32a860bb1d1b17b26b331a682",
+            "recordHash": "c5b50013fc36c5a2ec2db19893888a4eb601ab0a737c90d923a6c797d30fab29",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 7
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"checks\":[{\"detail\":\"canonical account resolved\",\"name\":\"identity_resolved\",\"passed\":true},{\"detail\":\"required evidence present\",\"name\":\"evidence_sufficient\",\"passed\":true},{\"detail\":\"policy validation\",\"name\":\"policy_passed\",\"passed\":true}],\"status\":\"verified\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:20Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-25f008ec09efa59f",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:20Z",
+            "payloadHash": "sha256:0404be97305fb734935e83a59c163346da3a9c6354721ab0f1eb56b6ed472b0d",
+            "previousRecordHash": "c5b50013fc36c5a2ec2db19893888a4eb601ab0a737c90d923a6c797d30fab29",
+            "recordHash": "fd781a5c4007f5ed790760de3d8737f6f454bd789e1554a450f285342a18592f",
+            "recordType": "verification_result",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 8
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-completed_support_escalation\",\"eventId\":\"EVT-ec69d5b65748\",\"eventType\":\"verification_passed\",\"fromState\":\"verifying\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:25Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"verified\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:25Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-b0c037cfbc53d9db",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:25Z",
+            "payloadHash": "sha256:499289cc4182e74e5ae2756807947579fed83dca442e5c866c25376197809859",
+            "previousRecordHash": "fd781a5c4007f5ed790760de3d8737f6f454bd789e1554a450f285342a18592f",
+            "recordHash": "6daa72864b6ee370de636d4c2656a2195f81cc6932b165b001e332ae3684453b",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 9
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"actionPayloadHash\":\"sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a\",\"actionPayloadRef\":\"payload://M-SUPPORT-1/REC-M-SUPPORT-1\",\"actionType\":\"support_escalation\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"permittedActions\":[\"simulate_support_escalation\",\"simulate_stakeholder_brief\"],\"prompt\":\"Approve simulated support_escalation for Curefoods?\",\"recommendationId\":\"REC-M-SUPPORT-1\",\"requiresHumanApproval\":true,\"schemaVersion\":\"1.0\",\"simulated\":true,\"verificationRef\":\"verify://M-SUPPORT-1\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:30Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-e31b11bd76e25bd1",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:30Z",
+            "payloadHash": "sha256:8bc8e19f36dd79c27e64ad20fb39e5e4fbe4ddda8aa04f752f1b5471d82c0ffb",
+            "previousRecordHash": "6daa72864b6ee370de636d4c2656a2195f81cc6932b165b001e332ae3684453b",
+            "recordHash": "11c3ada4907ea1bc73106c2985defb9ffa1e8080497f7c0e8024ed17087b335e",
+            "recordType": "approval_request",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 10
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-completed_support_escalation\",\"eventId\":\"EVT-4c02d4245652\",\"eventType\":\"request_approval\",\"fromState\":\"verified\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:25Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"awaiting_approval\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:25Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-b67ba31f206a5f23",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:25Z",
+            "payloadHash": "sha256:4c23063b482003557047b2ee858755eb9a2834ec99ea3d2e7c2c484c50d70d52",
+            "previousRecordHash": "11c3ada4907ea1bc73106c2985defb9ffa1e8080497f7c0e8024ed17087b335e",
+            "recordHash": "2925ff430c2ab37d25db50211f28ba80cefca98f1e8bccbcf5fa67569b55181b",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 11
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"actorRole\":\"manager\",\"approvedActionRef\":\"payload://M-SUPPORT-1/REC-M-SUPPORT-1\",\"approvedPayloadHash\":\"sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a\",\"channel\":\"screen\",\"confirmToken\":\"confirm-1\",\"decidedAt\":\"2026-07-14T10:00:35Z\",\"decisionId\":\"DEC-M-SUPPORT-1\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"outcome\":\"approved\",\"reason\":null,\"schemaVersion\":\"1.0\",\"simulated\":true}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:35Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-18006e5ae7c747d4",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:35Z",
+            "payloadHash": "sha256:a02f9c8f8275947094643c87c2f4d54ead3f789e5d95ffdce4b05b27f50b0ac3",
+            "previousRecordHash": "2925ff430c2ab37d25db50211f28ba80cefca98f1e8bccbcf5fa67569b55181b",
+            "recordHash": "d542a9e26b61a4e0169d30443edb688fb72e761895c3f6b7779a2b56ea674422",
+            "recordType": "approval_decision",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 12
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-completed_support_escalation\",\"eventId\":\"EVT-faf9dfa681ef\",\"eventType\":\"approve\",\"fromState\":\"awaiting_approval\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:35Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"approved\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:35Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-dbf56ae5ecf389d1",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:35Z",
+            "payloadHash": "sha256:97285b32f4efc1b4dead51ac5dd0f2f41b7a53e2718eff0fb5005c0f2440c352",
+            "previousRecordHash": "d542a9e26b61a4e0169d30443edb688fb72e761895c3f6b7779a2b56ea674422",
+            "recordHash": "0273cdcd12b7d830e53e316ca22f4b7892406ed13d65a3f581a45d2e5400e63a",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 13
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actionType\":\"support_escalation\",\"afterState\":{\"proposals\":2,\"support_stage\":\"escalation_prepared\"},\"approvedPayloadHash\":\"sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a\",\"auditRef\":\"audit://M-SUPPORT-1/REC-M-SUPPORT-1\",\"beforeState\":{\"support_stage\":\"escalation_requested\"},\"createdAt\":\"2026-07-14T10:00:40Z\",\"details\":{\"follow_up_task_proposal\":{\"owner_role\":\"support_engineer\",\"title\":\"Follow up on escalated support case for Curefoods\",\"type\":\"task\",\"write\":false},\"internal_escalation_proposal\":{\"notify_external\":false,\"severity\":\"high\",\"to_role\":\"support_lead\",\"type\":\"internal_escalation\"}},\"missionId\":\"M-SUPPORT-1\",\"receiptId\":\"RCP-eb5c33ff65e8\",\"recommendationId\":\"REC-M-SUPPORT-1\",\"schemaVersion\":\"1.0\",\"simulated\":true,\"summary\":\"Prepared simulated support-escalation package for Curefoods.\",\"targetId\":\"VOS-CUREFOODS\",\"targetType\":\"account\",\"toolId\":\"simulate_support_escalation\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:40Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-2547fee47f83c121",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:40Z",
+            "payloadHash": "sha256:937e1b29670bb1ad0ac27744412cbe56c3265bdd84abbd5efcd3825739c34fc2",
+            "previousRecordHash": "0273cdcd12b7d830e53e316ca22f4b7892406ed13d65a3f581a45d2e5400e63a",
+            "recordHash": "29498269ee26a20a9931cb439dab51bb1081bb53f98e34b27729ca80e3a7ab42",
+            "recordType": "simulated_action_receipt",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 14
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-completed_support_escalation\",\"eventId\":\"EVT-b0c235414c82\",\"eventType\":\"execute_simulated\",\"fromState\":\"approved\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:40Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"simulated_executed\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:40Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-cea86626017e70ac",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:40Z",
+            "payloadHash": "sha256:b04a84a5266f61fb896fefefdcd63fec3950ca41810b9db76c75db84179211b7",
+            "previousRecordHash": "29498269ee26a20a9931cb439dab51bb1081bb53f98e34b27729ca80e3a7ab42",
+            "recordHash": "258bc47d378fe3158c6c311df636f484973c67835147cc5958b0cb60cca3c437",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 15
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"checks\":[{\"detail\":\"sandbox produced a simulated receipt\",\"name\":\"simulated_effect_present\",\"passed\":true}],\"status\":\"verified\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:45Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-e76e75d6cbb010dc",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:45Z",
+            "payloadHash": "sha256:c6ecb33194a49d9bd519b1bbcc5702b6b5803a4e0f71f6267d2e8449fe7694a0",
+            "previousRecordHash": "258bc47d378fe3158c6c311df636f484973c67835147cc5958b0cb60cca3c437",
+            "recordHash": "67fec10d2046f1c784251f653715f42361123048d8af5b853c18235dd9ca63f2",
+            "recordType": "outcome_verification",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 16
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-completed_support_escalation\",\"eventId\":\"EVT-232de8d4480e\",\"eventType\":\"verify_outcome\",\"fromState\":\"simulated_executed\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:45Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"verified_outcome\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:45Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-8332fc41d9dd9b6a",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:45Z",
+            "payloadHash": "sha256:4c51e3df690c5b734dbc5022227dd010bd82b50a826825b6e13ec0564ec994dc",
+            "previousRecordHash": "67fec10d2046f1c784251f653715f42361123048d8af5b853c18235dd9ca63f2",
+            "recordHash": "6c4439c933c506702ce9ae2a3769c43db12512f518dc871812332b30d2b369f3",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 17
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"outcomeStatus\":\"simulated\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:50Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-709f45a5bb470b45",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:50Z",
+            "payloadHash": "sha256:da4ea6087171595ae659b7808c5d0d0f5ad9eb1669577183fe571d0ca9562607",
+            "previousRecordHash": "6c4439c933c506702ce9ae2a3769c43db12512f518dc871812332b30d2b369f3",
+            "recordHash": "e4218664a8dbf79857f733bd1a97f10615b142cbee1cd9fe6cd5ad5f06a707ea",
+            "recordType": "mission_closed",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 18
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-completed_support_escalation\",\"eventId\":\"EVT-c9eaeb440940\",\"eventType\":\"close\",\"fromState\":\"verified_outcome\",\"missionId\":\"M-SUPPORT-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:50Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"closed\"}",
+            "correlationId": "CORR-completed_support_escalation",
+            "createdAt": "2026-07-14T10:00:50Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-c7dcded693610406",
+            "missionId": "M-SUPPORT-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:50Z",
+            "payloadHash": "sha256:6cf05ebf7b878e35a552f279a6ff7b653e777f9df81e156a4dca0e7baaa60b10",
+            "previousRecordHash": "e4218664a8dbf79857f733bd1a97f10615b142cbee1cd9fe6cd5ad5f06a707ea",
+            "recordHash": "24f41deca3e422c21897e5b6e879c76b252ba1ff7703ad75a4221d888f2f5a31",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 19
+          }
+        ],
+        "schemaVersion": "1.0",
+        "selectedTemplateId": "support-escalation-sequential-v1",
+        "templateSelection": {
+          "agents": [],
+          "blocked": false,
+          "isFallback": false,
+          "matchedRuleId": "R2_support_escalation_critical",
+          "matchedRules": [
+            "R2_support_escalation_critical"
+          ],
+          "permittedActions": [],
+          "rationale": "Signal indicates a critical/high support escalation -> support-escalation-sequential-v1 (sequential chain).",
+          "selectedTemplateId": "support-escalation-sequential-v1",
+          "tools": []
+        },
+        "verificationResults": [
+          {
+            "checks": [
+              {
+                "detail": "canonical account resolved",
+                "name": "identity_resolved",
+                "passed": true
+              },
+              {
+                "detail": "required evidence present",
+                "name": "evidence_sufficient",
+                "passed": true
+              },
+              {
+                "detail": "policy validation",
+                "name": "policy_passed",
+                "passed": true
+              }
+            ],
+            "status": "verified"
+          },
+          {
+            "checks": [
+              {
+                "detail": "sandbox produced a simulated receipt",
+                "name": "simulated_effect_present",
+                "passed": true
+              }
+            ],
+            "status": "verified"
+          }
+        ]
+      },
+      "auditChainValid": true,
+      "canonicalAccount": {
+        "arr": 260000.0,
+        "canonicalName": "Curefoods",
+        "domain": "curefoods.com",
+        "industry": "Foodtech",
+        "normalizedName": "curefoods",
+        "owner": "A. Rao",
+        "region": "India",
+        "sourceRecordIds": [
+          "dynamics:DY-7777",
+          "hubspot:HS-1001",
+          "salesforce:SF-5555"
+        ],
+        "ventureOsId": "VOS-CUREFOODS"
+      },
+      "executionEligible": true,
+      "failureCode": null,
+      "finalStatus": "passed",
+      "identityResolutionStatus": "resolved",
+      "lifecycleEvents": [
+        {
+          "actor": "amit",
+          "correlationId": "CORR-completed_support_escalation",
+          "eventId": "EVT-44359548b076",
+          "eventType": "begin_gathering",
+          "fromState": "opened",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:05Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "gathering"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-completed_support_escalation",
+          "eventId": "EVT-3a5796bffaaf",
+          "eventType": "propose",
+          "fromState": "gathering",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:10Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "proposed"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-completed_support_escalation",
+          "eventId": "EVT-b74729b6e9d4",
+          "eventType": "begin_verification",
+          "fromState": "proposed",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:15Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "verifying"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-completed_support_escalation",
+          "eventId": "EVT-ec69d5b65748",
+          "eventType": "verification_passed",
+          "fromState": "verifying",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:25Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "verified"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-completed_support_escalation",
+          "eventId": "EVT-4c02d4245652",
+          "eventType": "request_approval",
+          "fromState": "verified",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:25Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "awaiting_approval"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-completed_support_escalation",
+          "eventId": "EVT-faf9dfa681ef",
+          "eventType": "approve",
+          "fromState": "awaiting_approval",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:35Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "approved"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-completed_support_escalation",
+          "eventId": "EVT-b0c235414c82",
+          "eventType": "execute_simulated",
+          "fromState": "approved",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:40Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "simulated_executed"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-completed_support_escalation",
+          "eventId": "EVT-232de8d4480e",
+          "eventType": "verify_outcome",
+          "fromState": "simulated_executed",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:45Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "verified_outcome"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-completed_support_escalation",
+          "eventId": "EVT-c9eaeb440940",
+          "eventType": "close",
+          "fromState": "verified_outcome",
+          "missionId": "M-SUPPORT-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:50Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "closed"
+        }
+      ],
+      "lifecycleStatus": "closed",
+      "missionId": "M-SUPPORT-1",
+      "missionPlan": {
+        "budgets": {
+          "maxCost": 0.5,
+          "maxRetries": 2,
+          "maxRuntimeMs": 45000
+        },
+        "missionDefinition": {
+          "canonicalAccount": {
+            "canonicalName": "Curefoods",
+            "ventureOsId": "VOS-CUREFOODS"
+          },
+          "constraints": [],
+          "expectedOutcome": "Approved simulated support_escalation action for Curefoods.",
+          "missionId": "M-SUPPORT-1",
+          "missionType": "support_escalation",
+          "objective": "Escalate a critical support situation through a strict sequential chain with governed action prep and stakeholder communication.",
+          "permittedActions": [
+            "simulate_support_escalation",
+            "simulate_stakeholder_brief"
+          ],
+          "rationale": "Signal SIG-SUP-1 selected template support-escalation-sequential-v1 for Curefoods.",
+          "requiredEvidence": [
+            {
+              "category": "support_history",
+              "mandatory": true
+            },
+            {
+              "category": "account_health",
+              "mandatory": true
+            }
+          ],
+          "requiresHumanApproval": true,
+          "riskLevel": "critical",
+          "schemaVersion": "1.0",
+          "selectedTemplateId": "support-escalation-sequential-v1",
+          "successCriteria": [
+            {
+              "criterionId": "SC1",
+              "description": "support_escalation mission objective prepared and approved for Curefoods.",
+              "measurementType": "boolean",
+              "target": "true"
+            }
+          ],
+          "triggerSignalId": "SIG-SUP-1"
+        },
+        "missionId": "M-SUPPORT-1",
+        "requiresHumanApproval": true,
+        "tasks": [
+          {
+            "agentId": "signal_ingestion",
+            "agentName": "Signal Ingestion Agent",
+            "dependsOn": [],
+            "orderIndex": 0,
+            "stepId": "ingest",
+            "taskId": "M-SUPPORT-1:ingest",
+            "toolIds": []
+          },
+          {
+            "agentId": "account_health",
+            "agentName": "Account Health Agent",
+            "dependsOn": [
+              "M-SUPPORT-1:ingest"
+            ],
+            "orderIndex": 1,
+            "stepId": "health",
+            "taskId": "M-SUPPORT-1:health",
+            "toolIds": []
+          },
+          {
+            "agentId": "governance",
+            "agentName": "Governance Agent",
+            "dependsOn": [
+              "M-SUPPORT-1:health"
+            ],
+            "orderIndex": 2,
+            "stepId": "governance",
+            "taskId": "M-SUPPORT-1:governance",
+            "toolIds": []
+          },
+          {
+            "agentId": "action",
+            "agentName": "Action Agent",
+            "dependsOn": [
+              "M-SUPPORT-1:governance"
+            ],
+            "orderIndex": 3,
+            "stepId": "action",
+            "taskId": "M-SUPPORT-1:action",
+            "toolIds": [
+              "simulate_support_escalation"
+            ]
+          },
+          {
+            "agentId": "communication",
+            "agentName": "Communication Agent",
+            "dependsOn": [
+              "M-SUPPORT-1:action"
+            ],
+            "orderIndex": 4,
+            "stepId": "communicate",
+            "taskId": "M-SUPPORT-1:communicate",
+            "toolIds": [
+              "simulate_stakeholder_brief"
+            ]
+          }
+        ],
+        "templateId": "support-escalation-sequential-v1",
+        "topology": "sequential"
+      },
+      "missionVersion": "v1",
+      "outcomeVerification": {
+        "checks": [
+          {
+            "detail": "sandbox produced a simulated receipt",
+            "name": "simulated_effect_present",
+            "passed": true
+          }
+        ],
+        "status": "verified"
+      },
+      "policyValidation": {
+        "errorCodes": [],
+        "errors": [],
+        "executionEligible": true,
+        "passed": true,
+        "warnings": []
+      },
+      "resultHash": "sha256:860a778d36357b268471a7802cfb1f75ff465c328133087e0a9a539556da3e01",
+      "scenarioId": "support-escalation-happy-path",
+      "schemaVersion": "1.0",
+      "scorecard": {
+        "approvalRequired": true,
+        "approvalValid": true,
+        "auditChainValid": true,
+        "auditComplete": true,
+        "deterministicOutput": true,
+        "evidencePresent": true,
+        "identityResolved": true,
+        "lifecycleValid": true,
+        "noExternalAction": true,
+        "payloadBindingValid": true,
+        "policyPassed": true,
+        "provenancePresent": true,
+        "simulatedOnly": true,
+        "templateSelected": true,
+        "verificationPassed": true
+      },
+      "selectedTemplateId": "support-escalation-sequential-v1",
+      "selectorExplanation": "Signal indicates a critical/high support escalation -> support-escalation-sequential-v1 (sequential chain).",
+      "simulatedActionReceipt": {
+        "actionType": "support_escalation",
+        "afterState": {
+          "proposals": 2,
+          "support_stage": "escalation_prepared"
+        },
+        "approvedPayloadHash": "sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a",
+        "auditRef": "audit://M-SUPPORT-1/REC-M-SUPPORT-1",
+        "beforeState": {
+          "support_stage": "escalation_requested"
+        },
+        "createdAt": "2026-07-14T10:00:40Z",
+        "details": {
+          "follow_up_task_proposal": {
+            "owner_role": "support_engineer",
+            "title": "Follow up on escalated support case for Curefoods",
+            "type": "task",
+            "write": false
+          },
+          "internal_escalation_proposal": {
+            "notify_external": false,
+            "severity": "high",
+            "to_role": "support_lead",
+            "type": "internal_escalation"
+          }
+        },
+        "missionId": "M-SUPPORT-1",
+        "receiptId": "RCP-eb5c33ff65e8",
+        "recommendationId": "REC-M-SUPPORT-1",
+        "schemaVersion": "1.0",
+        "simulated": true,
+        "summary": "Prepared simulated support-escalation package for Curefoods.",
+        "targetId": "VOS-CUREFOODS",
+        "targetType": "account",
+        "toolId": "simulate_support_escalation"
+      },
+      "verificationSummary": {
+        "checks": [
+          {
+            "detail": "canonical account resolved",
+            "name": "identity_resolved",
+            "passed": true
+          },
+          {
+            "detail": "required evidence present",
+            "name": "evidence_sufficient",
+            "passed": true
+          },
+          {
+            "detail": "policy validation",
+            "name": "policy_passed",
+            "passed": true
+          }
+        ],
+        "status": "verified"
+      }
+    },
+    "missionExecutionPayload": {
+      "approvalRequest": {
+        "actionPayloadHash": "sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a",
+        "actionPayloadRef": "payload://M-SUPPORT-1/REC-M-SUPPORT-1",
+        "actionType": "support_escalation",
+        "missionId": "M-SUPPORT-1",
+        "missionVersion": "v1",
+        "permittedActions": [
+          "simulate_support_escalation",
+          "simulate_stakeholder_brief"
+        ],
+        "prompt": "Approve simulated support_escalation for Curefoods?",
+        "recommendationId": "REC-M-SUPPORT-1",
+        "requiresHumanApproval": true,
+        "schemaVersion": "1.0",
+        "simulated": true,
+        "verificationRef": "verify://M-SUPPORT-1"
+      },
+      "auditRef": "audit://M-SUPPORT-1/REC-M-SUPPORT-1",
+      "canonicalAccount": {
+        "canonicalName": "Curefoods",
+        "ventureOsId": "VOS-CUREFOODS"
+      },
+      "evidenceRefs": [
+        {
+          "category": "support_history",
+          "recordId": "evidence://M-SUPPORT-1/support_history",
+          "source": "mission-audit",
+          "summary": "mandatory evidence: support_history"
+        },
+        {
+          "category": "account_health",
+          "recordId": "evidence://M-SUPPORT-1/account_health",
+          "source": "mission-audit",
+          "summary": "mandatory evidence: account_health"
+        }
+      ],
+      "intent": "next_step",
+      "missionDefinition": {
+        "expectedOutcome": "Approved simulated support_escalation action for Curefoods.",
+        "missionType": "support_escalation",
+        "objective": "Escalate a critical support situation through a strict sequential chain with governed action prep and stakeholder communication.",
+        "rationale": "Signal SIG-SUP-1 selected template support-escalation-sequential-v1 for Curefoods.",
+        "riskLevel": "critical",
+        "selectedTemplateId": "support-escalation-sequential-v1",
+        "successCriteria": [
+          {
+            "criterionId": "SC1",
+            "description": "support_escalation mission objective prepared and approved for Curefoods."
+          }
+        ]
+      },
+      "missionId": "M-SUPPORT-1",
+      "missionState": "closed",
+      "permittedActions": [
+        "simulate_support_escalation",
+        "simulate_stakeholder_brief"
+      ],
+      "personaId": "persona-support_escalation",
+      "recommendation": {
+        "accountId": "VOS-CUREFOODS",
+        "actionType": "support_escalation",
+        "confidenceScore": 1.0,
+        "governanceStatus": "approved",
+        "ledgerId": "decisionLedger://unlinked/M-SUPPORT-1",
+        "priorityRank": 1,
+        "recommendationId": "REC-M-SUPPORT-1",
+        "requiresHumanApproval": true
+      },
+      "retrievalQuery": {
+        "categories": null,
+        "limit": 5,
+        "subjectId": "VOS-CUREFOODS"
+      },
+      "schemaVersion": "1.0",
+      "selectedTemplateId": "support-escalation-sequential-v1",
+      "simulated": true,
+      "turnIndex": 0,
+      "verification": {
+        "checks": [
+          {
+            "detail": "canonical account resolved",
+            "name": "identity_resolved",
+            "passed": true
+          },
+          {
+            "detail": "required evidence present",
+            "name": "evidence_sufficient",
+            "passed": true
+          },
+          {
+            "detail": "policy validation",
+            "name": "policy_passed",
+            "passed": true
+          }
+        ],
+        "status": "verified"
+      },
+      "verificationRef": "verify://M-SUPPORT-1"
+    },
+    "requestId": "REQ-completed_support_escalation",
+    "resultHash": "sha256:90116cf7efdf736cb8e3576eb5931226178bc4ca0f80964ff0fbbf6bc5e6d2cd",
+    "schemaVersion": "1.0",
+    "serviceErrors": [],
+    "status": "completed",
+    "warnings": []
+  }
+}

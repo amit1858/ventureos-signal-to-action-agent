@@ -1,0 +1,71 @@
+{
+  "description": "An internal fault is translated into a BFF-safe internal_service_failure error carrying only a coarse error category (no trace, no path, no SQL).",
+  "name": "error_internal_safe_failure",
+  "request": {
+    "actor": "amit",
+    "actorRole": "manager",
+    "approval": "approved",
+    "approvalChannel": "screen",
+    "correlationId": "CORR-error_internal_safe_failure",
+    "idempotencyKey": "IDEMP-M-RENEWAL-1-internal",
+    "injectPayloadMismatch": false,
+    "injectedTimestamps": {
+      "approval_decision": "2026-07-14T10:00:35Z",
+      "approval_request": "2026-07-14T10:00:30Z",
+      "blocked": "2026-07-14T09:59:59Z",
+      "closed": "2026-07-14T10:00:50Z",
+      "default": "2026-07-14T10:00:00Z",
+      "execution": "2026-07-14T10:00:40Z",
+      "gathering": "2026-07-14T10:00:05Z",
+      "identity": "2026-07-14T09:59:50Z",
+      "intake": "2026-07-14T09:59:45Z",
+      "opened": "2026-07-14T10:00:00Z",
+      "outcome": "2026-07-14T10:00:45Z",
+      "proposed": "2026-07-14T10:00:10Z",
+      "selection": "2026-07-14T09:59:55Z",
+      "verification": "2026-07-14T10:00:20Z",
+      "verified": "2026-07-14T10:00:25Z",
+      "verifying": "2026-07-14T10:00:15Z"
+    },
+    "missionId": "M-INTERNAL-SAFE-1",
+    "missionVersion": "v1",
+    "outputMode": "full",
+    "protectedDecisionRef": null,
+    "replayExecution": false,
+    "requestId": "REQ-error_internal_safe_failure",
+    "requestRevisionAfterBlock": false,
+    "scenarioId": "renewal-risk-happy-path",
+    "schemaVersion": "1.0",
+    "signals": {
+      "mission_type": "renewal_risk",
+      "severity": "high",
+      "signal_id": "SIG-REN-1",
+      "signal_type": "renewal_risk"
+    },
+    "sourceRecords": null,
+    "verificationOutcome": "verified"
+  },
+  "response": {
+    "correlationId": "CORR-error_internal_safe_failure",
+    "executionEligible": false,
+    "ledgerReference": null,
+    "missionEvaluationResult": null,
+    "missionExecutionPayload": null,
+    "requestId": "REQ-error_internal_safe_failure",
+    "resultHash": "sha256:e6f0095ce9056af8fb891a8050b8ec65535c7001491764522112b614f44cb61f",
+    "schemaVersion": "1.0",
+    "serviceErrors": [
+      {
+        "code": "internal_service_failure",
+        "details": {
+          "errorType": "ProgrammingError"
+        },
+        "message": "An internal service error occurred.",
+        "retryable": false,
+        "stage": "service"
+      }
+    ],
+    "status": "failed",
+    "warnings": []
+  }
+}

@@ -1,0 +1,965 @@
+{
+  "description": "A verified mission whose human approval is rejected: status rejected, no executable payload.",
+  "name": "rejected_approval",
+  "request": {
+    "actor": "amit",
+    "actorRole": "manager",
+    "approval": "rejected",
+    "approvalChannel": "screen",
+    "correlationId": "CORR-rejected_approval",
+    "idempotencyKey": "IDEMP-M-REJECTED-1",
+    "injectPayloadMismatch": false,
+    "injectedTimestamps": {
+      "approval_decision": "2026-07-14T10:00:35Z",
+      "approval_request": "2026-07-14T10:00:30Z",
+      "blocked": "2026-07-14T09:59:59Z",
+      "closed": "2026-07-14T10:00:50Z",
+      "default": "2026-07-14T10:00:00Z",
+      "execution": "2026-07-14T10:00:40Z",
+      "gathering": "2026-07-14T10:00:05Z",
+      "identity": "2026-07-14T09:59:50Z",
+      "intake": "2026-07-14T09:59:45Z",
+      "opened": "2026-07-14T10:00:00Z",
+      "outcome": "2026-07-14T10:00:45Z",
+      "proposed": "2026-07-14T10:00:10Z",
+      "selection": "2026-07-14T09:59:55Z",
+      "verification": "2026-07-14T10:00:20Z",
+      "verified": "2026-07-14T10:00:25Z",
+      "verifying": "2026-07-14T10:00:15Z"
+    },
+    "missionId": "M-REJECTED-1",
+    "missionVersion": "v1",
+    "outputMode": "full",
+    "protectedDecisionRef": null,
+    "replayExecution": false,
+    "requestId": "REQ-rejected_approval",
+    "requestRevisionAfterBlock": false,
+    "scenarioId": "approval-rejected",
+    "schemaVersion": "1.0",
+    "signals": {
+      "mission_type": "renewal_risk",
+      "severity": "high",
+      "signal_id": "SIG-REJ-1",
+      "signal_type": "renewal_risk"
+    },
+    "sourceRecords": null,
+    "verificationOutcome": "verified"
+  },
+  "response": {
+    "correlationId": "CORR-rejected_approval",
+    "executionEligible": false,
+    "ledgerReference": {
+      "chainValid": true,
+      "latestLedgerRecordId": "LR-8dc2bdec4393d80d",
+      "missionId": "M-REJECTED-1",
+      "recordCount": 13
+    },
+    "missionEvaluationResult": {
+      "approvalDecision": {
+        "actor": "amit",
+        "actorRole": "manager",
+        "approvedActionRef": "payload://M-REJECTED-1/REC-M-REJECTED-1",
+        "approvedPayloadHash": "sha256:f0d8d0cde7ce8cfa8db9729d839b23494e66d2dfb4a5d80a0f0590674dddfb87",
+        "channel": "screen",
+        "confirmToken": null,
+        "decidedAt": "2026-07-14T10:00:35Z",
+        "decisionId": "DEC-M-REJECTED-1",
+        "missionId": "M-REJECTED-1",
+        "missionVersion": "v1",
+        "outcome": "rejected",
+        "reason": "declined by approver",
+        "schemaVersion": "1.0",
+        "simulated": true
+      },
+      "approvalRequest": {
+        "actionPayloadHash": "sha256:f0d8d0cde7ce8cfa8db9729d839b23494e66d2dfb4a5d80a0f0590674dddfb87",
+        "actionPayloadRef": "payload://M-REJECTED-1/REC-M-REJECTED-1",
+        "actionType": "renewal_outreach",
+        "missionId": "M-REJECTED-1",
+        "missionVersion": "v1",
+        "permittedActions": [
+          "simulate_renewal_outreach",
+          "simulate_stakeholder_brief"
+        ],
+        "prompt": "Approve simulated renewal_outreach for Curefoods?",
+        "recommendationId": "REC-M-REJECTED-1",
+        "requiresHumanApproval": true,
+        "schemaVersion": "1.0",
+        "simulated": true,
+        "verificationRef": "verify://M-REJECTED-1"
+      },
+      "auditBundle": {
+        "actionReceipt": null,
+        "approvalDecision": {
+          "actor": "amit",
+          "actorRole": "manager",
+          "approvedActionRef": "payload://M-REJECTED-1/REC-M-REJECTED-1",
+          "approvedPayloadHash": "sha256:f0d8d0cde7ce8cfa8db9729d839b23494e66d2dfb4a5d80a0f0590674dddfb87",
+          "channel": "screen",
+          "confirmToken": null,
+          "decidedAt": "2026-07-14T10:00:35Z",
+          "decisionId": "DEC-M-REJECTED-1",
+          "missionId": "M-REJECTED-1",
+          "missionVersion": "v1",
+          "outcome": "rejected",
+          "reason": "declined by approver",
+          "schemaVersion": "1.0",
+          "simulated": true
+        },
+        "approvalRequest": {
+          "actionPayloadHash": "sha256:f0d8d0cde7ce8cfa8db9729d839b23494e66d2dfb4a5d80a0f0590674dddfb87",
+          "actionPayloadRef": "payload://M-REJECTED-1/REC-M-REJECTED-1",
+          "actionType": "renewal_outreach",
+          "missionId": "M-REJECTED-1",
+          "missionVersion": "v1",
+          "permittedActions": [
+            "simulate_renewal_outreach",
+            "simulate_stakeholder_brief"
+          ],
+          "prompt": "Approve simulated renewal_outreach for Curefoods?",
+          "recommendationId": "REC-M-REJECTED-1",
+          "requiresHumanApproval": true,
+          "schemaVersion": "1.0",
+          "simulated": true,
+          "verificationRef": "verify://M-REJECTED-1"
+        },
+        "blocked": null,
+        "canonicalAccount": {
+          "arr": 260000.0,
+          "canonicalName": "Curefoods",
+          "domain": "curefoods.com",
+          "industry": "Foodtech",
+          "normalizedName": "curefoods",
+          "owner": "A. Rao",
+          "region": "India",
+          "sourceRecordIds": [
+            "dynamics:DY-7777",
+            "hubspot:HS-1001",
+            "salesforce:SF-5555"
+          ],
+          "ventureOsId": "VOS-CUREFOODS"
+        },
+        "chain": {
+          "brokenAtSequence": null,
+          "detail": "chain valid",
+          "length": 13,
+          "valid": true
+        },
+        "decisionLedgerRef": null,
+        "evidenceRefs": [
+          {
+            "matchedValue": "duns=8899-CF",
+            "signalType": "crosswalk",
+            "sourceRecords": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "weight": 0.5
+          },
+          {
+            "matchedValue": "curefoods.com",
+            "signalType": "domain",
+            "sourceRecords": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "weight": 0.3
+          },
+          {
+            "matchedValue": "curefoods",
+            "signalType": "name",
+            "sourceRecords": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "weight": 0.2
+          }
+        ],
+        "failureCode": null,
+        "identityResolution": {
+          "blockReason": null,
+          "blocked": false,
+          "canonicalAccount": {
+            "arr": 260000.0,
+            "canonicalName": "Curefoods",
+            "domain": "curefoods.com",
+            "industry": "Foodtech",
+            "normalizedName": "curefoods",
+            "owner": "A. Rao",
+            "region": "India",
+            "sourceRecordIds": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "ventureOsId": "VOS-CUREFOODS"
+          },
+          "clustersFound": 1,
+          "confidence": 1.0,
+          "conflicts": [
+            {
+              "field": "industry",
+              "values": [
+                {
+                  "sourceRecordId": "DY-7777",
+                  "sourceSystem": "dynamics",
+                  "value": "Food & Beverage"
+                },
+                {
+                  "sourceRecordId": "HS-1001",
+                  "sourceSystem": "hubspot",
+                  "value": "Food & Beverage"
+                },
+                {
+                  "sourceRecordId": "SF-5555",
+                  "sourceSystem": "salesforce",
+                  "value": "Foodtech"
+                }
+              ]
+            },
+            {
+              "field": "region",
+              "values": [
+                {
+                  "sourceRecordId": "HS-1001",
+                  "sourceSystem": "hubspot",
+                  "value": "APAC"
+                },
+                {
+                  "sourceRecordId": "SF-5555",
+                  "sourceSystem": "salesforce",
+                  "value": "India"
+                }
+              ]
+            },
+            {
+              "field": "arr",
+              "values": [
+                {
+                  "sourceRecordId": "DY-7777",
+                  "sourceSystem": "dynamics",
+                  "value": "250000.0"
+                },
+                {
+                  "sourceRecordId": "HS-1001",
+                  "sourceSystem": "hubspot",
+                  "value": "250000.0"
+                },
+                {
+                  "sourceRecordId": "SF-5555",
+                  "sourceSystem": "salesforce",
+                  "value": "260000.0"
+                }
+              ]
+            }
+          ],
+          "evidence": [
+            {
+              "matchedValue": "duns=8899-CF",
+              "signalType": "crosswalk",
+              "sourceRecords": [
+                "dynamics:DY-7777",
+                "hubspot:HS-1001",
+                "salesforce:SF-5555"
+              ],
+              "weight": 0.5
+            },
+            {
+              "matchedValue": "curefoods.com",
+              "signalType": "domain",
+              "sourceRecords": [
+                "dynamics:DY-7777",
+                "hubspot:HS-1001",
+                "salesforce:SF-5555"
+              ],
+              "weight": 0.3
+            },
+            {
+              "matchedValue": "curefoods",
+              "signalType": "name",
+              "sourceRecords": [
+                "dynamics:DY-7777",
+                "hubspot:HS-1001",
+                "salesforce:SF-5555"
+              ],
+              "weight": 0.2
+            }
+          ],
+          "provenance": [
+            {
+              "field": "canonical_name",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "Curefoods"
+            },
+            {
+              "field": "domain",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "curefoods.com"
+            },
+            {
+              "field": "industry",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "Foodtech"
+            },
+            {
+              "field": "region",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "India"
+            },
+            {
+              "field": "arr",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "260000.0"
+            },
+            {
+              "field": "owner",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "A. Rao"
+            }
+          ],
+          "resolved": true,
+          "sourceRecordRefs": [
+            "hubspot:HS-1001",
+            "salesforce:SF-5555",
+            "dynamics:DY-7777"
+          ]
+        },
+        "intake": {
+          "scenarioId": "approval-rejected",
+          "signals": {
+            "mission_type": "renewal_risk",
+            "severity": "high",
+            "signal_id": "SIG-REJ-1",
+            "signal_type": "renewal_risk"
+          }
+        },
+        "lifecycleEvents": [
+          {
+            "eventType": null,
+            "fromState": null,
+            "occurredAt": "2026-07-14T10:00:00Z",
+            "recordType": "mission_opened",
+            "sequenceNumber": 4,
+            "toState": null
+          },
+          {
+            "eventType": "begin_gathering",
+            "fromState": "opened",
+            "occurredAt": "2026-07-14T10:00:05Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 5,
+            "toState": "gathering"
+          },
+          {
+            "eventType": "propose",
+            "fromState": "gathering",
+            "occurredAt": "2026-07-14T10:00:10Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 6,
+            "toState": "proposed"
+          },
+          {
+            "eventType": "begin_verification",
+            "fromState": "proposed",
+            "occurredAt": "2026-07-14T10:00:15Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 7,
+            "toState": "verifying"
+          },
+          {
+            "eventType": "verification_passed",
+            "fromState": "verifying",
+            "occurredAt": "2026-07-14T10:00:25Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 9,
+            "toState": "verified"
+          },
+          {
+            "eventType": "request_approval",
+            "fromState": "verified",
+            "occurredAt": "2026-07-14T10:00:25Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 11,
+            "toState": "awaiting_approval"
+          },
+          {
+            "eventType": "reject",
+            "fromState": "awaiting_approval",
+            "occurredAt": "2026-07-14T10:00:35Z",
+            "recordType": "mission_transition",
+            "sequenceNumber": 13,
+            "toState": "rejected"
+          }
+        ],
+        "missionId": "M-REJECTED-1",
+        "missionVersion": "v1",
+        "outcomeVerification": null,
+        "records": [
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"scenarioId\":\"approval-rejected\",\"signals\":{\"mission_type\":\"renewal_risk\",\"severity\":\"high\",\"signal_id\":\"SIG-REJ-1\",\"signal_type\":\"renewal_risk\"}}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T09:59:45Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-1428defba5415cf3",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:45Z",
+            "payloadHash": "sha256:b9b87bfac4634f5602c0bf70201f98f8c052f14e8490e07324cdf42db053c769",
+            "previousRecordHash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "recordHash": "22d4a5ee38cab39f6c9a58ff0cef4a8e461c93355e642b5c1e209fd1c4843051",
+            "recordType": "mission_intake",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 1
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"blockReason\":null,\"blocked\":false,\"canonicalAccount\":{\"arr\":260000.0,\"canonicalName\":\"Curefoods\",\"domain\":\"curefoods.com\",\"industry\":\"Foodtech\",\"normalizedName\":\"curefoods\",\"owner\":\"A. Rao\",\"region\":\"India\",\"sourceRecordIds\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"ventureOsId\":\"VOS-CUREFOODS\"},\"clustersFound\":1,\"confidence\":1.0,\"conflicts\":[{\"field\":\"industry\",\"values\":[{\"sourceRecordId\":\"DY-7777\",\"sourceSystem\":\"dynamics\",\"value\":\"Food & Beverage\"},{\"sourceRecordId\":\"HS-1001\",\"sourceSystem\":\"hubspot\",\"value\":\"Food & Beverage\"},{\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"Foodtech\"}]},{\"field\":\"region\",\"values\":[{\"sourceRecordId\":\"HS-1001\",\"sourceSystem\":\"hubspot\",\"value\":\"APAC\"},{\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"India\"}]},{\"field\":\"arr\",\"values\":[{\"sourceRecordId\":\"DY-7777\",\"sourceSystem\":\"dynamics\",\"value\":\"250000.0\"},{\"sourceRecordId\":\"HS-1001\",\"sourceSystem\":\"hubspot\",\"value\":\"250000.0\"},{\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"260000.0\"}]}],\"evidence\":[{\"matchedValue\":\"duns=8899-CF\",\"signalType\":\"crosswalk\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.5},{\"matchedValue\":\"curefoods.com\",\"signalType\":\"domain\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.3},{\"matchedValue\":\"curefoods\",\"signalType\":\"name\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.2}],\"provenance\":[{\"field\":\"canonical_name\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"Curefoods\"},{\"field\":\"domain\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"curefoods.com\"},{\"field\":\"industry\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"Foodtech\"},{\"field\":\"region\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"India\"},{\"field\":\"arr\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"260000.0\"},{\"field\":\"owner\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"A. Rao\"}],\"resolved\":true,\"sourceRecordRefs\":[\"hubspot:HS-1001\",\"salesforce:SF-5555\",\"dynamics:DY-7777\"]}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T09:59:50Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-af91cab66a0c5092",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:50Z",
+            "payloadHash": "sha256:e0a80b18630d079ced207fab0f2cb314d9c6d73c258da6e7f45ac934afc6f275",
+            "previousRecordHash": "22d4a5ee38cab39f6c9a58ff0cef4a8e461c93355e642b5c1e209fd1c4843051",
+            "recordHash": "3d1d9f38cda6cbb2448c360a135c02293fe43dd279486bb69b011cea47e2cd6a",
+            "recordType": "identity_resolution_result",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 2
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"agents\":[],\"blocked\":false,\"isFallback\":false,\"matchedRuleId\":\"R1_renewal_risk\",\"matchedRules\":[\"R1_renewal_risk\"],\"permittedActions\":[],\"rationale\":\"Signal indicates renewal/churn risk -> renewal-risk-parallel-v1 (parallel analysis).\",\"selectedTemplateId\":\"renewal-risk-parallel-v1\",\"tools\":[]}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T09:59:55Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-b8325987aadc17a7",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:55Z",
+            "payloadHash": "sha256:177f0db8b80189ff711fd3ce49e5e80f68a26d27a2a2a484255d5910abb3d916",
+            "previousRecordHash": "3d1d9f38cda6cbb2448c360a135c02293fe43dd279486bb69b011cea47e2cd6a",
+            "recordHash": "b65e252fc5694df43b691b2e324ae26c71a7c822d8cd01ec66be5b627c5ffb9d",
+            "recordType": "template_selection_result",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 3
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"canonicalAccount\":{\"arr\":260000.0,\"canonicalName\":\"Curefoods\",\"domain\":\"curefoods.com\",\"industry\":\"Foodtech\",\"normalizedName\":\"curefoods\",\"owner\":\"A. Rao\",\"region\":\"India\",\"sourceRecordIds\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"ventureOsId\":\"VOS-CUREFOODS\"},\"evidenceRefs\":[{\"matchedValue\":\"duns=8899-CF\",\"signalType\":\"crosswalk\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.5},{\"matchedValue\":\"curefoods.com\",\"signalType\":\"domain\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.3},{\"matchedValue\":\"curefoods\",\"signalType\":\"name\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.2}],\"selectedTemplateId\":\"renewal-risk-parallel-v1\"}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:00Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-29557cf997dde495",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:00Z",
+            "payloadHash": "sha256:ae5f9f45d348460cd5374d45f0f2b005af3a8b8091e79ee72fbfa09d0d92f27f",
+            "previousRecordHash": "b65e252fc5694df43b691b2e324ae26c71a7c822d8cd01ec66be5b627c5ffb9d",
+            "recordHash": "0d488685bcbb7ca28433ec30b24943c9c9f8ae75c2d74843ba098e68f4a42d0c",
+            "recordType": "mission_opened",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 4
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-rejected_approval\",\"eventId\":\"EVT-7384b36c4364\",\"eventType\":\"begin_gathering\",\"fromState\":\"opened\",\"missionId\":\"M-REJECTED-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:05Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"gathering\"}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:05Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-dc1ea03e8ed35de2",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:05Z",
+            "payloadHash": "sha256:3535876a9d2bbdec2acef83a9d586f006a68f9ecfec4cae416098c4fb78b7e71",
+            "previousRecordHash": "0d488685bcbb7ca28433ec30b24943c9c9f8ae75c2d74843ba098e68f4a42d0c",
+            "recordHash": "5406102172cf73421af7c3dd160f6cbcc28c9071662e4bba6e51d89e6d457f97",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 5
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-rejected_approval\",\"eventId\":\"EVT-66b1142e0681\",\"eventType\":\"propose\",\"fromState\":\"gathering\",\"missionId\":\"M-REJECTED-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:10Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"proposed\"}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:10Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-4daf1bc0cf4cbd94",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:10Z",
+            "payloadHash": "sha256:bb6d4bd226b32b69493f9fe154ed1f4e2da03394fe49caadf6626947adebd622",
+            "previousRecordHash": "5406102172cf73421af7c3dd160f6cbcc28c9071662e4bba6e51d89e6d457f97",
+            "recordHash": "1c0da07dccc51aefa2d73a58300306ec0c46351b3427d498a709bbaed5abfda8",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 6
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-rejected_approval\",\"eventId\":\"EVT-cba7b09cc00d\",\"eventType\":\"begin_verification\",\"fromState\":\"proposed\",\"missionId\":\"M-REJECTED-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:15Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"verifying\"}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:15Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-a5464dc3a69ec095",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:15Z",
+            "payloadHash": "sha256:2ab7a78880f76b94b44a8f7c9c92247597a7fbdb4c349977bf783db6fd8fb175",
+            "previousRecordHash": "1c0da07dccc51aefa2d73a58300306ec0c46351b3427d498a709bbaed5abfda8",
+            "recordHash": "7395c7569fc9988e7b89fa7fd1308e914c268e3b67a2bd37b2349bd7310f6d74",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 7
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"checks\":[{\"detail\":\"canonical account resolved\",\"name\":\"identity_resolved\",\"passed\":true},{\"detail\":\"required evidence present\",\"name\":\"evidence_sufficient\",\"passed\":true},{\"detail\":\"policy validation\",\"name\":\"policy_passed\",\"passed\":true}],\"status\":\"verified\"}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:20Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-0a33cc04991b4a91",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:20Z",
+            "payloadHash": "sha256:0404be97305fb734935e83a59c163346da3a9c6354721ab0f1eb56b6ed472b0d",
+            "previousRecordHash": "7395c7569fc9988e7b89fa7fd1308e914c268e3b67a2bd37b2349bd7310f6d74",
+            "recordHash": "254a24d32eb2d93ad2c53b9d43ee57fd5794b2f509bd418aebc4c5da48d9bd8f",
+            "recordType": "verification_result",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 8
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-rejected_approval\",\"eventId\":\"EVT-a9cbc9f0ca16\",\"eventType\":\"verification_passed\",\"fromState\":\"verifying\",\"missionId\":\"M-REJECTED-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:25Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"verified\"}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:25Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-9c362e90aedb28d6",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:25Z",
+            "payloadHash": "sha256:f03a35678002c150e3e82a3a03f4b4d8777918b6d94d3e47417a1c1a1cf9be3a",
+            "previousRecordHash": "254a24d32eb2d93ad2c53b9d43ee57fd5794b2f509bd418aebc4c5da48d9bd8f",
+            "recordHash": "ab9dac1b2242bef38901029d3ffb7cad3222a9e9bf4af4a4a7fede07ec5cfb65",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 9
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"actionPayloadHash\":\"sha256:f0d8d0cde7ce8cfa8db9729d839b23494e66d2dfb4a5d80a0f0590674dddfb87\",\"actionPayloadRef\":\"payload://M-REJECTED-1/REC-M-REJECTED-1\",\"actionType\":\"renewal_outreach\",\"missionId\":\"M-REJECTED-1\",\"missionVersion\":\"v1\",\"permittedActions\":[\"simulate_renewal_outreach\",\"simulate_stakeholder_brief\"],\"prompt\":\"Approve simulated renewal_outreach for Curefoods?\",\"recommendationId\":\"REC-M-REJECTED-1\",\"requiresHumanApproval\":true,\"schemaVersion\":\"1.0\",\"simulated\":true,\"verificationRef\":\"verify://M-REJECTED-1\"}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:30Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-3a08ca4af542aa47",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:30Z",
+            "payloadHash": "sha256:f3fef70a2b94787a86f129598c9c3d980616ae62bc8393e67d2350ca1a0e8d16",
+            "previousRecordHash": "ab9dac1b2242bef38901029d3ffb7cad3222a9e9bf4af4a4a7fede07ec5cfb65",
+            "recordHash": "b2fe98521dbabac9b1007bcc559fa6c84ca3662f219c75b613c50e034086433d",
+            "recordType": "approval_request",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 10
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-rejected_approval\",\"eventId\":\"EVT-d267ec83db75\",\"eventType\":\"request_approval\",\"fromState\":\"verified\",\"missionId\":\"M-REJECTED-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:25Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"awaiting_approval\"}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:25Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-2dae2d86abea0032",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:25Z",
+            "payloadHash": "sha256:281ac854ebcc669233b0929bbe1756dae4d9b9e8a501b8210b53df1c939a22dc",
+            "previousRecordHash": "b2fe98521dbabac9b1007bcc559fa6c84ca3662f219c75b613c50e034086433d",
+            "recordHash": "b44d2fe7c0932e8c07f76ca6385eebce01b72104c1824892151d4dcf5d240efc",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 11
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"actorRole\":\"manager\",\"approvedActionRef\":\"payload://M-REJECTED-1/REC-M-REJECTED-1\",\"approvedPayloadHash\":\"sha256:f0d8d0cde7ce8cfa8db9729d839b23494e66d2dfb4a5d80a0f0590674dddfb87\",\"channel\":\"screen\",\"confirmToken\":null,\"decidedAt\":\"2026-07-14T10:00:35Z\",\"decisionId\":\"DEC-M-REJECTED-1\",\"missionId\":\"M-REJECTED-1\",\"missionVersion\":\"v1\",\"outcome\":\"rejected\",\"reason\":\"declined by approver\",\"schemaVersion\":\"1.0\",\"simulated\":true}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:35Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-4e3e4fac4a93e5bb",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:35Z",
+            "payloadHash": "sha256:8917a548fe3979b2ba53ea07a06ee14a6e7ad8a6de33f6ce0ebfe44fd849b5bb",
+            "previousRecordHash": "b44d2fe7c0932e8c07f76ca6385eebce01b72104c1824892151d4dcf5d240efc",
+            "recordHash": "85a50e9e8c1bc52b6cc317959cc76184194037e819896dba294a043ccc6946e9",
+            "recordType": "approval_decision",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 12
+          },
+          {
+            "actor": "amit",
+            "canonicalPayload": "{\"actor\":\"amit\",\"correlationId\":\"CORR-rejected_approval\",\"eventId\":\"EVT-adf2e72b3878\",\"eventType\":\"reject\",\"fromState\":\"awaiting_approval\",\"missionId\":\"M-REJECTED-1\",\"missionVersion\":\"v1\",\"occurredAt\":\"2026-07-14T10:00:35Z\",\"reason\":null,\"schemaVersion\":\"1.0\",\"toState\":\"rejected\"}",
+            "correlationId": "CORR-rejected_approval",
+            "createdAt": "2026-07-14T10:00:35Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-8dc2bdec4393d80d",
+            "missionId": "M-REJECTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T10:00:35Z",
+            "payloadHash": "sha256:52dc7f5659942e17c58521f1236c7c92ea07e8b20843d5066fd9e1064852e1f1",
+            "previousRecordHash": "85a50e9e8c1bc52b6cc317959cc76184194037e819896dba294a043ccc6946e9",
+            "recordHash": "ec043a9a3a3165402da148b388989c57316babd15a5dd1be3ee53a9545d69763",
+            "recordType": "mission_transition",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 13
+          }
+        ],
+        "schemaVersion": "1.0",
+        "selectedTemplateId": "renewal-risk-parallel-v1",
+        "templateSelection": {
+          "agents": [],
+          "blocked": false,
+          "isFallback": false,
+          "matchedRuleId": "R1_renewal_risk",
+          "matchedRules": [
+            "R1_renewal_risk"
+          ],
+          "permittedActions": [],
+          "rationale": "Signal indicates renewal/churn risk -> renewal-risk-parallel-v1 (parallel analysis).",
+          "selectedTemplateId": "renewal-risk-parallel-v1",
+          "tools": []
+        },
+        "verificationResults": [
+          {
+            "checks": [
+              {
+                "detail": "canonical account resolved",
+                "name": "identity_resolved",
+                "passed": true
+              },
+              {
+                "detail": "required evidence present",
+                "name": "evidence_sufficient",
+                "passed": true
+              },
+              {
+                "detail": "policy validation",
+                "name": "policy_passed",
+                "passed": true
+              }
+            ],
+            "status": "verified"
+          }
+        ]
+      },
+      "auditChainValid": true,
+      "canonicalAccount": {
+        "arr": 260000.0,
+        "canonicalName": "Curefoods",
+        "domain": "curefoods.com",
+        "industry": "Foodtech",
+        "normalizedName": "curefoods",
+        "owner": "A. Rao",
+        "region": "India",
+        "sourceRecordIds": [
+          "dynamics:DY-7777",
+          "hubspot:HS-1001",
+          "salesforce:SF-5555"
+        ],
+        "ventureOsId": "VOS-CUREFOODS"
+      },
+      "executionEligible": false,
+      "failureCode": "approval_rejected",
+      "finalStatus": "rejected",
+      "identityResolutionStatus": "resolved",
+      "lifecycleEvents": [
+        {
+          "actor": "amit",
+          "correlationId": "CORR-rejected_approval",
+          "eventId": "EVT-7384b36c4364",
+          "eventType": "begin_gathering",
+          "fromState": "opened",
+          "missionId": "M-REJECTED-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:05Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "gathering"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-rejected_approval",
+          "eventId": "EVT-66b1142e0681",
+          "eventType": "propose",
+          "fromState": "gathering",
+          "missionId": "M-REJECTED-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:10Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "proposed"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-rejected_approval",
+          "eventId": "EVT-cba7b09cc00d",
+          "eventType": "begin_verification",
+          "fromState": "proposed",
+          "missionId": "M-REJECTED-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:15Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "verifying"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-rejected_approval",
+          "eventId": "EVT-a9cbc9f0ca16",
+          "eventType": "verification_passed",
+          "fromState": "verifying",
+          "missionId": "M-REJECTED-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:25Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "verified"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-rejected_approval",
+          "eventId": "EVT-d267ec83db75",
+          "eventType": "request_approval",
+          "fromState": "verified",
+          "missionId": "M-REJECTED-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:25Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "awaiting_approval"
+        },
+        {
+          "actor": "amit",
+          "correlationId": "CORR-rejected_approval",
+          "eventId": "EVT-adf2e72b3878",
+          "eventType": "reject",
+          "fromState": "awaiting_approval",
+          "missionId": "M-REJECTED-1",
+          "missionVersion": "v1",
+          "occurredAt": "2026-07-14T10:00:35Z",
+          "reason": null,
+          "schemaVersion": "1.0",
+          "toState": "rejected"
+        }
+      ],
+      "lifecycleStatus": "rejected",
+      "missionId": "M-REJECTED-1",
+      "missionPlan": {
+        "budgets": {
+          "maxCost": 0.5,
+          "maxRetries": 2,
+          "maxRuntimeMs": 45000
+        },
+        "missionDefinition": {
+          "canonicalAccount": {
+            "canonicalName": "Curefoods",
+            "ventureOsId": "VOS-CUREFOODS"
+          },
+          "constraints": [],
+          "expectedOutcome": "Approved simulated renewal_risk action for Curefoods.",
+          "missionId": "M-REJECTED-1",
+          "missionType": "renewal_risk",
+          "objective": "Protect an at-risk renewal via parallel health/opportunity analysis, governed action prep and stakeholder communication.",
+          "permittedActions": [
+            "simulate_renewal_outreach",
+            "simulate_stakeholder_brief"
+          ],
+          "rationale": "Signal SIG-REJ-1 selected template renewal-risk-parallel-v1 for Curefoods.",
+          "requiredEvidence": [
+            {
+              "category": "account_health",
+              "mandatory": true
+            },
+            {
+              "category": "renewal_timeline",
+              "mandatory": true
+            },
+            {
+              "category": "usage_trend",
+              "mandatory": true
+            }
+          ],
+          "requiresHumanApproval": true,
+          "riskLevel": "high",
+          "schemaVersion": "1.0",
+          "selectedTemplateId": "renewal-risk-parallel-v1",
+          "successCriteria": [
+            {
+              "criterionId": "SC1",
+              "description": "renewal_risk mission objective prepared and approved for Curefoods.",
+              "measurementType": "boolean",
+              "target": "true"
+            }
+          ],
+          "triggerSignalId": "SIG-REJ-1"
+        },
+        "missionId": "M-REJECTED-1",
+        "requiresHumanApproval": true,
+        "tasks": [
+          {
+            "agentId": "signal_ingestion",
+            "agentName": "Signal Ingestion Agent",
+            "dependsOn": [],
+            "orderIndex": 0,
+            "stepId": "ingest",
+            "taskId": "M-REJECTED-1:ingest",
+            "toolIds": []
+          },
+          {
+            "agentId": "account_health",
+            "agentName": "Account Health Agent",
+            "dependsOn": [
+              "M-REJECTED-1:ingest"
+            ],
+            "orderIndex": 1,
+            "stepId": "health",
+            "taskId": "M-REJECTED-1:health",
+            "toolIds": []
+          },
+          {
+            "agentId": "opportunity",
+            "agentName": "Opportunity Agent",
+            "dependsOn": [
+              "M-REJECTED-1:ingest"
+            ],
+            "orderIndex": 2,
+            "stepId": "opportunity",
+            "taskId": "M-REJECTED-1:opportunity",
+            "toolIds": []
+          },
+          {
+            "agentId": "governance",
+            "agentName": "Governance Agent",
+            "dependsOn": [
+              "M-REJECTED-1:health",
+              "M-REJECTED-1:opportunity"
+            ],
+            "orderIndex": 3,
+            "stepId": "governance",
+            "taskId": "M-REJECTED-1:governance",
+            "toolIds": []
+          },
+          {
+            "agentId": "action",
+            "agentName": "Action Agent",
+            "dependsOn": [
+              "M-REJECTED-1:governance"
+            ],
+            "orderIndex": 4,
+            "stepId": "action",
+            "taskId": "M-REJECTED-1:action",
+            "toolIds": [
+              "simulate_renewal_outreach"
+            ]
+          },
+          {
+            "agentId": "communication",
+            "agentName": "Communication Agent",
+            "dependsOn": [
+              "M-REJECTED-1:action"
+            ],
+            "orderIndex": 5,
+            "stepId": "communicate",
+            "taskId": "M-REJECTED-1:communicate",
+            "toolIds": [
+              "simulate_stakeholder_brief"
+            ]
+          }
+        ],
+        "templateId": "renewal-risk-parallel-v1",
+        "topology": "parallel"
+      },
+      "missionVersion": "v1",
+      "outcomeVerification": null,
+      "policyValidation": {
+        "errorCodes": [],
+        "errors": [],
+        "executionEligible": true,
+        "passed": true,
+        "warnings": []
+      },
+      "resultHash": "sha256:131d751105dad0600943408170fe971d129edcb589c61207c14eb6b8a85db3b4",
+      "scenarioId": "approval-rejected",
+      "schemaVersion": "1.0",
+      "scorecard": {
+        "approvalRequired": true,
+        "approvalValid": false,
+        "auditChainValid": true,
+        "auditComplete": true,
+        "deterministicOutput": true,
+        "evidencePresent": true,
+        "identityResolved": true,
+        "lifecycleValid": true,
+        "noExternalAction": true,
+        "payloadBindingValid": false,
+        "policyPassed": true,
+        "provenancePresent": true,
+        "simulatedOnly": true,
+        "templateSelected": true,
+        "verificationPassed": true
+      },
+      "selectedTemplateId": "renewal-risk-parallel-v1",
+      "selectorExplanation": "Signal indicates renewal/churn risk -> renewal-risk-parallel-v1 (parallel analysis).",
+      "simulatedActionReceipt": null,
+      "verificationSummary": {
+        "checks": [
+          {
+            "detail": "canonical account resolved",
+            "name": "identity_resolved",
+            "passed": true
+          },
+          {
+            "detail": "required evidence present",
+            "name": "evidence_sufficient",
+            "passed": true
+          },
+          {
+            "detail": "policy validation",
+            "name": "policy_passed",
+            "passed": true
+          }
+        ],
+        "status": "verified"
+      }
+    },
+    "missionExecutionPayload": null,
+    "requestId": "REQ-rejected_approval",
+    "resultHash": "sha256:749d9b459592d30544b091234ebbe06453d5e04b6462eb01bfbf16acd07c2adc",
+    "schemaVersion": "1.0",
+    "serviceErrors": [
+      {
+        "code": "approval_rejected",
+        "details": {
+          "failureCode": "approval_rejected"
+        },
+        "message": "Human approval was not granted; no action was executed.",
+        "retryable": false,
+        "stage": "approval"
+      }
+    ],
+    "status": "rejected",
+    "warnings": []
+  }
+}
