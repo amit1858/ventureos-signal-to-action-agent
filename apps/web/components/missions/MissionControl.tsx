@@ -34,7 +34,10 @@ import { isCompletedMissionTurn } from "@/lib/missions/types";
 import type { CompletedMissionTurn, GovernedMissionTurn, MissionTurn } from "@/lib/missions/types";
 import { simulateApprovedActions } from "@/lib/missions/simulation";
 import type { ApprovalCapture, SimulatedActionProposal } from "@/lib/missions/simulation";
+import { buildMissionAuditTrail } from "@/lib/missions/auditTrail";
+import type { MissionAuditTrail } from "@/lib/missions/auditTrail";
 import { ApprovalPanel } from "@/components/missions/ApprovalPanel";
+import { MissionAuditTrailView } from "@/components/missions/MissionAuditTrail";
 
 // ---------------------------------------------------------------------------
 // Small presentation atoms (local — no external state)
@@ -331,15 +334,16 @@ function SimulatedExecution({
 // 10. Outcome & audit trail
 // ---------------------------------------------------------------------------
 
-function OutcomeAudit({ turn }: { turn: CompletedMissionTurn }) {
+function OutcomeAudit({ turn, trail }: { turn: CompletedMissionTurn; trail: MissionAuditTrail }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <p className="text-sm text-ink">{turn.outcome.headline}</p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <Meta label="Mission state" value={turn.outcome.state} mono />
         <Meta label="Mission id" value={turn.missionId} mono />
         <Meta label="Audit reference" value={turn.auditRef} mono />
       </div>
+      <MissionAuditTrailView trail={trail} />
     </div>
   );
 }
@@ -390,6 +394,7 @@ interface SectionCtx {
   turn: CompletedMissionTurn;
   capture: ApprovalCapture | null;
   proposals: SimulatedActionProposal[];
+  trail: MissionAuditTrail;
   onDecision: (capture: ApprovalCapture | null) => void;
 }
 
@@ -415,7 +420,7 @@ function sectionBody(id: string, ctx: SectionCtx): React.ReactNode {
     case "simulated-execution":
       return <SimulatedExecution capture={ctx.capture} proposals={ctx.proposals} />;
     case "outcome-audit":
-      return <OutcomeAudit turn={turn} />;
+      return <OutcomeAudit turn={turn} trail={ctx.trail} />;
     default:
       return null;
   }
@@ -435,7 +440,8 @@ export function MissionControl({ turn }: { turn: MissionTurn }) {
 
   const proposals =
     capture && capture.outcome === "approved" ? simulateApprovedActions(turn, capture) : [];
-  const ctx: SectionCtx = { turn, capture, proposals, onDecision: setCapture };
+  const trail = buildMissionAuditTrail({ turn, capture, proposals });
+  const ctx: SectionCtx = { turn, capture, proposals, trail, onDecision: setCapture };
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-10">
