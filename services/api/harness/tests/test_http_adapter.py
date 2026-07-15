@@ -272,6 +272,52 @@ def test_real_idempotency_conflict_maps_to_409() -> None:
             os.unlink(path)
 
 
+# -- service-to-service auth (F1.3) -----------------------------------------
+
+
+def test_auth_disabled_by_default_no_token_required() -> None:
+    # The self-contained app has no token -> unauthenticated (local-test mode).
+    r = _client().post("/missions", json=_body(renewal_risk_happy_path()))
+    _check("no-token app accepts request", r.status_code == 200, str(r.status_code))
+
+
+def test_auth_required_rejects_missing_token() -> None:
+    app = create_harness_app(service_token="tok-abc")
+    r = TestClient(app).post("/missions", json=_body(renewal_risk_happy_path()))
+    _check("missing token http 401", r.status_code == 401, str(r.status_code))
+    body = r.json()
+    _check("401 status failed", body["status"] == SVC_FAILED)
+    _check("401 code unauthorized",
+           any(e["code"] == "unauthorized" for e in body["serviceErrors"]))
+    _check("401 no payload", body["missionExecutionPayload"] is None)
+
+
+def test_auth_required_rejects_wrong_token() -> None:
+    app = create_harness_app(service_token="tok-abc")
+    r = TestClient(app).post("/missions", json=_body(renewal_risk_happy_path()),
+                             headers={"X-Harness-Service-Token": "nope"})
+    _check("wrong token http 401", r.status_code == 401, str(r.status_code))
+    _check("wrong token never echoed", "tok-abc" not in r.text and "nope" not in r.text)
+
+
+def test_auth_required_accepts_correct_token() -> None:
+    app = create_harness_app(service_token="tok-abc")
+    r = TestClient(app).post("/missions", json=_body(renewal_risk_happy_path()),
+                             headers={"X-Harness-Service-Token": "tok-abc"})
+    _check("correct token http 200", r.status_code == 200, str(r.status_code))
+    _check("correct token completed", r.json()["status"] == SVC_COMPLETED)
+    _check("real token never echoed in body", "tok-abc" not in r.text)
+
+
+def test_auth_precedes_body_processing() -> None:
+    # A malformed body with a missing token still fails as 401 first: auth is
+    # enforced before any body is read, parsed, or validated.
+    app = create_harness_app(service_token="tok-abc")
+    r = TestClient(app).post("/missions", content=b"{not json",
+                             headers={"content-type": "application/json"})
+    _check("auth precedes parsing -> 401", r.status_code == 401, str(r.status_code))
+
+
 # -- HTTP status mapping (pure function) ------------------------------------
 
 
@@ -455,6 +501,11 @@ _TESTS = [
     test_method_not_allowed_is_405,
     test_internal_failure_returns_500_without_trace,
     test_real_idempotency_conflict_maps_to_409,
+    test_auth_disabled_by_default_no_token_required,
+    test_auth_required_rejects_missing_token,
+    test_auth_required_rejects_wrong_token,
+    test_auth_required_accepts_correct_token,
+    test_auth_precedes_body_processing,
     test_status_mapping_table,
     test_correlation_header_body_match_succeeds,
     test_correlation_header_mismatch_fails_closed,

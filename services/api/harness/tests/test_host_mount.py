@@ -39,7 +39,13 @@ from harness.service import HarnessServiceRequest  # noqa: E402
 
 _RESULTS: list[tuple[str, bool, str]] = []
 
-_HARNESS_ENV_KEYS = ("HARNESS_MOUNT_ENABLED", "HARNESS_LEDGER_PATH", "DB_PATH")
+_HARNESS_ENV_KEYS = (
+    "HARNESS_MOUNT_ENABLED",
+    "HARNESS_LEDGER_PATH",
+    "HARNESS_SERVICE_TOKEN",
+    "HARNESS_ALLOW_INSECURE_LOCAL",
+    "DB_PATH",
+)
 
 
 def _check(name: str, condition: bool, detail: str = "") -> None:
@@ -129,19 +135,23 @@ def test_mount_enabled_exposes_governed_route() -> None:
     fd, path = tempfile.mkstemp(suffix=".harness.db")
     os.close(fd)
     os.unlink(path)
+    token = "s2s-secret-token-123"
+    auth = {"X-Harness-Service-Token": token}
     # Capture the host OpenAPI paths with the mount OFF for a strict comparison.
     baseline = _load_main()
     baseline_paths = _host_paths(baseline.app)
     _restore_env()
 
-    main = _load_main(HARNESS_MOUNT_ENABLED="true", HARNESS_LEDGER_PATH=path)
+    main = _load_main(
+        HARNESS_MOUNT_ENABLED="true", HARNESS_LEDGER_PATH=path, HARNESS_SERVICE_TOKEN=token
+    )
     try:
         client = TestClient(main.app)
         # Host health still works after mounting.
         _check("host health still 200", client.get("/api/health").status_code == 200)
 
-        # Completed governed outcome via the composed public route.
-        r = client.post("/api/harness/missions", json=_body(renewal_risk_happy_path()))
+        # Completed governed outcome via the composed public route (authenticated).
+        r = client.post("/api/harness/missions", json=_body(renewal_risk_happy_path()), headers=auth)
         _check("mounted renewal http 200", r.status_code == 200, str(r.status_code))
         body = r.json()
         _check("mounted renewal completed", body["status"] == "completed", body.get("status", ""))
@@ -149,10 +159,23 @@ def test_mount_enabled_exposes_governed_route() -> None:
         _check("mounted renewal simulated", body["missionExecutionPayload"]["simulated"] is True)
 
         # Blocked governed outcome -> 200 with no executable payload.
-        rb = client.post("/api/harness/missions", json=_body(unsupported_signal_blocked()))
+        rb = client.post("/api/harness/missions", json=_body(unsupported_signal_blocked()), headers=auth)
         _check("mounted blocked http 200", rb.status_code == 200, str(rb.status_code))
         _check("mounted blocked status", rb.json()["status"] == "blocked")
         _check("mounted blocked no payload", rb.json()["missionExecutionPayload"] is None)
+
+        # Missing token -> 401 before any processing; the token is never echoed.
+        rna = client.post("/api/harness/missions", json=_body(renewal_risk_happy_path()))
+        _check("missing token http 401", rna.status_code == 401, str(rna.status_code))
+        _check("401 code unauthorized",
+               (rna.json().get("serviceErrors") or [{}])[0].get("code") == "unauthorized")
+        _check("401 body omits token", token not in rna.text)
+
+        # Wrong token -> 401.
+        rwrong = client.post("/api/harness/missions", json=_body(renewal_risk_happy_path()),
+                             headers={"X-Harness-Service-Token": "wrong"})
+        _check("wrong token http 401", rwrong.status_code == 401, str(rwrong.status_code))
+        _check("401 body never leaks real token", token not in rwrong.text)
 
         # No PersonaResponse ever crosses the boundary.
         _check("no personaResponse over mount", "personaResponse" not in r.text)
@@ -173,10 +196,61 @@ def test_mount_enabled_exposes_governed_route() -> None:
         # A host route is still reachable alongside the mount.
         _check("host route reachable with mount", client.get("/api/accounts").status_code in (200, 500))
 
+        # Diagnostics never reveal the service token.
+        _check("settings never expose token in sanitized",
+               token not in str(main._settings.sanitized()))
+        _check("settings warnings never expose token",
+               all(token not in w for w in main._settings.warnings()))
+
         # The dedicated ledger file was created (file-backed, request-scoped).
         _check("dedicated ledger file created", os.path.exists(path), path)
         _check("ledger is not the decision ledger",
                os.path.abspath(path) != os.path.abspath(main._settings.db_path))
+    finally:
+        _restore_env()
+        for suffix in ("", "-wal", "-shm"):
+            p = path + suffix
+            if os.path.exists(p):
+                os.unlink(p)
+
+
+# -- fail closed without a token --------------------------------------------
+
+
+def test_mount_refuses_without_token() -> None:
+    fd, path = tempfile.mkstemp(suffix=".harness.db")
+    os.close(fd)
+    os.unlink(path)
+    # Mount enabled, isolated ledger, but NO token and no insecure-local flag.
+    main = _load_main(HARNESS_MOUNT_ENABLED="true", HARNESS_LEDGER_PATH=path)
+    try:
+        client = TestClient(main.app)
+        _check("no-token mount refused -> 404",
+               client.post("/api/harness/missions", json=_body(renewal_risk_happy_path())).status_code == 404)
+        _check("host health unaffected by token refusal", client.get("/api/health").status_code == 200)
+        _check("settings not authorised without token", main._settings.harness_mount_authorised is False)
+    finally:
+        _restore_env()
+        for suffix in ("", "-wal", "-shm"):
+            p = path + suffix
+            if os.path.exists(p):
+                os.unlink(p)
+
+
+def test_mount_insecure_local_allows_no_token() -> None:
+    fd, path = tempfile.mkstemp(suffix=".harness.db")
+    os.close(fd)
+    os.unlink(path)
+    main = _load_main(
+        HARNESS_MOUNT_ENABLED="true", HARNESS_LEDGER_PATH=path, HARNESS_ALLOW_INSECURE_LOCAL="true"
+    )
+    try:
+        client = TestClient(main.app)
+        _check("insecure-local authorised", main._settings.harness_mount_authorised is True)
+        # No token header required in insecure-local mode.
+        r = client.post("/api/harness/missions", json=_body(renewal_risk_happy_path()))
+        _check("insecure-local renewal http 200", r.status_code == 200, str(r.status_code))
+        _check("insecure-local completed", r.json()["status"] == "completed")
     finally:
         _restore_env()
         for suffix in ("", "-wal", "-shm"):
@@ -238,6 +312,8 @@ def test_config_reads_harness_flags() -> None:
 _TESTS = [
     test_mount_disabled_by_default,
     test_mount_enabled_exposes_governed_route,
+    test_mount_refuses_without_token,
+    test_mount_insecure_local_allows_no_token,
     test_mount_refuses_shared_ledger,
     test_config_reads_harness_flags,
 ]

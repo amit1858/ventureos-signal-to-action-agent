@@ -23,6 +23,7 @@ internal clock. All execution is *simulated* by the underlying sandbox.
 
 from __future__ import annotations
 
+import hmac
 import json
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
@@ -50,7 +51,12 @@ from harness.service import (
 )
 
 CORRELATION_HEADER = "X-Correlation-ID"
+SERVICE_TOKEN_HEADER = "X-Harness-Service-Token"
 _JSON_MEDIA_TYPE = "application/json"
+
+# Stable transport-level error code for a rejected service-to-service call. It is
+# distinct from the governed service error codes and never carries the token.
+ERR_UNAUTHORIZED = "unauthorized"
 
 # Governed mission outcomes are valid business results, not transport failures:
 # their precise status stays in the response body and the HTTP status is 200.
@@ -165,6 +171,7 @@ def _safe_body(response: HarnessServiceResponse) -> dict:
 def create_harness_app(
     dependencies: Optional[HarnessServiceDependencies] = None,
     config: Optional[HarnessHttpConfig] = None,
+    service_token: Optional[str] = None,
 ) -> FastAPI:
     """Build a mountable, self-contained Harness HTTP application.
 
@@ -174,6 +181,13 @@ def create_harness_app(
     private in-memory audit ledger that the service opens and closes itself; a
     caller-supplied ledger remains caller-owned and is left open.
 
+    When ``service_token`` is a non-empty string the adapter requires every
+    request to present a matching ``X-Harness-Service-Token`` header (compared
+    in constant time); mismatched or missing tokens are rejected with HTTP 401
+    before any body is read. When ``service_token`` is ``None``/empty the
+    endpoint is unauthenticated -- this is the self-contained, local-test mode.
+    The token is never logged, never echoed, and never placed in any response.
+
     Route composition: this sub-app exposes ``POST /missions``. The approved
     future host mount is ``app.mount("/api/harness", create_harness_app(...))``,
     which yields the composed public route ``POST /api/harness/missions``. No
@@ -181,6 +195,7 @@ def create_harness_app(
     """
 
     cfg = config or HarnessHttpConfig()  # validates; fails closed on bad config
+    expected_token = service_token or None  # normalise "" -> None (no auth)
 
     app = FastAPI(
         title="VentureOS Mission Harness HTTP Adapter",
@@ -208,6 +223,25 @@ def create_harness_app(
     )
     async def create_mission(request: Request) -> JSONResponse:  # noqa: D401
         header_cid = request.headers.get(CORRELATION_HEADER)
+
+        # 0. Service-to-service authentication (when a token is configured). This
+        #    is the FIRST guard: an unauthenticated caller is rejected before any
+        #    body is read, parsed, or validated. The comparison is constant-time
+        #    and the token is never logged or echoed.
+        if expected_token is not None:
+            presented = request.headers.get(SERVICE_TOKEN_HEADER) or ""
+            if not hmac.compare_digest(presented, expected_token):
+                return _json_response(
+                    401,
+                    _error_envelope(
+                        errors=[ServiceError(
+                            code=ERR_UNAUTHORIZED, stage="transport",
+                            message="Missing or invalid service token.",
+                        )],
+                        request_id=None, correlation_id=header_cid,
+                    ),
+                    header_cid,
+                )
 
         # 1. Content-type: JSON only (before reading / validating the body).
         content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
@@ -288,6 +322,8 @@ def create_harness_app(
 
 __all__ = [
     "CORRELATION_HEADER",
+    "SERVICE_TOKEN_HEADER",
+    "ERR_UNAUTHORIZED",
     "HarnessHttpConfig",
     "HarnessHttpConfigError",
     "create_harness_app",

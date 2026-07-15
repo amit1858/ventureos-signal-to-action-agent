@@ -94,6 +94,12 @@ class Settings:
     harness_ledger_path: str = field(
         default_factory=lambda: os.path.join(_API_DIR, "harness_audit.db")
     )
+    # Shared secret the Next.js BFF presents as ``X-Harness-Service-Token`` when
+    # calling the mounted harness. Server-only; never a NEXT_PUBLIC_ value. When
+    # the mount is enabled the token is REQUIRED unless the explicit local
+    # insecure mode is set. It is never logged, echoed, or placed in diagnostics.
+    harness_service_token: str = ""
+    harness_allow_insecure_local: bool = False
 
     # -- model provider ----------------------------------------------------
     model_provider: str = "mock"
@@ -149,6 +155,8 @@ class Settings:
             harness_mount_enabled=_flag("HARNESS_MOUNT_ENABLED", False),
             harness_ledger_path=os.getenv("HARNESS_LEDGER_PATH")
             or os.path.join(_API_DIR, "harness_audit.db"),
+            harness_service_token=_str("HARNESS_SERVICE_TOKEN"),
+            harness_allow_insecure_local=_flag("HARNESS_ALLOW_INSECURE_LOCAL", False),
             model_provider=(_str("MODEL_PROVIDER", "mock") or "mock").lower(),
             nvidia_api_key=_str("NVIDIA_API_KEY"),
             nvidia_base_url=(_str("NVIDIA_BASE_URL") or _str("NVIDIA_NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")).rstrip("/"),
@@ -189,6 +197,19 @@ class Settings:
     def harness_ledger_is_isolated(self) -> bool:
         """The Harness audit ledger must never share the decision ledger file."""
         return os.path.abspath(self.harness_ledger_path) != os.path.abspath(self.db_path)
+
+    @property
+    def harness_mount_authorised(self) -> bool:
+        """Whether the mount may proceed under the fail-closed security policy.
+
+        A service token is required; an explicit local insecure mode is the only
+        sanctioned way to run the mount without one. Does not reveal the token.
+        """
+        if not self.harness_mount_enabled:
+            return False
+        if not self.harness_ledger_is_isolated:
+            return False
+        return bool(self.harness_service_token) or self.harness_allow_insecure_local
 
     @property
     def hubspot_ready(self) -> bool:
@@ -302,6 +323,17 @@ class Settings:
                 "HARNESS_LEDGER_PATH points at the decision ledger (DB_PATH); the Harness mount "
                 "requires a dedicated audit ledger. Set a distinct HARNESS_LEDGER_PATH."
             )
+        if self.harness_mount_enabled and not self.harness_service_token:
+            if self.harness_allow_insecure_local:
+                w.append(
+                    "HARNESS_MOUNT_ENABLED=true with no HARNESS_SERVICE_TOKEN; running in insecure "
+                    "local mode (HARNESS_ALLOW_INSECURE_LOCAL=true). Do not use outside local testing."
+                )
+            else:
+                w.append(
+                    "HARNESS_MOUNT_ENABLED=true but HARNESS_SERVICE_TOKEN is empty; the mount will be "
+                    "refused (fail closed). Set HARNESS_SERVICE_TOKEN, or HARNESS_ALLOW_INSECURE_LOCAL=true for local testing."
+                )
         dp = self.decision_provider
         if dp not in DECISION_PROVIDERS:
             w.append(f"Unknown DECISION_PROVIDER '{dp}'; the deterministic baseline will be used.")

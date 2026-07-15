@@ -993,20 +993,28 @@ if _settings.harness_mount_enabled:
             "Refusing to mount Adaptive Mission Harness: HARNESS_LEDGER_PATH must be "
             "distinct from the decision ledger (DB_PATH)."
         )
+    elif not _settings.harness_service_token and not _settings.harness_allow_insecure_local:
+        logger.error(
+            "Refusing to mount Adaptive Mission Harness: HARNESS_SERVICE_TOKEN is required "
+            "(set HARNESS_ALLOW_INSECURE_LOCAL=true only for local testing)."
+        )
     else:
         from harness import create_harness_app  # noqa: E402
         from harness.service import HarnessServiceDependencies  # noqa: E402
 
         _harness_ledger_path = _settings.harness_ledger_path
+        _harness_token = _settings.harness_service_token or None
         os.makedirs(os.path.dirname(os.path.abspath(_harness_ledger_path)), exist_ok=True)
         app.mount(
             "/api/harness",
             create_harness_app(
                 dependencies=HarnessServiceDependencies(ledger_path=_harness_ledger_path),
+                service_token=_harness_token,
             ),
         )
         logger.info(
             "Adaptive Mission Harness mounted at /api/harness (POST /api/harness/missions; "
-            "audit ledger: %s; simulated execution only).",
+            "audit ledger: %s; auth: %s; simulated execution only).",
             os.path.basename(_harness_ledger_path),
+            "service-token" if _harness_token else "INSECURE-LOCAL",
         )
