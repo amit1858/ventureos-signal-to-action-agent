@@ -99,9 +99,9 @@ check("two demo builds are byte-identical", a === b);
 console.log("\n[5] Guided narrative: complete, ordered, no dashboard grid");
 // ===========================================================================
 const EXPECTED_IDS = [
-  "what-happened", "why-at-risk", "unified-context", "evidence",
-  "recommended-mission", "proposed-actions", "verification", "approval",
-  "simulated-execution", "outcome-audit",
+  "what-happened", "recommended-mission", "why-at-risk", "evidence",
+  "proposed-actions", "verification", "approval", "simulated-execution",
+  "outcome", "supporting-context",
 ];
 check("exactly 10 narrative sections", MISSION_SECTIONS.length === 10);
 check("section ids match the spec order",

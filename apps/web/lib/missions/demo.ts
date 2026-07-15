@@ -236,16 +236,18 @@ export interface MissionSection {
   subtitle: string;
 }
 
-/** The deterministic, ordered renewal-risk narrative (F1.7 spec, 10 beats). */
+/** The deterministic, ordered renewal-risk narrative (F1 correction, 10 beats).
+ * Recommendation comes BEFORE the supporting detail; customer context and the
+ * audit trail are progressively disclosed last. */
 export const MISSION_SECTIONS: readonly MissionSection[] = Object.freeze([
   { id: "what-happened", index: 1, title: "What happened", subtitle: "The signal that opened this mission" },
-  { id: "why-at-risk", index: 2, title: "Why this account is at risk", subtitle: "The narrative, before the metrics" },
-  { id: "unified-context", index: 3, title: "Unified customer context", subtitle: "One resolved account across sources" },
+  { id: "recommended-mission", index: 2, title: "Recommended renewal mission", subtitle: "One mission, chosen deterministically" },
+  { id: "why-at-risk", index: 3, title: "Why this account is at risk", subtitle: "The narrative, before the metrics" },
   { id: "evidence", index: 4, title: "Confidence, evidence & provenance", subtitle: "Why you can trust this" },
-  { id: "recommended-mission", index: 5, title: "Recommended renewal mission", subtitle: "One mission, chosen deterministically" },
-  { id: "proposed-actions", index: 6, title: "Proposed actions", subtitle: "Exactly what would run" },
-  { id: "verification", index: 7, title: "Verification", subtitle: "Checked before you are asked" },
-  { id: "approval", index: 8, title: "Approval", subtitle: "Human approval before any action" },
-  { id: "simulated-execution", index: 9, title: "Simulated execution", subtitle: "Nothing leaves the sandbox" },
-  { id: "outcome-audit", index: 10, title: "Outcome & audit trail", subtitle: "The receipt for this mission" },
+  { id: "proposed-actions", index: 5, title: "Proposed actions", subtitle: "Exactly what would run" },
+  { id: "verification", index: 6, title: "Verification", subtitle: "Checked before you are asked" },
+  { id: "approval", index: 7, title: "Approval", subtitle: "Human approval before any action" },
+  { id: "simulated-execution", index: 8, title: "Simulated execution", subtitle: "Nothing leaves the sandbox" },
+  { id: "outcome", index: 9, title: "Outcome", subtitle: "Where this mission stands now" },
+  { id: "supporting-context", index: 10, title: "Supporting customer context & audit", subtitle: "One resolved account, and the full history" },
 ]);

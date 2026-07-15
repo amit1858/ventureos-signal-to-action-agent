@@ -35,6 +35,16 @@ import type { CompletedMissionTurn, GovernedMissionTurn, MissionTurn } from "@/l
 import { simulateApprovedActions } from "@/lib/missions/simulation";
 import type { ApprovalCapture, SimulatedActionProposal } from "@/lib/missions/simulation";
 import { deriveMissionPhase, missionPhaseNarrative } from "@/lib/missions/missionStatusCopy";
+import { deriveMissionView } from "@/lib/missions/missionView";
+import type { MissionView } from "@/lib/missions/missionView";
+import {
+  actionLabel,
+  checkLabel,
+  intentLabel,
+  permittedActionLabel,
+  targetTypeLabel,
+  templateLabel,
+} from "@/lib/missions/missionLabels";
 import { buildMissionAuditTrail } from "@/lib/missions/auditTrail";
 import type { MissionAuditTrail } from "@/lib/missions/auditTrail";
 import { ApprovalPanel } from "@/components/missions/ApprovalPanel";
@@ -88,16 +98,17 @@ function Meta({ label, value, mono }: { label: string; value: React.ReactNode; m
 // ---------------------------------------------------------------------------
 
 function WhatHappened({ turn }: { turn: CompletedMissionTurn }) {
+  const opening = `${turn.account.canonicalName} shows signs of renewal risk. VentureOS recommends preparing focused renewal outreach and a stakeholder briefing before the next customer milestone.`;
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-        <p className="text-[15px] leading-relaxed text-ink">{turn.signalNarrative}</p>
+        <p className="text-[15px] leading-relaxed text-ink">{opening}</p>
       </div>
       <div className="flex items-center gap-2 rounded-lg border border-gov/25 bg-gov/5 px-3 py-2">
-        <Volume2 className="h-3.5 w-3.5 shrink-0 text-gov-bright" />
+        <Volume2 className="h-3.5 w-3.5 shrink-0 text-gov-bright" aria-hidden="true" />
+        <span className="text-[10px] font-medium uppercase tracking-wider text-gov-bright">Voice summary</span>
         <span className="text-xs italic text-muted">{turn.voiceSummary}</span>
-        <span className="chip ml-auto shrink-0 text-[10px]">shared voice line</span>
       </div>
     </div>
   );
@@ -141,8 +152,8 @@ function UnifiedContext({ turn }: { turn: CompletedMissionTurn }) {
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       <Meta label="Account" value={turn.account.canonicalName} />
       <Meta label="VentureOS id" value={turn.account.ventureOsId} mono />
-      <Meta label="Intent" value={turn.intent} />
-      <Meta label="Template" value={turn.selectedTemplateId} mono />
+      <Meta label="Review type" value={intentLabel(turn.intent)} />
+      <Meta label="Mission" value={templateLabel(turn.selectedTemplateId)} />
     </div>
   );
 }
@@ -152,15 +163,27 @@ function UnifiedContext({ turn }: { turn: CompletedMissionTurn }) {
 // ---------------------------------------------------------------------------
 
 function EvidenceProvenance({ turn }: { turn: CompletedMissionTurn }) {
-  const confidence = turn.recommendation.confidenceScore;
+  const matchConfidence = turn.recommendation.confidenceScore;
+  const checks = turn.verification.checks;
+  const passedChecks = checks.filter((c) => c.passed).length;
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="text-2xl font-semibold text-accent">{pct(confidence)}</div>
-        <div className="text-xs text-faint">
-          governance <span className="text-muted">{turn.recommendation.governanceStatus}</span>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="rounded-lg border border-edge bg-surface2/60 px-3 py-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-faint">Account match confidence</div>
+          <div className="mt-0.5 text-2xl font-semibold text-accent">{pct(matchConfidence)}</div>
+        </div>
+        <div className="rounded-lg border border-edge bg-surface2/60 px-3 py-2.5">
+          <div className="text-[10px] uppercase tracking-wider text-faint">Governance checks</div>
+          <div className="mt-0.5 text-2xl font-semibold text-gov-bright">
+            {passedChecks} of {checks.length} <span className="text-sm font-medium text-muted">passed</span>
+          </div>
         </div>
       </div>
+      <p className="text-xs leading-relaxed text-faint">
+        Account match confidence reflects deterministic identity resolution across the source systems — how sure we
+        are this is the right customer. It is not a prediction of renewal loss.
+      </p>
       <div>
         <div className="panel-title mb-2">Mandatory evidence</div>
         <ul className="space-y-1.5">
@@ -198,17 +221,21 @@ function RecommendedMission({ turn }: { turn: CompletedMissionTurn }) {
   const def = turn.missionDefinition;
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <span className="chip border-brand/40 bg-brand/10 text-brand-bright">
-          {turn.recommendation.actionType}
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className="chip border-brand/40 bg-brand/10 text-brand-bright"
+          title={turn.selectedTemplateId}
+        >
+          {templateLabel(turn.selectedTemplateId)}
         </span>
-        <span className="chip text-[10px]">priority 1</span>
+        <span className="chip text-[10px]" title={turn.recommendation.actionType}>
+          {actionLabel(turn.recommendation.actionType)}
+        </span>
         {def && <span className="chip text-[10px]">risk: {def.riskLevel}</span>}
       </div>
       {def ? (
         <>
           <p className="text-sm leading-relaxed text-ink">{def.objective}</p>
-          <p className="text-xs italic text-faint">{def.rationale}</p>
           <div>
             <div className="panel-title mb-1.5">Success criteria</div>
             <ul className="space-y-1">
@@ -238,8 +265,10 @@ function ProposedActions({ turn }: { turn: CompletedMissionTurn }) {
       {turn.permittedActions.map((a) => (
         <li key={a} className="flex items-center gap-2 rounded-lg border border-edge bg-surface2/50 px-3 py-2">
           <Layers className="h-3.5 w-3.5 shrink-0 text-brand" />
-          <span className="font-mono text-xs text-ink">{a}</span>
-          <span className="chip ml-auto border-accent/30 bg-accent/10 text-[10px] text-accent">simulated</span>
+          <span className="text-sm text-ink" title={a}>{permittedActionLabel(a)}</span>
+          <span className="chip ml-auto border-edge bg-surface2 text-[10px] text-faint">
+            Proposed · will not be sent
+          </span>
         </li>
       ))}
     </ul>
@@ -265,7 +294,7 @@ function Verification({ turn }: { turn: CompletedMissionTurn }) {
             ) : (
               <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-risk" />
             )}
-            <span className="font-mono text-xs text-ink">{c.name}</span>
+            <span className="text-ink" title={c.name}>{checkLabel(c.name)}</span>
             <span className="text-faint">· {c.detail}</span>
           </li>
         ))}
@@ -302,15 +331,15 @@ function SimulatedExecution({
         <span className="text-sm text-ink">
           {proposals.length} action{proposals.length === 1 ? "" : "s"} simulated for the approved mission.
         </span>
-        <span className="chip ml-auto border-accent/30 bg-accent/10 text-[10px] text-accent">simulated=true</span>
+        <span className="chip ml-auto border-accent/30 bg-accent/10 text-[10px] text-accent">Completed in sandbox</span>
       </div>
       <ul className="space-y-2">
         {proposals.map((p) => (
           <li key={p.receiptId} className="rounded-lg border border-edge bg-surface2/50 p-3">
             <div className="flex items-center gap-2">
-              <span className="chip text-[10px] uppercase">{p.targetType.replace("_", " ")}</span>
+              <span className="chip text-[10px] uppercase" title={p.targetType}>{targetTypeLabel(p.targetType)}</span>
               <span className="text-sm font-medium text-ink">{p.title}</span>
-              <span className="chip ml-auto border-accent/30 bg-accent/10 text-[10px] text-accent">simulated</span>
+              <span className="chip ml-auto border-accent/30 bg-accent/10 text-[10px] text-accent">Simulated</span>
             </div>
             <p className="mt-1.5 text-sm text-muted">{p.summary}</p>
             <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -332,17 +361,50 @@ function SimulatedExecution({
 }
 
 // ---------------------------------------------------------------------------
-// 10. Outcome & audit trail
+// 9. Outcome — driven by ONE authoritative mission view (never turn.outcome.*)
 // ---------------------------------------------------------------------------
 
-function OutcomeAudit({ turn, trail }: { turn: CompletedMissionTurn; trail: MissionAuditTrail }) {
+const STATE_TONE: Record<MissionView["missionStateTone"], string> = {
+  gov: "border-gov/40 bg-gov/10 text-gov-bright",
+  accent: "border-accent/40 bg-accent/15 text-accent",
+  risk: "border-risk/40 bg-risk/15 text-risk",
+  muted: "border-line bg-surface2 text-muted",
+};
+
+function Outcome({ turn, view }: { turn: CompletedMissionTurn; view: MissionView }) {
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-ink">{turn.outcome.headline}</p>
+    <div className="space-y-3">
+      <p className="text-sm text-ink">{view.outcomeHeadline}</p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <Meta label="Mission state" value={turn.outcome.state} mono />
+        <div className="rounded-lg border border-edge bg-surface2/60 px-3 py-2">
+          <div className="text-[10px] uppercase tracking-wider text-faint">Mission state</div>
+          <span
+            className={cx(
+              "mt-1 inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium",
+              STATE_TONE[view.missionStateTone],
+            )}
+          >
+            {view.missionStateLabel}
+          </span>
+        </div>
         <Meta label="Mission id" value={turn.missionId} mono />
         <Meta label="Audit reference" value={turn.auditRef} mono />
+      </div>
+      <p className="text-xs text-faint">{view.outcomeNotice}</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 10. Supporting customer context & audit (progressively disclosed)
+// ---------------------------------------------------------------------------
+
+function SupportingContext({ turn, trail }: { turn: CompletedMissionTurn; trail: MissionAuditTrail }) {
+  return (
+    <div className="space-y-5">
+      <div>
+        <div className="panel-title mb-2">Unified customer context</div>
+        <UnifiedContext turn={turn} />
       </div>
       <MissionAuditTrailView trail={trail} />
     </div>
@@ -384,15 +446,15 @@ function GovernedNotice({ turn }: { turn: GovernedMissionTurn }) {
 
 const SECTION_ICON: Record<string, React.ReactNode> = {
   "what-happened": <AlertTriangle className="h-4 w-4 text-risk" />,
-  "why-at-risk": <Sparkles className="h-4 w-4 text-accent" />,
-  "unified-context": <Building2 className="h-4 w-4 text-cyan" />,
-  evidence: <FileText className="h-4 w-4 text-faint" />,
   "recommended-mission": <Layers className="h-4 w-4 text-brand" />,
+  "why-at-risk": <Sparkles className="h-4 w-4 text-accent" />,
+  evidence: <FileText className="h-4 w-4 text-faint" />,
   "proposed-actions": <Layers className="h-4 w-4 text-brand" />,
   verification: <ShieldCheck className="h-4 w-4 text-accent" />,
   approval: <Lock className="h-4 w-4 text-gov-bright" />,
   "simulated-execution": <CircleDashed className="h-4 w-4 text-faint" />,
-  "outcome-audit": <ScrollText className="h-4 w-4 text-muted" />,
+  outcome: <ScrollText className="h-4 w-4 text-muted" />,
+  "supporting-context": <Building2 className="h-4 w-4 text-cyan" />,
 };
 
 interface SectionCtx {
@@ -400,6 +462,7 @@ interface SectionCtx {
   capture: ApprovalCapture | null;
   proposals: SimulatedActionProposal[];
   trail: MissionAuditTrail;
+  view: MissionView;
   onDecision: (capture: ApprovalCapture | null) => void;
 }
 
@@ -408,14 +471,12 @@ function sectionBody(id: string, ctx: SectionCtx): React.ReactNode {
   switch (id) {
     case "what-happened":
       return <WhatHappened turn={turn} />;
-    case "why-at-risk":
-      return <WhyAtRisk turn={turn} />;
-    case "unified-context":
-      return <UnifiedContext turn={turn} />;
-    case "evidence":
-      return <EvidenceProvenance turn={turn} />;
     case "recommended-mission":
       return <RecommendedMission turn={turn} />;
+    case "why-at-risk":
+      return <WhyAtRisk turn={turn} />;
+    case "evidence":
+      return <EvidenceProvenance turn={turn} />;
     case "proposed-actions":
       return <ProposedActions turn={turn} />;
     case "verification":
@@ -424,8 +485,10 @@ function sectionBody(id: string, ctx: SectionCtx): React.ReactNode {
       return <ApprovalPanel turn={turn} capture={ctx.capture} onDecision={ctx.onDecision} />;
     case "simulated-execution":
       return <SimulatedExecution capture={ctx.capture} proposals={ctx.proposals} />;
-    case "outcome-audit":
-      return <OutcomeAudit turn={turn} trail={ctx.trail} />;
+    case "outcome":
+      return <Outcome turn={turn} view={ctx.view} />;
+    case "supporting-context":
+      return <SupportingContext turn={turn} trail={ctx.trail} />;
     default:
       return null;
   }
@@ -446,8 +509,9 @@ export function MissionControl({ turn }: { turn: MissionTurn }) {
   const proposals =
     capture && capture.outcome === "approved" ? simulateApprovedActions(turn, capture) : [];
   const trail = buildMissionAuditTrail({ turn, capture, proposals });
-  const ctx: SectionCtx = { turn, capture, proposals, trail, onDecision: setCapture };
-  const phaseCopy = missionPhaseNarrative(deriveMissionPhase(turn, capture));
+  const view = deriveMissionView(turn, capture, proposals);
+  const ctx: SectionCtx = { turn, capture, proposals, trail, view, onDecision: setCapture };
+  const phaseCopy = missionPhaseNarrative(view.phase);
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-10">

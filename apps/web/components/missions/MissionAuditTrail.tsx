@@ -10,7 +10,7 @@
 import * as React from "react";
 import { CheckCircle2, CircleDashed, XCircle, ShieldAlert, ShieldCheck, ChevronDown } from "lucide-react";
 import { cx } from "@/lib/format";
-import type { AuditStepStatus, MissionAuditStep, MissionAuditTrail } from "@/lib/missions/auditTrail";
+import type { AuditStepStatus, AuditTechnicalDetail, MissionAuditStep, MissionAuditTrail } from "@/lib/missions/auditTrail";
 
 function StatusIcon({ status }: { status: AuditStepStatus }) {
   if (status === "done") return <CheckCircle2 className="h-4 w-4 text-accent" />;
@@ -19,16 +19,15 @@ function StatusIcon({ status }: { status: AuditStepStatus }) {
   return <CircleDashed className="h-4 w-4 text-faint" />;
 }
 
-function RefChip({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="chip text-[10px]" title={value}>
-      {label}: <span className="font-mono">{value}</span>
-    </span>
-  );
-}
-
 function Step({ step }: { step: MissionAuditStep }) {
   const [open, setOpen] = React.useState(false);
+  const extras: AuditTechnicalDetail[] = [
+    { label: "actor", value: step.actor },
+    ...(step.evidenceRef ? [{ label: "evidence", value: step.evidenceRef }] : []),
+    ...(step.approvalRef ? [{ label: "approval", value: step.approvalRef }] : []),
+    ...(step.receiptRef ? [{ label: "receipt", value: step.receiptRef }] : []),
+    ...step.technical,
+  ];
   return (
     <li className="relative pl-8">
       <span className="absolute left-0 top-0.5">
@@ -42,25 +41,22 @@ function Step({ step }: { step: MissionAuditStep }) {
         <span className="ml-auto font-mono text-[10px] text-faint">{step.timestamp}</span>
       </div>
       <p className="mt-0.5 text-xs text-muted">{step.detail}</p>
-      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-        <span className="chip text-[10px]">actor: {step.actor}</span>
-        {step.evidenceRef && <RefChip label="evidence" value={step.evidenceRef} />}
-        {step.approvalRef && <RefChip label="approval" value={step.approvalRef} />}
-        {step.receiptRef && <RefChip label="receipt" value={step.receiptRef} />}
-        {step.technical.length > 0 && (
+      {extras.length > 0 && (
+        <div className="mt-1.5">
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
             className="inline-flex items-center gap-1 text-[10px] text-faint hover:text-muted"
           >
             <ChevronDown className={cx("h-3 w-3 transition-transform", open && "rotate-180")} />
             technical evidence
           </button>
-        )}
-      </div>
-      {open && step.technical.length > 0 && (
+        </div>
+      )}
+      {open && extras.length > 0 && (
         <div className="mt-1.5 space-y-1 rounded-lg border border-edge bg-base px-3 py-2">
-          {step.technical.map((t) => (
+          {extras.map((t) => (
             <div key={t.label + t.value} className="flex items-center justify-between gap-3 text-[11px]">
               <span className="text-faint">{t.label}</span>
               <span className="break-all font-mono text-muted">{t.value}</span>

@@ -9,10 +9,11 @@
 // simulated-only and bound to the exact reviewed payload — no live action.
 
 import * as React from "react";
-import { Lock, ShieldCheck, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { Lock, ShieldCheck, CheckCircle2, XCircle, RotateCcw, ChevronDown } from "lucide-react";
 import { cx } from "@/lib/format";
 import { captureApproval, ApprovalError } from "@/lib/missions/simulation";
 import type { ApprovalCapture, PresentationApprovalOutcome } from "@/lib/missions/simulation";
+import { actionLabel, permittedActionLabel } from "@/lib/missions/missionLabels";
 import type { CompletedMissionTurn } from "@/lib/missions/types";
 
 function BindingRow({ label, value }: { label: string; value: string }) {
@@ -20,6 +21,33 @@ function BindingRow({ label, value }: { label: string; value: string }) {
     <div className="flex flex-col gap-0.5">
       <span className="text-[10px] uppercase tracking-wider text-faint">{label}</span>
       <span className="break-all font-mono text-[11px] text-ink">{value}</span>
+    </div>
+  );
+}
+
+/** The reviewed payload ref, full hash and low-level ids — collapsed by default
+ * so the primary approval reads in business terms. Governance binding is intact;
+ * only its PRESENTATION is progressively disclosed. */
+function TechnicalBinding({ rows }: { rows: Array<{ label: string; value: string }> }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className="rounded-lg border border-edge bg-surface2/50">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-faint hover:text-muted"
+      >
+        <ChevronDown className={cx("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+        Technical approval binding
+      </button>
+      {open && (
+        <div className="grid grid-cols-1 gap-2 border-t border-edge px-3 py-3 sm:grid-cols-2">
+          {rows.map((r) => (
+            <BindingRow key={r.label} label={r.label} value={r.value} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -72,12 +100,18 @@ export function ApprovalPanel({
           <span className="chip ml-auto text-[10px]">{capture.channel}</span>
         </div>
         {capture.reason && <p className="text-xs italic text-faint">Reason: {capture.reason}</p>}
-        <div className="grid grid-cols-1 gap-2 rounded-lg border border-edge bg-surface2/50 p-3 sm:grid-cols-2">
-          <BindingRow label="Mission version" value={capture.missionVersion} />
-          <BindingRow label="Decision id" value={capture.decisionId} />
-          <BindingRow label="Bound payload ref" value={capture.approvedActionRef} />
-          <BindingRow label="Bound payload hash" value={capture.approvedPayloadHash} />
+        <div className="text-xs text-muted">
+          Mission version <span className="font-medium text-ink">{capture.missionVersion}</span> · nothing was sent
+          and no record was written.
         </div>
+        <TechnicalBinding
+          rows={[
+            { label: "Mission version", value: capture.missionVersion },
+            { label: "Decision id", value: capture.decisionId },
+            { label: "Bound payload ref", value: capture.approvedActionRef },
+            { label: "Bound payload hash", value: capture.approvedPayloadHash },
+          ]}
+        />
         <button
           type="button"
           className="btn btn-ghost"
@@ -119,16 +153,53 @@ export function ApprovalPanel({
         <Lock className="h-4 w-4 shrink-0 text-gov-bright" />
         <span className="text-sm text-ink">{binding.prompt}</span>
         <span className="chip ml-auto border-gov/40 bg-gov/10 text-[10px] text-gov-bright">
-          {turn.approvalState}
+          Awaiting approval
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 rounded-lg border border-edge bg-surface2/50 p-3 sm:grid-cols-2">
-        <BindingRow label="Proposed action" value={turn.recommendation.actionType} />
-        <BindingRow label="Mission version" value={binding.missionVersion} />
-        <BindingRow label="Reviewed payload ref" value={binding.actionPayloadRef} />
-        <BindingRow label="Reviewed payload hash" value={binding.actionPayloadHash} />
+      <div className="space-y-2 rounded-lg border border-edge bg-surface2/50 p-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-faint">Action to approve</div>
+            <div className="mt-0.5 text-sm font-medium text-ink">
+              {actionLabel(turn.recommendation.actionType)}
+            </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-faint">Customer</div>
+            <div className="mt-0.5 text-sm font-medium text-ink">{turn.account.canonicalName}</div>
+          </div>
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-faint">What will be simulated</div>
+          <ul className="mt-1 space-y-1">
+            {turn.permittedActions.map((a) => (
+              <li key={a} className="flex items-center gap-2 text-sm text-muted">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-accent" />
+                <span className="text-ink">{permittedActionLabel(a)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="chip border-accent/30 bg-accent/10 text-[10px] text-accent">
+            Verification passed
+          </span>
+          <span className="chip text-[10px]">Mission version {binding.missionVersion}</span>
+        </div>
+        <p className="text-[11px] text-faint">
+          Nothing will be sent and no CRM record will be written. Every action runs only in a controlled sandbox.
+        </p>
       </div>
+
+      <TechnicalBinding
+        rows={[
+          { label: "Reviewed payload ref", value: binding.actionPayloadRef },
+          { label: "Reviewed payload hash", value: binding.actionPayloadHash },
+          { label: "Recommendation id", value: turn.recommendation.recommendationId },
+          { label: "Mission version", value: binding.missionVersion },
+        ]}
+      />
 
       {mode === "idle" && (
         <div className="flex flex-wrap gap-2">
@@ -154,7 +225,7 @@ export function ApprovalPanel({
               onChange={(e) => setConfirmed(e.target.checked)}
             />
             <span>
-              I confirm the exact reviewed action ({turn.recommendation.actionType}) and its payload binding.
+              I confirm the exact reviewed action ({actionLabel(turn.recommendation.actionType)}) and its payload binding.
             </span>
           </label>
           <div className="flex flex-wrap gap-2">

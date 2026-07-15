@@ -11,6 +11,7 @@
 // Pure module: types + plain functions only (no JSX, no clock, no network).
 
 import { defaultInjectedTimestamps } from "../harness/requestBuilder";
+import { templateLabel } from "./missionLabels";
 import type { ApprovalCapture, SimulatedActionProposal } from "./simulation";
 import type { CompletedMissionTurn } from "./types";
 
@@ -92,7 +93,7 @@ export function buildMissionAuditTrail(input: AuditTrailInput): MissionAuditTrai
     {
       sequence: 1,
       stageId: "intake",
-      title: "Intake",
+      title: "Signal received",
       actor: "system",
       timestamp: ts.intake ?? ts.default,
       status: "done",
@@ -106,7 +107,7 @@ export function buildMissionAuditTrail(input: AuditTrailInput): MissionAuditTrai
     {
       sequence: 2,
       stageId: "identity_resolution",
-      title: "Identity resolution",
+      title: "Customer identified",
       actor: "identity-resolver",
       timestamp: ts.identity ?? ts.default,
       status: "done",
@@ -120,35 +121,35 @@ export function buildMissionAuditTrail(input: AuditTrailInput): MissionAuditTrai
     {
       sequence: 3,
       stageId: "template_selection",
-      title: "Template selection",
+      title: "Mission selected",
       actor: "mission-selector",
       timestamp: ts.selection ?? ts.default,
       status: "done",
-      detail: `Deterministically selected ${turn.selectedTemplateId}.`,
+      detail: `Selected the ${templateLabel(turn.selectedTemplateId)} for ${account}.`,
       evidenceRef: turn.selectedTemplateId,
       approvalRef: null,
       receiptRef: null,
       chainValid,
-      technical: [],
+      technical: [{ label: "Template id", value: turn.selectedTemplateId }],
     },
     {
       sequence: 4,
       stageId: "planning",
-      title: "Planning",
+      title: "Actions prepared",
       actor: "mission-harness",
       timestamp: ts.proposed ?? ts.default,
       status: "done",
-      detail: `Prepared ${turn.recommendation.actionType} with ${turn.permittedActions.length} permitted actions.`,
+      detail: `Prepared ${turn.permittedActions.length} permitted actions for this mission.`,
       evidenceRef: turn.recommendation.recommendationId,
       approvalRef: null,
       receiptRef: null,
       chainValid,
-      technical: [],
+      technical: [{ label: "Action id", value: turn.recommendation.actionType }],
     },
     {
       sequence: 5,
       stageId: "verification",
-      title: "Verification",
+      title: "Governance checks",
       actor: "verifier",
       timestamp: ts.verification ?? ts.default,
       status: verificationDone ? "done" : "blocked",
@@ -185,7 +186,7 @@ export function buildMissionAuditTrail(input: AuditTrailInput): MissionAuditTrai
     {
       sequence: 7,
       stageId: "simulated_execution",
-      title: "Simulated execution",
+      title: "Simulated actions",
       actor: "sandbox",
       timestamp: ts.execution ?? ts.default,
       status: approved ? "done" : rejected ? "blocked" : "pending",
@@ -201,7 +202,7 @@ export function buildMissionAuditTrail(input: AuditTrailInput): MissionAuditTrai
     {
       sequence: 8,
       stageId: "outcome_verification",
-      title: "Outcome verification",
+      title: "Outcome checked",
       actor: "verifier",
       timestamp: ts.outcome ?? ts.default,
       status: approved ? "done" : "pending",
@@ -217,7 +218,7 @@ export function buildMissionAuditTrail(input: AuditTrailInput): MissionAuditTrai
     {
       sequence: 9,
       stageId: "closure",
-      title: "Closure",
+      title: "Mission closed",
       actor: "mission-harness",
       timestamp: ts.outcome ?? ts.default,
       status: rejected ? "blocked" : approved ? "done" : "pending",

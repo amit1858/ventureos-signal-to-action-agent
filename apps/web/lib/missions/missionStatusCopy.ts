@@ -59,37 +59,38 @@ export function deriveMissionPhase(
 const PHASE_COPY: Record<MissionPhase, Omit<MissionPhaseCopy, "phase">> = {
   awaiting_approval: {
     label: "Awaiting approval",
-    headline: "Verified and ready — your explicit approval is required before any action runs.",
+    headline: "The verified renewal mission is ready for your approval. No action has run.",
     tone: "gov",
   },
   simulated_executed: {
-    label: "Simulated",
-    headline: "Approved. The proposed actions ran in the sandbox — nothing left the demo environment.",
+    label: "Complete",
+    headline:
+      "Your approved renewal actions were simulated. The mission is complete — no email was sent and no CRM record was changed.",
     tone: "accent",
   },
   closed: {
     label: "Closed",
-    headline: "Mission complete. The governed audit trail is recorded.",
+    headline: "The renewal mission is complete. The governed audit trail is recorded.",
     tone: "muted",
   },
   blocked: {
     label: "Blocked",
-    headline: "Held by governance — this mission was not cleared to proceed.",
+    headline: "VentureOS cannot safely proceed with this mission.",
     tone: "risk",
   },
   rejected: {
-    label: "Rejected",
-    headline: "The proposed action was not approved. No action was taken.",
+    label: "Not approved",
+    headline: "The proposed renewal mission was not approved.",
     tone: "risk",
   },
   revision_required: {
     label: "Revision requested",
-    headline: "Sent back for revision — verification must pass before approval.",
+    headline: "The mission needs revision before it can proceed.",
     tone: "gov",
   },
   failed: {
     label: "Failed",
-    headline: "The mission could not be completed.",
+    headline: "The renewal mission could not be completed.",
     tone: "risk",
   },
 };
