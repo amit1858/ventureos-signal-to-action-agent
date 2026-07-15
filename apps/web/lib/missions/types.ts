@@ -26,7 +26,9 @@ import type {
   ApprovalChannel,
   ApprovalOutcome,
   CanonicalAccountRef,
+  EvidenceRef,
   HarnessServiceErrorCode,
+  MissionDefinitionBrief,
   MissionState,
   VerificationResult,
 } from "../harness/types";
@@ -58,6 +60,42 @@ export interface ApprovalSummary {
   channel: ApprovalChannel;
 }
 
+/** A minimal, presentation-safe account header for the surfaces. */
+export interface AccountSummary {
+  ventureOsId: string;
+  canonicalName: string;
+}
+
+/** The presentation approval state of a completed turn. Release 2.2 captures a
+ * human decision in a later increment (F1.8); until then a mission awaiting a
+ * bound approval is `pending`, and one with no approval gate is `not_required`. */
+export type MissionApprovalState =
+  | "not_required"
+  | "pending"
+  | "approved"
+  | "rejected";
+
+/** A presentation-safe projection of a simulated action receipt. `null` until an
+ * approved action has been simulated (F1.8). NEVER a live/external side effect. */
+export interface SimulatedActionResult {
+  receiptId: string;
+  actionType: string;
+  targetType: string;
+  targetId: string;
+  summary: string;
+  simulated: true;
+}
+
+/** The deterministic, presentation-safe outcome of a mission turn. */
+export interface MissionOutcome {
+  /** The governed mission state this outcome reflects (forwarded, not derived). */
+  state: MissionState;
+  /** Whether an execution-eligible action is available on this turn. */
+  executable: boolean;
+  /** A short, deterministic headline the surfaces render (no model output). */
+  headline: string;
+}
+
 /** Fields shared by every packaged turn, executed or governed. */
 export interface MissionTurnBase {
   schemaVersion: "1.0";
@@ -72,22 +110,49 @@ export interface MissionTurnBase {
 }
 
 /** A governance-valid, execution-eligible turn. This is the ONLY turn variant
- * that carries composed language (`PersonaResponse`) and a voice summary. */
+ * that carries composed language (`PersonaResponse`) and a voice summary.
+ *
+ * One shared shape serves the screen, Voice, and Digital Human surfaces — there
+ * are NO provider-specific fields. The surfaces read `personaResponse` for rich
+ * rendering and `voiceSummary` for the spoken line; neither the language nor the
+ * governed facts are re-derived per channel. */
 export interface CompletedMissionTurn extends MissionTurnBase {
   status: "completed";
   canonicalAccount: CanonicalAccountRef;
+  /** Presentation account header (mirrors `canonicalAccount`). */
+  account: AccountSummary;
+  /** The governed conversation intent for this turn. */
+  intent: string;
+  /** The deterministically selected mission template id. */
+  selectedTemplateId: string;
+  /** A deterministic, governed one-line framing of why the mission ran. */
+  signalNarrative: string;
   /** Composed by the protected Conversation Runtime on the TypeScript side. */
   personaResponse: PersonaResponse;
   /** Single spoken-form line for the Voice / Digital Human surfaces. */
   voiceSummary: string;
+  /** Reference-only evidence backing the mission (citations live on
+   * `personaResponse.citations`, projected from record provenance). */
+  evidence: EvidenceRef[];
   verification: VerificationResult;
+  /** A deterministic, human-readable summary of the verification verdict. */
+  verificationSummary: string;
   recommendation: RecommendationSummary;
+  /** Actions the mission is permitted to take (forwarded governance fact). */
+  permittedActions: string[];
+  /** Presentation approval state (F1.8 captures the human decision). */
+  approvalState: MissionApprovalState;
   approval?: ApprovalSummary;
+  /** Simulated action result once an approved action has run; `null` until then. */
+  simulatedAction: SimulatedActionResult | null;
+  /** The deterministic presentation outcome for this turn. */
+  outcome: MissionOutcome;
+  missionDefinition: MissionDefinitionBrief | null;
 }
 
 /** A governed, NON-executable turn (blocked / rejected / revision_required /
  * failed). It NEVER carries a `PersonaResponse`: the surfaces render a governed
- * narrative and status instead. */
+ * narrative and status instead. One shared shape for every surface. */
 export interface GovernedMissionTurn extends MissionTurnBase {
   status: "blocked" | "rejected" | "revision_required" | "failed";
   /** Short, presentation-safe reason for the governed outcome. */

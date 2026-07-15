@@ -10,7 +10,8 @@
     "lint": "next lint",
     "test:bff": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/bff.eval.ts",
     "test:mission-memory": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/missionMemoryAdapter.eval.ts",
-    "test:missions": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/missionPayloadCompatibility.eval.ts && node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/bff.eval.ts && node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/missionMemoryAdapter.eval.ts"
+    "test:mission-turn": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/missionTurn.eval.ts",
+    "test:missions": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/missionPayloadCompatibility.eval.ts && node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/bff.eval.ts && node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/missionMemoryAdapter.eval.ts && node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/missionTurn.eval.ts"
   },
   "dependencies": {
     "lucide-react": "0.454.0",
