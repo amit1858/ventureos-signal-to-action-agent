@@ -408,3 +408,21 @@ __all__ += [
     "LedgerReference",
     "execute_mission",
 ]
+
+# -- Commit 9: self-contained mission HTTP adapter --------------------------
+
+from harness.http_adapter import (  # noqa: E402
+    CORRELATION_HEADER,
+    HarnessHttpConfig,
+    HarnessHttpConfigError,
+    create_harness_app,
+    http_status_for_response,
+)
+
+__all__ += [
+    "CORRELATION_HEADER",
+    "HarnessHttpConfig",
+    "HarnessHttpConfigError",
+    "create_harness_app",
+    "http_status_for_response",
+]
