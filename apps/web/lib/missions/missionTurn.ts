@@ -164,6 +164,16 @@ export function assembleCompletedMissionTurn(input: CompletedTurnInput): Complet
     recommendation: recommendationSummary(payload.recommendation),
     permittedActions: payload.permittedActions,
     approvalState,
+    approvalBinding: approvalRequest
+      ? {
+          missionVersion: approvalRequest.missionVersion,
+          actionPayloadRef: approvalRequest.actionPayloadRef,
+          actionPayloadHash: approvalRequest.actionPayloadHash,
+          verificationRef: approvalRequest.verificationRef,
+          prompt: approvalRequest.prompt,
+          permittedActions: approvalRequest.permittedActions,
+        }
+      : null,
     // Simulated action result is produced after a human approval (F1.8).
     simulatedAction: null,
     outcome: outcomeOf(payload.missionState, approvalState, payload.recommendation),

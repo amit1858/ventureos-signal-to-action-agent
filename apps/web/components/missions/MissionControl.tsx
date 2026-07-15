@@ -32,6 +32,9 @@ import { cx, pct } from "@/lib/format";
 import { MISSION_SECTIONS } from "@/lib/missions/demo";
 import { isCompletedMissionTurn } from "@/lib/missions/types";
 import type { CompletedMissionTurn, GovernedMissionTurn, MissionTurn } from "@/lib/missions/types";
+import { simulateApprovedActions } from "@/lib/missions/simulation";
+import type { ApprovalCapture, SimulatedActionProposal } from "@/lib/missions/simulation";
+import { ApprovalPanel } from "@/components/missions/ApprovalPanel";
 
 // ---------------------------------------------------------------------------
 // Small presentation atoms (local — no external state)
@@ -268,65 +271,58 @@ function Verification({ turn }: { turn: CompletedMissionTurn }) {
 }
 
 // ---------------------------------------------------------------------------
-// 8. Approval — human approval before any action (interaction lands in F1.8)
-// ---------------------------------------------------------------------------
-
-function Approval({ turn }: { turn: CompletedMissionTurn }) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 rounded-lg border border-gov/30 bg-gov/5 px-3 py-2">
-        <Lock className="h-4 w-4 shrink-0 text-gov-bright" />
-        <span className="text-sm text-ink">
-          Human approval is required before{" "}
-          <span className="font-medium">{turn.recommendation.actionType}</span> can run.
-        </span>
-        <span className="chip ml-auto border-gov/40 bg-gov/10 text-[10px] text-gov-bright">
-          {turn.approvalState}
-        </span>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <button type="button" disabled className="btn btn-primary" aria-disabled>
-          Approve
-        </button>
-        <button type="button" disabled className="btn btn-ghost" aria-disabled>
-          Request revision
-        </button>
-        <button type="button" disabled className="btn btn-danger" aria-disabled>
-          Reject
-        </button>
-      </div>
-      <p className="text-[11px] text-faint">
-        Approval binds to the exact mission version and reviewed action payload. Interaction is enabled in the
-        next increment; no action can run until a human approves.
-      </p>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // 9. Simulated execution — nothing leaves the sandbox
 // ---------------------------------------------------------------------------
 
-function SimulatedExecution({ turn }: { turn: CompletedMissionTurn }) {
-  if (turn.simulatedAction) {
-    const r = turn.simulatedAction;
+function SimulatedExecution({
+  capture,
+  proposals,
+}: {
+  capture: ApprovalCapture | null;
+  proposals: SimulatedActionProposal[];
+}) {
+  if (!capture || capture.outcome !== "approved") {
     return (
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-accent" />
-          <span className="text-sm text-ink">{r.summary}</span>
-          <span className="chip ml-auto border-accent/30 bg-accent/10 text-[10px] text-accent">simulated=true</span>
-        </div>
-        <div className="font-mono text-xs text-faint">receipt {r.receiptId}</div>
+      <div className="flex items-center gap-2 rounded-lg border border-dashed border-edge bg-surface2/40 px-3 py-3">
+        <CircleDashed className="h-4 w-4 shrink-0 text-faint" />
+        <span className="text-sm text-muted">
+          Runs only after approval. Every action is simulated — nothing leaves the controlled sandbox.
+        </span>
       </div>
     );
   }
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-dashed border-edge bg-surface2/40 px-3 py-3">
-      <CircleDashed className="h-4 w-4 shrink-0 text-faint" />
-      <span className="text-sm text-muted">
-        Runs only after approval. Every action is simulated — nothing leaves the controlled sandbox.
-      </span>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <CheckCircle2 className="h-4 w-4 text-accent" />
+        <span className="text-sm text-ink">
+          {proposals.length} action{proposals.length === 1 ? "" : "s"} simulated for the approved mission.
+        </span>
+        <span className="chip ml-auto border-accent/30 bg-accent/10 text-[10px] text-accent">simulated=true</span>
+      </div>
+      <ul className="space-y-2">
+        {proposals.map((p) => (
+          <li key={p.receiptId} className="rounded-lg border border-edge bg-surface2/50 p-3">
+            <div className="flex items-center gap-2">
+              <span className="chip text-[10px] uppercase">{p.targetType.replace("_", " ")}</span>
+              <span className="text-sm font-medium text-ink">{p.title}</span>
+              <span className="chip ml-auto border-accent/30 bg-accent/10 text-[10px] text-accent">simulated</span>
+            </div>
+            <p className="mt-1.5 text-sm text-muted">{p.summary}</p>
+            <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+              <div className="rounded border border-edge bg-base px-2 py-1.5 text-xs text-faint">
+                <span className="text-[10px] uppercase tracking-wider">before</span>
+                <div className="text-muted">{p.before}</div>
+              </div>
+              <div className="rounded border border-accent/25 bg-accent/5 px-2 py-1.5 text-xs">
+                <span className="text-[10px] uppercase tracking-wider text-faint">after</span>
+                <div className="text-ink">{p.after}</div>
+              </div>
+            </div>
+            <div className="mt-1.5 font-mono text-[11px] text-faint">receipt {p.receiptId}</div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -390,7 +386,15 @@ const SECTION_ICON: Record<string, React.ReactNode> = {
   "outcome-audit": <ScrollText className="h-4 w-4 text-muted" />,
 };
 
-function sectionBody(id: string, turn: CompletedMissionTurn): React.ReactNode {
+interface SectionCtx {
+  turn: CompletedMissionTurn;
+  capture: ApprovalCapture | null;
+  proposals: SimulatedActionProposal[];
+  onDecision: (capture: ApprovalCapture | null) => void;
+}
+
+function sectionBody(id: string, ctx: SectionCtx): React.ReactNode {
+  const { turn } = ctx;
   switch (id) {
     case "what-happened":
       return <WhatHappened turn={turn} />;
@@ -407,9 +411,9 @@ function sectionBody(id: string, turn: CompletedMissionTurn): React.ReactNode {
     case "verification":
       return <Verification turn={turn} />;
     case "approval":
-      return <Approval turn={turn} />;
+      return <ApprovalPanel turn={turn} capture={ctx.capture} onDecision={ctx.onDecision} />;
     case "simulated-execution":
-      return <SimulatedExecution turn={turn} />;
+      return <SimulatedExecution capture={ctx.capture} proposals={ctx.proposals} />;
     case "outcome-audit":
       return <OutcomeAudit turn={turn} />;
     default:
@@ -419,6 +423,8 @@ function sectionBody(id: string, turn: CompletedMissionTurn): React.ReactNode {
 
 /** The complete renewal-risk Mission Control experience for one governed turn. */
 export function MissionControl({ turn }: { turn: MissionTurn }) {
+  const [capture, setCapture] = React.useState<ApprovalCapture | null>(null);
+
   if (!isCompletedMissionTurn(turn)) {
     return (
       <div className="mx-auto w-full max-w-4xl px-4 py-10">
@@ -426,6 +432,11 @@ export function MissionControl({ turn }: { turn: MissionTurn }) {
       </div>
     );
   }
+
+  const proposals =
+    capture && capture.outcome === "approved" ? simulateApprovedActions(turn, capture) : [];
+  const ctx: SectionCtx = { turn, capture, proposals, onDecision: setCapture };
+
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-10">
       <header className="mb-8">
@@ -442,7 +453,7 @@ export function MissionControl({ turn }: { turn: MissionTurn }) {
             subtitle={s.subtitle}
             icon={SECTION_ICON[s.id]}
           >
-            {sectionBody(s.id, turn)}
+            {sectionBody(s.id, ctx)}
           </SectionShell>
         ))}
       </div>

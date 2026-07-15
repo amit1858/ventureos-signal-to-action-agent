@@ -146,7 +146,7 @@ const KNOWN_COMPLETED_KEYS = new Set([
   "schemaVersion", "missionId", "turnIndex", "status", "missionState", "canonicalAccount",
   "auditRef", "simulated", "account", "intent", "selectedTemplateId", "signalNarrative",
   "personaResponse", "voiceSummary", "evidence", "verification", "verificationSummary",
-  "recommendation", "permittedActions", "approvalState", "approval", "simulatedAction",
+  "recommendation", "permittedActions", "approvalState", "approvalBinding", "approval", "simulatedAction",
   "outcome", "missionDefinition",
 ]);
 
@@ -187,6 +187,11 @@ for (const file of COMPLETED) {
   check(`${file}: permittedActions forwarded`,
     JSON.stringify(turn.permittedActions) === JSON.stringify(payload.permittedActions));
   check(`${file}: approvalState pending (bound approval request)`, turn.approvalState === "pending");
+  check(`${file}: approvalBinding forwards mission version + payload hash`,
+    !!turn.approvalBinding &&
+    turn.approvalBinding.missionVersion === payload.approvalRequest!.missionVersion &&
+    turn.approvalBinding.actionPayloadHash === payload.approvalRequest!.actionPayloadHash &&
+    turn.approvalBinding.actionPayloadRef === payload.approvalRequest!.actionPayloadRef);
   check(`${file}: no simulated action yet (F1.8)`, turn.simulatedAction === null);
   check(`${file}: outcome executable + forwards state`,
     turn.outcome.executable === true && turn.outcome.state === payload.missionState);

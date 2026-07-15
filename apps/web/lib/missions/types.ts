@@ -60,6 +60,18 @@ export interface ApprovalSummary {
   channel: ApprovalChannel;
 }
 
+/** A presentation-safe binding of the approval gate to the exact mission version
+ * and reviewed action payload. Lets every surface show WHAT is being approved and
+ * prove the decision is bound to one payload (by ref + hash). Carries no secrets. */
+export interface ApprovalBinding {
+  missionVersion: string;
+  actionPayloadRef: string;
+  actionPayloadHash: string;
+  verificationRef: string;
+  prompt: string;
+  permittedActions: string[];
+}
+
 /** A minimal, presentation-safe account header for the surfaces. */
 export interface AccountSummary {
   ventureOsId: string;
@@ -142,6 +154,9 @@ export interface CompletedMissionTurn extends MissionTurnBase {
   permittedActions: string[];
   /** Presentation approval state (F1.8 captures the human decision). */
   approvalState: MissionApprovalState;
+  /** Binding of the approval gate to the mission version + reviewed payload;
+   * `null` when the mission has no approval gate. */
+  approvalBinding: ApprovalBinding | null;
   approval?: ApprovalSummary;
   /** Simulated action result once an approved action has run; `null` until then. */
   simulatedAction: SimulatedActionResult | null;
