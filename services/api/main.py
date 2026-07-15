@@ -974,3 +974,39 @@ def hubspot_note(recommendation_id: str, body: Optional[HubspotActionRequest] = 
 def list_writebacks(recommendation_id: str) -> dict:
     """Return any CRM write-backs already recorded for a recommendation."""
     return {"recommendation_id": recommendation_id, "writebacks": ledger_service.get_writebacks(recommendation_id)}
+
+
+# -- Adaptive Mission Harness (feature-flagged host mount) ----------------
+#
+# When HARNESS_MOUNT_ENABLED=true the governed Adaptive Mission Harness is
+# mounted as an isolated, transport-only FastAPI sub-application at
+# ``/api/harness``, exposing the single public route ``POST
+# /api/harness/missions``. The sub-app owns its own OpenAPI schema and docs,
+# performs SIMULATED execution only, and writes to a DEDICATED SQLite audit
+# ledger (never the decision ledger). Each request opens and closes its own
+# request-scoped ledger connection. Mounting is OFF by default, so the host
+# app's existing routes, health check, and OpenAPI are unchanged unless the
+# flag is explicitly set.
+if _settings.harness_mount_enabled:
+    if not _settings.harness_ledger_is_isolated:
+        logger.error(
+            "Refusing to mount Adaptive Mission Harness: HARNESS_LEDGER_PATH must be "
+            "distinct from the decision ledger (DB_PATH)."
+        )
+    else:
+        from harness import create_harness_app  # noqa: E402
+        from harness.service import HarnessServiceDependencies  # noqa: E402
+
+        _harness_ledger_path = _settings.harness_ledger_path
+        os.makedirs(os.path.dirname(os.path.abspath(_harness_ledger_path)), exist_ok=True)
+        app.mount(
+            "/api/harness",
+            create_harness_app(
+                dependencies=HarnessServiceDependencies(ledger_path=_harness_ledger_path),
+            ),
+        )
+        logger.info(
+            "Adaptive Mission Harness mounted at /api/harness (POST /api/harness/missions; "
+            "audit ledger: %s; simulated execution only).",
+            os.path.basename(_harness_ledger_path),
+        )
