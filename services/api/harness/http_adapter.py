@@ -57,10 +57,10 @@ _JSON_MEDIA_TYPE = "application/json"
 _OK_STATUSES = (SVC_COMPLETED, SVC_BLOCKED, SVC_REJECTED, SVC_REVISION_REQUIRED)
 
 # When status == failed, the HTTP code is chosen from the leading service error.
-# ``idempotency_conflict`` is a reserved forward-looking mapping: the current
-# in-process service surfaces a genuine durable conflict as ``internal_service_
-# failure`` (fail-closed), so 409 is validated at the mapping layer and honoured
-# here for when the service promotes that code.
+# A genuine durable idempotency conflict is surfaced by the service as the stable
+# ``idempotency_conflict`` code (see evaluation.FAIL_IDEMPOTENCY_CONFLICT ->
+# service._FAILURE_MAP), which maps to HTTP 409 here. Unrelated internal failures
+# remain ``internal_service_failure`` -> 500.
 _FAILED_ERROR_STATUS = {
     ERR_INVALID_REQUEST: 422,
     ERR_IDEMPOTENCY_CONFLICT: 409,
@@ -173,6 +173,11 @@ def create_harness_app(
     When ``dependencies`` is omitted, each request is served with a fresh,
     private in-memory audit ledger that the service opens and closes itself; a
     caller-supplied ledger remains caller-owned and is left open.
+
+    Route composition: this sub-app exposes ``POST /missions``. The approved
+    future host mount is ``app.mount("/api/harness", create_harness_app(...))``,
+    which yields the composed public route ``POST /api/harness/missions``. No
+    mounting is performed here.
     """
 
     cfg = config or HarnessHttpConfig()  # validates; fails closed on bad config
@@ -191,7 +196,7 @@ def create_harness_app(
     request_schema = HarnessServiceRequest.model_json_schema()
 
     @app.post(
-        "/api/harness/missions",
+        "/missions",
         response_model=HarnessServiceResponse,
         summary="Evaluate a governed mission (simulated execution only)",
         openapi_extra={

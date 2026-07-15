@@ -52,6 +52,7 @@ from harness.evaluation import (
     FAIL_AMBIGUOUS_IDENTITY,
     FAIL_APPROVAL_PAYLOAD_MISMATCH,
     FAIL_APPROVAL_REJECTED,
+    FAIL_IDEMPOTENCY_CONFLICT,
     FAIL_INTERNAL,
     FAIL_NO_MATCHING_TEMPLATE,
     FAIL_POLICY,
@@ -124,6 +125,11 @@ _FAILURE_MAP = {
     FAIL_APPROVAL_PAYLOAD_MISMATCH: (
         ERR_APPROVAL_PAYLOAD_MISMATCH, "approval", False,
         "Approval was not bound to the reviewed action payload; execution was refused.",
+    ),
+    FAIL_IDEMPOTENCY_CONFLICT: (
+        ERR_IDEMPOTENCY_CONFLICT, "audit", False,
+        "A durable idempotency conflict was detected; the idempotency key was reused "
+        "with a different action payload and no new receipt was created.",
     ),
     FAIL_INTERNAL: (
         ERR_INTERNAL, "internal", False,

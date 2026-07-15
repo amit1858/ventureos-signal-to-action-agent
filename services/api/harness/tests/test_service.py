@@ -38,6 +38,7 @@ from harness.service import (  # noqa: E402
     ERR_AMBIGUOUS_IDENTITY,
     ERR_APPROVAL_PAYLOAD_MISMATCH,
     ERR_APPROVAL_REJECTED,
+    ERR_IDEMPOTENCY_CONFLICT,
     ERR_INVALID_REQUEST,
     ERR_NO_MATCHING_TEMPLATE,
     ERR_VERIFICATION_FAILED,
@@ -160,6 +161,37 @@ def test_payload_mismatch_response() -> None:
     _check("mismatch no payload", resp.mission_execution_payload is None)
     _check("mismatch error code",
            any(e.code == ERR_APPROVAL_PAYLOAD_MISMATCH for e in resp.service_errors))
+
+
+def test_real_idempotency_conflict_response() -> None:
+    # A GENUINE durable idempotency collision: two governed missions share one
+    # caller-owned ledger and the same mission_id (thus the same idempotency key)
+    # but carry DIFFERENT action payloads. The second receipt append collides in
+    # the Mission Audit Ledger, and the service must translate that into a stable,
+    # typed idempotency_conflict error (not a generic internal failure).
+    led = MissionAuditLedger(":memory:")
+    try:
+        deps = HarnessServiceDependencies(ledger=led)
+        mid = "MISSION-IDEM-CONFLICT"
+        first = execute_mission(_request(renewal_risk_happy_path(), mission_id=mid), deps)
+        _check("conflict setup completed", first.status == SVC_COMPLETED, first.status)
+        clash = execute_mission(_request(support_escalation_happy_path(), mission_id=mid), deps)
+        _check("conflict status failed", clash.status == SVC_FAILED, clash.status)
+        _check("conflict execution ineligible", clash.execution_eligible is False)
+        _check("conflict no payload", clash.mission_execution_payload is None)
+        _check("conflict single error", len(clash.service_errors) == 1, str(clash.service_errors))
+        err = clash.service_errors[0]
+        _check("conflict code idempotency_conflict", err.code == ERR_IDEMPOTENCY_CONFLICT, err.code)
+        _check("conflict stage owns failure", err.stage in ("audit", "execution"), err.stage)
+        _check("conflict not retryable", err.retryable is False)
+        blob = json.dumps(clash.model_dump(by_alias=True, mode="json"))
+        unsafe = any(t in blob for t in (
+            "Traceback", ".py", "sqlite", "SELECT ", ":memory:", "\\",
+            "IdempotencyConflictError", "AuditIdempotencyConflictError", "ValueError",
+        ))
+        _check("conflict error is BFF-safe", not unsafe, blob[:200])
+    finally:
+        led.close()
 
 
 def test_payload_only_for_valid_scenarios() -> None:
@@ -349,6 +381,7 @@ _TESTS = [
     test_verification_revision_response,
     test_approval_rejected_response,
     test_payload_mismatch_response,
+    test_real_idempotency_conflict_response,
     test_payload_only_for_valid_scenarios,
     test_request_and_correlation_id_propagation,
     test_strict_request_validation,

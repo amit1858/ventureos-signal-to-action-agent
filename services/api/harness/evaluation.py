@@ -35,7 +35,10 @@ from typing import List, Mapping, Optional
 
 from pydantic import Field
 
-from harness.audit_ledger import MissionAuditLedger
+from harness.audit_ledger import (
+    IdempotencyConflictError as AuditIdempotencyConflictError,
+    MissionAuditLedger,
+)
 from harness.contracts import (
     ActionReceipt,
     ApprovalChannel,
@@ -58,7 +61,13 @@ from harness.fabric import (
 from harness.planner import MissionPlan, plan_mission
 from harness.policy_validator import PolicyValidationResult, validate
 from harness.registries import default_agent_registry, default_tool_registry
-from harness.sandbox import ActionRequest, SandboxError, SimulationSandbox, payload_hash
+from harness.sandbox import (
+    ActionRequest,
+    IdempotencyConflictError as SandboxIdempotencyConflictError,
+    SandboxError,
+    SimulationSandbox,
+    payload_hash,
+)
 from harness.selector import SelectionResult, select
 from harness.state_machine import (
     MissionEventType,
@@ -83,7 +92,14 @@ FAIL_POLICY = "policy_failed"
 FAIL_VERIFICATION = "verification_failed"
 FAIL_APPROVAL_PAYLOAD_MISMATCH = "approval_payload_mismatch"
 FAIL_APPROVAL_REJECTED = "approval_rejected"
+FAIL_IDEMPOTENCY_CONFLICT = "idempotency_conflict"
 FAIL_INTERNAL = "internal_error"
+
+# The stage that owns a durable idempotency conflict. The Mission Audit Ledger is
+# the durable idempotency authority, so a genuine collision is attributed to the
+# audit boundary; a sandbox in-memory collision is attributed to execution.
+_IDEMPOTENCY_STAGE_AUDIT = "audit"
+_IDEMPOTENCY_STAGE_EXECUTION = "execution"
 
 # Deterministic timestamp stages. Every stage time is injected; there is no
 # clock and no hardcoded time. A caller must supply at least ``default``.
@@ -264,6 +280,15 @@ def evaluate_mission_scenario(
         return _run(scenario, ledger, at, result, score,
                     correlation_id=correlation_id, agent_registry=agent_registry,
                     tool_registry=tool_registry, template_registry=template_registry)
+    except (AuditIdempotencyConflictError, SandboxIdempotencyConflictError):
+        # A genuine durable idempotency collision: the same idempotency key was
+        # reused with a different action payload. This is a governed, fail-closed
+        # outcome — not an internal crash — so it carries a stable failure code and
+        # never leaks the raw exception message or class name into the result.
+        score.lifecycle_valid = False
+        result.final_status = STATUS_FAILED
+        result.failure_code = FAIL_IDEMPOTENCY_CONFLICT
+        return _finalize(result)
     except SandboxError as exc:
         # A sandbox governance failure is an expected fail-closed outcome.
         score.lifecycle_valid = False

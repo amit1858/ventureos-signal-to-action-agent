@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import tempfile
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _API_DIR = os.path.abspath(os.path.join(_HERE, "..", ".."))
@@ -106,8 +107,16 @@ def test_app_factory_creation() -> None:
 
 
 def test_openapi_generation() -> None:
-    oa = json.dumps(create_harness_app().openapi())
-    _check("openapi has route", "/api/harness/missions" in oa)
+    app = create_harness_app()
+    spec = app.openapi()
+    paths = list(spec.get("paths", {}).keys())
+    # The self-contained sub-app exposes /missions. The approved future host mount
+    # ``app.mount("/api/harness", create_harness_app(...))`` composes the public
+    # route /api/harness/missions; the sub-app itself must NOT hard-code that prefix.
+    _check("openapi path is /missions", paths == ["/missions"], str(paths))
+    _check("openapi does not hardcode mount prefix", "/api/harness/missions" not in paths, str(paths))
+    oa = json.dumps(spec)
+    _check("openapi has route", "/missions" in oa)
     _check("openapi shows request contract", "missionId" in oa)
     _check("openapi shows response contract", "executionEligible" in oa)
     _check("openapi states simulated", "simulated" in oa or "SIMULATED" in oa)
@@ -121,7 +130,7 @@ def test_openapi_generation() -> None:
 
 
 def test_valid_renewal_request_completed_200() -> None:
-    r = _client().post("/api/harness/missions", json=_body(renewal_risk_happy_path()))
+    r = _client().post("/missions", json=_body(renewal_risk_happy_path()))
     _check("renewal http 200", r.status_code == 200, str(r.status_code))
     body = r.json()
     _check("renewal status completed", body["status"] == SVC_COMPLETED, body["status"])
@@ -130,28 +139,28 @@ def test_valid_renewal_request_completed_200() -> None:
 
 
 def test_valid_support_request_completed_200() -> None:
-    r = _client().post("/api/harness/missions", json=_body(support_escalation_happy_path()))
+    r = _client().post("/missions", json=_body(support_escalation_happy_path()))
     _check("support http 200", r.status_code == 200, str(r.status_code))
     _check("support status completed", r.json()["status"] == SVC_COMPLETED)
     _check("support has payload", r.json()["missionExecutionPayload"] is not None)
 
 
 def test_blocked_returns_200_with_status_blocked() -> None:
-    r = _client().post("/api/harness/missions", json=_body(unsupported_signal_blocked()))
+    r = _client().post("/missions", json=_body(unsupported_signal_blocked()))
     _check("blocked http 200", r.status_code == 200, str(r.status_code))
     _check("blocked status blocked", r.json()["status"] == SVC_BLOCKED)
     _check("blocked no payload", r.json()["missionExecutionPayload"] is None)
 
 
 def test_rejected_returns_200_with_status_rejected() -> None:
-    r = _client().post("/api/harness/missions", json=_body(approval_rejected()))
+    r = _client().post("/missions", json=_body(approval_rejected()))
     _check("rejected http 200", r.status_code == 200, str(r.status_code))
     _check("rejected status rejected", r.json()["status"] == SVC_REJECTED)
     _check("rejected no payload", r.json()["missionExecutionPayload"] is None)
 
 
 def test_revision_required_returns_200() -> None:
-    r = _client().post("/api/harness/missions", json=_body(verification_failed_revision()))
+    r = _client().post("/missions", json=_body(verification_failed_revision()))
     _check("revision http 200", r.status_code == 200, str(r.status_code))
     _check("revision status revision_required", r.json()["status"] == SVC_REVISION_REQUIRED)
     _check("revision no payload", r.json()["missionExecutionPayload"] is None)
@@ -159,10 +168,10 @@ def test_revision_required_returns_200() -> None:
 
 def test_payload_only_for_valid_governed_outcomes() -> None:
     c = _client()
-    ok = c.post("/api/harness/missions", json=_body(renewal_risk_happy_path())).json()
+    ok = c.post("/missions", json=_body(renewal_risk_happy_path())).json()
     _check("valid outcome carries payload", ok["missionExecutionPayload"] is not None)
     for sc in (unsupported_signal_blocked(), approval_rejected(), verification_failed_revision()):
-        blob = c.post("/api/harness/missions", json=_body(sc)).json()
+        blob = c.post("/missions", json=_body(sc)).json()
         _check(f"{sc.scenario_id} no executable payload",
                blob["missionExecutionPayload"] is None)
 
@@ -171,7 +180,7 @@ def test_payload_only_for_valid_governed_outcomes() -> None:
 
 
 def test_validation_failure_returns_422() -> None:
-    r = _client().post("/api/harness/missions", json={"requestId": "only-one-field"})
+    r = _client().post("/missions", json={"requestId": "only-one-field"})
     _check("validation http 422", r.status_code == 422, str(r.status_code))
     body = r.json()
     _check("validation status failed", body["status"] == SVC_FAILED)
@@ -181,13 +190,13 @@ def test_validation_failure_returns_422() -> None:
 
 
 def test_malformed_json_returns_422() -> None:
-    r = _client().post("/api/harness/missions", content=b"{not valid json",
+    r = _client().post("/missions", content=b"{not valid json",
                        headers={"content-type": "application/json"})
     _check("malformed json http 422", r.status_code == 422, str(r.status_code))
 
 
 def test_unsupported_content_type_returns_415() -> None:
-    r = _client().post("/api/harness/missions", content="hi",
+    r = _client().post("/missions", content="hi",
                        headers={"content-type": "text/plain"})
     _check("unsupported content type http 415", r.status_code == 415, str(r.status_code))
     _check("415 status failed", r.json()["status"] == SVC_FAILED)
@@ -195,13 +204,13 @@ def test_unsupported_content_type_returns_415() -> None:
 
 def test_oversized_body_rejected() -> None:
     app = create_harness_app(config=HarnessHttpConfig(max_request_bytes=50))
-    r = TestClient(app).post("/api/harness/missions", json=_body(renewal_risk_happy_path()))
+    r = TestClient(app).post("/missions", json=_body(renewal_risk_happy_path()))
     _check("oversized http 413", r.status_code == 413, str(r.status_code))
     _check("413 status failed", r.json()["status"] == SVC_FAILED)
 
 
 def test_method_not_allowed_is_405() -> None:
-    _check("GET is 405", _client().get("/api/harness/missions").status_code == 405)
+    _check("GET is 405", _client().get("/missions").status_code == 405)
 
 
 def test_internal_failure_returns_500_without_trace() -> None:
@@ -209,7 +218,7 @@ def test_internal_failure_returns_500_without_trace() -> None:
     led = MissionAuditLedger(":memory:")
     led.close()
     app = create_harness_app(dependencies=HarnessServiceDependencies(ledger=led))
-    r = TestClient(app).post("/api/harness/missions", json=_body(renewal_risk_happy_path()))
+    r = TestClient(app).post("/missions", json=_body(renewal_risk_happy_path()))
     _check("internal http 500", r.status_code == 500, str(r.status_code))
     body = r.json()
     _check("500 status failed", body["status"] == SVC_FAILED)
@@ -218,6 +227,49 @@ def test_internal_failure_returns_500_without_trace() -> None:
     blob = json.dumps(body)
     unsafe = any(t in blob for t in ("Traceback", ".py", "sqlite", "SELECT ", ":memory:", "\\", "/home/"))
     _check("500 body is BFF-safe", not unsafe, blob[:160])
+
+
+def test_real_idempotency_conflict_maps_to_409() -> None:
+    # Reproduce a GENUINE durable idempotency collision (not a simulated mapping):
+    # two governed missions share one durable file-backed ledger and the same
+    # mission_id (hence the same idempotency key ``idem-<mission_id>``) but carry
+    # DIFFERENT action payloads. The first records a receipt; the second collides
+    # at the Mission Audit Ledger's durable receipt append. A file-backed path is
+    # used (not a shared in-memory handle) so each request opens its own
+    # connection in the TestClient worker thread while sharing durable state.
+    fd, path = tempfile.mkstemp(suffix=".sqlite")
+    os.close(fd)
+    os.unlink(path)
+    try:
+        app = create_harness_app(dependencies=HarnessServiceDependencies(ledger_path=path))
+        c = TestClient(app)
+        mid = "MISSION-IDEM-CONFLICT"
+        r1 = c.post("/missions", json=_body(renewal_risk_happy_path(), mission_id=mid))
+        _check("conflict setup call ok", r1.status_code == 200, str(r1.status_code))
+        _check("conflict setup completed", r1.json()["status"] == SVC_COMPLETED)
+        r2 = c.post("/missions", json=_body(support_escalation_happy_path(), mission_id=mid))
+        _check("real conflict http 409", r2.status_code == 409, str(r2.status_code))
+        b2 = r2.json()
+        _check("409 status failed", b2["status"] == SVC_FAILED)
+        errs = b2.get("serviceErrors") or []
+        _check("409 has a service error", len(errs) >= 1, str(errs))
+        _check("409 code idempotency_conflict",
+               bool(errs) and errs[0]["code"] == "idempotency_conflict", str(errs[:1]))
+        _check("409 stage owns failure",
+               bool(errs) and errs[0]["stage"] in ("audit", "execution"), str(errs[:1]))
+        _check("409 not retryable", bool(errs) and errs[0]["retryable"] is False, str(errs[:1]))
+        _check("409 execution not eligible", b2["executionEligible"] is False)
+        _check("409 no payload", b2["missionExecutionPayload"] is None)
+        _check("409 withholds eval result", b2["missionEvaluationResult"] is None)
+        blob = json.dumps(b2)
+        unsafe = any(t in blob for t in (
+            "Traceback", ".py", "sqlite", "SELECT ", ":memory:", "\\", "/home/",
+            "IdempotencyConflictError", "AuditIdempotencyConflictError", "ValueError",
+        ))
+        _check("409 body is BFF-safe", not unsafe, blob[:200])
+    finally:
+        if os.path.exists(path):
+            os.unlink(path)
 
 
 # -- HTTP status mapping (pure function) ------------------------------------
@@ -249,7 +301,7 @@ def test_status_mapping_table() -> None:
 
 def test_correlation_header_body_match_succeeds() -> None:
     body = _body(renewal_risk_happy_path())
-    r = _client().post("/api/harness/missions", json=body,
+    r = _client().post("/missions", json=body,
                        headers={CORRELATION_HEADER: body["correlationId"]})
     _check("matching correlation http 200", r.status_code == 200, str(r.status_code))
     _check("matching correlation echoed",
@@ -257,7 +309,7 @@ def test_correlation_header_body_match_succeeds() -> None:
 
 
 def test_correlation_header_mismatch_fails_closed() -> None:
-    r = _client().post("/api/harness/missions", json=_body(renewal_risk_happy_path()),
+    r = _client().post("/missions", json=_body(renewal_risk_happy_path()),
                        headers={CORRELATION_HEADER: "DIFFERENT-CID"})
     _check("correlation mismatch http 422", r.status_code == 422, str(r.status_code))
     _check("correlation mismatch status failed", r.json()["status"] == SVC_FAILED)
@@ -267,13 +319,13 @@ def test_correlation_header_mismatch_fails_closed() -> None:
 
 def test_correlation_id_echoed_on_success() -> None:
     body = _body(renewal_risk_happy_path())
-    r = _client().post("/api/harness/missions", json=body)
+    r = _client().post("/missions", json=body)
     _check("X-Correlation-ID echoed", r.headers.get(CORRELATION_HEADER) == body["correlationId"])
 
 
 def test_correlation_id_propagated_to_service() -> None:
     body = _body(renewal_risk_happy_path(), correlation_id="CORR-PROP-XYZ")
-    r = _client().post("/api/harness/missions", json=body)
+    r = _client().post("/missions", json=body)
     _check("correlation propagated to response body",
            r.json()["correlationId"] == "CORR-PROP-XYZ")
 
@@ -282,7 +334,7 @@ def test_correlation_id_propagated_to_service() -> None:
 
 
 def test_camel_case_response() -> None:
-    r = _client().post("/api/harness/missions", json=_body(renewal_risk_happy_path()))
+    r = _client().post("/missions", json=_body(renewal_risk_happy_path()))
     keys = set(r.json().keys())
     for key in ("schemaVersion", "requestId", "correlationId", "executionEligible",
                 "missionEvaluationResult", "missionExecutionPayload", "resultHash"):
@@ -299,7 +351,7 @@ def test_snake_case_request_accepted() -> None:
         "signals": sc.signals,
         "output_mode": "evaluation_only",
     }
-    r = _client().post("/api/harness/missions", json=snake)
+    r = _client().post("/missions", json=snake)
     _check("snake_case accepted http 200", r.status_code == 200, str(r.status_code))
     _check("snake_case status completed", r.json()["status"] == SVC_COMPLETED)
     _check("snake_case request id preserved", r.json()["requestId"] == "REQ-SNAKE")
@@ -308,15 +360,15 @@ def test_snake_case_request_accepted() -> None:
 def test_result_hash_deterministic() -> None:
     c = _client()
     body = _body(renewal_risk_happy_path())
-    a = c.post("/api/harness/missions", json=body).json()["resultHash"]
-    b = c.post("/api/harness/missions", json=body).json()["resultHash"]
+    a = c.post("/missions", json=body).json()["resultHash"]
+    b = c.post("/missions", json=body).json()["resultHash"]
     _check("result hash deterministic", a == b and a != "", f"{a} vs {b}")
 
 
 def test_different_missions_differ() -> None:
     c = _client()
-    a = c.post("/api/harness/missions", json=_body(renewal_risk_happy_path())).json()["resultHash"]
-    b = c.post("/api/harness/missions", json=_body(support_escalation_happy_path())).json()["resultHash"]
+    a = c.post("/missions", json=_body(renewal_risk_happy_path())).json()["resultHash"]
+    b = c.post("/missions", json=_body(support_escalation_happy_path())).json()["resultHash"]
     _check("different missions different hash", a != b)
 
 
@@ -352,14 +404,14 @@ def test_execute_mission_invoked_exactly_once() -> None:
 
     adapter_mod.execute_mission = _spy
     try:
-        _client().post("/api/harness/missions", json=_body(renewal_risk_happy_path()))
+        _client().post("/missions", json=_body(renewal_risk_happy_path()))
     finally:
         adapter_mod.execute_mission = real
     _check("execute_mission invoked exactly once", calls["n"] == 1, str(calls["n"]))
 
 
 def test_no_persona_response_over_http() -> None:
-    r = _client().post("/api/harness/missions", json=_body(renewal_risk_happy_path()))
+    r = _client().post("/missions", json=_body(renewal_risk_happy_path()))
     blob = r.text
     _check("no personaResponse in body", "personaResponse" not in blob)
     _check("no rendered persona text", "renderedText" not in blob)
@@ -402,6 +454,7 @@ _TESTS = [
     test_oversized_body_rejected,
     test_method_not_allowed_is_405,
     test_internal_failure_returns_500_without_trace,
+    test_real_idempotency_conflict_maps_to_409,
     test_status_mapping_table,
     test_correlation_header_body_match_succeeds,
     test_correlation_header_mismatch_fails_closed,
