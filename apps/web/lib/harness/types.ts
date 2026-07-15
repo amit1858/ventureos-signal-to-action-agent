@@ -302,6 +302,9 @@ export interface MissionEvaluationResultView {
   approvalRequest?: ApprovalRequest | null;
   approvalDecision?: ApprovalDecision | null;
   verificationSummary?: VerificationResult | null;
+  /** True when this result was reproduced from a durable idempotency entry (a
+   * genuine replay of an already-executed mission). */
+  replayed?: boolean;
   resultHash: string;
   [key: string]: unknown;
 }

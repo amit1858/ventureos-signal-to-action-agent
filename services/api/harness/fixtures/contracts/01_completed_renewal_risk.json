@@ -124,7 +124,7 @@
             }
           },
           "missionId": "M-RENEWAL-1",
-          "receiptId": "RCP-552022649963",
+          "receiptId": "RCP-2272a700d6f2",
           "recommendationId": "REC-M-RENEWAL-1",
           "schemaVersion": "1.0",
           "simulated": true,
@@ -711,17 +711,17 @@
           },
           {
             "actor": "amit",
-            "canonicalPayload": "{\"actionType\":\"renewal_outreach\",\"afterState\":{\"outreach\":\"prepared\",\"proposals\":3,\"renewal_stage\":\"at_risk\"},\"approvedPayloadHash\":\"sha256:eea56a7b2c0a101c892c7c86a335efa6e48b14aef869bd25a4e0689e2cb7bb7b\",\"auditRef\":\"audit://M-RENEWAL-1/REC-M-RENEWAL-1\",\"beforeState\":{\"outreach\":\"none\",\"renewal_stage\":\"at_risk\"},\"createdAt\":\"2026-07-14T10:00:40Z\",\"details\":{\"crm_task_proposal\":{\"owner_role\":\"account_manager\",\"title\":\"Schedule renewal check-in with Curefoods\",\"type\":\"task\",\"write\":false},\"draft_email\":{\"body\":\"Hi, we noticed some renewal-risk signals on Curefoods and would like to align on value delivered and next steps ahead of renewal.\",\"send\":false,\"subject\":\"Partnering on your upcoming renewal - Curefoods\",\"to_role\":\"customer_champion\"},\"opportunity_risk_update_proposal\":{\"field\":\"risk_status\",\"proposed_value\":\"engaged_mitigation\",\"type\":\"opportunity_update\",\"write\":false}},\"missionId\":\"M-RENEWAL-1\",\"receiptId\":\"RCP-552022649963\",\"recommendationId\":\"REC-M-RENEWAL-1\",\"schemaVersion\":\"1.0\",\"simulated\":true,\"summary\":\"Prepared simulated renewal-risk outreach package for Curefoods.\",\"targetId\":\"VOS-CUREFOODS\",\"targetType\":\"account\",\"toolId\":\"simulate_renewal_outreach\"}",
+            "canonicalPayload": "{\"actionType\":\"renewal_outreach\",\"afterState\":{\"outreach\":\"prepared\",\"proposals\":3,\"renewal_stage\":\"at_risk\"},\"approvedPayloadHash\":\"sha256:eea56a7b2c0a101c892c7c86a335efa6e48b14aef869bd25a4e0689e2cb7bb7b\",\"auditRef\":\"audit://M-RENEWAL-1/REC-M-RENEWAL-1\",\"beforeState\":{\"outreach\":\"none\",\"renewal_stage\":\"at_risk\"},\"createdAt\":\"2026-07-14T10:00:40Z\",\"details\":{\"crm_task_proposal\":{\"owner_role\":\"account_manager\",\"title\":\"Schedule renewal check-in with Curefoods\",\"type\":\"task\",\"write\":false},\"draft_email\":{\"body\":\"Hi, we noticed some renewal-risk signals on Curefoods and would like to align on value delivered and next steps ahead of renewal.\",\"send\":false,\"subject\":\"Partnering on your upcoming renewal - Curefoods\",\"to_role\":\"customer_champion\"},\"opportunity_risk_update_proposal\":{\"field\":\"risk_status\",\"proposed_value\":\"engaged_mitigation\",\"type\":\"opportunity_update\",\"write\":false}},\"missionId\":\"M-RENEWAL-1\",\"receiptId\":\"RCP-2272a700d6f2\",\"recommendationId\":\"REC-M-RENEWAL-1\",\"schemaVersion\":\"1.0\",\"simulated\":true,\"summary\":\"Prepared simulated renewal-risk outreach package for Curefoods.\",\"targetId\":\"VOS-CUREFOODS\",\"targetType\":\"account\",\"toolId\":\"simulate_renewal_outreach\"}",
             "correlationId": "CORR-completed_renewal_risk",
             "createdAt": "2026-07-14T10:00:40Z",
             "decisionRef": null,
-            "ledgerRecordId": "LR-a66bf34f8c9bed58",
+            "ledgerRecordId": "LR-18e70ced1cad4a77",
             "missionId": "M-RENEWAL-1",
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:40Z",
-            "payloadHash": "sha256:4fcaf62aa9366e4b017ce044a29883e053c5adb5d38515c577afda7357248d35",
+            "payloadHash": "sha256:1acd58ee148c8771080676bb6119c90dccd5c53b3e6b8e92a688887a51bf4a99",
             "previousRecordHash": "60f6eba9cbef09afa818e9d2790e0b7b4031d08509b449d26841b945d2075c60",
-            "recordHash": "fa5d2cc781919598e44080df86317936485497b02579f37a37555cb331f37960",
+            "recordHash": "d3af3dc94a9bc4d23f0469f4efd6bbe5cb3ad5ff0047babdbfedee4ff8ceb4cf",
             "recordType": "simulated_action_receipt",
             "schemaVersion": "1.0",
             "sequenceNumber": 14
@@ -737,8 +737,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:40Z",
             "payloadHash": "sha256:dadbb3934498a63dcb180e2f6f82e2d2463cacf4f1daa79d0934c45a7c9f8963",
-            "previousRecordHash": "fa5d2cc781919598e44080df86317936485497b02579f37a37555cb331f37960",
-            "recordHash": "68d1ce21abdf9f7328672981a8758f5d84c841fea0ddbf9397db7c4602e25f1f",
+            "previousRecordHash": "d3af3dc94a9bc4d23f0469f4efd6bbe5cb3ad5ff0047babdbfedee4ff8ceb4cf",
+            "recordHash": "6788908c0627620623cb6c192381cbd8cd48be5e04075bac584fec1a9a40d779",
             "recordType": "mission_transition",
             "schemaVersion": "1.0",
             "sequenceNumber": 15
@@ -754,8 +754,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:45Z",
             "payloadHash": "sha256:c6ecb33194a49d9bd519b1bbcc5702b6b5803a4e0f71f6267d2e8449fe7694a0",
-            "previousRecordHash": "68d1ce21abdf9f7328672981a8758f5d84c841fea0ddbf9397db7c4602e25f1f",
-            "recordHash": "7a9e65eb402849cfc328d0a2373d9441eac212c2d375dc9b5a14b67d1d307713",
+            "previousRecordHash": "6788908c0627620623cb6c192381cbd8cd48be5e04075bac584fec1a9a40d779",
+            "recordHash": "25e8aea0bdb5e1fe802fc3516be7e64511726db39bdb73e946ef3dc5c0375061",
             "recordType": "outcome_verification",
             "schemaVersion": "1.0",
             "sequenceNumber": 16
@@ -771,8 +771,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:45Z",
             "payloadHash": "sha256:e8fc02a86f8f9fdf36f3fd27cdd0ebf892e062e1444fe963658cf7f3d969e893",
-            "previousRecordHash": "7a9e65eb402849cfc328d0a2373d9441eac212c2d375dc9b5a14b67d1d307713",
-            "recordHash": "3c129d1a79931837a957705f1a59e637109a9b0bc5f42a4947203971d6d11004",
+            "previousRecordHash": "25e8aea0bdb5e1fe802fc3516be7e64511726db39bdb73e946ef3dc5c0375061",
+            "recordHash": "9a0b51d9c7b7a2ac4f89652c28d2e271d39246534d7ffe80c816efbd83d8dc7d",
             "recordType": "mission_transition",
             "schemaVersion": "1.0",
             "sequenceNumber": 17
@@ -788,8 +788,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:50Z",
             "payloadHash": "sha256:da4ea6087171595ae659b7808c5d0d0f5ad9eb1669577183fe571d0ca9562607",
-            "previousRecordHash": "3c129d1a79931837a957705f1a59e637109a9b0bc5f42a4947203971d6d11004",
-            "recordHash": "e7c32e477ff39eff219355fa6130a47cd14fd40fba47432339ed6ec9b74742a1",
+            "previousRecordHash": "9a0b51d9c7b7a2ac4f89652c28d2e271d39246534d7ffe80c816efbd83d8dc7d",
+            "recordHash": "c78f30a8ad50e6a125debf29f92dd0fea7dcb8bbc169df3745005f634cc255f9",
             "recordType": "mission_closed",
             "schemaVersion": "1.0",
             "sequenceNumber": 18
@@ -805,8 +805,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:50Z",
             "payloadHash": "sha256:824247227492d2060b6eee0893c6a52ff9dad98a6b79e9c6bbf4d3032e9470c3",
-            "previousRecordHash": "e7c32e477ff39eff219355fa6130a47cd14fd40fba47432339ed6ec9b74742a1",
-            "recordHash": "7e4f4299fcf83d9c4eb376499e7e837b63a68434c2cb06f8b2a72b44cd3c1dde",
+            "previousRecordHash": "c78f30a8ad50e6a125debf29f92dd0fea7dcb8bbc169df3745005f634cc255f9",
+            "recordHash": "e380739f34076461bd1103e96be3330a7a96604d47acaf14e3406465b8b6a668",
             "recordType": "mission_transition",
             "schemaVersion": "1.0",
             "sequenceNumber": 19
@@ -1144,7 +1144,8 @@
         "passed": true,
         "warnings": []
       },
-      "resultHash": "sha256:47f007b5b10657047207a7c9814b48d3acf0fa3f5bb0942d023d4e0cad10d5b2",
+      "replayed": false,
+      "resultHash": "sha256:8dc2eafc7fd1e560c85b008c9b81c9a8d4e721063d5436998b24a1d118d9d599",
       "scenarioId": "renewal-risk-happy-path",
       "schemaVersion": "1.0",
       "scorecard": {
@@ -1201,7 +1202,7 @@
           }
         },
         "missionId": "M-RENEWAL-1",
-        "receiptId": "RCP-552022649963",
+        "receiptId": "RCP-2272a700d6f2",
         "recommendationId": "REC-M-RENEWAL-1",
         "schemaVersion": "1.0",
         "simulated": true,
@@ -1338,7 +1339,7 @@
       "verificationRef": "verify://M-RENEWAL-1"
     },
     "requestId": "REQ-completed_renewal_risk",
-    "resultHash": "sha256:4e2c15a9bca5feb431b964194abecf220312affa76874acc72a574fcd5cd6fb7",
+    "resultHash": "sha256:ed7d55b3ba45aad27dacea2e95ef7e555d2dee16c6706fd4663cc685f35937b0",
     "schemaVersion": "1.0",
     "serviceErrors": [],
     "status": "completed",

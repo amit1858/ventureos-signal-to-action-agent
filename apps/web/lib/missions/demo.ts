@@ -184,6 +184,45 @@ export function buildRenewalDemoTurn(): CompletedMissionTurn {
   return assembleCompletedMissionTurn({ payload: RENEWAL_DEMO_PAYLOAD, memory });
 }
 
+/** The presentation request the Mission Control screen posts to the live BFF
+ * (`POST /api/missions/execute`) to run the governed renewal-risk mission through
+ * the real Python Adaptive Mission Harness. `sourceRecords` is omitted so the
+ * harness resolves its standard Curefoods demo fixtures; `approval` +
+ * `verificationOutcome` drive the mission to a completed, execution-eligible
+ * outcome. Carries NO PersonaResponse, credentials, endpoint, or token. */
+export const RENEWAL_PRESENTATION_REQUEST = Object.freeze({
+  missionId: "M-RENEWAL-1",
+  scenarioId: "renewal-risk-happy-path",
+  actor: "amit",
+  actorRole: "owner",
+  approval: "approved",
+  verificationOutcome: "verified",
+  // Stable idempotency key so re-running the SAME demo mission durably REPLAYS
+  // (returns the stored receipt, adds no ledger records) instead of colliding on
+  // the single-use mission id. This makes the screen safely reloadable.
+  idempotencyKey: "IDEM-M-RENEWAL-1-DEMO",
+  signals: {
+    mission_type: "renewal_risk",
+    signal_type: "renewal_risk",
+    severity: "high",
+    signal_id: "SIG-REN-1",
+  },
+});
+
+/** Build the live MissionTurn memory/runtime deps for a completed mission's
+ * governed payload. The governed FACTS come from the live Python harness; the
+ * cited memory corpus is the local demo source (there is no live CRM), and the
+ * persona language is composed by the protected TypeScript Conversation Runtime
+ * over that corpus — never mirrored from a static turn and never from Python. */
+export function renewalMissionMemoryDeps(payload: MissionExecutionPayload): MissionMemoryDeps {
+  return {
+    store: seedRenewalDemoMemory(),
+    session: createSession(`mission:${payload.canonicalAccount.ventureOsId}`),
+    asOfMs: DEMO_ASOF_MS,
+    persona: { role: "Renewal Coach", tone: "advisory" },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Guided mission narrative — section order (NOT a dashboard grid)
 // ---------------------------------------------------------------------------

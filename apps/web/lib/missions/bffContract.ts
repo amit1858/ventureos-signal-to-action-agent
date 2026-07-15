@@ -25,6 +25,7 @@ import type {
   LedgerReference,
   MissionExecutionPayload,
 } from "../harness/types";
+import type { MissionTurn } from "./types";
 
 /** The presentation request the browser posts to `/api/missions/execute`. */
 export interface MissionExecuteRequest {
@@ -68,6 +69,16 @@ export interface MissionBffResponse {
   executionEligible: boolean;
   /** Present ONLY for a completed, execution-eligible mission. */
   missionExecutionPayload: MissionExecutionPayload | null;
+  /** The final, presentation-safe MissionTurn the screen / voice / Digital Human
+   * surfaces render. Assembled on the TypeScript side (F1.5 memory + F1.6
+   * assembler) for a completed mission when the route provides memory deps, and a
+   * governed non-executable turn for blocked / rejected / revision / failed. It is
+   * `null` only when no turn could be assembled (e.g. a completed payload with no
+   * memory deps injected, as in a pure contract test). */
+  missionTurn: MissionTurn | null;
+  /** `true` when the completed outcome was served from a DURABLE idempotent replay
+   * (the same mission + idempotency key returned an already-stored receipt). */
+  replayed?: boolean;
   /** Present for governed non-executable outcomes (blocked/rejected/revision/failed). */
   governed: GovernedOutcome | null;
   serviceErrors: HarnessServiceError[];

@@ -172,6 +172,19 @@ class ReceiptAppendResult(HarnessModel):
     replayed: bool = False
 
 
+class IdempotencyEntry(HarnessModel):
+    """A durable idempotency record: the payload hash the key is bound to, the
+    stored simulated receipt, and the ledger record it was persisted as. Purely
+    a READ projection of the ``mission_idempotency`` table -- exposing it never
+    mutates the ledger or its hash chain."""
+
+    mission_id: str
+    idempotency_key: str
+    payload_hash: str
+    receipt: ActionReceipt
+    ledger_record_id: str
+
+
 class MissionAuditBundle(HarnessModel):
     schema_version: str = SCHEMA_VERSION
     mission_id: str
@@ -698,6 +711,30 @@ class MissionAuditLedger:
         if row is None:
             return None
         return ActionReceipt(**json.loads(row["receipt_json"]))
+
+    def get_idempotency_entry(
+        self, mission_id: str, idempotency_key: str
+    ) -> Optional["IdempotencyEntry"]:
+        """Return the durable idempotency entry for ``mission_id`` + key, or
+        ``None``. This is the READ side of the durable idempotency authority: it
+        surfaces the payload hash the key is bound to and the stored receipt so a
+        caller can distinguish a genuine replay (same payload) from a conflict
+        (same key, different payload) WITHOUT re-appending anything."""
+        cur = self._conn.execute(
+            "SELECT payload_hash, receipt_json, ledger_record_id FROM mission_idempotency "
+            "WHERE mission_id = ? AND idempotency_key = ?",
+            (mission_id, idempotency_key),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        return IdempotencyEntry(
+            mission_id=mission_id,
+            idempotency_key=idempotency_key,
+            payload_hash=row["payload_hash"],
+            receipt=ActionReceipt(**json.loads(row["receipt_json"])),
+            ledger_record_id=row["ledger_record_id"],
+        )
 
     def export_mission_audit_bundle(self, mission_id: str) -> MissionAuditBundle:
         records = self.list_mission_records(mission_id)

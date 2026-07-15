@@ -116,7 +116,7 @@
             }
           },
           "missionId": "M-SUPPORT-1",
-          "receiptId": "RCP-eb5c33ff65e8",
+          "receiptId": "RCP-120b4e77eada",
           "recommendationId": "REC-M-SUPPORT-1",
           "schemaVersion": "1.0",
           "simulated": true,
@@ -703,17 +703,17 @@
           },
           {
             "actor": "amit",
-            "canonicalPayload": "{\"actionType\":\"support_escalation\",\"afterState\":{\"proposals\":2,\"support_stage\":\"escalation_prepared\"},\"approvedPayloadHash\":\"sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a\",\"auditRef\":\"audit://M-SUPPORT-1/REC-M-SUPPORT-1\",\"beforeState\":{\"support_stage\":\"escalation_requested\"},\"createdAt\":\"2026-07-14T10:00:40Z\",\"details\":{\"follow_up_task_proposal\":{\"owner_role\":\"support_engineer\",\"title\":\"Follow up on escalated support case for Curefoods\",\"type\":\"task\",\"write\":false},\"internal_escalation_proposal\":{\"notify_external\":false,\"severity\":\"high\",\"to_role\":\"support_lead\",\"type\":\"internal_escalation\"}},\"missionId\":\"M-SUPPORT-1\",\"receiptId\":\"RCP-eb5c33ff65e8\",\"recommendationId\":\"REC-M-SUPPORT-1\",\"schemaVersion\":\"1.0\",\"simulated\":true,\"summary\":\"Prepared simulated support-escalation package for Curefoods.\",\"targetId\":\"VOS-CUREFOODS\",\"targetType\":\"account\",\"toolId\":\"simulate_support_escalation\"}",
+            "canonicalPayload": "{\"actionType\":\"support_escalation\",\"afterState\":{\"proposals\":2,\"support_stage\":\"escalation_prepared\"},\"approvedPayloadHash\":\"sha256:06f4c2ab24fc1dc037d76063e00e16da5581aa7aaa2c6f0baa2eb18ecc7cc72a\",\"auditRef\":\"audit://M-SUPPORT-1/REC-M-SUPPORT-1\",\"beforeState\":{\"support_stage\":\"escalation_requested\"},\"createdAt\":\"2026-07-14T10:00:40Z\",\"details\":{\"follow_up_task_proposal\":{\"owner_role\":\"support_engineer\",\"title\":\"Follow up on escalated support case for Curefoods\",\"type\":\"task\",\"write\":false},\"internal_escalation_proposal\":{\"notify_external\":false,\"severity\":\"high\",\"to_role\":\"support_lead\",\"type\":\"internal_escalation\"}},\"missionId\":\"M-SUPPORT-1\",\"receiptId\":\"RCP-120b4e77eada\",\"recommendationId\":\"REC-M-SUPPORT-1\",\"schemaVersion\":\"1.0\",\"simulated\":true,\"summary\":\"Prepared simulated support-escalation package for Curefoods.\",\"targetId\":\"VOS-CUREFOODS\",\"targetType\":\"account\",\"toolId\":\"simulate_support_escalation\"}",
             "correlationId": "CORR-completed_support_escalation",
             "createdAt": "2026-07-14T10:00:40Z",
             "decisionRef": null,
-            "ledgerRecordId": "LR-2547fee47f83c121",
+            "ledgerRecordId": "LR-0b5ef78a867ca877",
             "missionId": "M-SUPPORT-1",
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:40Z",
-            "payloadHash": "sha256:937e1b29670bb1ad0ac27744412cbe56c3265bdd84abbd5efcd3825739c34fc2",
+            "payloadHash": "sha256:55a07af44d8b51bbfd2848d14c97a05c178c6481c1dd469f45e61fd8a5d7560f",
             "previousRecordHash": "0273cdcd12b7d830e53e316ca22f4b7892406ed13d65a3f581a45d2e5400e63a",
-            "recordHash": "29498269ee26a20a9931cb439dab51bb1081bb53f98e34b27729ca80e3a7ab42",
+            "recordHash": "b7d2b12181ce27670b5850d7eb81d1b8debd549da3ec7e5489016b92cebde052",
             "recordType": "simulated_action_receipt",
             "schemaVersion": "1.0",
             "sequenceNumber": 14
@@ -729,8 +729,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:40Z",
             "payloadHash": "sha256:b04a84a5266f61fb896fefefdcd63fec3950ca41810b9db76c75db84179211b7",
-            "previousRecordHash": "29498269ee26a20a9931cb439dab51bb1081bb53f98e34b27729ca80e3a7ab42",
-            "recordHash": "258bc47d378fe3158c6c311df636f484973c67835147cc5958b0cb60cca3c437",
+            "previousRecordHash": "b7d2b12181ce27670b5850d7eb81d1b8debd549da3ec7e5489016b92cebde052",
+            "recordHash": "f6a97e0236e930732bf24290f7926639be1c2df465e36701ae9c4e8e9b56d1e0",
             "recordType": "mission_transition",
             "schemaVersion": "1.0",
             "sequenceNumber": 15
@@ -746,8 +746,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:45Z",
             "payloadHash": "sha256:c6ecb33194a49d9bd519b1bbcc5702b6b5803a4e0f71f6267d2e8449fe7694a0",
-            "previousRecordHash": "258bc47d378fe3158c6c311df636f484973c67835147cc5958b0cb60cca3c437",
-            "recordHash": "67fec10d2046f1c784251f653715f42361123048d8af5b853c18235dd9ca63f2",
+            "previousRecordHash": "f6a97e0236e930732bf24290f7926639be1c2df465e36701ae9c4e8e9b56d1e0",
+            "recordHash": "c5639986c18bbbe371505d7e65deef7ebaab4b3f46e8797734e70c7fabc37536",
             "recordType": "outcome_verification",
             "schemaVersion": "1.0",
             "sequenceNumber": 16
@@ -763,8 +763,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:45Z",
             "payloadHash": "sha256:4c51e3df690c5b734dbc5022227dd010bd82b50a826825b6e13ec0564ec994dc",
-            "previousRecordHash": "67fec10d2046f1c784251f653715f42361123048d8af5b853c18235dd9ca63f2",
-            "recordHash": "6c4439c933c506702ce9ae2a3769c43db12512f518dc871812332b30d2b369f3",
+            "previousRecordHash": "c5639986c18bbbe371505d7e65deef7ebaab4b3f46e8797734e70c7fabc37536",
+            "recordHash": "fd512457b5e96f4dee6a16200bb15556e9588e8c0adff26a82fd3468489a3559",
             "recordType": "mission_transition",
             "schemaVersion": "1.0",
             "sequenceNumber": 17
@@ -780,8 +780,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:50Z",
             "payloadHash": "sha256:da4ea6087171595ae659b7808c5d0d0f5ad9eb1669577183fe571d0ca9562607",
-            "previousRecordHash": "6c4439c933c506702ce9ae2a3769c43db12512f518dc871812332b30d2b369f3",
-            "recordHash": "e4218664a8dbf79857f733bd1a97f10615b142cbee1cd9fe6cd5ad5f06a707ea",
+            "previousRecordHash": "fd512457b5e96f4dee6a16200bb15556e9588e8c0adff26a82fd3468489a3559",
+            "recordHash": "eac7c667e2e094ed3badac7754af0a2b3faa453f45db946ff289144aa09e229c",
             "recordType": "mission_closed",
             "schemaVersion": "1.0",
             "sequenceNumber": 18
@@ -797,8 +797,8 @@
             "missionVersion": "v1",
             "occurredAt": "2026-07-14T10:00:50Z",
             "payloadHash": "sha256:6cf05ebf7b878e35a552f279a6ff7b653e777f9df81e156a4dca0e7baaa60b10",
-            "previousRecordHash": "e4218664a8dbf79857f733bd1a97f10615b142cbee1cd9fe6cd5ad5f06a707ea",
-            "recordHash": "24f41deca3e422c21897e5b6e879c76b252ba1ff7703ad75a4221d888f2f5a31",
+            "previousRecordHash": "eac7c667e2e094ed3badac7754af0a2b3faa453f45db946ff289144aa09e229c",
+            "recordHash": "b01ac65af8f753e6653e7e86fd9268fe474997a0000bec8f31fd49067596fd6d",
             "recordType": "mission_transition",
             "schemaVersion": "1.0",
             "sequenceNumber": 19
@@ -1120,7 +1120,8 @@
         "passed": true,
         "warnings": []
       },
-      "resultHash": "sha256:860a778d36357b268471a7802cfb1f75ff465c328133087e0a9a539556da3e01",
+      "replayed": false,
+      "resultHash": "sha256:79ef02a942bc5bbaa88575606937cf53390233531856288b74ccdf69a7a53d4b",
       "scenarioId": "support-escalation-happy-path",
       "schemaVersion": "1.0",
       "scorecard": {
@@ -1169,7 +1170,7 @@
           }
         },
         "missionId": "M-SUPPORT-1",
-        "receiptId": "RCP-eb5c33ff65e8",
+        "receiptId": "RCP-120b4e77eada",
         "recommendationId": "REC-M-SUPPORT-1",
         "schemaVersion": "1.0",
         "simulated": true,
@@ -1300,7 +1301,7 @@
       "verificationRef": "verify://M-SUPPORT-1"
     },
     "requestId": "REQ-completed_support_escalation",
-    "resultHash": "sha256:90116cf7efdf736cb8e3576eb5931226178bc4ca0f80964ff0fbbf6bc5e6d2cd",
+    "resultHash": "sha256:c2664f346431accdd147b4ef203f500fb61be032fbad4eec19a7d78ff79c81a4",
     "schemaVersion": "1.0",
     "serviceErrors": [],
     "status": "completed",

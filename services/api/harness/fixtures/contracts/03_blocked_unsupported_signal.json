@@ -401,7 +401,8 @@
       "missionVersion": "v1",
       "outcomeVerification": null,
       "policyValidation": null,
-      "resultHash": "sha256:24d30c13d5791d06571bb09b10eba3d6682f10bbcf023c99eaa40a74272a7824",
+      "replayed": false,
+      "resultHash": "sha256:87f39a7a51348288cbf56da1075700bc9a585b68f1fe8e2fb9ec5165e0713fb6",
       "scenarioId": "unsupported-signal-blocked",
       "schemaVersion": "1.0",
       "scorecard": {
@@ -428,7 +429,7 @@
     },
     "missionExecutionPayload": null,
     "requestId": "REQ-blocked_unsupported_signal",
-    "resultHash": "sha256:f3fb17d721016ad9942e148bab7bf99ade30f7c2aa46b33cb06b0676f14081fb",
+    "resultHash": "sha256:fb7d5864f14c2dd260c4bafb4a232afb862f535ee2b613f9b15a3b9c17041192",
     "schemaVersion": "1.0",
     "serviceErrors": [
       {

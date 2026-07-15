@@ -30,6 +30,7 @@ import { dirname, join, resolve } from "node:path";
 import { executeMissionRequest } from "../bff";
 import type { MissionBffDeps } from "../bff";
 import type { MissionExecuteRequest } from "../bffContract";
+import { renewalMissionMemoryDeps } from "../demo";
 import { createHarnessCaller } from "../../harness/client";
 import { containsNoPersonaResponse } from "../../harness/contractValidation";
 import type {
@@ -87,7 +88,11 @@ interface CapturingDeps extends MissionBffDeps {
  * does. `mutate` lets a test corrupt the echoed response to prove fail-closed. */
 function fixtureDeps(
   file: string,
-  opts: { presetCorrelation?: string; mutate?: (r: HarnessServiceResponse) => HarnessServiceResponse } = {},
+  opts: {
+    presetCorrelation?: string;
+    mutate?: (r: HarnessServiceResponse) => HarnessServiceResponse;
+    withMemory?: boolean;
+  } = {},
 ): CapturingDeps {
   const captured: HarnessServiceRequest[] = [];
   let counter = 0;
@@ -111,6 +116,7 @@ function fixtureDeps(
       return { ok: true, httpStatus: 200, body: echoed };
     },
   };
+  if (opts.withMemory) deps.buildMemoryDeps = renewalMissionMemoryDeps;
   void next;
   return deps;
 }
@@ -325,6 +331,84 @@ function jsonRes(status: number, body: unknown): Response {
   const caller = createHarnessCaller({ baseUrl: "", fetchImpl: (async () => jsonRes(200, {})) as unknown as typeof fetch });
   const out = await caller(REQ);
   check("misconfigured baseUrl -> failure, no call", out.ok === false);
+}
+
+// ===========================================================================
+console.log("\n[9] Live MissionTurn assembly (memory deps injected)");
+// ===========================================================================
+{
+  // Completed mission -> a live MissionTurn is composed on the TypeScript side
+  // (Memory Core + Conversation Runtime) and packaged onto the response.
+  const deps = fixtureDeps("01_completed_renewal_risk.json", { withMemory: true });
+  const res = await executeMissionRequest(
+    { missionId: "M-RENEWAL-1", scenarioId: "renewal-risk-happy-path", actor: "amit", actorRole: "owner" },
+    deps);
+  const turn = res.body.missionTurn;
+  check("live: HTTP 200", res.httpStatus === 200, String(res.httpStatus));
+  check("live: missionTurn present", turn !== null);
+  check("live: turn status completed", turn?.status === "completed");
+  check("live: payload still carried", res.body.missionExecutionPayload !== null);
+  const completed = turn?.status === "completed" ? turn : null;
+  check("live: personaResponse composed by TS", !!completed && typeof completed.personaResponse === "object" && completed.personaResponse !== null);
+  check("live: voiceSummary present", !!completed && typeof completed.voiceSummary === "string" && completed.voiceSummary.length > 0);
+  check("live: turn simulated", completed?.simulated === true);
+  check("live: turn account is canonical Curefoods", completed?.account.ventureOsId === "VOS-CUREFOODS");
+  // The composed turn is NOT a Python artifact: Python carried no PersonaResponse.
+  check("live: outgoing request had no PersonaResponse", containsNoPersonaResponse(deps.captured[0]).ok);
+}
+{
+  // A completed replay surfaces `replayed: true` on the BFF envelope.
+  const deps = fixtureDeps("01_completed_renewal_risk.json", {
+    withMemory: true,
+    mutate: (r) => ({
+      ...r,
+      missionEvaluationResult: r.missionEvaluationResult
+        ? { ...r.missionEvaluationResult, replayed: true }
+        : r.missionEvaluationResult,
+    }),
+  });
+  const res = await executeMissionRequest(
+    { missionId: "M-RENEWAL-1", scenarioId: "renewal-risk-happy-path", actor: "amit", actorRole: "owner" },
+    deps);
+  check("replay: envelope flags replayed=true", res.body.replayed === true);
+  check("replay: still HTTP 200 completed", res.httpStatus === 200 && res.body.status === "completed");
+}
+{
+  // Governed outcome -> a governed, NON-executable turn with NO PersonaResponse.
+  const deps = fixtureDeps("03_blocked_unsupported_signal.json", { withMemory: true });
+  const res = await executeMissionRequest(
+    { missionId: "M", scenarioId: "s", actor: "a", actorRole: "r" }, deps);
+  const turn = res.body.missionTurn;
+  check("governed: missionTurn present", turn !== null);
+  check("governed: turn status blocked", turn?.status === "blocked");
+  check("governed: turn carries no personaResponse",
+    !!turn && !("personaResponse" in (turn as unknown as Record<string, unknown>)));
+  check("governed: no payload", res.body.missionExecutionPayload === null);
+}
+{
+  // Assembly must FAIL CLOSED: a payload whose retrieval subject no longer matches
+  // the canonical account cannot be composed -> HTTP 500, no completed turn.
+  const deps = fixtureDeps("01_completed_renewal_risk.json", {
+    withMemory: true,
+    mutate: (r) => {
+      const p = r.missionExecutionPayload;
+      if (!p) return r;
+      return {
+        ...r,
+        missionExecutionPayload: {
+          ...p,
+          retrievalQuery: { ...p.retrievalQuery, subjectId: "VOS-WRONG" },
+        },
+      };
+    },
+  });
+  const res = await executeMissionRequest(
+    { missionId: "M-RENEWAL-1", scenarioId: "renewal-risk-happy-path", actor: "amit", actorRole: "owner" },
+    deps);
+  check("fail-closed: HTTP 500", res.httpStatus === 500, String(res.httpStatus));
+  check("fail-closed: status failed", res.body.status === "failed");
+  check("fail-closed: no completed turn", res.body.missionTurn === null);
+  check("fail-closed: no payload leaked", res.body.missionExecutionPayload === null);
 }
 
 // ---------------------------------------------------------------------------

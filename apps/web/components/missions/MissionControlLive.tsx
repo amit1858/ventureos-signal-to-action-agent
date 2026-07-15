@@ -1,0 +1,99 @@
+"use client";
+
+// Release 2.2 — Mission Control · live renewal-risk loader (F1 correction)
+// ========================================================================
+// The client seam that runs the governed renewal-risk mission through the REAL
+// stack: it POSTs the presentation request to the Next.js Mission BFF
+// (`POST /api/missions/execute`), which calls the Python Adaptive Mission Harness,
+// composes the TypeScript MissionTurn (Memory Core + Conversation Runtime), and
+// returns ONE governed `MissionTurn`. That live turn is what the shared
+// presentation surface renders.
+//
+// The browser NEVER calls Python directly and never sees the Python endpoint or
+// service token — it only talks to this same-origin BFF route.
+//
+// Fallback is HONEST and VISIBLY LABELED: if the live mission service is
+// unavailable, we render the deterministic offline demo turn behind an explicit
+// banner so a viewer can never mistake it for a live governed result.
+
+import * as React from "react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+
+import { MissionControl } from "@/components/missions/MissionControl";
+import { RENEWAL_PRESENTATION_REQUEST, buildRenewalDemoTurn } from "@/lib/missions/demo";
+import type { MissionTurn } from "@/lib/missions/types";
+
+type LoadState =
+  | { phase: "loading" }
+  | { phase: "live"; turn: MissionTurn }
+  | { phase: "offline"; turn: MissionTurn; reason: string };
+
+export function MissionControlLive() {
+  const [state, setState] = React.useState<LoadState>({ phase: "loading" });
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      try {
+        const res = await fetch("/api/missions/execute", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(RENEWAL_PRESENTATION_REQUEST),
+        });
+        const body = (await res.json()) as { missionTurn?: MissionTurn | null };
+        if (cancelled) return;
+        if (res.ok && body && body.missionTurn) {
+          setState({ phase: "live", turn: body.missionTurn });
+          return;
+        }
+        setState({
+          phase: "offline",
+          turn: buildRenewalDemoTurn(),
+          reason: "The mission service returned no governed turn.",
+        });
+      } catch {
+        if (cancelled) return;
+        setState({
+          phase: "offline",
+          turn: buildRenewalDemoTurn(),
+          reason: "The mission service is unavailable.",
+        });
+      }
+    }
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (state.phase === "loading") {
+    return (
+      <div className="mx-auto flex w-full max-w-4xl items-center gap-3 px-4 py-16 text-sm text-muted">
+        <Loader2 className="h-5 w-5 animate-spin text-brand" aria-hidden />
+        <span>Running the governed renewal-risk mission…</span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {state.phase === "offline" && (
+        <div className="mx-auto w-full max-w-4xl px-4 pt-6">
+          <div className="flex items-start gap-3 rounded-lg border border-risk/40 bg-risk/10 p-4 text-sm">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-risk" aria-hidden />
+            <div>
+              <p className="font-medium text-ink">Offline demo turn — not a live mission</p>
+              <p className="mt-1 text-muted">
+                {state.reason} Showing the deterministic renewal-risk demo turn so the experience stays
+                reviewable. Start the local Python harness and Next.js BFF to run the live governed mission.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      <MissionControl turn={state.turn} />
+    </>
+  );
+}

@@ -34,6 +34,7 @@ import { isCompletedMissionTurn } from "@/lib/missions/types";
 import type { CompletedMissionTurn, GovernedMissionTurn, MissionTurn } from "@/lib/missions/types";
 import { simulateApprovedActions } from "@/lib/missions/simulation";
 import type { ApprovalCapture, SimulatedActionProposal } from "@/lib/missions/simulation";
+import { deriveMissionPhase, missionPhaseNarrative } from "@/lib/missions/missionStatusCopy";
 import { buildMissionAuditTrail } from "@/lib/missions/auditTrail";
 import type { MissionAuditTrail } from "@/lib/missions/auditTrail";
 import { ApprovalPanel } from "@/components/missions/ApprovalPanel";
@@ -353,11 +354,15 @@ function OutcomeAudit({ turn, trail }: { turn: CompletedMissionTurn; trail: Miss
 // ---------------------------------------------------------------------------
 
 function GovernedNotice({ turn }: { turn: GovernedMissionTurn }) {
+  const phaseCopy = missionPhaseNarrative(deriveMissionPhase(turn, null));
   return (
     <div className="card-premium mx-auto max-w-2xl p-6">
       <div className="mb-3 flex items-center gap-2">
         <ShieldCheck className="h-5 w-5 text-gov-bright" />
         <h2 className="section-h text-[20px]">Mission held by governance</h2>
+        <span className="rounded-full border border-line px-2 py-0.5 text-[11px] font-medium text-muted">
+          {phaseCopy.label}
+        </span>
       </div>
       <p className="mb-4 text-sm leading-relaxed text-muted">{turn.governedNarrative}</p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -442,13 +447,19 @@ export function MissionControl({ turn }: { turn: MissionTurn }) {
     capture && capture.outcome === "approved" ? simulateApprovedActions(turn, capture) : [];
   const trail = buildMissionAuditTrail({ turn, capture, proposals });
   const ctx: SectionCtx = { turn, capture, proposals, trail, onDecision: setCapture };
+  const phaseCopy = missionPhaseNarrative(deriveMissionPhase(turn, capture));
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:py-10">
       <header className="mb-8">
-        <div className="eyebrow mb-1">Mission Control · Renewal risk</div>
+        <div className="mb-1 flex items-center gap-2">
+          <span className="eyebrow">Mission Control · Renewal risk</span>
+          <span className="rounded-full border border-line px-2 py-0.5 text-[11px] font-medium text-muted">
+            {phaseCopy.label}
+          </span>
+        </div>
         <h1 className="section-h text-[26px] sm:text-[30px]">{turn.account.canonicalName}</h1>
-        <p className="section-sub mt-1">{turn.outcome.headline}</p>
+        <p className="section-sub mt-1">{phaseCopy.headline}</p>
       </header>
       <div className="space-y-8">
         {MISSION_SECTIONS.map((s) => (

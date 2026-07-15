@@ -28,6 +28,8 @@ from harness.evaluation import (  # noqa: E402
     ambiguous_account_blocked,
     approval_payload_mismatch,
     approval_rejected,
+    default_injected_timestamps,
+    evaluate_mission_scenario,
     idempotent_replay,
     renewal_risk_happy_path,
     support_escalation_happy_path,
@@ -192,6 +194,82 @@ def test_real_idempotency_conflict_response() -> None:
         _check("conflict error is BFF-safe", not unsafe, blob[:200])
     finally:
         led.close()
+
+
+def test_durable_idempotent_replay_returns_stored_receipt() -> None:
+    # A genuine replay -- same mission + same idempotency key, on a DURABLE ledger
+    # that is closed and reopened between calls, with a fresh correlation id -- must
+    # return the ALREADY-STORED receipt, add no new ledger records, and leave the
+    # hash chain valid. This is the corrected durable-replay behaviour (previously a
+    # raw-identical replay crashed 500 and a fresh-correlation replay duplicated the
+    # governed lifecycle records).
+    sc = renewal_risk_happy_path()
+    fd, path = tempfile.mkstemp(suffix=".sqlite")
+    os.close(fd)
+    try:
+        led = MissionAuditLedger(path)
+        first = execute_mission(
+            _request(sc, request_id="REQ-DUR-1", correlation_id="CORR-DUR-1",
+                     idempotency_key="IDEM-DURABLE"),
+            HarnessServiceDependencies(ledger=led),
+        )
+        _check("durable first run completed", first.status == SVC_COMPLETED, first.status)
+        _check("durable first run not flagged replayed",
+               first.mission_evaluation_result.replayed is False)
+        first_receipt_id = first.mission_evaluation_result.simulated_action_receipt.receipt_id
+        records_before = first.ledger_reference.record_count
+        led.close()
+
+        # Reopen the SAME durable ledger file; replay with a FRESH correlation id.
+        led2 = MissionAuditLedger(path)
+        second = execute_mission(
+            _request(sc, request_id="REQ-DUR-2", correlation_id="CORR-DUR-2",
+                     idempotency_key="IDEM-DURABLE"),
+            HarnessServiceDependencies(ledger=led2),
+        )
+        _check("durable replay completed (HTTP-200 equivalent)",
+               second.status == SVC_COMPLETED, second.status)
+        _check("durable replay flagged replayed=true",
+               second.mission_evaluation_result.replayed is True)
+        _check("durable replay returns the SAME stored receipt id",
+               second.mission_evaluation_result.simulated_action_receipt.receipt_id
+               == first_receipt_id)
+        _check("durable replay still produces execution payload",
+               second.mission_execution_payload is not None)
+        _check("durable replay adds NO new ledger records",
+               second.ledger_reference.record_count == records_before,
+               f"{records_before} -> {second.ledger_reference.record_count}")
+        receipts = [r for r in led2.list_mission_records(sc.mission_id)
+                    if r.record_type == "simulated_action_receipt"]
+        _check("exactly one receipt persisted after replay", len(receipts) == 1,
+               str(len(receipts)))
+        _check("durable replay chain remains valid",
+               led2.verify_mission_chain(sc.mission_id).valid is True)
+        led2.close()
+    finally:
+        os.remove(path)
+
+
+def test_duplicate_record_not_masked_as_replay() -> None:
+    # A DuplicateRecordError that is NOT a durable idempotency replay (no receipt
+    # was ever stored -- e.g. a blocked mission re-submitted raw-identically) must
+    # fail closed as an internal error. It must never be silently reported as a
+    # successful replay, and it must never be mapped to idempotency_conflict.
+    led = MissionAuditLedger(":memory:")
+    ts = default_injected_timestamps()
+    sc = unsupported_signal_blocked()  # blocks after intake -> no receipt/idem entry
+    first = evaluate_mission_scenario(sc, led, ts, correlation_id="dup-same")
+    _check("dup setup blocked (no receipt)", first.final_status != "passed",
+           first.final_status)
+    _check("dup setup has no receipt", first.simulated_action_receipt is None)
+    # Identical replay collides at intake; with no idempotency entry it is NOT a
+    # replay -> fails closed internal, never masked as replayed / conflict.
+    second = evaluate_mission_scenario(sc, led, ts, correlation_id="dup-same")
+    _check("duplicate intake not masked as replay", second.replayed is False)
+    _check("duplicate intake fails closed internal",
+           second.final_status == "failed" and second.failure_code == "internal_error",
+           f"{second.final_status}/{second.failure_code}")
+    led.close()
 
 
 def test_payload_only_for_valid_scenarios() -> None:
@@ -382,6 +460,8 @@ _TESTS = [
     test_approval_rejected_response,
     test_payload_mismatch_response,
     test_real_idempotency_conflict_response,
+    test_durable_idempotent_replay_returns_stored_receipt,
+    test_duplicate_record_not_masked_as_replay,
     test_payload_only_for_valid_scenarios,
     test_request_and_correlation_id_propagation,
     test_strict_request_validation,

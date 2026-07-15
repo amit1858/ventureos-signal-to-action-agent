@@ -900,7 +900,8 @@
         "passed": true,
         "warnings": []
       },
-      "resultHash": "sha256:131d751105dad0600943408170fe971d129edcb589c61207c14eb6b8a85db3b4",
+      "replayed": false,
+      "resultHash": "sha256:a4e8d73ee7031005653aad1d0e3eb61a88670f7bd718aabacca93e62f145d52f",
       "scenarioId": "approval-rejected",
       "schemaVersion": "1.0",
       "scorecard": {
@@ -946,7 +947,7 @@
     },
     "missionExecutionPayload": null,
     "requestId": "REQ-rejected_approval",
-    "resultHash": "sha256:749d9b459592d30544b091234ebbe06453d5e04b6462eb01bfbf16acd07c2adc",
+    "resultHash": "sha256:8a6f1c882bea9d012eedc857ed66c0e2542fa6e97cf171bd01fdeb604b8ad074",
     "schemaVersion": "1.0",
     "serviceErrors": [
       {

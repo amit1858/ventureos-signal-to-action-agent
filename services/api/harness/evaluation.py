@@ -145,6 +145,10 @@ class MissionScenario(HarnessModel):
     request_revision_after_block: bool = False
     inject_payload_mismatch: bool = False
     replay_execution: bool = False
+    # Caller-supplied durable idempotency key. When omitted the evaluator uses its
+    # deterministic mission-scoped default (``idem-{mission_id}``), so existing
+    # behaviour is unchanged. When supplied it is the authority for durable replay.
+    idempotency_key: Optional[str] = None
 
 
 # -- scorecard --------------------------------------------------------------
@@ -201,6 +205,10 @@ class MissionEvaluationResult(HarnessModel):
     failure_code: Optional[str] = None
     scorecard: MissionScorecard = Field(default_factory=MissionScorecard)
     result_hash: str = ""
+    # True when this result was reproduced from a durable idempotency entry (a
+    # genuine replay of an already-executed mission) rather than a fresh run. The
+    # governed facts and the receipt are identical to the original.
+    replayed: bool = False
 
 
 # -- helpers ----------------------------------------------------------------
@@ -308,6 +316,92 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
          result: MissionEvaluationResult, score: MissionScorecard,
          *, correlation_id: Optional[str] = None, agent_registry=None,
          tool_registry=None, template_registry=None) -> MissionEvaluationResult:
+    mission_id = scenario.mission_id
+    effective_key = scenario.idempotency_key or f"idem-{mission_id}"
+
+    # -- Stage -1: durable idempotency short-circuit (before any append) ------
+    # The Mission Audit Ledger is the durable idempotency authority. If this
+    # mission + key already produced a receipt, this is a REPLAY: re-appending the
+    # governed lifecycle would either collide on a deterministic record id (a raw
+    # identical replay) or duplicate the lifecycle records (a fresh-correlation
+    # replay). Instead we reproduce the governed result deterministically and
+    # re-attach the DURABLE audit trail + stored receipt, so the record count and
+    # the hash chain are unchanged.
+    entry = ledger.get_idempotency_entry(mission_id, effective_key)
+    if entry is not None:
+        return _replay_from_durable(
+            scenario, ledger, at, result, score, entry, effective_key,
+            correlation_id=correlation_id, agent_registry=agent_registry,
+            tool_registry=tool_registry, template_registry=template_registry,
+        )
+
+    return _run_full(
+        scenario, ledger, at, result, score, effective_key,
+        correlation_id=correlation_id, agent_registry=agent_registry,
+        tool_registry=tool_registry, template_registry=template_registry,
+    )
+
+
+def _replay_from_durable(
+    scenario: MissionScenario, ledger: MissionAuditLedger, at,
+    result: MissionEvaluationResult, score: MissionScorecard,
+    entry, effective_key: str, *, correlation_id: Optional[str] = None,
+    agent_registry=None, tool_registry=None, template_registry=None,
+) -> MissionEvaluationResult:
+    """Reproduce an already-executed mission from its durable idempotency entry.
+
+    The mission is re-evaluated deterministically on a THROWAWAY in-memory ledger
+    to rebuild the full governed result (canonical account, plan, verification,
+    approval, receipt) without touching the durable ledger. The recomputed receipt
+    is then reconciled against the durable entry:
+
+    * same payload hash  -> a genuine replay: reuse the DURABLE receipt + audit
+      bundle, flag ``replayed`` and return the passed result unchanged;
+    * different payload   -> a real idempotency conflict: fail closed by raising
+      ``AuditIdempotencyConflictError`` (the same key was reused with a different
+      action payload), which the caller maps to ``idempotency_conflict``.
+    """
+    mission_id = scenario.mission_id
+    scratch = MissionAuditLedger(":memory:")
+    try:
+        fresh = MissionEvaluationResult(
+            scenario_id=scenario.scenario_id,
+            mission_id=scenario.mission_id,
+            mission_version=scenario.mission_version,
+        )
+        recomputed = _run_full(
+            scenario, scratch, at, fresh, fresh.scorecard, effective_key,
+            correlation_id=correlation_id, agent_registry=agent_registry,
+            tool_registry=tool_registry, template_registry=template_registry,
+        )
+    finally:
+        scratch.close()
+
+    recomputed_receipt = recomputed.simulated_action_receipt
+    if (
+        recomputed.final_status != STATUS_PASSED
+        or recomputed_receipt is None
+        or recomputed_receipt.approved_payload_hash != entry.payload_hash
+    ):
+        # The key was reused with a scenario that no longer reproduces the stored
+        # receipt (a different action payload, or a now non-executable outcome).
+        raise AuditIdempotencyConflictError(
+            f"idempotency key {effective_key!r} reused with a different action "
+            f"payload for mission {mission_id!r}."
+        )
+
+    # Genuine replay: the durable receipt and audit trail are authoritative.
+    recomputed.simulated_action_receipt = entry.receipt
+    recomputed.replayed = True
+    _attach_audit(recomputed, ledger, mission_id, recomputed.scorecard)
+    return _finalize(recomputed)
+
+
+def _run_full(scenario: MissionScenario, ledger: MissionAuditLedger, at,
+              result: MissionEvaluationResult, score: MissionScorecard,
+              effective_key: str,
+              *, correlation_id: Optional[str] = None, agent_registry=None,
+              tool_registry=None, template_registry=None) -> MissionEvaluationResult:
     mission_id = scenario.mission_id
     mission_version = scenario.mission_version
     correlation_id = correlation_id or f"corr-{mission_id}"
@@ -600,7 +694,7 @@ def _run(scenario: MissionScenario, ledger: MissionAuditLedger, at,
 
     # -- Stage 7: simulated execution ----------------------------------------
     sandbox = SimulationSandbox()
-    idempotency_key = f"idem-{mission_id}"
+    idempotency_key = effective_key
     audit_ref = f"audit://{mission_id}/{recommendation_id}"
     action_request = ActionRequest(
         mission_id=mission_id, mission_version=mission_version, recommendation_id=recommendation_id,

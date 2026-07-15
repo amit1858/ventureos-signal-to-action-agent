@@ -272,6 +272,48 @@ def test_real_idempotency_conflict_maps_to_409() -> None:
             os.unlink(path)
 
 
+def test_real_idempotent_replay_maps_to_200() -> None:
+    # The genuine-replay counterpart of the 409 test: two IDENTICAL governed
+    # missions (same mission_id, same idempotency key, same action payload) share a
+    # durable file-backed ledger across separate TestClient requests. The second is
+    # a REPLAY: HTTP 200, ``replayed=true``, the SAME stored receipt, and no new
+    # ledger records -- the durable audit trail is authoritative.
+    fd, path = tempfile.mkstemp(suffix=".sqlite")
+    os.close(fd)
+    os.unlink(path)
+    try:
+        app = create_harness_app(dependencies=HarnessServiceDependencies(ledger_path=path))
+        c = TestClient(app)
+        mid = "MISSION-IDEM-REPLAY"
+        body = _body(renewal_risk_happy_path(), mission_id=mid, idempotency_key="IDEM-HTTP")
+        r1 = c.post("/missions", json=body)
+        _check("replay setup http 200", r1.status_code == 200, str(r1.status_code))
+        b1 = r1.json()
+        _check("replay setup completed", b1["status"] == SVC_COMPLETED, b1["status"])
+        _check("replay setup not flagged replayed",
+               b1["missionEvaluationResult"]["replayed"] is False)
+        receipt1 = b1["missionEvaluationResult"]["simulatedActionReceipt"]["receiptId"]
+        records1 = b1["ledgerReference"]["recordCount"]
+        # Second identical submission with a FRESH correlation id -> durable replay.
+        body2 = _body(renewal_risk_happy_path(), mission_id=mid, idempotency_key="IDEM-HTTP",
+                      correlation_id="CORR-REPLAY-2")
+        r2 = c.post("/missions", json=body2)
+        _check("real replay http 200", r2.status_code == 200, str(r2.status_code))
+        b2 = r2.json()
+        _check("replay status completed", b2["status"] == SVC_COMPLETED, b2["status"])
+        _check("replay flagged replayed=true",
+               b2["missionEvaluationResult"]["replayed"] is True)
+        _check("replay returns same receipt id",
+               b2["missionEvaluationResult"]["simulatedActionReceipt"]["receiptId"] == receipt1)
+        _check("replay adds no new ledger records",
+               b2["ledgerReference"]["recordCount"] == records1,
+               f'{records1} -> {b2["ledgerReference"]["recordCount"]}')
+        _check("replay still produces payload", b2["missionExecutionPayload"] is not None)
+    finally:
+        if os.path.exists(path):
+            os.unlink(path)
+
+
 # -- service-to-service auth (F1.3) -----------------------------------------
 
 
@@ -501,6 +543,7 @@ _TESTS = [
     test_method_not_allowed_is_405,
     test_internal_failure_returns_500_without_trace,
     test_real_idempotency_conflict_maps_to_409,
+    test_real_idempotent_replay_maps_to_200,
     test_auth_disabled_by_default_no_token_required,
     test_auth_required_rejects_missing_token,
     test_auth_required_rejects_wrong_token,

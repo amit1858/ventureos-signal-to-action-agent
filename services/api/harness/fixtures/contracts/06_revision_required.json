@@ -766,7 +766,8 @@
         "passed": true,
         "warnings": []
       },
-      "resultHash": "sha256:59b6dac5464c37ec80a1444a8f75fc9db873e255a61f192506c93cfbb9b1b7a1",
+      "replayed": false,
+      "resultHash": "sha256:3b8ef553233843d93b8aa4d23bf1f8be870c15f7d0da5f1594800dcf8a7c4df3",
       "scenarioId": "verification-failed-revision",
       "schemaVersion": "1.0",
       "scorecard": {
@@ -812,7 +813,7 @@
     },
     "missionExecutionPayload": null,
     "requestId": "REQ-revision_required",
-    "resultHash": "sha256:71b93f735ba0cf2c1d1b8083973338622a5e7bedcc548bcd99b56169cab007ea",
+    "resultHash": "sha256:a64d466b0d719cecc5e1f439d89c90d85882c54a1ac404258aff0ba21f8da838",
     "schemaVersion": "1.0",
     "serviceErrors": [
       {

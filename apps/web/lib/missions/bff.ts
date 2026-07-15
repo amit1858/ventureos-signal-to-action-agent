@@ -27,9 +27,14 @@ import type {
   HarnessServiceError,
   HarnessServiceResponse,
   HarnessServiceStatus,
+  MissionExecutionPayload,
 } from "../harness/types";
 import { validateMissionRequest } from "./bffContract";
 import type { MissionBffResponse } from "./bffContract";
+import { composeMissionMemory } from "./memoryAdapter";
+import type { MissionMemoryDeps } from "./memoryAdapter";
+import { assembleCompletedMissionTurn, assembleGovernedMissionTurn } from "./missionTurn";
+import type { MissionTurn } from "./types";
 
 export interface MissionBffDeps {
   callHarness: HarnessCaller;
@@ -38,6 +43,12 @@ export interface MissionBffDeps {
   newIdempotencyKey: () => string;
   /** Injected governance timestamps (keyed by stage; must include `default`). */
   injectedTimestamps: () => Record<string, string>;
+  /** OPTIONAL memory/runtime deps for live MissionTurn assembly. When provided,
+   * a completed mission's governed payload is composed through the F1.5 memory
+   * adapter (TypeScript Memory Core + Conversation Runtime) and packaged onto a
+   * live `MissionTurn`. When omitted (e.g. a pure contract test), a completed
+   * response carries its payload but `missionTurn` stays `null`. */
+  buildMemoryDeps?: (payload: MissionExecutionPayload) => MissionMemoryDeps;
 }
 
 export interface MissionBffResult {
@@ -79,6 +90,7 @@ function envelope(
     status,
     executionEligible: false,
     missionExecutionPayload: null,
+    missionTurn: null,
     governed: null,
     serviceErrors: [],
     warnings: [],
@@ -191,11 +203,38 @@ export async function executeMissionRequest(
 
   // 6. Map the governed outcome to a presentation-safe envelope.
   if (response.status === "completed") {
+    const payload = response.missionExecutionPayload ?? null;
+    const replayed = response.missionEvaluationResult?.replayed === true;
+
+    // Assemble the LIVE MissionTurn on the TypeScript side when memory deps are
+    // injected: compose the payload through the F1.5 memory adapter (Memory Core +
+    // Conversation Runtime) and package it with the F1.6 assembler. This must fail
+    // CLOSED — a turn we cannot compose safely is never emitted as `completed`.
+    let missionTurn: MissionTurn | null = null;
+    if (payload && deps.buildMemoryDeps) {
+      try {
+        const memory = composeMissionMemory(payload, deps.buildMemoryDeps(payload));
+        missionTurn = assembleCompletedMissionTurn({ payload, memory });
+      } catch {
+        return {
+          httpStatus: 500,
+          body: envelope("failed", requestId, correlationId, {
+            governed: { reason: "The mission response could not be assembled.", errorCode: "internal_service_failure" },
+            serviceErrors: [
+              bffError("internal_service_failure", "bff_turn_assembly", "The mission response could not be assembled.", false),
+            ],
+          }),
+        };
+      }
+    }
+
     return {
       httpStatus: 200,
       body: envelope("completed", requestId, correlationId, {
         executionEligible: true,
-        missionExecutionPayload: response.missionExecutionPayload ?? null,
+        missionExecutionPayload: payload,
+        missionTurn,
+        replayed,
         serviceErrors,
         warnings,
         ledgerReference,
@@ -211,6 +250,7 @@ export async function executeMissionRequest(
           reason: governedReason(response.status, serviceErrors),
           errorCode: serviceErrors[0]?.code,
         },
+        missionTurn: assembleGovernedMissionTurn(response),
         serviceErrors,
         warnings,
         ledgerReference,
@@ -225,6 +265,7 @@ export async function executeMissionRequest(
     httpStatus,
     body: envelope("failed", requestId, correlationId, {
       governed: { reason: governedReason("failed", serviceErrors), errorCode: leadCode },
+      missionTurn: assembleGovernedMissionTurn(response),
       serviceErrors,
       warnings,
       ledgerReference,

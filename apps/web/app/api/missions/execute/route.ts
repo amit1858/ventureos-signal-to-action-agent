@@ -16,6 +16,7 @@ import { defaultHarnessCaller } from "../../../../lib/harness/client";
 import { defaultInjectedTimestamps } from "../../../../lib/harness/requestBuilder";
 import { executeMissionRequest } from "../../../../lib/missions/bff";
 import type { MissionBffDeps } from "../../../../lib/missions/bff";
+import { renewalMissionMemoryDeps } from "../../../../lib/missions/demo";
 
 // Never statically optimise or cache: every mission is evaluated fresh.
 export const dynamic = "force-dynamic";
@@ -36,6 +37,10 @@ function realDeps(): MissionBffDeps {
     newCorrelationId: () => newId("CORR"),
     newIdempotencyKey: () => newId("IDEM"),
     injectedTimestamps: defaultInjectedTimestamps,
+    // Live MissionTurn assembly: the completed governed payload is composed
+    // through the TypeScript Memory Core + Conversation Runtime (F1.5) and packaged
+    // by the F1.6 assembler. Python never composes language and none crosses back.
+    buildMemoryDeps: renewalMissionMemoryDeps,
   };
 }
 

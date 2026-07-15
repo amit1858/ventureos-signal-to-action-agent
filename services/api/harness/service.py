@@ -354,6 +354,7 @@ def _scenario_from_request(request: HarnessServiceRequest) -> MissionScenario:
         request_revision_after_block=request.request_revision_after_block,
         inject_payload_mismatch=request.inject_payload_mismatch,
         replay_execution=request.replay_execution,
+        idempotency_key=request.idempotency_key,
     )
 
 
