@@ -123,6 +123,10 @@ export interface NvidiaGroundedNarrative {
   validationStatus: NarrativeValidationStatus;
   /** True when the deterministic VentureOS baseline is presented instead. */
   fallbackUsed: boolean;
+  /** OPTIONAL safe telemetry from a live provider call (server-owned). Present
+   * only for the hosted NIM path; never includes secrets. */
+  latencyMs?: number;
+  attempts?: number;
 }
 
 /** A provider turns a governed request into a candidate narrative. Providers are

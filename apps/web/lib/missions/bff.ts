@@ -256,6 +256,8 @@ export async function executeMissionRequest(
             grounded: n.grounded,
             validationStatus: n.validationStatus,
             fallbackUsed: n.fallbackUsed,
+            ...(typeof n.latencyMs === "number" ? { latencyMs: n.latencyMs } : {}),
+            ...(typeof n.attempts === "number" ? { attempts: n.attempts } : {}),
           };
         }
         missionTurn = assembleCompletedMissionTurn({ payload, memory, groundedNarrative });

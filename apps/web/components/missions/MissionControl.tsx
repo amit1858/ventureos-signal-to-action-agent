@@ -121,6 +121,12 @@ function GroundedNarrativeIndicator({ turn }: { turn: CompletedMissionTurn }) {
           <Meta label="Narrative model" value={gn.model} mono />
           <Meta label="Validation" value={gn.validationStatus} mono />
           <Meta label="Fallback used" value={gn.fallbackUsed ? "yes" : "no"} mono />
+          {typeof gn.latencyMs === "number" ? (
+            <Meta label="Provider latency" value={`${gn.latencyMs} ms`} mono />
+          ) : null}
+          {typeof gn.attempts === "number" ? (
+            <Meta label="Provider attempts" value={String(gn.attempts)} mono />
+          ) : null}
           <Meta
             label="Grounded evidence refs"
             value={gn.evidenceRefs.length > 0 ? gn.evidenceRefs.join(", ") : "—"}

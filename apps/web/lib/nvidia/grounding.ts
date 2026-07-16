@@ -129,6 +129,67 @@ function ruleFires(normalized: string, rule: ClaimRule): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Live-output security: reject untrusted content leakage / injection
+// ---------------------------------------------------------------------------
+
+/** Each rule fires on the RAW (non-normalized) narrative text, because secrets,
+ * paths, and injection markers rely on punctuation that normalization strips.
+ * A hit marks the narrative rejected and the flow fails closed to the
+ * deterministic baseline. These matter for the hosted-NIM path where the output
+ * is untrusted model text; the deterministic mock never trips them. */
+interface SecurityRule {
+  id: string;
+  pattern: RegExp;
+}
+
+const SECURITY_RULES: SecurityRule[] = [
+  // API keys / tokens.
+  { id: "nvapi_key", pattern: /nvapi-[A-Za-z0-9_*\-]{4,}/i },
+  { id: "openai_key", pattern: /\bsk-(?:ant-)?[A-Za-z0-9_-]{6,}/ },
+  { id: "bearer_token", pattern: /\bBearer\s+[A-Za-z0-9._\-]{8,}/i },
+  { id: "aws_key", pattern: /\bAKIA[0-9A-Z]{12,}/ },
+  { id: "masked_secret", pattern: /\*{4,}/ },
+  // Environment-variable assignments (e.g. NVIDIA_API_KEY=...).
+  { id: "env_assignment", pattern: /\b[A-Z][A-Z0-9]{2,}_[A-Z0-9_]*\s*=\s*\S/ },
+  // Internal service / config identifiers.
+  { id: "internal_service_var", pattern: /\b(?:HARNESS_SERVICE_TOKEN|PYTHON_HARNESS_URL|NVIDIA_API_KEY|DATABASE_URL)\b/i },
+  { id: "localhost_ref", pattern: /\b(?:localhost|127\.0\.0\.1|0\.0\.0\.0)\b/i },
+  // File paths (Windows drive / UNC / common unix roots).
+  { id: "windows_path", pattern: /[A-Za-z]:\\[^\s]*/ },
+  { id: "unc_path", pattern: /\\\\[A-Za-z0-9._$-]+\\[^\s]+/ },
+  { id: "unix_path", pattern: /(?:^|\s)\/(?:etc|var|home|usr|root|tmp|opt|proc|bin|sys)\/[^\s]+/ },
+  // Stack traces.
+  { id: "js_stack", pattern: /\bat\s+[^\s]+\s+\([^\s]+:\d+:\d+\)/ },
+  { id: "py_traceback", pattern: /Traceback \(most recent call last\)/i },
+  { id: "error_with_frame", pattern: /\b\w*(?:Error|Exception):[^\n]*\n\s+at\s/ },
+  // URLs (a grounded narrative never needs to emit a URL).
+  { id: "url", pattern: /\bhttps?:\/\/[^\s]+/i },
+  // Database connection strings.
+  { id: "db_conn", pattern: /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis):\/\//i },
+  { id: "mssql_conn", pattern: /Server=[^;]+;\s*Database=/i },
+  // Raw protected-object keys leaking as JSON/text.
+  { id: "secret_key_json", pattern: /["']?(?:api[_-]?key|authorization|service[_-]?token|password|secret|access[_-]?token)["']?\s*[:=]\s*["']?\S/i },
+  // HTML / script injection.
+  { id: "script_tag", pattern: /<\s*script\b/i },
+  { id: "html_embed", pattern: /<\s*\/?\s*(?:iframe|img|svg|object|embed|link|style)\b/i },
+  { id: "js_uri", pattern: /javascript:\s*\S/i },
+  { id: "event_handler", pattern: /\bon(?:error|load|click|mouseover)\s*=/i },
+  // Control-character abuse (allow tab/newline/carriage-return only).
+  // eslint-disable-next-line no-control-regex
+  { id: "control_chars", pattern: /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/ },
+];
+
+/** Scan the raw narrative text for secret/path/injection leakage. Returns the
+ * ids of any rules that fired. */
+export function securityViolations(rawText: string): string[] {
+  const hits: string[] = [];
+  for (const rule of SECURITY_RULES) {
+    if (rule.pattern.test(rawText)) hits.push(rule.id);
+  }
+  return hits;
+}
+
+// ---------------------------------------------------------------------------
 // Structural: numeric grounding
 // ---------------------------------------------------------------------------
 
@@ -214,7 +275,15 @@ export function validateGroundedNarrative(
   const allTextRaw = narrativeTextFields(candidate).join(" \n ");
   const normalized = normalizeText(allTextRaw);
 
-  // 2. Evidence-ref subset — every cited ref must be a supplied ref.
+  // 2. Live-output security — reject secret/path/URL/injection/control-char
+  // leakage in untrusted model text. Fails closed to the deterministic baseline.
+  const security = securityViolations(allTextRaw);
+  for (const id of security) {
+    errors.push(`security_violation:${id}`);
+    rejectedClaims.push(`Narrative contained disallowed content (${id}).`);
+  }
+
+  // 3. Evidence-ref subset — every cited ref must be a supplied ref.
   const allowedRefs = new Set(request.evidenceRefs);
   const acceptedEvidenceRefs: string[] = [];
   for (const ref of candidate.evidenceRefs) {
@@ -229,7 +298,7 @@ export function validateGroundedNarrative(
     rejectedClaims.push("Narrative cites no supplied evidence.");
   }
 
-  // 3. Banned real-execution claims.
+  // 4. Banned real-execution claims.
   for (const rule of BANNED_EXECUTION_RULES) {
     if (ruleFires(normalized, rule)) {
       errors.push(`banned_execution_claim:${rule.id}`);
@@ -237,7 +306,7 @@ export function validateGroundedNarrative(
     }
   }
 
-  // 4. False approval / self-authority claims.
+  // 5. False approval / self-authority claims.
   for (const rule of BANNED_APPROVAL_RULES) {
     if (ruleFires(normalized, rule)) {
       errors.push(`banned_approval_claim:${rule.id}`);
@@ -245,7 +314,7 @@ export function validateGroundedNarrative(
     }
   }
 
-  // 5. Unapproved-action vocabulary — an action not in the governed set.
+  // 6. Unapproved-action vocabulary — an action not in the governed set.
   const permittedVocab = normalizeText(
     request.permittedActions.map((a) => `${a.actionId} ${a.businessLabel}`).join(" ") +
       " " +
@@ -259,7 +328,7 @@ export function validateGroundedNarrative(
     }
   }
 
-  // 6. Numeric grounding — no fabricated metrics.
+  // 7. Numeric grounding — no fabricated metrics.
   const allowed = allowedNumbers(request);
   const badNumbers = ungroundedNumbers(normalized, allowed);
   for (const num of badNumbers) {
@@ -267,7 +336,7 @@ export function validateGroundedNarrative(
     rejectedClaims.push(`Narrative states an unsupported figure: ${num}`);
   }
 
-  // 7. Simulation language must be preserved (assurance nothing was sent/written).
+  // 8. Simulation language must be preserved (assurance nothing was sent/written).
   const simulationPreserved =
     containsPhrase(normalized, "simulat") ||
     coOccurs(normalized, ["sandbox"]) ||
@@ -277,7 +346,7 @@ export function validateGroundedNarrative(
     warnings.push("simulation_language_absent");
   }
 
-  // 8. Voice summary bound (soft — presentation truncates but we flag).
+  // 9. Voice summary bound (soft — presentation truncates but we flag).
   if (candidate.voiceSummary.length > 240) warnings.push("voice_summary_over_bound");
 
   const valid = errors.length === 0;

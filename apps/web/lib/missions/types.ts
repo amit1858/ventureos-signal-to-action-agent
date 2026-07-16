@@ -188,6 +188,10 @@ export interface GroundedNarrativeSummary {
   validationStatus: string;
   /** True when the deterministic VentureOS baseline is being presented. */
   fallbackUsed: boolean;
+  /** OPTIONAL safe telemetry from a live provider call. Present only for the
+   * hosted NIM path; never includes secrets. */
+  latencyMs?: number;
+  attempts?: number;
 }
 
 /** A governed, NON-executable turn (blocked / rejected / revision_required /
