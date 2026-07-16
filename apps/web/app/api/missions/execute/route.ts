@@ -22,6 +22,11 @@ import { nvidiaConfigFromEnv, selectNarrativeProvider } from "../../../../lib/nv
 // Never statically optimise or cache: every mission is evaluated fresh.
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+// Bounded server budget so the deterministic fallback always completes on the
+// server before Vercel terminates the function. Worst case ≈ harness (≤20s,
+// 10s + one retry) + NVIDIA narrative (≤30s per-attempt + total budget) + assembly.
+// 60s is the Vercel Hobby ceiling and leaves headroom above that ~50s worst case.
+export const maxDuration = 60;
 
 function newId(prefix: string): string {
   const uuid =
