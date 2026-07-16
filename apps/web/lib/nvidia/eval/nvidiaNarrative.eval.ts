@@ -20,6 +20,12 @@ import {
   FALLBACK_MODEL,
 } from "../narrative";
 import { selectNarrativeProvider } from "../provider";
+import {
+  narrativeStateLabel,
+  NARRATIVE_LABEL_MOCK,
+  NARRATIVE_LABEL_LIVE,
+  NARRATIVE_LABEL_FALLBACK,
+} from "../presentation";
 import type {
   NvidiaGroundedNarrative,
   NvidiaNarrativeProvider,
@@ -181,6 +187,36 @@ check("fallback provider is ventureos-deterministic", fb1.provider === "ventureo
 check("fallback model id is stable", fb1.model === FALLBACK_MODEL);
 check("fallback passes the guard structurally", validateGroundedNarrative(request, fb1).status !== "malformed");
 check("fallback voiceSummary within bound", fb1.voiceSummary.length <= NVIDIA_VOICE_SUMMARY_MAX_CHARS);
+
+// ---------------------------------------------------------------------------
+// 4b. Truthful provider-state labels (Mission Control indicator)
+// ---------------------------------------------------------------------------
+check(
+  "mock provider labelled as a simulation (not a live call)",
+  narrativeStateLabel("mock", false).label === NARRATIVE_LABEL_MOCK,
+);
+check("mock label tone is grounded", narrativeStateLabel("mock", false).tone === "grounded");
+check(
+  "live nim provider labelled as NVIDIA Nemotron",
+  narrativeStateLabel("nim", false).label === NARRATIVE_LABEL_LIVE,
+);
+check("live nim label tone is live", narrativeStateLabel("nim", false).tone === "live");
+check(
+  "deterministic provider labelled as VentureOS fallback",
+  narrativeStateLabel("ventureos-deterministic", true).label === NARRATIVE_LABEL_FALLBACK,
+);
+check(
+  "nim that fell back is labelled fallback, NOT live",
+  narrativeStateLabel("nim", true).label === NARRATIVE_LABEL_FALLBACK,
+);
+check(
+  "mock never shows the live NVIDIA label",
+  narrativeStateLabel("mock", false).label !== NARRATIVE_LABEL_LIVE,
+);
+check(
+  "fallback tone maps to de-emphasis",
+  narrativeStateLabel("ventureos-deterministic", true).tone === "fallback",
+);
 
 // ---------------------------------------------------------------------------
 // 5. Pipeline — present validated, else fail closed to the baseline

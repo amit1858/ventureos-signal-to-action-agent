@@ -47,6 +47,7 @@ import {
 } from "@/lib/missions/missionLabels";
 import { buildMissionAuditTrail } from "@/lib/missions/auditTrail";
 import type { MissionAuditTrail } from "@/lib/missions/auditTrail";
+import { narrativeStateLabel } from "@/lib/nvidia/presentation";
 import { ApprovalPanel } from "@/components/missions/ApprovalPanel";
 import { MissionAuditTrailView } from "@/components/missions/MissionAuditTrail";
 
@@ -100,15 +101,13 @@ function Meta({ label, value, mono }: { label: string; value: React.ReactNode; m
 function GroundedNarrativeIndicator({ turn }: { turn: CompletedMissionTurn }) {
   const gn = turn.groundedNarrative;
   if (!gn) return null;
-  const grounded = gn.grounded && !gn.fallbackUsed;
-  const label = grounded
-    ? "AI explanation grounded in verified mission evidence"
-    : "Deterministic VentureOS explanation";
+  const { label, tone } = narrativeStateLabel(gn.provider, gn.fallbackUsed);
+  const emphasised = tone !== "fallback";
   return (
     <div className="rounded-lg border border-edge bg-surface2/60 px-3 py-2">
       <div className="flex items-center gap-2">
         <Sparkles
-          className={cx("h-3.5 w-3.5 shrink-0", grounded ? "text-accent" : "text-faint")}
+          className={cx("h-3.5 w-3.5 shrink-0", emphasised ? "text-accent" : "text-faint")}
           aria-hidden="true"
         />
         <span className="text-[11px] font-medium text-muted">{label}</span>
