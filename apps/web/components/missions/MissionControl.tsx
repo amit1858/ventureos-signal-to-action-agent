@@ -39,15 +39,19 @@ import { deriveMissionView } from "@/lib/missions/missionView";
 import type { MissionView } from "@/lib/missions/missionView";
 import {
   actionLabel,
+  categoryLabel,
   checkLabel,
   intentLabel,
   permittedActionLabel,
+  sourceModuleLabel,
   targetTypeLabel,
   templateLabel,
 } from "@/lib/missions/missionLabels";
 import { buildMissionAuditTrail } from "@/lib/missions/auditTrail";
 import type { MissionAuditTrail } from "@/lib/missions/auditTrail";
 import { narrativeStateLabel, MODEL_SELECTION_STATEMENT } from "@/lib/nvidia/presentation";
+import { projectVoiceSummary, toBusinessProse } from "@/lib/nvidia/narrativeProjection";
+import { NVIDIA_VOICE_SUMMARY_MAX_CHARS } from "@/lib/nvidia/types";
 import { ApprovalPanel } from "@/components/missions/ApprovalPanel";
 import { MissionAuditTrailView } from "@/components/missions/MissionAuditTrail";
 
@@ -142,7 +146,22 @@ function GroundedNarrativeIndicator({ turn }: { turn: CompletedMissionTurn }) {
 }
 
 function WhatHappened({ turn }: { turn: CompletedMissionTurn }) {
-  const opening = `${turn.account.canonicalName} shows signs of renewal risk. VentureOS recommends preparing focused renewal outreach and a stakeholder briefing before the next customer milestone.`;
+  const gn = turn.groundedNarrative;
+  // Prefer the grounded narrative's natural business framing when present (it is
+  // already evidence-validated or the safe deterministic baseline); otherwise use
+  // the deterministic opening. Never re-derives a governed fact.
+  const fallbackOpening = `${turn.account.canonicalName} shows signs of renewal risk. VentureOS recommends preparing focused renewal outreach and a stakeholder briefing before the next customer milestone.`;
+  const opening = gn && gn.whatChanged.trim().length > 0 ? gn.whatChanged : fallbackOpening;
+  // Speak naturally: prefer a live, grounded model voice line; otherwise normalize
+  // the persona voice line so it no longer reads as internal Memory phrasing.
+  const spokenSummary = projectVoiceSummary(
+    {
+      personaVoiceSummary: turn.voiceSummary,
+      narrativeVoiceSummary: gn?.voiceSummary ?? null,
+      narrativeIsLiveGrounded: !!gn && gn.grounded && !gn.fallbackUsed,
+    },
+    NVIDIA_VOICE_SUMMARY_MAX_CHARS,
+  );
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
@@ -152,7 +171,7 @@ function WhatHappened({ turn }: { turn: CompletedMissionTurn }) {
       <div className="flex items-center gap-2 rounded-lg border border-gov/25 bg-gov/5 px-3 py-2">
         <Volume2 className="h-3.5 w-3.5 shrink-0 text-gov-bright" aria-hidden="true" />
         <span className="text-[10px] font-medium uppercase tracking-wider text-gov-bright">Voice summary</span>
-        <span className="text-xs italic text-muted">{turn.voiceSummary}</span>
+        <span className="text-xs italic text-muted">{spokenSummary}</span>
       </div>
       <GroundedNarrativeIndicator turn={turn} />
     </div>
@@ -164,27 +183,42 @@ function WhatHappened({ turn }: { turn: CompletedMissionTurn }) {
 // ---------------------------------------------------------------------------
 
 function WhyAtRisk({ turn }: { turn: CompletedMissionTurn }) {
+  const gn = turn.groundedNarrative;
+  // A live/grounded (or safe fallback) risk explanation reads as natural business
+  // language; surface it as the lead paragraph. Evidence chips below are unchanged,
+  // so every reference is still preserved.
+  const riskLead = gn && gn.riskExplanation.trim().length > 0 ? gn.riskExplanation : null;
   const segments = turn.personaResponse.segments;
   if (segments.length === 0) {
-    return <p className="text-sm text-muted">{turn.personaResponse.voiceSummary}</p>;
+    return (
+      <div className="space-y-3">
+        {riskLead && <p className="text-sm leading-relaxed text-ink">{riskLead}</p>}
+        <p className="text-sm text-muted">{toBusinessProse(turn.personaResponse.voiceSummary)}</p>
+      </div>
+    );
   }
   return (
-    <ol className="space-y-3">
-      {segments.map((s) => (
-        <li key={s.recordId} className="border-l-2 border-accent/30 pl-3">
-          <p className="text-sm leading-relaxed text-ink">{s.text}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <span className="chip text-[10px] uppercase">{s.category}</span>
-            <span className="chip text-[10px]">{s.confidenceBand}</span>
-            {s.citations.map((c) => (
-              <span key={c.recordId} className="chip text-[10px]" title={c.ref}>
-                {c.label}
+    <div className="space-y-3">
+      {riskLead && <p className="text-sm leading-relaxed text-ink">{riskLead}</p>}
+      <ol className="space-y-3">
+        {segments.map((s) => (
+          <li key={s.recordId} className="border-l-2 border-accent/30 pl-3">
+            <p className="text-sm leading-relaxed text-ink">{toBusinessProse(s.text)}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <span className="chip text-[10px] uppercase" title={s.category}>
+                {categoryLabel(s.category)}
               </span>
-            ))}
-          </div>
-        </li>
-      ))}
-    </ol>
+              <span className="chip text-[10px]">{s.confidenceBand}</span>
+              {s.citations.map((c) => (
+                <span key={c.recordId} className="chip text-[10px]" title={c.ref}>
+                  {c.label}
+                </span>
+              ))}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -235,7 +269,7 @@ function EvidenceProvenance({ turn }: { turn: CompletedMissionTurn }) {
           {turn.evidence.map((e) => (
             <li key={e.recordId} className="flex items-center gap-2 text-sm text-muted">
               <FileText className="h-3.5 w-3.5 shrink-0 text-faint" />
-              <span className="text-ink">{e.category}</span>
+              <span className="text-ink" title={e.category}>{categoryLabel(e.category)}</span>
               <span className="text-faint">· {e.summary}</span>
               <span className="chip ml-auto text-[10px]">{e.source}</span>
             </li>
@@ -247,8 +281,8 @@ function EvidenceProvenance({ turn }: { turn: CompletedMissionTurn }) {
           <div className="panel-title mb-2">Provenance</div>
           <div className="flex flex-wrap gap-1.5">
             {turn.personaResponse.citations.map((c) => (
-              <span key={c.recordId} className="chip text-[10px]" title={c.ref}>
-                {c.sourceModule} · {c.sourceQuality}
+              <span key={c.recordId} className="chip text-[10px]" title={`${c.sourceModule} · ${c.ref}`}>
+                {sourceModuleLabel(c.sourceModule)} · {c.sourceQuality}
               </span>
             ))}
           </div>

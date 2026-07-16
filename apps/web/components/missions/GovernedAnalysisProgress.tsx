@@ -18,7 +18,7 @@
 //   * Respects prefers-reduced-motion and is announced via role="status".
 
 import * as React from "react";
-import { Check, Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 
 import { cx } from "@/lib/format";
 import {
@@ -27,6 +27,7 @@ import {
   deriveAnalysisProgress,
   stageMarker,
 } from "@/lib/nvidia/governedAnalysisProgress";
+import type { StageMarker } from "@/lib/nvidia/governedAnalysisProgress";
 
 /** Poll cadence for the local elapsed-time estimate. Coarse on purpose — this is
  * a roadmap animation, not precise telemetry. */
@@ -59,20 +60,7 @@ function useElapsedMs(reducedMotion: boolean): number {
   return elapsed;
 }
 
-function StageDot({ marker, nvidia }: { marker: "done" | "active" | "upcoming"; nvidia: boolean }) {
-  if (marker === "done") {
-    return (
-      <span
-        className={cx(
-          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-          nvidia ? "bg-accent/20 text-accent" : "bg-brand/20 text-brand",
-        )}
-        aria-hidden="true"
-      >
-        <Check className="h-3 w-3" />
-      </span>
-    );
-  }
+function StageDot({ marker, nvidia }: { marker: StageMarker; nvidia: boolean }) {
   if (marker === "active") {
     return (
       <span className="relative flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
@@ -86,12 +74,20 @@ function StageDot({ marker, nvidia }: { marker: "done" | "active" | "upcoming"; 
       </span>
     );
   }
+  // "past" and "upcoming" are BOTH low-emphasis dots — never a completion
+  // checkmark. A time-driven stage is only quieter once the estimate passes it;
+  // it is never presented as backend-confirmed. Past reads slightly stronger than
+  // upcoming, but neither claims the stage finished.
+  const past = marker === "past";
   return (
     <span
-      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-edge"
+      className={cx(
+        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+        past ? "border-edge" : "border-edge/50",
+      )}
       aria-hidden="true"
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-faint/40" />
+      <span className={cx("h-1.5 w-1.5 rounded-full", past ? "bg-faint/70" : "bg-faint/30")} />
     </span>
   );
 }
@@ -139,7 +135,7 @@ export function GovernedAnalysisProgress() {
                       ? nvidia
                         ? "font-medium text-accent"
                         : "font-medium text-ink"
-                      : marker === "done"
+                      : marker === "past"
                         ? "text-muted"
                         : "text-faint",
                   )}

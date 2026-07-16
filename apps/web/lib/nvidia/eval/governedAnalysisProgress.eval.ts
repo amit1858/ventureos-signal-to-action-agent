@@ -169,17 +169,50 @@ check("delayed hint at 8s", deriveAnalysisProgress(DELAYED_HINT_AFTER_MS).showDe
 check("delayed hint after 8s", deriveAnalysisProgress(10_000).showDelayedHint === true);
 
 // ===========================================================================
-console.log("\n[6] Stage markers are consistent with the active estimate");
+console.log("\n[6] Stage markers: quiet past/active/upcoming — NEVER a completed/confirmed state");
 // ===========================================================================
-check("before active -> done", stageMarker(0, 2) === "done");
+check("before active -> past (a quiet marker, not 'done')", stageMarker(0, 2) === "past");
 check("at active -> active", stageMarker(2, 2) === "active");
 check("after active -> upcoming", stageMarker(3, 2) === "upcoming");
-// At every sampled time exactly one stage is active, the rest done/upcoming.
+// Exhaustively enumerate every (stageIndex, activeIndex) marker the timeline can
+// ever produce and prove NO completion/telemetry-confirmation state exists.
+const ALL_MARKERS = new Set<string>();
+for (let active = 0; active < ANALYSIS_STAGES.length; active++) {
+  for (let i = 0; i < ANALYSIS_STAGES.length; i++) ALL_MARKERS.add(stageMarker(i, active));
+}
+const FORBIDDEN_MARKERS = ["done", "complete", "completed", "confirmed", "verified", "checked"];
+check(
+  "no completed/confirmed marker is ever produced",
+  FORBIDDEN_MARKERS.every((m) => !ALL_MARKERS.has(m)),
+  [...ALL_MARKERS].join(","),
+);
+check(
+  "only past/active/upcoming markers exist",
+  [...ALL_MARKERS].every((m) => m === "past" || m === "active" || m === "upcoming"),
+  [...ALL_MARKERS].join(","),
+);
+// At every sampled time exactly one stage is active (single-active invariant).
 for (let t = 0; t <= 12_000; t += 500) {
   const active = deriveAnalysisProgress(t).activeIndex;
   const markers = ANALYSIS_STAGES.map((_, i) => stageMarker(i, active));
   check(`t=${t}ms exactly one active marker`, markers.filter((m) => m === "active").length === 1);
+  check(
+    `t=${t}ms no marker claims completion`,
+    markers.every((m) => m === "past" || m === "active" || m === "upcoming"),
+  );
 }
+// Reduced-motion resting state: the component holds elapsed at 0, so stage 0 is
+// active and NOTHING is even marked "past" (no false progress, one active stage).
+const rmMarkers = ANALYSIS_STAGES.map((_, i) => stageMarker(i, stageIndexForElapsed(0)));
+check(
+  "reduced-motion rest (elapsed 0): exactly one active stage",
+  rmMarkers.filter((m) => m === "active").length === 1,
+);
+check(
+  "reduced-motion rest (elapsed 0): no stage shown as past/completed",
+  rmMarkers.filter((m) => m === "past").length === 0,
+);
+check("reduced-motion rest keeps the first stage active", stageIndexForElapsed(0) === 0);
 
 // ===========================================================================
 console.log("\n[7] Model-selection evidence copy is honest and non-size-based");

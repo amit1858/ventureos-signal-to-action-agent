@@ -60,6 +60,27 @@ const TARGET_TYPE_LABELS: Record<string, string> = {
   risk_update: "Risk update",
 };
 
+/** Business labels for evidence / signal categories shown in primary content
+ * (mandatory evidence, why-at-risk chips). Raw ids stay available for Technical
+ * Evidence and audit. Unmapped ids humanise (e.g. `renewal_risk` -> "Renewal
+ * risk") rather than leaking a snake_case token. */
+const CATEGORY_LABELS: Record<string, string> = {
+  renewal_risk: "Renewal risk",
+  account_health: "Account health",
+  renewal_timeline: "Renewal timeline",
+  usage_trend: "Usage trend",
+  decision: "Decision",
+  engagement: "Engagement",
+};
+
+/** Business labels for provenance source modules shown in primary content. Raw
+ * module ids remain the canonical technical identifier for traceability. */
+const SOURCE_MODULE_LABELS: Record<string, string> = {
+  decision_ledger: "Decision ledger",
+  account_timeline: "Account timeline",
+  mission_audit: "Mission audit",
+};
+
 /** Business label for a governed conversation intent (e.g. `risk_review`). */
 export function intentLabel(id: string): string {
   return INTENT_LABELS[id] ?? humanizeId(id);
@@ -88,4 +109,16 @@ export function checkLabel(id: string): string {
 /** Business label for a simulated action target type (e.g. `crm_task`). */
 export function targetTypeLabel(id: string): string {
   return TARGET_TYPE_LABELS[id] ?? humanizeId(id);
+}
+
+/** Business label for an evidence / signal category (e.g. `renewal_timeline`).
+ * Raw id is kept by callers for Technical Evidence / audit. */
+export function categoryLabel(id: string): string {
+  return CATEGORY_LABELS[id] ?? humanizeId(id);
+}
+
+/** Business label for a provenance source module (e.g. `decision_ledger`). The
+ * raw module id remains the canonical technical identifier for traceability. */
+export function sourceModuleLabel(id: string): string {
+  return SOURCE_MODULE_LABELS[id] ?? humanizeId(id);
 }

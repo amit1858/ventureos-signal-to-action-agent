@@ -127,13 +127,19 @@ export function deriveAnalysisProgress(elapsedMs: number): AnalysisProgress {
   };
 }
 
-/** Visual state of a single stage dot in the timeline, given the active estimate.
- * "done" stages are BEFORE the estimate, "active" pulses, "upcoming" is ahead.
- * These are estimate-driven roadmap markers, never asserted backend completion. */
-export type StageMarker = "done" | "active" | "upcoming";
+/** Visual state of a single stage marker in the timeline, given the active
+ * estimate. There is deliberately NO "done" / "complete" / "confirmed" state:
+ * because the six stages are a time-driven roadmap (not backend telemetry), a
+ * stage the estimate has already passed is rendered only as a QUIETER "past"
+ * marker — never a completion checkmark that would falsely imply the backend
+ * confirmed it. Exactly one stage is "active" at a time; everything else is
+ * "past" (behind the estimate) or "upcoming" (ahead of it). The real mission
+ * result/fallback is the ONLY thing that confirms completion, and it is shown by
+ * the parent unmounting this component — not by any marker here. */
+export type StageMarker = "past" | "active" | "upcoming";
 
 export function stageMarker(stageIndex: number, activeIndex: number): StageMarker {
-  if (stageIndex < activeIndex) return "done";
+  if (stageIndex < activeIndex) return "past";
   if (stageIndex === activeIndex) return "active";
   return "upcoming";
 }
