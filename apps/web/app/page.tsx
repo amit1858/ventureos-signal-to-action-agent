@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, TrendingUp, Radar } from "lucide-react";
 import { api } from "@/lib/api";
 import type {
   Account,
@@ -26,6 +27,7 @@ import { LOADING_PHASES } from "@/lib/evaluation";
 import { fetchOverlay, overlayFor, type AIOverlayMap } from "@/lib/aiOverlay";
 import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
 import { Header, type AppView } from "@/components/Header";
+import { parseViewParam } from "@/lib/shell/nav";
 import { LeftPanel } from "@/components/LeftPanel";
 import { CrmIntegrationCard } from "@/components/CrmIntegrationCard";
 import { HubspotWriteback } from "@/components/HubspotWriteback";
@@ -203,6 +205,11 @@ export default function Page() {
     const params = new URLSearchParams(window.location.search);
     const fromUrl = params.get("accountId") ?? params.get("account") ?? params.get("account_id");
     setUrlAccountId(fromUrl);
+    // Release 2.3 — honor a `?view=` deep link so the shared shell nav (and the
+    // Mission Control route's back-links) can open a specific in-app view
+    // directly. Invalid/absent values keep the default landing entry.
+    const deepLinkView = parseViewParam(params.get("view"));
+    if (deepLinkView) setView(deepLinkView);
     try {
       setPersistedAccountId(window.localStorage.getItem(SELECTED_ACCOUNT_KEY));
     } catch {
@@ -1122,6 +1129,22 @@ export default function Page() {
 
       {view === "mission" ? (
         <main key="mission" className="scene flex flex-1 flex-col">
+          <div className="mx-auto mt-4 flex w-full max-w-[1040px] flex-wrap items-center justify-between gap-3 rounded-xl border border-gov/30 bg-gov/5 px-4 py-3">
+            <div className="flex items-start gap-2">
+              <Radar size={16} className="mt-0.5 shrink-0 text-gov-bright" />
+              <p className="text-[12px] leading-snug text-muted">
+                Renewal risk on this account? Run the{" "}
+                <span className="font-medium text-ink">NVIDIA-grounded governed mission</span> — verified
+                evidence, human approval, and simulated actions.
+              </p>
+            </div>
+            <Link
+              href="/mission-control"
+              className="btn btn-primary shrink-0 px-4 py-2 text-[13px]"
+            >
+              Open governed mission
+            </Link>
+          </div>
           {selectedRec && missionReasoning ? (
             <SellerMissionControl
               variant="page"

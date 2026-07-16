@@ -8,6 +8,7 @@
 // the live mission service is unavailable.
 
 import { MissionControlLive } from "@/components/missions/MissionControlLive";
+import { MissionControlHeader } from "@/components/shell/MissionControlHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +18,11 @@ export const metadata = {
 
 export default function MissionControlPage() {
   return (
-    <main className="min-h-screen bg-base">
-      <MissionControlLive />
-    </main>
+    <div className="flex min-h-screen flex-col bg-base">
+      <MissionControlHeader />
+      <main className="flex-1">
+        <MissionControlLive />
+      </main>
+    </div>
   );
 }
