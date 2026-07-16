@@ -163,6 +163,31 @@ export interface CompletedMissionTurn extends MissionTurnBase {
   /** The deterministic presentation outcome for this turn. */
   outcome: MissionOutcome;
   missionDefinition: MissionDefinitionBrief | null;
+  /** OPTIONAL post-decision, pre-presentation grounded narrative (Release 2.3
+   * NVIDIA-Grounded Mission Intelligence). Purely presentational: it NEVER
+   * changes any governed fact above. Absent on turns assembled without a
+   * narrative provider (backward-compatible). */
+  groundedNarrative?: GroundedNarrativeSummary;
+}
+
+/** A validated (or deterministically fallen-back) grounded narrative attached to
+ * a completed turn. Presentation text only — carries no governance authority. */
+export interface GroundedNarrativeSummary {
+  whatChanged: string;
+  riskExplanation: string;
+  recommendationRationale: string;
+  approvalExplanation: string;
+  voiceSummary: string;
+  caveats: string[];
+  /** Evidence refs the narrative is grounded in (subset of turn evidence). */
+  evidenceRefs: string[];
+  provider: string;
+  model: string;
+  /** True when the guard confirmed the model narrative; false for the fallback. */
+  grounded: boolean;
+  validationStatus: string;
+  /** True when the deterministic VentureOS baseline is being presented. */
+  fallbackUsed: boolean;
 }
 
 /** A governed, NON-executable turn (blocked / rejected / revision_required /

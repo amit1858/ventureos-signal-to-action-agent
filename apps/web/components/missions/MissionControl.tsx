@@ -97,6 +97,42 @@ function Meta({ label, value, mono }: { label: string; value: React.ReactNode; m
 // 1. What happened — the AI speaks first
 // ---------------------------------------------------------------------------
 
+function GroundedNarrativeIndicator({ turn }: { turn: CompletedMissionTurn }) {
+  const gn = turn.groundedNarrative;
+  if (!gn) return null;
+  const grounded = gn.grounded && !gn.fallbackUsed;
+  const label = grounded
+    ? "AI explanation grounded in verified mission evidence"
+    : "Deterministic VentureOS explanation";
+  return (
+    <div className="rounded-lg border border-edge bg-surface2/60 px-3 py-2">
+      <div className="flex items-center gap-2">
+        <Sparkles
+          className={cx("h-3.5 w-3.5 shrink-0", grounded ? "text-accent" : "text-faint")}
+          aria-hidden="true"
+        />
+        <span className="text-[11px] font-medium text-muted">{label}</span>
+      </div>
+      <details className="mt-1">
+        <summary className="cursor-pointer text-[10px] uppercase tracking-wider text-faint">
+          Technical evidence
+        </summary>
+        <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+          <Meta label="Narrative provider" value={gn.provider} mono />
+          <Meta label="Narrative model" value={gn.model} mono />
+          <Meta label="Validation" value={gn.validationStatus} mono />
+          <Meta label="Fallback used" value={gn.fallbackUsed ? "yes" : "no"} mono />
+          <Meta
+            label="Grounded evidence refs"
+            value={gn.evidenceRefs.length > 0 ? gn.evidenceRefs.join(", ") : "—"}
+            mono
+          />
+        </div>
+      </details>
+    </div>
+  );
+}
+
 function WhatHappened({ turn }: { turn: CompletedMissionTurn }) {
   const opening = `${turn.account.canonicalName} shows signs of renewal risk. VentureOS recommends preparing focused renewal outreach and a stakeholder briefing before the next customer milestone.`;
   return (
@@ -110,6 +146,7 @@ function WhatHappened({ turn }: { turn: CompletedMissionTurn }) {
         <span className="text-[10px] font-medium uppercase tracking-wider text-gov-bright">Voice summary</span>
         <span className="text-xs italic text-muted">{turn.voiceSummary}</span>
       </div>
+      <GroundedNarrativeIndicator turn={turn} />
     </div>
   );
 }

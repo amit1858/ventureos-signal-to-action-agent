@@ -35,6 +35,8 @@ import { composeMissionMemory } from "./memoryAdapter";
 import type { MissionMemoryDeps } from "./memoryAdapter";
 import { assembleCompletedMissionTurn, assembleGovernedMissionTurn } from "./missionTurn";
 import type { MissionTurn } from "./types";
+import { groundMissionNarrative } from "../nvidia/narrative";
+import type { NvidiaNarrativeProvider } from "../nvidia/types";
 
 export interface MissionBffDeps {
   callHarness: HarnessCaller;
@@ -49,6 +51,16 @@ export interface MissionBffDeps {
    * live `MissionTurn`. When omitted (e.g. a pure contract test), a completed
    * response carries its payload but `missionTurn` stays `null`. */
   buildMemoryDeps?: (payload: MissionExecutionPayload) => MissionMemoryDeps;
+  /** OPTIONAL post-decision narrative provider (Release 2.3 NVIDIA-Grounded
+   * Mission Intelligence). When provided together with `buildMemoryDeps`, a
+   * COMPLETED mission's turn gains a grounded narrative (validated by the
+   * deterministic guard, or a deterministic fallback). It runs strictly after the
+   * governed decision + PersonaResponse and changes NO governed fact. When
+   * omitted, the completed turn carries no narrative (backward-compatible). The
+   * governed (blocked/rejected/revision/failed) branches NEVER call it. */
+  nvidiaProvider?: NvidiaNarrativeProvider;
+  /** OPTIONAL audience hint for the narrative layer (presentation only). */
+  nvidiaAudience?: string;
 }
 
 export interface MissionBffResult {
@@ -214,7 +226,39 @@ export async function executeMissionRequest(
     if (payload && deps.buildMemoryDeps) {
       try {
         const memory = composeMissionMemory(payload, deps.buildMemoryDeps(payload));
-        missionTurn = assembleCompletedMissionTurn({ payload, memory });
+        // Release 2.3 — post-decision, pre-presentation grounded narrative. This
+        // runs ONLY on the completed branch, AFTER the deterministic
+        // PersonaResponse, and can never alter a governed fact. It fails closed to
+        // a deterministic fallback, so it never blocks a completed mission.
+        let groundedNarrative;
+        if (deps.nvidiaProvider) {
+          const attachment = await groundMissionNarrative(
+            {
+              payload,
+              personaResponse: memory.personaResponse,
+              requestId,
+              correlationId,
+              audience: deps.nvidiaAudience,
+            },
+            deps.nvidiaProvider,
+          );
+          const n = attachment.narrative;
+          groundedNarrative = {
+            whatChanged: n.whatChanged,
+            riskExplanation: n.riskExplanation,
+            recommendationRationale: n.recommendationRationale,
+            approvalExplanation: n.approvalExplanation,
+            voiceSummary: n.voiceSummary,
+            caveats: n.caveats,
+            evidenceRefs: n.evidenceRefs,
+            provider: n.provider,
+            model: n.model,
+            grounded: n.grounded,
+            validationStatus: n.validationStatus,
+            fallbackUsed: n.fallbackUsed,
+          };
+        }
+        missionTurn = assembleCompletedMissionTurn({ payload, memory, groundedNarrative });
       } catch {
         return {
           httpStatus: 500,

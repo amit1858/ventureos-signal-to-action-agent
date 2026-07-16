@@ -17,6 +17,7 @@ import { defaultInjectedTimestamps } from "../../../../lib/harness/requestBuilde
 import { executeMissionRequest } from "../../../../lib/missions/bff";
 import type { MissionBffDeps } from "../../../../lib/missions/bff";
 import { renewalMissionMemoryDeps } from "../../../../lib/missions/demo";
+import { nvidiaConfigFromEnv, selectNarrativeProvider } from "../../../../lib/nvidia/provider";
 
 // Never statically optimise or cache: every mission is evaluated fresh.
 export const dynamic = "force-dynamic";
@@ -31,6 +32,10 @@ function newId(prefix: string): string {
 }
 
 function realDeps(): MissionBffDeps {
+  // Release 2.3 — resolve the NVIDIA narrative provider from SERVER-ONLY config.
+  // Defaults to the deterministic mock (no live key / no network this release);
+  // no NVIDIA URL or key is ever exposed to the browser.
+  const nvidiaConfig = nvidiaConfigFromEnv(process.env);
   return {
     callHarness: defaultHarnessCaller(),
     newRequestId: () => newId("REQ"),
@@ -41,6 +46,9 @@ function realDeps(): MissionBffDeps {
     // through the TypeScript Memory Core + Conversation Runtime (F1.5) and packaged
     // by the F1.6 assembler. Python never composes language and none crosses back.
     buildMemoryDeps: renewalMissionMemoryDeps,
+    // Post-decision, pre-presentation grounded narrative (presentation only).
+    nvidiaProvider: selectNarrativeProvider(nvidiaConfig),
+    nvidiaAudience: nvidiaConfig.audience,
   };
 }
 

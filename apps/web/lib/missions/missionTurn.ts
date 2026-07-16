@@ -32,6 +32,7 @@ import type { MissionMemoryResult } from "./memoryAdapter";
 import type {
   CompletedMissionTurn,
   GovernedMissionTurn,
+  GroundedNarrativeSummary,
   MissionApprovalState,
   MissionOutcome,
   MissionTurn,
@@ -130,6 +131,10 @@ export interface CompletedTurnInput {
   memory: MissionMemoryResult;
   /** Injected presentation turn index; defaults to the payload's turn index. */
   turnIndex?: number;
+  /** OPTIONAL post-decision grounded narrative (Release 2.3). Presentation text
+   * only; attaching it changes NO governed field. Omitted for backward-compatible
+   * assembly without a narrative provider. */
+  groundedNarrative?: GroundedNarrativeSummary;
 }
 
 /** Assemble the executable, presentation-safe completed turn. The persona
@@ -178,6 +183,7 @@ export function assembleCompletedMissionTurn(input: CompletedTurnInput): Complet
     simulatedAction: null,
     outcome: outcomeOf(payload.missionState, approvalState, payload.recommendation),
     missionDefinition: payload.missionDefinition ?? null,
+    ...(input.groundedNarrative ? { groundedNarrative: input.groundedNarrative } : {}),
   };
 }
 
