@@ -40,6 +40,17 @@ export const INTERNAL_LEAD_PATTERNS: readonly RegExp[] = [
 export const VOICE_PREAMBLE_PATTERN =
   /^(Resuming|Status from|Risk review of|Next step from|Recap of)\b[^.]*\.\s*(Top:\s*)?/i;
 
+/** The Conversation Runtime assembles each supporting-evidence segment as
+ *   [tone lead] [confidence hedge] [importance flag] [intent frame] [subject]: [summary]
+ * (see conversation/templates.ts). For PRIMARY presentation we want just the
+ * business summary, so this matches the whole leading scaffold up to and including
+ * the `<intent frame> <subject>:` — any tone lead / hedge / flag in front is
+ * absorbed by the lazy prefix. Subtractive: it only removes a genuine leading
+ * frame and never rewrites the summary that follows. Confidence is not lost — it
+ * stays on the segment's confidence-band chip. */
+export const INTENT_FRAME_PREFIX_PATTERN =
+  /^.*?\b(?:risk to watch on|recommended next step for|current status for|picking up on|recap on)\b[^:]*:\s*/i;
+
 /** Collapse whitespace to single spaces and trim. Deterministic. */
 function tidy(text: string): string {
   return (text ?? "").replace(/\s+/g, " ").trim();
@@ -72,6 +83,23 @@ export function toBusinessProse(text: string): string {
     }
   }
   return capitalizeFirst(out);
+}
+
+/**
+ * Project a supporting-evidence segment ("Advisory — On record, risk to watch on
+ * Curefoods: renewal risk flagged for enterprise account") into the business
+ * sentence a reviewer should read ("Renewal risk flagged for enterprise
+ * account."). Removes the leading `<intent frame> <subject>:` scaffold and any
+ * remaining tone/hedge lead, subtractively — the surviving words all come from
+ * the input, so no fact, number, action, or conclusion is introduced. If the
+ * strip would empty the sentence, it falls back to the lead-only projection so
+ * the output is always non-empty and usable. */
+export function toSupportingEvidenceProse(text: string): string {
+  const raw = tidy(text);
+  const withoutFrame = raw.replace(INTENT_FRAME_PREFIX_PATTERN, "");
+  const candidate = withoutFrame.trim().length > 0 ? withoutFrame : raw;
+  const prose = toBusinessProse(candidate);
+  return prose.length > 0 ? prose : toBusinessProse(raw);
 }
 
 /** Deterministically bound a string to `maxChars`, adding a single ellipsis when

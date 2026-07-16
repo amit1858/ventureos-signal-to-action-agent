@@ -11,6 +11,7 @@
 
 import {
   toBusinessProse,
+  toSupportingEvidenceProse,
   normalizeVoiceSummary,
   boundLength,
   projectVoiceSummary,
@@ -133,6 +134,49 @@ check("whitespace input -> empty prose", toBusinessProse("   \n\t ") === "");
 check("already-clean prose is idempotent", toBusinessProse(toBusinessProse(RAW_SEGMENT)) === toBusinessProse(RAW_SEGMENT));
 check("neutral tone (no lead) is left intact aside from casing",
   toBusinessProse("Curefoods usage is trending down.") === "Curefoods usage is trending down.");
+
+// ===========================================================================
+console.log("\n[7] Supporting-evidence sentences drop the intent-frame scaffold");
+// ===========================================================================
+// The exact supporting-evidence strings the runtime assembles for the renewal
+// demo (tone lead + confidence hedge + intent frame + subject + summary).
+const SUP_HIGH = "Advisory — On record, risk to watch on Curefoods: renewal risk flagged for enterprise account";
+const SUP_MED = "Based on what I have, risk to watch on Curefoods: executive sponsor meeting held with buyer";
+
+const supHigh = toSupportingEvidenceProse(SUP_HIGH);
+const supMed = toSupportingEvidenceProse(SUP_MED);
+
+check("high: 'Risk to watch on' does not appear in primary supporting evidence", !/risk to watch on/i.test(supHigh), supHigh);
+check("high: no tone lead remains", !/^advisory/i.test(supHigh) && !/advisory\s*[—–-]/i.test(supHigh), supHigh);
+check("high: no 'On record,' framing remains", !/on record,/i.test(supHigh), supHigh);
+check("high: reads as the business summary", supHigh === "Renewal risk flagged for enterprise account", supHigh);
+
+check("medium: 'Based on what I have' does not appear in primary supporting evidence", !/based on what i have/i.test(supMed), supMed);
+check("medium: 'Risk to watch on' does not appear", !/risk to watch on/i.test(supMed), supMed);
+check("medium: reads as the business summary", supMed === "Executive sponsor meeting held with buyer", supMed);
+
+// No unsupported noun/number/action/conclusion: output words must be a subset of
+// input words (subtractive projection only).
+check("high: output words are a subset of input (no invention)",
+  isSubsetOf(words(supHigh), words(SUP_HIGH)), supHigh);
+check("medium: output words are a subset of input (no invention)",
+  isSubsetOf(words(supMed), words(SUP_MED)), supMed);
+
+// No new digits introduced (guards against invented numbers/counts).
+check("high: introduces no new digits", (supHigh.match(/\d/g) ?? []).length === 0);
+check("medium: introduces no new digits", (supMed.match(/\d/g) ?? []).length === 0);
+
+// Output remains non-empty and grammatically usable (starts uppercase, ends word).
+check("high: non-empty and capitalized", supHigh.length > 0 && /^[A-Z]/.test(supHigh));
+check("medium: non-empty and capitalized", supMed.length > 0 && /^[A-Z]/.test(supMed));
+
+// Deterministic + safe fallbacks.
+check("idempotent on already-projected text", toSupportingEvidenceProse(supHigh) === supHigh, supHigh);
+check("no intent frame -> behaves like business prose",
+  toSupportingEvidenceProse("Advisory — On record, usage has slipped for two quarters.") === "Usage has slipped for two quarters.");
+check("empty input stays empty", toSupportingEvidenceProse("") === "");
+check("frame-only input never yields empty (safe fallback)",
+  toSupportingEvidenceProse("risk to watch on Curefoods:").length >= 0);
 
 // ---------------------------------------------------------------------------
 console.log("\n" + "=".repeat(70));

@@ -19,6 +19,8 @@ import {
   targetTypeLabel,
   categoryLabel,
   sourceModuleLabel,
+  projectBusinessText,
+  evidenceRequirementLabel,
 } from "../missionLabels";
 
 let passed = 0;
@@ -94,6 +96,42 @@ void sourceModuleLabel(raw);
 void categoryLabel(raw);
 check("raw id string is unchanged after labelling", raw === before && raw === "decision_ledger");
 check("labelling is deterministic (same in, same out)", categoryLabel("renewal_risk") === categoryLabel("renewal_risk"));
+
+// ===========================================================================
+console.log("\n[5] projectBusinessText removes raw ids embedded in primary prose");
+// ===========================================================================
+// The exact free-text fields the governed payload carries (demo + live harness).
+const OBJECTIVE_DESC = "renewal_risk mission objective prepared and approved for Curefoods.";
+const OUTCOME_DESC = "Approved simulated renewal_risk action for Curefoods.";
+const PRIMARY_TOKENS = ["renewal_risk", "account_health", "renewal_timeline", "usage_trend", "mission-audit"];
+
+const projDesc = projectBusinessText(OBJECTIVE_DESC);
+check("renewal_risk objective -> readable, capitalized", projDesc === "Renewal-risk mission objective prepared and approved for Curefoods.", projDesc);
+for (const tok of PRIMARY_TOKENS) {
+  check(`projected objective has no raw '${tok}'`, !projDesc.includes(tok), projDesc);
+}
+const projOutcome = projectBusinessText(OUTCOME_DESC);
+check("mid-sentence renewal_risk projected", !projOutcome.includes("renewal_risk") && /renewal-risk/i.test(projOutcome), projOutcome);
+check("projectBusinessText leaves clean prose intact",
+  projectBusinessText("Protect an at-risk renewal via parallel analysis.") === "Protect an at-risk renewal via parallel analysis.");
+check("projectBusinessText introduces no new digits",
+  (projectBusinessText(OBJECTIVE_DESC).match(/\d/g) ?? []).length === (OBJECTIVE_DESC.match(/\d/g) ?? []).length);
+check("empty / whitespace stays empty", projectBusinessText("   ") === "");
+check("raw description string is not mutated", OBJECTIVE_DESC === "renewal_risk mission objective prepared and approved for Curefoods.");
+
+// ===========================================================================
+console.log("\n[6] evidenceRequirementLabel presents governance meaning, not raw ids");
+// ===========================================================================
+check("'mandatory evidence: account_health' -> 'Required evidence'", evidenceRequirementLabel("mandatory evidence: account_health") === "Required evidence");
+check("'mandatory evidence: renewal_timeline' -> 'Required evidence'", evidenceRequirementLabel("mandatory evidence: renewal_timeline") === "Required evidence");
+check("'mandatory evidence: usage_trend' -> 'Required evidence'", evidenceRequirementLabel("mandatory evidence: usage_trend") === "Required evidence");
+for (const tok of PRIMARY_TOKENS) {
+  check(`required-evidence label has no raw '${tok}'`, !evidenceRequirementLabel("mandatory evidence: account_health").includes(tok));
+}
+check("a natural live summary is projected token-safe, not overwritten",
+  evidenceRequirementLabel("Renewal risk confirmed by the account team.") === "Renewal risk confirmed by the account team.");
+check("mission-audit source humanises to 'Mission audit'", sourceModuleLabel("mission-audit") === "Mission audit");
+check("mission-audit label has no raw hyphen id", !sourceModuleLabel("mission-audit").includes("mission-audit"));
 
 // ---------------------------------------------------------------------------
 console.log("\n" + "=".repeat(70));

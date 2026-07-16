@@ -41,8 +41,10 @@ import {
   actionLabel,
   categoryLabel,
   checkLabel,
+  evidenceRequirementLabel,
   intentLabel,
   permittedActionLabel,
+  projectBusinessText,
   sourceModuleLabel,
   targetTypeLabel,
   templateLabel,
@@ -50,7 +52,7 @@ import {
 import { buildMissionAuditTrail } from "@/lib/missions/auditTrail";
 import type { MissionAuditTrail } from "@/lib/missions/auditTrail";
 import { narrativeStateLabel, MODEL_SELECTION_STATEMENT } from "@/lib/nvidia/presentation";
-import { projectVoiceSummary, toBusinessProse } from "@/lib/nvidia/narrativeProjection";
+import { projectVoiceSummary, toSupportingEvidenceProse } from "@/lib/nvidia/narrativeProjection";
 import { NVIDIA_VOICE_SUMMARY_MAX_CHARS } from "@/lib/nvidia/types";
 import { ApprovalPanel } from "@/components/missions/ApprovalPanel";
 import { MissionAuditTrailView } from "@/components/missions/MissionAuditTrail";
@@ -193,7 +195,7 @@ function WhyAtRisk({ turn }: { turn: CompletedMissionTurn }) {
     return (
       <div className="space-y-3">
         {riskLead && <p className="text-sm leading-relaxed text-ink">{riskLead}</p>}
-        <p className="text-sm text-muted">{toBusinessProse(turn.personaResponse.voiceSummary)}</p>
+        <p className="text-sm text-muted">{toSupportingEvidenceProse(turn.personaResponse.voiceSummary)}</p>
       </div>
     );
   }
@@ -203,7 +205,7 @@ function WhyAtRisk({ turn }: { turn: CompletedMissionTurn }) {
       <ol className="space-y-3">
         {segments.map((s) => (
           <li key={s.recordId} className="border-l-2 border-accent/30 pl-3">
-            <p className="text-sm leading-relaxed text-ink">{toBusinessProse(s.text)}</p>
+            <p className="text-sm leading-relaxed text-ink" title={s.text}>{toSupportingEvidenceProse(s.text)}</p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <span className="chip text-[10px] uppercase" title={s.category}>
                 {categoryLabel(s.category)}
@@ -270,8 +272,8 @@ function EvidenceProvenance({ turn }: { turn: CompletedMissionTurn }) {
             <li key={e.recordId} className="flex items-center gap-2 text-sm text-muted">
               <FileText className="h-3.5 w-3.5 shrink-0 text-faint" />
               <span className="text-ink" title={e.category}>{categoryLabel(e.category)}</span>
-              <span className="text-faint">· {e.summary}</span>
-              <span className="chip ml-auto text-[10px]">{e.source}</span>
+              <span className="text-faint" title={e.summary}>· {evidenceRequirementLabel(e.summary)}</span>
+              <span className="chip ml-auto text-[10px]" title={e.source}>{sourceModuleLabel(e.source)}</span>
             </li>
           ))}
         </ul>
@@ -314,14 +316,14 @@ function RecommendedMission({ turn }: { turn: CompletedMissionTurn }) {
       </div>
       {def ? (
         <>
-          <p className="text-sm leading-relaxed text-ink">{def.objective}</p>
+          <p className="text-sm leading-relaxed text-ink" title={def.objective}>{projectBusinessText(def.objective)}</p>
           <div>
             <div className="panel-title mb-1.5">Success criteria</div>
             <ul className="space-y-1">
               {def.successCriteria.map((c) => (
                 <li key={c.criterionId} className="flex items-start gap-2 text-sm text-muted">
                   <CircleDashed className="mt-0.5 h-3.5 w-3.5 shrink-0 text-faint" />
-                  <span>{c.description}</span>
+                  <span title={c.description}>{projectBusinessText(c.description)}</span>
                 </li>
               ))}
             </ul>

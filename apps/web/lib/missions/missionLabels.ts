@@ -122,3 +122,55 @@ export function categoryLabel(id: string): string {
 export function sourceModuleLabel(id: string): string {
   return SOURCE_MODULE_LABELS[id] ?? humanizeId(id);
 }
+
+/** Raw governed identifiers that must not appear verbatim inside PRIMARY business
+ * prose (evidence summaries, mission-objective / success-criteria sentences).
+ * Each maps to its readable, lower-case in-prose form; sentence capitalization is
+ * re-applied afterwards so a leading token reads naturally (e.g. `renewal_risk
+ * mission objective…` -> `Renewal-risk mission objective…`). Raw ids stay in
+ * `title=` / Technical Evidence for traceability — this only changes what a
+ * business reviewer reads by default. Reuses the same taxonomy as the label maps
+ * above; it does not introduce a competing source of truth. */
+const PROSE_TOKEN_REPLACEMENTS: ReadonlyArray<readonly [string, string]> = [
+  ["renewal_risk", "renewal-risk"],
+  ["account_health", "account health"],
+  ["renewal_timeline", "renewal timeline"],
+  ["usage_trend", "usage trend"],
+  ["renewal_outreach", "renewal outreach"],
+  ["stakeholder_brief", "stakeholder briefing"],
+  ["mission-audit", "mission audit"],
+  ["mission_audit", "mission audit"],
+  ["decision_ledger", "decision ledger"],
+  ["account_timeline", "account timeline"],
+];
+
+function escapeRegExp(literal: string): string {
+  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Replace any embedded raw governed identifier inside a PRIMARY business sentence
+ * with its readable form, then sentence-case the first character. Purely a
+ * label substitution — it introduces no new fact, number, or clause; it only
+ * swaps a known internal token for the human phrase it already denotes. Callers
+ * keep the raw text for `title=` / Technical Evidence. Safe for both the frozen
+ * demo payload and the live harness payload, which share these token shapes. */
+export function projectBusinessText(text: string): string {
+  let out = text ?? "";
+  for (const [raw, readable] of PROSE_TOKEN_REPLACEMENTS) {
+    out = out.replace(new RegExp(`\\b${escapeRegExp(raw)}\\b`, "g"), readable);
+  }
+  const trimmed = out.trim();
+  if (trimmed.length === 0) return trimmed;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+/** Business label for a mandatory-evidence summary. The governed payload encodes
+ * these as `mandatory evidence: <category>` (raw token in the display string); we
+ * present the governance meaning ("Required evidence") and keep the raw summary in
+ * `title=`. Live summaries that are already natural business text are projected
+ * token-safe instead of overwritten. */
+export function evidenceRequirementLabel(summary: string): string {
+  if (/^\s*mandatory evidence\s*:/i.test(summary ?? "")) return "Required evidence";
+  return projectBusinessText(summary);
+}
