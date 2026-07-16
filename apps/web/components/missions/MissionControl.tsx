@@ -47,7 +47,7 @@ import {
 } from "@/lib/missions/missionLabels";
 import { buildMissionAuditTrail } from "@/lib/missions/auditTrail";
 import type { MissionAuditTrail } from "@/lib/missions/auditTrail";
-import { narrativeStateLabel } from "@/lib/nvidia/presentation";
+import { narrativeStateLabel, MODEL_SELECTION_STATEMENT } from "@/lib/nvidia/presentation";
 import { ApprovalPanel } from "@/components/missions/ApprovalPanel";
 import { MissionAuditTrailView } from "@/components/missions/MissionAuditTrail";
 
@@ -133,6 +133,9 @@ function GroundedNarrativeIndicator({ turn }: { turn: CompletedMissionTurn }) {
             mono
           />
         </div>
+        {tone === "live" ? (
+          <p className="mt-2 text-[10px] leading-relaxed text-faint">{MODEL_SELECTION_STATEMENT}</p>
+        ) : null}
       </details>
     </div>
   );

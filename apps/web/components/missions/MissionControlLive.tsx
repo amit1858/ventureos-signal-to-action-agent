@@ -17,9 +17,10 @@
 // banner so a viewer can never mistake it for a live governed result.
 
 import * as React from "react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 import { MissionControl } from "@/components/missions/MissionControl";
+import { GovernedAnalysisProgress } from "@/components/missions/GovernedAnalysisProgress";
 import { RENEWAL_PRESENTATION_REQUEST, buildRenewalDemoTurn } from "@/lib/missions/demo";
 import type { MissionTurn } from "@/lib/missions/types";
 
@@ -69,12 +70,7 @@ export function MissionControlLive() {
   }, []);
 
   if (state.phase === "loading") {
-    return (
-      <div className="mx-auto flex w-full max-w-4xl items-center gap-3 px-4 py-16 text-sm text-muted">
-        <Loader2 className="h-5 w-5 animate-spin text-brand" aria-hidden />
-        <span>Running the governed renewal-risk mission…</span>
-      </div>
-    );
+    return <GovernedAnalysisProgress />;
   }
 
   return (
