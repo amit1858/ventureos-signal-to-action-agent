@@ -24,6 +24,8 @@ export interface NvidiaProviderConfig {
   model?: string;
   timeoutMs?: number;
   maxRetries?: number;
+  /** Optional hard ceiling on total wall time across attempts (ms). */
+  totalBudgetMs?: number;
 }
 
 export const DEFAULT_AUDIENCE = "business";
@@ -65,6 +67,7 @@ export function selectNarrativeProvider(config: NvidiaProviderConfig = {}): Nvid
         model: config.model as string,
         timeoutMs: config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         maxRetries: config.maxRetries ?? DEFAULT_MAX_RETRIES,
+        totalBudgetMs: config.totalBudgetMs,
       });
     }
     // nim requested but not fully configured: fail closed to the deterministic
@@ -99,5 +102,9 @@ export function nvidiaConfigFromEnv(env: Record<string, string | undefined>): Nv
     model: env.NVIDIA_MODEL,
     timeoutMs: parseIntOr(env.NVIDIA_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),
     maxRetries: parseIntOr(env.NVIDIA_MAX_RETRIES, DEFAULT_MAX_RETRIES),
+    totalBudgetMs:
+      env.NVIDIA_TOTAL_BUDGET_MS !== undefined
+        ? parseIntOr(env.NVIDIA_TOTAL_BUDGET_MS, DEFAULT_TIMEOUT_MS)
+        : undefined,
   };
 }

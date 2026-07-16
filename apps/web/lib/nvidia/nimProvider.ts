@@ -35,8 +35,13 @@ export interface NimProviderConfig {
   baseUrl: string;
   apiKey: string;
   model: string;
+  /** Per-attempt timeout (ms). A single attempt is aborted after this long. */
   timeoutMs: number;
   maxRetries: number;
+  /** OPTIONAL hard ceiling (ms) on TOTAL wall time across all attempts. Defaults
+   * to `timeoutMs`, which guarantees the mission experience can never block for
+   * roughly two full timeouts. A retry only runs inside the remaining budget. */
+  totalBudgetMs?: number;
 }
 
 /** Minimal fetch surface so tests can stub the network deterministically. */
@@ -217,11 +222,18 @@ export function createNimProvider(
   const now = deps.now ?? (() => Date.now());
   const maxRetries = Number.isFinite(config.maxRetries) ? Math.max(0, config.maxRetries) : 1;
   const timeoutMs = Number.isFinite(config.timeoutMs) ? config.timeoutMs : 10000;
+  // Total wall-time ceiling across attempts. Defaults to one per-attempt timeout
+  // so a slow/hung model can never hold the mission experience for ~2x the
+  // timeout. A retry only runs if meaningful budget remains.
+  const totalBudgetMs =
+    Number.isFinite(config.totalBudgetMs as number) && (config.totalBudgetMs as number) > 0
+      ? (config.totalBudgetMs as number)
+      : timeoutMs;
   const url = config.baseUrl.replace(/\/+$/, "") + "/chat/completions";
 
-  async function requestOnce(body: string): Promise<string> {
+  async function requestOnce(body: string, attemptTimeoutMs: number): Promise<string> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => controller.abort(), Math.max(1, attemptTimeoutMs));
     try {
       const res = await fetchImpl(url, {
         method: "POST",
@@ -267,12 +279,20 @@ export function createNimProvider(
       });
 
       const started = now();
+      // Hard ceiling: no attempt may push total wall time past this deadline.
+      const deadline = started + totalBudgetMs;
+      // A retry needs at least this much budget to be worth starting.
+      const MIN_ATTEMPT_MS = 250;
       let attempts = 0;
       let lastErr: NimProviderError = new NimProviderError("unknown", false);
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const remaining = deadline - now();
+        // Out of budget before a retry — stop and fail closed.
+        if (attempt > 0 && remaining <= MIN_ATTEMPT_MS) break;
+        const attemptTimeoutMs = Math.min(timeoutMs, Math.max(1, remaining));
         attempts = attempt + 1;
         try {
-          const raw = await requestOnce(body);
+          const raw = await requestOnce(body, attemptTimeoutMs);
           const content = extractAssistantContent(raw);
           const parsed = extractNarrativeJson(content);
           return toCandidateNarrative(parsed, config, {
@@ -281,7 +301,13 @@ export function createNimProvider(
           });
         } catch (err) {
           lastErr = err instanceof NimProviderError ? err : new NimProviderError("unknown", false);
-          if (!lastErr.retryable || attempt >= maxRetries) break;
+          // Never retry after a FULL timeout: a slow model will not answer faster
+          // on a second full wait, and the governed mission experience must not
+          // block for roughly two timeouts. Fast retryable HTTP (429/502/503/504)
+          // and network errors still get one retry inside the remaining budget.
+          const timedOut = lastErr.code === "timeout";
+          const budgetLeft = deadline - now() > MIN_ATTEMPT_MS;
+          if (!lastErr.retryable || timedOut || attempt >= maxRetries || !budgetLeft) break;
         }
       }
       throw lastErr;

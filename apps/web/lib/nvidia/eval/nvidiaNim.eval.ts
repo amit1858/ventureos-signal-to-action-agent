@@ -10,7 +10,8 @@
 //   * every Feature 2.1 grounding rule still rejects bad live output;
 //   * live-output security rejection (secrets, tokens, paths, stack traces,
 //     URLs, DB strings, HTML/script injection, control chars);
-//   * retry policy (retry once on 429/503/timeout/network; never on 400/401);
+//   * retry policy (one retry on 429/502/503/504/network; a FULL timeout is
+//     terminal; never retry 400/401/403) and a bounded total wall-time budget;
 //   * fail-closed fallback + truthful labels for every failure path;
 //   * blocked / rejected / revision missions NEVER invoke the provider.
 //
@@ -322,17 +323,74 @@ async function run(): Promise<void> {
       try { await provider.generate(request); } catch { threw = true; }
       check("exhausted retries -> at most one retry (2 calls)", threw && stub.calls() === 2, `calls=${stub.calls()}`);
     }
-    // Timeout retries once.
+    // A FULL timeout is TERMINAL: no second full-timeout attempt (bounds wait).
     {
       const { provider, stub } = nim([{ throwAbort: true }, { status: 200, text: envelope(validBody()) }]);
-      const n = await provider.generate(request);
-      check("timeout -> retries once then succeeds", stub.calls() === 2 && n.provider === "nim");
+      let threw = false;
+      try { await provider.generate(request); } catch { threw = true; }
+      check("timeout -> terminal, NOT retried (1 call)", threw && stub.calls() === 1, `calls=${stub.calls()}`);
     }
-    // Network error retries once.
+    // Network error still retries once (fast failure, within budget).
     {
       const { provider, stub } = nim([{ throwNetwork: true }, { status: 200, text: envelope(validBody()) }]);
       const n = await provider.generate(request);
       check("network error -> retries once then succeeds", stub.calls() === 2 && n.provider === "nim");
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  console.log("\n[8b] Latency budget: total wall time is bounded");
+  // -------------------------------------------------------------------------
+  {
+    // Controllable clock: each now() call returns the next scripted timestamp.
+    function scriptedClock(times: number[]): () => number {
+      let k = 0;
+      return () => times[Math.min(k++, times.length - 1)];
+    }
+    // Budget = per-attempt timeout: a full timeout leaves no room to retry.
+    {
+      const stub = stubFetch([{ throwAbort: true }, { status: 200, text: envelope(validBody()) }]);
+      // started=0; retry-guard now=30000 (budget spent) -> no retry.
+      const provider = createNimProvider(
+        { ...CONFIG, timeoutMs: 30000, maxRetries: 1, totalBudgetMs: 30000 },
+        { fetchImpl: stub.fn, now: scriptedClock([0, 30000, 30000, 30000]) },
+      );
+      let threw = false;
+      try { await provider.generate(request); } catch { threw = true; }
+      check("budget=timeout: full timeout -> no second attempt", threw && stub.calls() === 1, `calls=${stub.calls()}`);
+    }
+    // Fast retryable HTTP with budget remaining -> exactly one retry.
+    {
+      const stub = stubFetch([{ status: 503 }, { status: 200, text: envelope(validBody()) }]);
+      const provider = createNimProvider(
+        { ...CONFIG, timeoutMs: 30000, maxRetries: 1, totalBudgetMs: 30000 },
+        { fetchImpl: stub.fn, now: scriptedClock([0, 200, 400, 600]) },
+      );
+      const n = await provider.generate(request);
+      check("budget: fast 503 with budget left -> one retry", stub.calls() === 2 && n.attempts === 2);
+    }
+    // Retryable HTTP but budget already exhausted -> no retry.
+    {
+      const stub = stubFetch([{ status: 503 }, { status: 200, text: envelope(validBody()) }]);
+      const provider = createNimProvider(
+        { ...CONFIG, timeoutMs: 30000, maxRetries: 1, totalBudgetMs: 30000 },
+        // started=0; after first failure now=29900 -> <250ms budget left -> stop.
+        { fetchImpl: stub.fn, now: scriptedClock([0, 29900, 29900, 29900]) },
+      );
+      let threw = false;
+      try { await provider.generate(request); } catch { threw = true; }
+      check("budget: 503 but budget exhausted -> no retry", threw && stub.calls() === 1, `calls=${stub.calls()}`);
+    }
+    // Timeout -> deterministic fallback preserved through the pipeline.
+    {
+      const stub = stubFetch([{ throwAbort: true }]);
+      const provider = createNimProvider(
+        { ...CONFIG, timeoutMs: 30000, maxRetries: 1, totalBudgetMs: 30000 },
+        { fetchImpl: stub.fn, now: scriptedClock([0, 30000, 30000, 30000]) },
+      );
+      const att = await groundMissionNarrative(REQUEST_INPUT, provider);
+      check("timeout -> deterministic fallback", att.narrative.fallbackUsed === true && att.narrative.provider === "ventureos-deterministic");
+      check("timeout fallback preserves evidence refs", att.narrative.evidenceRefs.length === request.evidenceRefs.length);
     }
   }
 
