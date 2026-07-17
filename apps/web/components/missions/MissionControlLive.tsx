@@ -39,15 +39,20 @@ type LoadState =
  * from a deterministic allowlist — that this is the SAME Curefoods account and
  * governed mission the seller opened, and never silently switches accounts. */
 function ContinuityCue() {
-  const cue = React.useMemo(() => {
-    if (typeof window === "undefined") return null;
+  // Read the incoming context AFTER mount (client-only). A `useMemo` that reads
+  // `window` returns null during SSR and is not guaranteed to recompute on
+  // hydration, so the cue could silently never appear on the hosted deployment.
+  // Computing it in an effect forces a client-side render once the URL is known.
+  const [cue, setCue] = React.useState<{ title: string; detail: string } | null>(null);
+
+  React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const validation = validateIncomingMissionContext({
       account: params.get(MISSION_CONTEXT_PARAMS.account),
       mission: params.get(MISSION_CONTEXT_PARAMS.mission),
       from: params.get(MISSION_CONTEXT_PARAMS.from),
     });
-    return continuityCue(validation);
+    setCue(continuityCue(validation));
   }, []);
 
   if (!cue) return null;

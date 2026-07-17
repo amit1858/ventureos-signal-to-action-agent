@@ -29,6 +29,8 @@ import {
   buildMissionControlHref,
   validateIncomingMissionContext,
   continuityCue,
+  shouldShowCanonicalMissionFallback,
+  CUREFOODS_MISSION_ENTRY,
 } from "../../demo/canonicalMission";
 import {
   projectGovernedOutcome,
@@ -208,6 +210,29 @@ check("executive states execution simulated", exec.facts.join(" ").toLowerCase()
 const ops = projectMissionForPersona(turn, executedView, "operations");
 check("operations references the same mission id", ops.headline.includes(turn.missionId));
 check("operations states audit chain valid", ops.facts.join(" ").toLowerCase().includes("audit chain valid"));
+
+// ---------------------------------------------------------------------------
+console.log("\n[9] Today's Mission canonical fallback — truthful + scoped");
+// ===========================================================================
+// The fallback shows ONLY when the legacy root API is unavailable AND no live
+// recommendation is selected — a healthy root journey is never overridden, and
+// general backend errors are not blanket-suppressed.
+check("fallback shows when API down and no rec", shouldShowCanonicalMissionFallback({ rootApiAvailable: false, hasSelectedRecommendation: false }) === true);
+check("fallback hidden when API healthy", shouldShowCanonicalMissionFallback({ rootApiAvailable: true, hasSelectedRecommendation: false }) === false);
+check("fallback hidden when a rec is selected", shouldShowCanonicalMissionFallback({ rootApiAvailable: false, hasSelectedRecommendation: true }) === false);
+check("fallback hidden on healthy journey with rec", shouldShowCanonicalMissionFallback({ rootApiAvailable: true, hasSelectedRecommendation: true }) === false);
+
+const entry = CUREFOODS_MISSION_ENTRY;
+check("entry account reuses canonical Curefoods name", entry.accountName === CUREFOODS_CANONICAL.canonicalName && entry.accountName === "Curefoods", entry.accountName);
+check("entry shows the renewal protection mission", entry.missionTitle === "Renewal protection mission", entry.missionTitle);
+check("entry is truthfully labelled a deterministic governed demo", entry.truthLabel === "Deterministic governed demo mission", entry.truthLabel);
+check("entry status reads governed mission ready for review", entry.status.toLowerCase().includes("governed mission ready for review"), entry.status);
+check("entry CTA wording matches Today's Mission CTA", entry.ctaLabel === "Open governed mission", entry.ctaLabel);
+check("entry states why now with evidence categories", /account-health|renewal-timeline|usage-trend/.test(entry.whyNow), entry.whyNow);
+check("entry does not claim live CRM data", !/live crm|from your crm|synced from/i.test(`${entry.whyNow} ${entry.status} ${entry.truthLabel}`));
+scanForbidden("canonical entry", `${entry.priorityLabel} ${entry.accountName} ${entry.missionTitle} ${entry.whyNow} ${entry.status} ${entry.truthLabel} ${entry.ctaLabel}`);
+const entryHref = buildMissionControlHref(null);
+check("entry CTA carries safe canonical identifiers", entryHref === "/mission-control?account=VOS-CUREFOODS&mission=M-RENEWAL-1&from=todays-mission", entryHref);
 
 // ---------------------------------------------------------------------------
 console.log("\n" + "=".repeat(70));

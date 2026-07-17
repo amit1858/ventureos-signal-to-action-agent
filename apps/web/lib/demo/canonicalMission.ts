@@ -244,6 +244,69 @@ export function validateIncomingMissionContext(raw: {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Today's Mission canonical entry — truthful fallback when the legacy root API
+// is unavailable (Release 2.3, narrow P0 continuity correction)
+// ---------------------------------------------------------------------------
+//
+// The legacy Morning Brief / Today's Mission experience is driven by a separate
+// decision-engine backend (port 8000) that is NOT part of the hosted Vercel
+// deployment. In hosted environments that backend is unreachable, so the seller
+// surface would otherwise show a raw "cannot reach backend" error and a "no
+// mission selected" empty state right next to the "Open governed mission" CTA —
+// making the whole product look broken even though the governed /mission-control
+// route is healthy.
+//
+// This model provides a truthful, deterministic Curefoods entry state so the
+// canonical journey visibly begins with the same account and mission it hands
+// off to. It re-derives NO recommendation, ranking or governance — it is fixed
+// presentation copy bound to the canonical Curefoods identity, and is explicitly
+// labelled as a deterministic governed demo mission (never claimed as live CRM
+// data).
+
+/** The presentation model for the canonical Today's Mission entry card. */
+export interface CanonicalMissionEntryModel {
+  /** Section eyebrow, e.g. "Today's priority". */
+  readonly priorityLabel: string;
+  /** Canonical account name — the SAME account the CTA hands off. */
+  readonly accountName: string;
+  /** The governed mission title. */
+  readonly missionTitle: string;
+  /** Why this mission is surfaced now (evidence categories, no business claim). */
+  readonly whyNow: string;
+  /** Lifecycle status — governed mission is prepared and awaiting review. */
+  readonly status: string;
+  /** Explicit truth label so no viewer mistakes this for live CRM data. */
+  readonly truthLabel: string;
+  /** The handoff CTA label. */
+  readonly ctaLabel: string;
+}
+
+/** The single canonical Curefoods entry, bound to {@link CUREFOODS_CANONICAL}.
+ * Frozen so no surface can mutate the canonical presentation. */
+export const CUREFOODS_MISSION_ENTRY: CanonicalMissionEntryModel = Object.freeze({
+  priorityLabel: "Today's priority",
+  accountName: CUREFOODS_CANONICAL.canonicalName,
+  missionTitle: "Renewal protection mission",
+  whyNow:
+    "Renewal risk has been identified from verified account-health, renewal-timeline and usage-trend evidence.",
+  status: "Governed mission ready for review",
+  truthLabel: "Deterministic governed demo mission",
+  ctaLabel: "Open governed mission",
+});
+
+/** Decide whether the Today's Mission surface should show the canonical Curefoods
+ * entry instead of the raw backend-error + empty state. TRUE only when the legacy
+ * root API is unavailable AND no live recommendation is selected — so a healthy
+ * root journey is never overridden and general backend errors are not hidden on
+ * unrelated views (the caller scopes this to the Today's Mission view only). */
+export function shouldShowCanonicalMissionFallback(args: {
+  rootApiAvailable: boolean;
+  hasSelectedRecommendation: boolean;
+}): boolean {
+  return !args.rootApiAvailable && !args.hasSelectedRecommendation;
+}
+
 /** A short, business-English continuity cue for a validated context. Returns
  * `null` when there is nothing to say (direct load / invalid context). */
 export function continuityCue(

@@ -28,7 +28,11 @@ import { fetchOverlay, overlayFor, type AIOverlayMap } from "@/lib/aiOverlay";
 import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
 import { Header, type AppView } from "@/components/Header";
 import { parseViewParam } from "@/lib/shell/nav";
-import { buildMissionControlHref } from "@/lib/demo/canonicalMission";
+import {
+  buildMissionControlHref,
+  shouldShowCanonicalMissionFallback,
+  CUREFOODS_MISSION_ENTRY,
+} from "@/lib/demo/canonicalMission";
 import { LeftPanel } from "@/components/LeftPanel";
 import { CrmIntegrationCard } from "@/components/CrmIntegrationCard";
 import { HubspotWriteback } from "@/components/HubspotWriteback";
@@ -1049,6 +1053,16 @@ export default function Page() {
   const dataReady = health?.data_ready ?? !!meta;
   const modelProvider = result?.model_provider ?? meta?.model_provider ?? "mock";
   const agents = meta?.agents ?? [];
+  // When the legacy decision-engine backend (port 8000) is unreachable — as it
+  // always is in the hosted deployment, where only the governed Mission Control
+  // stack is served — the Today's Mission surface shows a truthful canonical
+  // Curefoods entry instead of a raw backend error + empty state, so the seller
+  // journey visibly begins with the same account and mission it hands off.
+  const showCanonicalMissionFallback = shouldShowCanonicalMissionFallback({
+    rootApiAvailable: !bootError,
+    hasSelectedRecommendation: !!selectedRec,
+  });
+  const missionFallbackActive = view === "mission" && showCanonicalMissionFallback;
   const accountsList = React.useMemo(() => Object.values(accounts), [accounts]);
 
   // Outside-in supporting context keyed by account, distilled for the portfolio
@@ -1082,7 +1096,7 @@ export default function Page() {
         overlayModel={aiOverlay?.model ?? null}
       />
 
-      {bootError ? (
+      {bootError && !missionFallbackActive ? (
         <div className="mx-5 mt-4 flex items-center gap-2 rounded-lg border border-risk/40 bg-risk/10 px-4 py-3 text-sm text-risk">
           <AlertTriangle size={16} />
           Cannot reach the backend API. Start it on port 8000, then reload. ({bootError})
@@ -1130,55 +1144,61 @@ export default function Page() {
 
       {view === "mission" ? (
         <main key="mission" className="scene flex flex-1 flex-col">
-          <div className="mx-auto mt-4 flex w-full max-w-[1040px] flex-wrap items-center justify-between gap-3 rounded-xl border border-gov/30 bg-gov/5 px-4 py-3">
-            <div className="flex items-start gap-2">
-              <Radar size={16} className="mt-0.5 shrink-0 text-gov-bright" />
-              <p className="text-[12px] leading-snug text-muted">
-                Renewal risk on this account? Run the{" "}
-                <span className="font-medium text-ink">NVIDIA-grounded governed mission</span> — verified
-                evidence, human approval, and simulated actions.
-              </p>
-            </div>
-            <Link
-              href={buildMissionControlHref(selectedRec?.account_id ?? null)}
-              className="btn btn-primary shrink-0 px-4 py-2 text-[13px]"
-            >
-              Open governed mission
-            </Link>
-          </div>
-          {selectedRec && missionReasoning ? (
-            <SellerMissionControl
-              variant="page"
-              recommendation={selectedRec}
-              account={accounts[selectedRec.account_id]}
-              reasoning={missionReasoning}
-              experienceMode={experienceMode}
-              generatedAt={result?.generated_at}
-              nextAccount={nextRecommendedAccount}
-              onOpenAccount={(accountId, source) => {
-                applyAccountSelection(accountId, null, { clearRedirect: true, source: source ?? "Mission" });
-                launchMission(accountId);
-              }}
-              onOpenWorkspace={(accountId) => {
-                applyAccountSelection(accountId, null, { clearRedirect: true, source: "Mission" });
-                setView("workspace");
-              }}
-              onClose={() => setView("brief")}
-            />
+          {missionFallbackActive ? (
+            <CanonicalMissionEntry />
           ) : (
-            <div className="mx-auto mt-10 w-full max-w-[640px] rounded-2xl border border-edge bg-surface2/40 p-8 text-center">
-              <p className="text-[15px] font-medium text-ink">No mission selected yet.</p>
-              <p className="mt-1 text-[12px] text-muted">
-                Start from your Morning Brief to begin today's first mission.
-              </p>
-              <button
-                type="button"
-                onClick={() => setView("brief")}
-                className="btn btn-primary mt-4 px-4 py-2 text-[13px]"
-              >
-                Go to Morning Brief
-              </button>
-            </div>
+            <>
+              <div className="mx-auto mt-4 flex w-full max-w-[1040px] flex-wrap items-center justify-between gap-3 rounded-xl border border-gov/30 bg-gov/5 px-4 py-3">
+                <div className="flex items-start gap-2">
+                  <Radar size={16} className="mt-0.5 shrink-0 text-gov-bright" />
+                  <p className="text-[12px] leading-snug text-muted">
+                    Renewal risk on this account? Run the{" "}
+                    <span className="font-medium text-ink">NVIDIA-grounded governed mission</span> — verified
+                    evidence, human approval, and simulated actions.
+                  </p>
+                </div>
+                <Link
+                  href={buildMissionControlHref(selectedRec?.account_id ?? null)}
+                  className="btn btn-primary shrink-0 px-4 py-2 text-[13px]"
+                >
+                  Open governed mission
+                </Link>
+              </div>
+              {selectedRec && missionReasoning ? (
+                <SellerMissionControl
+                  variant="page"
+                  recommendation={selectedRec}
+                  account={accounts[selectedRec.account_id]}
+                  reasoning={missionReasoning}
+                  experienceMode={experienceMode}
+                  generatedAt={result?.generated_at}
+                  nextAccount={nextRecommendedAccount}
+                  onOpenAccount={(accountId, source) => {
+                    applyAccountSelection(accountId, null, { clearRedirect: true, source: source ?? "Mission" });
+                    launchMission(accountId);
+                  }}
+                  onOpenWorkspace={(accountId) => {
+                    applyAccountSelection(accountId, null, { clearRedirect: true, source: "Mission" });
+                    setView("workspace");
+                  }}
+                  onClose={() => setView("brief")}
+                />
+              ) : (
+                <div className="mx-auto mt-10 w-full max-w-[640px] rounded-2xl border border-edge bg-surface2/40 p-8 text-center">
+                  <p className="text-[15px] font-medium text-ink">No mission selected yet.</p>
+                  <p className="mt-1 text-[12px] text-muted">
+                    Start from your Morning Brief to begin today's first mission.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setView("brief")}
+                    className="btn btn-primary mt-4 px-4 py-2 text-[13px]"
+                  >
+                    Go to Morning Brief
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </main>
       ) : null}
@@ -1505,7 +1525,7 @@ export default function Page() {
         </main>
       ) : null}
 
-      {view !== "landing" ? (
+      {view !== "landing" && !missionFallbackActive ? (
         <RuntimeTrace
           ledger={result?.decision_ledger ?? null}
           apiBaseUrl={api.baseUrl}
@@ -1518,6 +1538,48 @@ export default function Page() {
 }
 
 const LOADING_DONE = "I'm ready. Here's where I'd spend today.";
+
+/** The truthful canonical Curefoods entry shown on Today's Mission when the
+ * legacy decision-engine backend is unreachable (hosted deployments). It shows
+ * the Curefoods account and the renewal-protection mission BEFORE the CTA, is
+ * explicitly labelled a deterministic governed demo mission, and hands off to
+ * `/mission-control` with the same safe identifiers. It re-derives no
+ * recommendation — all copy is bound to the canonical Curefoods identity. */
+function CanonicalMissionEntry() {
+  const entry = CUREFOODS_MISSION_ENTRY;
+  return (
+    <div className="mx-auto mt-4 w-full max-w-[1040px]">
+      <div className="rounded-2xl border border-gov/30 bg-gov/5 p-6">
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-gov-bright">
+          <Radar size={14} />
+          {entry.priorityLabel}
+        </div>
+        <h2 className="mt-3 text-[22px] font-semibold leading-tight text-ink">{entry.accountName}</h2>
+        <p className="mt-1 text-[15px] font-medium text-ink">{entry.missionTitle}</p>
+
+        <div className="mt-4 rounded-xl border border-edge bg-surface2/40 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Why now</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink">{entry.whyNow}</p>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center rounded-full border border-gov/40 bg-gov/10 px-3 py-1 text-[12px] font-medium text-gov-bright">
+            {entry.status}
+          </span>
+          <span className="inline-flex items-center rounded-full border border-edge bg-surface2/60 px-3 py-1 text-[11px] text-muted">
+            {entry.truthLabel}
+          </span>
+        </div>
+
+        <div className="mt-5">
+          <Link href={buildMissionControlHref(null)} className="btn btn-primary px-4 py-2 text-[13px]">
+            {entry.ctaLabel}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function CenterLoading() {
   const [phase, setPhase] = React.useState(0);
