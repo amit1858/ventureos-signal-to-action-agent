@@ -54,6 +54,7 @@ import type { MissionAuditTrail } from "@/lib/missions/auditTrail";
 import { narrativeStateLabel, MODEL_SELECTION_STATEMENT } from "@/lib/nvidia/presentation";
 import { projectVoiceSummary, toSupportingEvidenceProse } from "@/lib/nvidia/narrativeProjection";
 import { NVIDIA_VOICE_SUMMARY_MAX_CHARS } from "@/lib/nvidia/types";
+import { groundedEvidenceCue, projectGovernedOutcome, projectMissionForPersona, type PersonaLens } from "@/lib/demo/missionProjection";
 import { ApprovalPanel } from "@/components/missions/ApprovalPanel";
 import { MissionAuditTrailView } from "@/components/missions/MissionAuditTrail";
 
@@ -154,6 +155,8 @@ function WhatHappened({ turn }: { turn: CompletedMissionTurn }) {
   // the deterministic opening. Never re-derives a governed fact.
   const fallbackOpening = `${turn.account.canonicalName} shows signs of renewal risk. VentureOS recommends preparing focused renewal outreach and a stakeholder briefing before the next customer milestone.`;
   const opening = gn && gn.whatChanged.trim().length > 0 ? gn.whatChanged : fallbackOpening;
+  // Business-facing trust cue from EXISTING grounding metadata (dynamic count).
+  const evidenceCue = groundedEvidenceCue(turn);
   // Speak naturally: prefer a live, grounded model voice line; otherwise normalize
   // the persona voice line so it no longer reads as internal Memory phrasing.
   const spokenSummary = projectVoiceSummary(
@@ -170,6 +173,12 @@ function WhatHappened({ turn }: { turn: CompletedMissionTurn }) {
         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
         <p className="text-[15px] leading-relaxed text-ink">{opening}</p>
       </div>
+      {evidenceCue ? (
+        <div className="flex items-center gap-2 rounded-lg border border-accent/25 bg-accent/5 px-3 py-2">
+          <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+          <span className="text-xs font-medium text-ink">{evidenceCue.text}</span>
+        </div>
+      ) : null}
       <div className="flex items-center gap-2 rounded-lg border border-gov/25 bg-gov/5 px-3 py-2">
         <Volume2 className="h-3.5 w-3.5 shrink-0 text-gov-bright" aria-hidden="true" />
         <span className="text-[10px] font-medium uppercase tracking-wider text-gov-bright">Voice summary</span>
@@ -453,9 +462,30 @@ const STATE_TONE: Record<MissionView["missionStateTone"], string> = {
 };
 
 function Outcome({ turn, view }: { turn: CompletedMissionTurn; view: MissionView }) {
+  const projected = projectGovernedOutcome(view);
   return (
     <div className="space-y-3">
       <p className="text-sm text-ink">{view.outcomeHeadline}</p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="rounded-lg border border-gov/30 bg-gov/5 px-3 py-2">
+          <div className="text-[10px] uppercase tracking-wider text-faint">System outcome</div>
+          <p className="mt-1 text-[13px] text-ink">{projected.systemOutcome}</p>
+        </div>
+        <div className="rounded-lg border border-edge bg-surface2/60 px-3 py-2">
+          <div className="text-[10px] uppercase tracking-wider text-faint">Business outcome</div>
+          <p className="mt-1 text-[13px] text-ink">{projected.businessOutcome}</p>
+        </div>
+      </div>
+      {projected.supportingLines.length > 0 ? (
+        <ul className="space-y-1">
+          {projected.supportingLines.map((line) => (
+            <li key={line} className="flex items-center gap-2 text-xs text-muted">
+              <CircleDashed className="h-3.5 w-3.5 shrink-0 text-faint" aria-hidden />
+              {line}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div className="rounded-lg border border-edge bg-surface2/60 px-3 py-2">
           <div className="text-[10px] uppercase tracking-wider text-faint">Mission state</div>
@@ -480,14 +510,68 @@ function Outcome({ turn, view }: { turn: CompletedMissionTurn; view: MissionView
 // 10. Supporting customer context & audit (progressively disclosed)
 // ---------------------------------------------------------------------------
 
-function SupportingContext({ turn, trail }: { turn: CompletedMissionTurn; trail: MissionAuditTrail }) {
+function SupportingContext({
+  turn,
+  trail,
+  view,
+}: {
+  turn: CompletedMissionTurn;
+  trail: MissionAuditTrail;
+  view: MissionView;
+}) {
   return (
     <div className="space-y-5">
       <div>
         <div className="panel-title mb-2">Unified customer context</div>
         <UnifiedContext turn={turn} />
       </div>
+      <PersonaProjections turn={turn} view={view} />
       <MissionAuditTrailView trail={trail} />
+    </div>
+  );
+}
+
+// One governed mission, read through each persona lens. This is a READ-ONLY
+// projection of the SAME turn — no second source of truth, no Manager lens.
+const PERSONA_LENSES: readonly { lens: PersonaLens; label: string }[] = [
+  { lens: "seller", label: "Seller" },
+  { lens: "executive", label: "Executive" },
+  { lens: "operations", label: "Operations" },
+];
+
+function PersonaProjections({ turn, view }: { turn: CompletedMissionTurn; view: MissionView }) {
+  return (
+    <div>
+      <div className="panel-title mb-2">The same mission, read by each persona</div>
+      <p className="mb-3 text-xs text-muted">
+        One governed Curefoods mission, projected read-only through each persona lens. Executive and
+        Operations views are Production-Partial projections — they add no new facts and take no action.
+      </p>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {PERSONA_LENSES.map(({ lens, label }) => {
+          const p = projectMissionForPersona(turn, view, lens);
+          return (
+            <div key={lens} className="rounded-lg border border-edge bg-surface2/60 px-3 py-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wider text-faint">{label}</span>
+                {lens !== "seller" ? (
+                  <span className="rounded-full border border-line px-1.5 py-0.5 text-[9px] text-muted">
+                    Production-Partial
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-1 text-[12px] font-medium text-ink">{p.headline}</p>
+              <ul className="mt-1.5 space-y-1">
+                {p.facts.map((f) => (
+                  <li key={f} className="text-[11px] leading-snug text-muted">
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -569,7 +653,7 @@ function sectionBody(id: string, ctx: SectionCtx): React.ReactNode {
     case "outcome":
       return <Outcome turn={turn} view={ctx.view} />;
     case "supporting-context":
-      return <SupportingContext turn={turn} trail={ctx.trail} />;
+      return <SupportingContext turn={turn} trail={ctx.trail} view={ctx.view} />;
     default:
       return null;
   }
