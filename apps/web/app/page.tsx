@@ -28,6 +28,7 @@ import { fetchOverlay, overlayFor, type AIOverlayMap } from "@/lib/aiOverlay";
 import { AIEnhancedBanner } from "@/components/AIReasoningStatus";
 import { Header, type AppView } from "@/components/Header";
 import { parseViewParam } from "@/lib/shell/nav";
+import { buildMissionControlHref } from "@/lib/demo/canonicalMission";
 import { LeftPanel } from "@/components/LeftPanel";
 import { CrmIntegrationCard } from "@/components/CrmIntegrationCard";
 import { HubspotWriteback } from "@/components/HubspotWriteback";
@@ -1139,7 +1140,7 @@ export default function Page() {
               </p>
             </div>
             <Link
-              href="/mission-control"
+              href={buildMissionControlHref(selectedRec?.account_id ?? null)}
               className="btn btn-primary shrink-0 px-4 py-2 text-[13px]"
             >
               Open governed mission

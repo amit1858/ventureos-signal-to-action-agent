@@ -17,17 +17,52 @@
 // banner so a viewer can never mistake it for a live governed result.
 
 import * as React from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Link2 } from "lucide-react";
 
 import { MissionControl } from "@/components/missions/MissionControl";
 import { GovernedAnalysisProgress } from "@/components/missions/GovernedAnalysisProgress";
 import { RENEWAL_PRESENTATION_REQUEST, buildRenewalDemoTurn } from "@/lib/missions/demo";
+import {
+  validateIncomingMissionContext,
+  continuityCue,
+  MISSION_CONTEXT_PARAMS,
+} from "@/lib/demo/canonicalMission";
 import type { MissionTurn } from "@/lib/missions/types";
 
 type LoadState =
   | { phase: "loading" }
   | { phase: "live"; turn: MissionTurn }
   | { phase: "offline"; turn: MissionTurn; reason: string };
+
+/** The honest, business-English continuity cue shown when Mission Control is
+ * opened from Today's Mission with a validated canonical context. It confirms —
+ * from a deterministic allowlist — that this is the SAME Curefoods account and
+ * governed mission the seller opened, and never silently switches accounts. */
+function ContinuityCue() {
+  const cue = React.useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const validation = validateIncomingMissionContext({
+      account: params.get(MISSION_CONTEXT_PARAMS.account),
+      mission: params.get(MISSION_CONTEXT_PARAMS.mission),
+      from: params.get(MISSION_CONTEXT_PARAMS.from),
+    });
+    return continuityCue(validation);
+  }, []);
+
+  if (!cue) return null;
+  return (
+    <div className="mx-auto w-full max-w-4xl px-4 pt-6">
+      <div className="flex items-start gap-3 rounded-lg border border-gov/40 bg-gov/10 p-4 text-sm">
+        <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-gov-bright" aria-hidden />
+        <div>
+          <p className="font-medium text-ink">{cue.title}</p>
+          <p className="mt-1 text-muted">{cue.detail}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function MissionControlLive() {
   const [state, setState] = React.useState<LoadState>({ phase: "loading" });
@@ -70,11 +105,17 @@ export function MissionControlLive() {
   }, []);
 
   if (state.phase === "loading") {
-    return <GovernedAnalysisProgress />;
+    return (
+      <>
+        <ContinuityCue />
+        <GovernedAnalysisProgress />
+      </>
+    );
   }
 
   return (
     <>
+      <ContinuityCue />
       {state.phase === "offline" && (
         <div className="mx-auto w-full max-w-4xl px-4 pt-6">
           <div className="flex items-start gap-3 rounded-lg border border-risk/40 bg-risk/10 p-4 text-sm">
