@@ -31,6 +31,8 @@ import { parseViewParam } from "@/lib/shell/nav";
 import {
   buildMissionControlHref,
   shouldShowCanonicalMissionFallback,
+  hasUsableSelectedMission,
+  isRealGovernedDecisionEngine,
   CUREFOODS_MISSION_ENTRY,
 } from "@/lib/demo/canonicalMission";
 import { LeftPanel } from "@/components/LeftPanel";
@@ -1053,16 +1055,38 @@ export default function Page() {
   const dataReady = health?.data_ready ?? !!meta;
   const modelProvider = result?.model_provider ?? meta?.model_provider ?? "mock";
   const agents = meta?.agents ?? [];
-  // When the legacy decision-engine backend (port 8000) is unreachable — as it
-  // always is in the hosted deployment, where only the governed Mission Control
-  // stack is served — the Today's Mission surface shows a truthful canonical
-  // Curefoods entry instead of a raw backend error + empty state, so the seller
-  // journey visibly begins with the same account and mission it hands off.
-  const showCanonicalMissionFallback = shouldShowCanonicalMissionFallback({
-    rootApiAvailable: !bootError,
-    hasSelectedRecommendation: !!selectedRec,
+  // The legacy Morning Brief / Today's Mission experience is driven by a separate
+  // decision-engine backend that is NOT part of the hosted Vercel deployment. In
+  // the hosted demo that engine always reports mock / synthetic data — whether it
+  // is unreachable (Preview: localhost), reachable-but-mock/synthetic with no
+  // selected recommendation, or reachable-but-returns a mock legacy mission
+  // ("Tessera DocOnline"). Per the canonical hosted policy (Option B), the truthful
+  // Curefoods governed entry is AUTHORITATIVE on Today's Mission whenever the engine
+  // is mock/synthetic, so the seller journey always begins with the same account and
+  // mission it hands off — never a raw error / mock / empty state, and never a
+  // mock/synthetic legacy mission. Only a PROVEN real, non-mock, non-synthetic
+  // governed backend mission (compatible identifiers) is allowed to defer. The
+  // decision is based on product readiness + engine realness, never API reachability.
+  const decisionEngineIsRealGoverned = isRealGovernedDecisionEngine({
+    modelProvider: result?.model_provider ?? meta?.model_provider ?? null,
+    dataSourceMode: meta?.dataset?.data_source_mode ?? null,
+    dataSourceLabel: meta?.dataset?.source_label ?? meta?.dataset?.source ?? null,
   });
-  const missionFallbackActive = view === "mission" && showCanonicalMissionFallback;
+  const usableSelectedMission = hasUsableSelectedMission({
+    decisionEngineIsRealGoverned,
+    selectedRecommendation: selectedRec
+      ? {
+          account_id: selectedRec.account_id,
+          recommendation_id: selectedRec.recommendation_id,
+          account_name: selectedRec.account_name,
+        }
+      : null,
+  });
+  const showCanonicalMissionFallback = shouldShowCanonicalMissionFallback({
+    isTodaysMissionView: view === "mission",
+    hasUsableSelectedMission: usableSelectedMission,
+  });
+  const missionFallbackActive = showCanonicalMissionFallback;
   const accountsList = React.useMemo(() => Object.values(accounts), [accounts]);
 
   // Outside-in supporting context keyed by account, distilled for the portfolio

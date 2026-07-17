@@ -295,16 +295,129 @@ export const CUREFOODS_MISSION_ENTRY: CanonicalMissionEntryModel = Object.freeze
   ctaLabel: "Open governed mission",
 });
 
+/** The minimal live selected recommendation shape needed to decide usability.
+ * Mirrors the real `Recommendation` contract (a superset) so the predicate can be
+ * unit-tested without importing the full type. */
+export interface SelectedMissionRecommendation {
+  readonly account_id?: string | null;
+  readonly recommendation_id?: string | null;
+  readonly account_name?: string | null;
+}
+
+/** Inputs describing the ACTUAL live selected mission/recommendation state. */
+export interface UsableSelectedMissionInput {
+  /** The live selected recommendation, when one has resolved. */
+  readonly selectedRecommendation?: SelectedMissionRecommendation | null;
+  /** Whether the selected account resolves to a known account record. Optional —
+   * only blocks usability when explicitly `false` (so a missing lookup never
+   * wrongly forces the fallback over a real selected mission). */
+  readonly selectedAccountResolved?: boolean;
+  /** Whether the legacy decision engine that produced the selected mission is a
+   * PROVEN real, non-mock, non-synthetic governed engine. Defaults to `false`.
+   *
+   * Per the canonical hosted Today's Mission policy (Option B), a backend-selected
+   * mission is only allowed to REPLACE the canonical Curefoods governed entry when
+   * it is proven real: a non-mock provider AND a non-synthetic (live/production)
+   * dataset. In the current hosted demo the decision engine always reports mock /
+   * synthetic data, so this is `false` and Curefoods stays authoritative whether
+   * the backend is cold, unavailable, warm, mock or synthetic. Only a future,
+   * proven real governed backend flips this to `true` and is allowed to defer. */
+  readonly decisionEngineIsRealGoverned?: boolean;
+}
+
+/** Deterministic: is there a real, renderable, safely-continuable selected
+ * mission that is allowed to REPLACE the canonical Curefoods governed entry on the
+ * hosted Today's Mission journey?
+ *
+ * This evaluates two things together:
+ *  1. The DECISION-ENGINE REALNESS gate — the mission must come from a proven
+ *     real, non-mock, non-synthetic governed engine (`decisionEngineIsRealGoverned`).
+ *     A mock/synthetic backend mission (e.g. the legacy "Tessera DocOnline" demo
+ *     fixture) is NOT usable for the canonical journey, so Curefoods stays.
+ *  2. The SELECTED RECOMMENDATION CONTRACT — a resolved recommendation with the
+ *     account + mission identifiers needed to render and to continue safely.
+ *
+ * It deliberately does NOT look at API reachability, `bootError`, account count or
+ * agent count — those are diagnostics, not the authoritative signal. */
+export function hasUsableSelectedMission(input: UsableSelectedMissionInput): boolean {
+  // Realness gate first (Option B): a mock/synthetic engine never yields a
+  // canonical-journey-usable mission — Curefoods remains authoritative.
+  if (input?.decisionEngineIsRealGoverned !== true) return false;
+  const rec = input?.selectedRecommendation;
+  if (!rec) return false; // a selected recommendation must exist
+  const accountId = typeof rec.account_id === "string" ? rec.account_id.trim() : "";
+  const recommendationId =
+    typeof rec.recommendation_id === "string" ? rec.recommendation_id.trim() : "";
+  const accountName = typeof rec.account_name === "string" ? rec.account_name.trim() : "";
+  if (!accountId || !recommendationId) return false; // required identifiers present
+  if (!accountName) return false; // renderable (has a display name)
+  if (input.selectedAccountResolved === false) return false; // selected account exists
+  return true;
+}
+
 /** Decide whether the Today's Mission surface should show the canonical Curefoods
- * entry instead of the raw backend-error + empty state. TRUE only when the legacy
- * root API is unavailable AND no live recommendation is selected — so a healthy
- * root journey is never overridden and general backend errors are not hidden on
- * unrelated views (the caller scopes this to the Today's Mission view only). */
+ * governed entry instead of a raw backend-error / mock / empty state.
+ *
+ * The decision is based on PRODUCT READINESS, not API reachability: the fallback
+ * activates whenever the seller is on Today's Mission with NO canonical-journey-
+ * usable selected mission and the canonical Curefoods mission is available. Because
+ * `hasUsableSelectedMission` requires a PROVEN real, non-mock, non-synthetic
+ * governed engine, the canonical Curefoods entry stays authoritative whenever the
+ * root API is unreachable, reachable-but-mock, reachable-but-synthetic,
+ * reachable-but-empty, reachable-but-returns-no-selected-recommendation, OR
+ * reachable-but-returns-a-mock/synthetic legacy mission (e.g. "Tessera DocOnline").
+ *
+ * Only a proven real governed backend mission (non-mock, non-synthetic, compatible
+ * identifiers) is allowed to defer and preserve the normal root mission experience.
+ * The caller keeps general backend diagnostics visible on other views. */
 export function shouldShowCanonicalMissionFallback(args: {
-  rootApiAvailable: boolean;
-  hasSelectedRecommendation: boolean;
+  readonly isTodaysMissionView: boolean;
+  readonly hasUsableSelectedMission: boolean;
+  readonly canonicalMissionAvailable?: boolean;
 }): boolean {
-  return !args.rootApiAvailable && !args.hasSelectedRecommendation;
+  const canonicalAvailable = args.canonicalMissionAvailable ?? true;
+  return (
+    args.isTodaysMissionView === true &&
+    args.hasUsableSelectedMission === false &&
+    canonicalAvailable === true
+  );
+}
+
+/** Descriptors of the legacy decision engine that produced the current output. */
+export interface DecisionEngineDescriptor {
+  /** `model_provider` from the recommendation result or meta (e.g. "mock", "nim"). */
+  readonly modelProvider?: string | null;
+  /** Dataset mode from meta (e.g. "synthetic", "live", "production"). */
+  readonly dataSourceMode?: string | null;
+  /** Human dataset/source label from meta (e.g. "HubSpot test CRM"). */
+  readonly dataSourceLabel?: string | null;
+}
+
+/** Provider tokens that denote a mock / non-real decision engine. */
+const MOCK_PROVIDER_TOKENS = ["mock", "synthetic", "demo", "deterministic", "fixture", "sample"];
+/** Dataset tokens that denote synthetic / non-live data. */
+const SYNTHETIC_DATASET_TOKENS = ["synthetic", "mock", "test", "demo", "sample", "fixture"];
+
+/** Deterministic: is the legacy decision engine a PROVEN real, non-mock,
+ * non-synthetic governed engine? Conservative by design — returns `true` ONLY when
+ * BOTH the provider is a real (non-mock) provider AND the dataset is an explicitly
+ * live/production (non-synthetic) source. Missing/unknown descriptors resolve to
+ * `false`, so the canonical Curefoods entry stays authoritative until a real
+ * governed backend is proven. */
+export function isRealGovernedDecisionEngine(engine: DecisionEngineDescriptor | null | undefined): boolean {
+  if (!engine) return false;
+  const provider = typeof engine.modelProvider === "string" ? engine.modelProvider.trim().toLowerCase() : "";
+  if (!provider) return false;
+  const providerIsMock = MOCK_PROVIDER_TOKENS.some((t) => provider.includes(t));
+  if (providerIsMock) return false;
+  const mode = typeof engine.dataSourceMode === "string" ? engine.dataSourceMode.trim().toLowerCase() : "";
+  const label = typeof engine.dataSourceLabel === "string" ? engine.dataSourceLabel.trim().toLowerCase() : "";
+  // Dataset must be explicitly live/production to count as real.
+  const datasetIsLive = mode === "live" || mode === "production" || mode === "real";
+  if (!datasetIsLive) return false;
+  const datasetLooksSynthetic = SYNTHETIC_DATASET_TOKENS.some((t) => mode.includes(t) || label.includes(t));
+  if (datasetLooksSynthetic) return false;
+  return true;
 }
 
 /** A short, business-English continuity cue for a validated context. Returns

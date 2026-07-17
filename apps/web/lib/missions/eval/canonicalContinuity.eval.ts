@@ -30,6 +30,8 @@ import {
   validateIncomingMissionContext,
   continuityCue,
   shouldShowCanonicalMissionFallback,
+  hasUsableSelectedMission,
+  isRealGovernedDecisionEngine,
   CUREFOODS_MISSION_ENTRY,
 } from "../../demo/canonicalMission";
 import {
@@ -212,15 +214,62 @@ check("operations references the same mission id", ops.headline.includes(turn.mi
 check("operations states audit chain valid", ops.facts.join(" ").toLowerCase().includes("audit chain valid"));
 
 // ---------------------------------------------------------------------------
-console.log("\n[9] Today's Mission canonical fallback — truthful + scoped");
+console.log("\n[9] Today's Mission canonical fallback — Option B: mock/synthetic -> Curefoods authoritative");
 // ===========================================================================
-// The fallback shows ONLY when the legacy root API is unavailable AND no live
-// recommendation is selected — a healthy root journey is never overridden, and
-// general backend errors are not blanket-suppressed.
-check("fallback shows when API down and no rec", shouldShowCanonicalMissionFallback({ rootApiAvailable: false, hasSelectedRecommendation: false }) === true);
-check("fallback hidden when API healthy", shouldShowCanonicalMissionFallback({ rootApiAvailable: true, hasSelectedRecommendation: false }) === false);
-check("fallback hidden when a rec is selected", shouldShowCanonicalMissionFallback({ rootApiAvailable: false, hasSelectedRecommendation: true }) === false);
-check("fallback hidden on healthy journey with rec", shouldShowCanonicalMissionFallback({ rootApiAvailable: true, hasSelectedRecommendation: true }) === false);
+// Canonical hosted policy (Option B): the truthful Curefoods governed entry is
+// AUTHORITATIVE on Today's Mission whenever the legacy decision engine is mock or
+// synthetic — cold, unavailable, warm, mock, synthetic, empty, OR returning a
+// mock legacy mission (e.g. "Tessera DocOnline"). Only a PROVEN real, non-mock,
+// non-synthetic governed mission with compatible identifiers is allowed to defer.
+// The decision is based on product readiness + engine realness, NEVER on API
+// reachability. This matrix reproduces the exact Production regression and the new
+// Option B requirement.
+
+// -- isRealGovernedDecisionEngine contract --
+const mockEngine = isRealGovernedDecisionEngine({ modelProvider: "mock", dataSourceMode: "synthetic", dataSourceLabel: "HubSpot test CRM" });
+const realEngine = isRealGovernedDecisionEngine({ modelProvider: "nim", dataSourceMode: "live", dataSourceLabel: "Salesforce Production" });
+check("engine: null descriptor is not real governed", isRealGovernedDecisionEngine(null) === false);
+check("engine: undefined descriptor is not real governed", isRealGovernedDecisionEngine(undefined) === false);
+check("engine: mock provider + synthetic dataset is not real", mockEngine === false);
+check("engine: mock provider alone is not real", isRealGovernedDecisionEngine({ modelProvider: "mock" }) === false);
+check("engine: empty provider is not real", isRealGovernedDecisionEngine({ modelProvider: "", dataSourceMode: "live" }) === false);
+check("engine: real provider + synthetic dataset is not real", isRealGovernedDecisionEngine({ modelProvider: "nim", dataSourceMode: "synthetic" }) === false);
+check("engine: real provider + test label is not real", isRealGovernedDecisionEngine({ modelProvider: "nim", dataSourceMode: "live", dataSourceLabel: "HubSpot test CRM" }) === false);
+check("engine: real provider + no dataset mode is not real (must be proven live)", isRealGovernedDecisionEngine({ modelProvider: "nim" }) === false);
+check("engine: real provider + live dataset IS real governed", realEngine === true);
+check("engine: deterministic provider is treated as mock", isRealGovernedDecisionEngine({ modelProvider: "deterministic", dataSourceMode: "live" }) === false);
+
+// -- hasUsableSelectedMission contract (Option B: realness gate first) --
+const validRec = { account_id: "ACC-0016", recommendation_id: "REC-CUREFOODS-1", account_name: "Curefoods" };
+const usable = (realGoverned: boolean, rec: typeof validRec | null, resolved?: boolean) =>
+  hasUsableSelectedMission({ decisionEngineIsRealGoverned: realGoverned, selectedRecommendation: rec, selectedAccountResolved: resolved });
+check("mock engine + valid selected mission is NOT usable (Option B)", usable(false, validRec) === false);
+check("mock engine + valid mock legacy mission is NOT usable (Tessera case)", usable(false, validRec) === false);
+check("real engine + no selected recommendation is not usable", usable(true, null) === false);
+check("real engine + valid selected mission is usable", usable(true, validRec) === true);
+check("real engine + missing mission id is not usable", usable(true, { account_id: "ACC-0016", recommendation_id: "", account_name: "Curefoods" }) === false);
+check("real engine + missing account id is not usable", usable(true, { account_id: " ", recommendation_id: "REC-1", account_name: "Curefoods" }) === false);
+check("real engine + missing name is not renderable", usable(true, { account_id: "ACC-0016", recommendation_id: "REC-1", account_name: "" }) === false);
+check("real engine + explicitly unresolved account is not usable", usable(true, validRec, false) === false);
+check("default (no engine flag) + valid mission is NOT usable", hasUsableSelectedMission({ selectedRecommendation: validRec }) === false);
+
+// -- behaviour matrix (Option B) --
+const fb = (isTodaysMissionView: boolean, usableMission: boolean) =>
+  shouldShowCanonicalMissionFallback({ isTodaysMissionView, hasUsableSelectedMission: usableMission });
+const mockNoMission = usable(false, null);
+const mockLegacyMission = usable(false, validRec); // reachable mock backend returns Tessera
+const realValidMission = usable(true, validRec);
+const realNoMission = usable(true, null);
+
+check("[m1] API unreachable + no mission -> Curefoods fallback", fb(true, mockNoMission) === true);
+check("[m2] API reachable + mock/synthetic + no mission -> Curefoods fallback", fb(true, mockNoMission) === true);
+check("[m3] API reachable + mock legacy mission (Tessera) -> Curefoods fallback (Option B)", fb(true, mockLegacyMission) === true);
+check("[m4] API reachable + PROVEN real governed + valid mission -> defer to backend", fb(true, realValidMission) === false);
+check("[m5] API reachable + real governed engine + no mission yet -> Curefoods fallback", fb(true, realNoMission) === true);
+check("[m6] mock provider + valid selected mission -> Curefoods authoritative", fb(true, mockLegacyMission) === true);
+check("[m7] synthetic dataset + valid selected mission -> Curefoods authoritative", fb(true, mockLegacyMission) === true);
+check("[m8] unrelated root view -> no fallback (backend status stays visible)", fb(false, mockNoMission) === false);
+check("[m8b] canonical unavailable -> no fallback even with no mission", shouldShowCanonicalMissionFallback({ isTodaysMissionView: true, hasUsableSelectedMission: false, canonicalMissionAvailable: false }) === false);
 
 const entry = CUREFOODS_MISSION_ENTRY;
 check("entry account reuses canonical Curefoods name", entry.accountName === CUREFOODS_CANONICAL.canonicalName && entry.accountName === "Curefoods", entry.accountName);
@@ -231,8 +280,20 @@ check("entry CTA wording matches Today's Mission CTA", entry.ctaLabel === "Open 
 check("entry states why now with evidence categories", /account-health|renewal-timeline|usage-trend/.test(entry.whyNow), entry.whyNow);
 check("entry does not claim live CRM data", !/live crm|from your crm|synced from/i.test(`${entry.whyNow} ${entry.status} ${entry.truthLabel}`));
 scanForbidden("canonical entry", `${entry.priorityLabel} ${entry.accountName} ${entry.missionTitle} ${entry.whyNow} ${entry.status} ${entry.truthLabel} ${entry.ctaLabel}`);
+
+// [m9] CTA safe identifiers unchanged; [m10] direct /mission-control unchanged
 const entryHref = buildMissionControlHref(null);
-check("entry CTA carries safe canonical identifiers", entryHref === "/mission-control?account=VOS-CUREFOODS&mission=M-RENEWAL-1&from=todays-mission", entryHref);
+check("[m9] entry CTA carries safe canonical identifiers", entryHref === "/mission-control?account=VOS-CUREFOODS&mission=M-RENEWAL-1&from=todays-mission", entryHref);
+const entryParams = new URLSearchParams(entryHref.split("?")[1] ?? "");
+check("[m10] CTA params are exactly account+mission+from", [...entryParams.keys()].sort().join(",") === "account,from,mission", [...entryParams.keys()].join(","));
+// [m11] continuity cue unchanged
+const cueValidation = validateIncomingMissionContext({ account: "VOS-CUREFOODS", mission: "M-RENEWAL-1", from: "todays-mission" });
+const entryCue = continuityCue(cueValidation);
+check("[m11] continuity cue reads continuing from Today's Mission", !!entryCue && entryCue.title.includes("Continuing from Today's Mission — Curefoods renewal"), entryCue?.title ?? "null");
+check("[m11] continuity cue states nothing was re-selected", !!entryCue && entryCue.detail.toLowerCase().includes("nothing was re-selected"));
+// [m12] no unsupported business claims — covered by scanForbidden above
+// [m13] no secret or payload data in the CTA URL
+check("[m13] CTA URL carries no secret/payload/token/hash/evidence", !/token|hash|evidence|payload|secret|apikey|key=/i.test(entryHref), entryHref);
 
 // ---------------------------------------------------------------------------
 console.log("\n" + "=".repeat(70));
