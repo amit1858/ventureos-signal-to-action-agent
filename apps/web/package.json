@@ -18,6 +18,7 @@
     "test:mission-labels": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/missionLabels.eval.ts",
     "test:mission-rendering": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/missionControlRendering.eval.ts",
     "test:canonical-continuity": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/missions/eval/canonicalContinuity.eval.ts",
+    "test:manager-coaching": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/manager/eval/managerCoaching.eval.ts",
     "test:shell-nav": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/shell/eval/shellNav.eval.ts",
     "test:narrative-projection": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/nvidia/eval/narrativeProjection.eval.ts",
     "test:nvidia": "node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/nvidia/eval/nvidiaNarrative.eval.ts && node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/nvidia/eval/nvidiaNim.eval.ts && node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/nvidia/eval/governedAnalysisProgress.eval.ts && node --disable-warning=ExperimentalWarning --import ./lib/memory/eval/register.mjs ./lib/nvidia/eval/narrativeProjection.eval.ts",
