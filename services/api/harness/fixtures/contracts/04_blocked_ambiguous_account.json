@@ -1,0 +1,250 @@
+{
+  "description": "Ambiguous identity blocks before template selection (ambiguous_identity); no canonical account fabricated, no payload.",
+  "name": "blocked_ambiguous_account",
+  "request": {
+    "actor": "amit",
+    "actorRole": "manager",
+    "approval": "approved",
+    "approvalChannel": "screen",
+    "correlationId": "CORR-blocked_ambiguous_account",
+    "idempotencyKey": "IDEMP-M-AMBIGUOUS-1",
+    "injectPayloadMismatch": false,
+    "injectedTimestamps": {
+      "approval_decision": "2026-07-14T10:00:35Z",
+      "approval_request": "2026-07-14T10:00:30Z",
+      "blocked": "2026-07-14T09:59:59Z",
+      "closed": "2026-07-14T10:00:50Z",
+      "default": "2026-07-14T10:00:00Z",
+      "execution": "2026-07-14T10:00:40Z",
+      "gathering": "2026-07-14T10:00:05Z",
+      "identity": "2026-07-14T09:59:50Z",
+      "intake": "2026-07-14T09:59:45Z",
+      "opened": "2026-07-14T10:00:00Z",
+      "outcome": "2026-07-14T10:00:45Z",
+      "proposed": "2026-07-14T10:00:10Z",
+      "selection": "2026-07-14T09:59:55Z",
+      "verification": "2026-07-14T10:00:20Z",
+      "verified": "2026-07-14T10:00:25Z",
+      "verifying": "2026-07-14T10:00:15Z"
+    },
+    "missionId": "M-AMBIGUOUS-1",
+    "missionVersion": "v1",
+    "outputMode": "full",
+    "protectedDecisionRef": null,
+    "replayExecution": false,
+    "requestId": "REQ-blocked_ambiguous_account",
+    "requestRevisionAfterBlock": false,
+    "scenarioId": "ambiguous-account-blocked",
+    "schemaVersion": "1.0",
+    "signals": {
+      "mission_type": "renewal_risk",
+      "severity": "high",
+      "signal_id": "SIG-AMB-1",
+      "signal_type": "renewal_risk"
+    },
+    "sourceRecords": [
+      {
+        "accountName": "Globex",
+        "arr": null,
+        "domain": "globex-hs.com",
+        "externalIds": {
+          "duns": "111-GX"
+        },
+        "industry": null,
+        "owner": null,
+        "region": null,
+        "sourceRecordId": "HS-9001",
+        "sourceSystem": "hubspot"
+      },
+      {
+        "accountName": "Globex",
+        "arr": null,
+        "domain": "globex-sf.com",
+        "externalIds": {
+          "duns": "222-GX"
+        },
+        "industry": null,
+        "owner": null,
+        "region": null,
+        "sourceRecordId": "SF-9002",
+        "sourceSystem": "salesforce"
+      }
+    ],
+    "verificationOutcome": "verified"
+  },
+  "response": {
+    "correlationId": "CORR-blocked_ambiguous_account",
+    "executionEligible": false,
+    "ledgerReference": {
+      "chainValid": true,
+      "latestLedgerRecordId": "LR-daaa5307d3c3e5a6",
+      "missionId": "M-AMBIGUOUS-1",
+      "recordCount": 3
+    },
+    "missionEvaluationResult": {
+      "approvalDecision": null,
+      "approvalRequest": null,
+      "auditBundle": {
+        "actionReceipt": null,
+        "approvalDecision": null,
+        "approvalRequest": null,
+        "blocked": {
+          "blockedReason": "conflicting crosswalk identifier 'duns': 111-GX, 222-GX",
+          "failureCode": "ambiguous_identity",
+          "finalStatus": "blocked",
+          "stage": "identity_resolution"
+        },
+        "canonicalAccount": null,
+        "chain": {
+          "brokenAtSequence": null,
+          "detail": "chain valid",
+          "length": 3,
+          "valid": true
+        },
+        "decisionLedgerRef": null,
+        "evidenceRefs": [],
+        "failureCode": "ambiguous_identity",
+        "identityResolution": {
+          "blockReason": "conflicting crosswalk identifier 'duns': 111-GX, 222-GX",
+          "blocked": true,
+          "canonicalAccount": null,
+          "clustersFound": 1,
+          "confidence": 0.0,
+          "conflicts": [],
+          "evidence": [],
+          "provenance": [],
+          "resolved": false,
+          "sourceRecordRefs": [
+            "hubspot:HS-9001",
+            "salesforce:SF-9002"
+          ]
+        },
+        "intake": {
+          "scenarioId": "ambiguous-account-blocked",
+          "signals": {
+            "mission_type": "renewal_risk",
+            "severity": "high",
+            "signal_id": "SIG-AMB-1",
+            "signal_type": "renewal_risk"
+          }
+        },
+        "lifecycleEvents": [],
+        "missionId": "M-AMBIGUOUS-1",
+        "missionVersion": "v1",
+        "outcomeVerification": null,
+        "records": [
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"scenarioId\":\"ambiguous-account-blocked\",\"signals\":{\"mission_type\":\"renewal_risk\",\"severity\":\"high\",\"signal_id\":\"SIG-AMB-1\",\"signal_type\":\"renewal_risk\"}}",
+            "correlationId": "CORR-blocked_ambiguous_account",
+            "createdAt": "2026-07-14T09:59:45Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-852ebc0a9fd2eea7",
+            "missionId": "M-AMBIGUOUS-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:45Z",
+            "payloadHash": "sha256:3ce5ef684a406f229630c3de1955d7c748447b32b7d5bcf3640662d205aac4d8",
+            "previousRecordHash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "recordHash": "989a6bb8a53557043b6c1725d37c0141f41ff26aafd6d4f34a3b313eed50a180",
+            "recordType": "mission_intake",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 1
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"blockReason\":\"conflicting crosswalk identifier 'duns': 111-GX, 222-GX\",\"blocked\":true,\"canonicalAccount\":null,\"clustersFound\":1,\"confidence\":0.0,\"conflicts\":[],\"evidence\":[],\"provenance\":[],\"resolved\":false,\"sourceRecordRefs\":[\"hubspot:HS-9001\",\"salesforce:SF-9002\"]}",
+            "correlationId": "CORR-blocked_ambiguous_account",
+            "createdAt": "2026-07-14T09:59:50Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-1e0f5038e5ac6467",
+            "missionId": "M-AMBIGUOUS-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:50Z",
+            "payloadHash": "sha256:d71c7c8c25dc0472c5fe1f28107ac63ad36f3544980063bcd21ddd88c4b88dc8",
+            "previousRecordHash": "989a6bb8a53557043b6c1725d37c0141f41ff26aafd6d4f34a3b313eed50a180",
+            "recordHash": "7f441e13845a219924eec729b627f94cd27eec8d72433852742c876ca6118b1f",
+            "recordType": "identity_resolution_result",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 2
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"blockedReason\":\"conflicting crosswalk identifier 'duns': 111-GX, 222-GX\",\"failureCode\":\"ambiguous_identity\",\"finalStatus\":\"blocked\",\"stage\":\"identity_resolution\"}",
+            "correlationId": "CORR-blocked_ambiguous_account",
+            "createdAt": "2026-07-14T09:59:59Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-daaa5307d3c3e5a6",
+            "missionId": "M-AMBIGUOUS-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:59Z",
+            "payloadHash": "sha256:bd106ed9fb82cf458a64988b0cecb48a0cd103028ee6cf83d5e385b2cf589394",
+            "previousRecordHash": "7f441e13845a219924eec729b627f94cd27eec8d72433852742c876ca6118b1f",
+            "recordHash": "952e6844ee785da00b6ee79e0cef26a9fcb309e42e7f42c929938680ea72c3e8",
+            "recordType": "mission_blocked",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 3
+          }
+        ],
+        "schemaVersion": "1.0",
+        "selectedTemplateId": null,
+        "templateSelection": null,
+        "verificationResults": []
+      },
+      "auditChainValid": true,
+      "canonicalAccount": null,
+      "executionEligible": false,
+      "failureCode": "ambiguous_identity",
+      "finalStatus": "blocked",
+      "identityResolutionStatus": "blocked",
+      "lifecycleEvents": [],
+      "lifecycleStatus": null,
+      "missionId": "M-AMBIGUOUS-1",
+      "missionPlan": null,
+      "missionVersion": "v1",
+      "outcomeVerification": null,
+      "policyValidation": null,
+      "replayed": false,
+      "resultHash": "sha256:d0af083450595a87ea36501654b06c6c549373cfc2df5e258299e40cecad2602",
+      "scenarioId": "ambiguous-account-blocked",
+      "schemaVersion": "1.0",
+      "scorecard": {
+        "approvalRequired": false,
+        "approvalValid": false,
+        "auditChainValid": true,
+        "auditComplete": true,
+        "deterministicOutput": true,
+        "evidencePresent": false,
+        "identityResolved": false,
+        "lifecycleValid": true,
+        "noExternalAction": true,
+        "payloadBindingValid": false,
+        "policyPassed": false,
+        "provenancePresent": false,
+        "simulatedOnly": true,
+        "templateSelected": false,
+        "verificationPassed": false
+      },
+      "selectedTemplateId": null,
+      "selectorExplanation": "conflicting crosswalk identifier 'duns': 111-GX, 222-GX",
+      "simulatedActionReceipt": null,
+      "verificationSummary": {}
+    },
+    "missionExecutionPayload": null,
+    "requestId": "REQ-blocked_ambiguous_account",
+    "resultHash": "sha256:f57d38ee1ceb190399f1c120ddea46b25b103d54e17b3faaf9ff6ac0afd39cfa",
+    "schemaVersion": "1.0",
+    "serviceErrors": [
+      {
+        "code": "ambiguous_identity",
+        "details": {
+          "failureCode": "ambiguous_identity"
+        },
+        "message": "Customer identity could not be resolved unambiguously; mission did not proceed.",
+        "retryable": false,
+        "stage": "identity_resolution"
+      }
+    ],
+    "status": "blocked",
+    "warnings": []
+  }
+}

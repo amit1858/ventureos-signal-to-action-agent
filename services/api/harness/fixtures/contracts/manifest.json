@@ -1,0 +1,78 @@
+{
+  "fixtures": [
+    {
+      "executionEligible": true,
+      "file": "01_completed_renewal_risk.json",
+      "hasExecutionPayload": true,
+      "missionId": "M-RENEWAL-1",
+      "name": "completed_renewal_risk",
+      "resultHash": "sha256:ed7d55b3ba45aad27dacea2e95ef7e555d2dee16c6706fd4663cc685f35937b0",
+      "status": "completed"
+    },
+    {
+      "executionEligible": true,
+      "file": "02_completed_support_escalation.json",
+      "hasExecutionPayload": true,
+      "missionId": "M-SUPPORT-1",
+      "name": "completed_support_escalation",
+      "resultHash": "sha256:c2664f346431accdd147b4ef203f500fb61be032fbad4eec19a7d78ff79c81a4",
+      "status": "completed"
+    },
+    {
+      "executionEligible": false,
+      "file": "03_blocked_unsupported_signal.json",
+      "hasExecutionPayload": false,
+      "missionId": "M-UNSUPPORTED-1",
+      "name": "blocked_unsupported_signal",
+      "resultHash": "sha256:fb7d5864f14c2dd260c4bafb4a232afb862f535ee2b613f9b15a3b9c17041192",
+      "status": "blocked"
+    },
+    {
+      "executionEligible": false,
+      "file": "04_blocked_ambiguous_account.json",
+      "hasExecutionPayload": false,
+      "missionId": "M-AMBIGUOUS-1",
+      "name": "blocked_ambiguous_account",
+      "resultHash": "sha256:f57d38ee1ceb190399f1c120ddea46b25b103d54e17b3faaf9ff6ac0afd39cfa",
+      "status": "blocked"
+    },
+    {
+      "executionEligible": false,
+      "file": "05_rejected_approval.json",
+      "hasExecutionPayload": false,
+      "missionId": "M-REJECTED-1",
+      "name": "rejected_approval",
+      "resultHash": "sha256:8a6f1c882bea9d012eedc857ed66c0e2542fa6e97cf171bd01fdeb604b8ad074",
+      "status": "rejected"
+    },
+    {
+      "executionEligible": false,
+      "file": "06_revision_required.json",
+      "hasExecutionPayload": false,
+      "missionId": "M-REVISION-1",
+      "name": "revision_required",
+      "resultHash": "sha256:a64d466b0d719cecc5e1f439d89c90d85882c54a1ac404258aff0ba21f8da838",
+      "status": "revision_required"
+    },
+    {
+      "executionEligible": false,
+      "file": "07_error_idempotency_conflict.json",
+      "hasExecutionPayload": false,
+      "missionId": "M-IDEMPOTENCY-CONFLICT",
+      "name": "error_idempotency_conflict",
+      "resultHash": "sha256:7c53ed3af471a2850c2580a704da10fe3c605c7f0fc0f4f13ba779c44e590b07",
+      "status": "failed"
+    },
+    {
+      "executionEligible": false,
+      "file": "08_error_internal_safe_failure.json",
+      "hasExecutionPayload": false,
+      "missionId": "M-INTERNAL-SAFE-1",
+      "name": "error_internal_safe_failure",
+      "resultHash": "sha256:e6f0095ce9056af8fb891a8050b8ec65535c7001491764522112b614f44cb61f",
+      "status": "failed"
+    }
+  ],
+  "note": "Deterministic Python-generated contract fixtures for the Harness <-> TypeScript boundary. Regenerate with generate_contract_fixtures.py --write; do not edit by hand.",
+  "schemaVersion": "1.0"
+}

@@ -1,11 +1,13 @@
-import * as React from "react";
-import { Activity, LayoutDashboard, Columns3, Database, Gauge, Sunrise, Rocket } from "lucide-react";
+import { Activity, Database } from "lucide-react";
 import { cx } from "@/lib/format";
 import { AIReasoningChip } from "@/components/AIReasoningStatus";
+import { ShellNav } from "@/components/shell/ShellNav";
+import { resolveActiveNavKey } from "@/lib/shell/nav";
 
 // Release 1.4B — the journey is now persona-first:
 //   Platform → Morning Brief (entry) → Today's Mission (work mode) →
 //   Command Center (power view) → Workspace (explain) → Trust & Governance.
+// Release 2.3 — the governed Mission Control route is added to the same shell nav.
 export type AppView =
   | "landing"
   | "brief"
@@ -67,41 +69,14 @@ export function Header({
           </div>
         </button>
 
-        {/* Journey: Morning Brief → Today's Mission → Command Center → Workspace
+        {/* Journey: Morning Brief → Today's Mission → Mission Control →
+            Command Center → Workspace → Trust & Governance
             (hidden on the landing screen) */}
         {view !== "landing" ? (
-          <div className="flex items-center rounded-lg border border-edge bg-surface2/60 p-0.5">
-            <ViewTab
-              active={view === "brief"}
-              onClick={() => onViewChange("brief")}
-              icon={<Sunrise size={13} />}
-              label="Morning Brief"
-            />
-            <ViewTab
-              active={view === "mission"}
-              onClick={() => onViewChange("mission")}
-              icon={<Rocket size={13} />}
-              label="Today's Mission"
-            />
-            <ViewTab
-              active={view === "command"}
-              onClick={() => onViewChange("command")}
-              icon={<LayoutDashboard size={13} />}
-              label="Command Center"
-            />
-            <ViewTab
-              active={view === "workspace"}
-              onClick={() => onViewChange("workspace")}
-              icon={<Columns3 size={13} />}
-              label="Workspace"
-            />
-            <ViewTab
-              active={view === "evaluation"}
-              onClick={() => onViewChange("evaluation")}
-              icon={<Gauge size={13} />}
-              label="Trust & Governance"
-            />
-          </div>
+          <ShellNav
+            activeKey={resolveActiveNavKey({ pathname: "/", view })}
+            onSelectView={onViewChange}
+          />
         ) : null}
 
         {/* Phase 6 · persistent AI reasoning status + single calm source indicator */}
@@ -135,32 +110,5 @@ export function Header({
         </div>
       </div>
     </header>
-  );
-}
-
-function ViewTab({
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cx(
-        "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-        active ? "bg-brand/15 text-brand-bright shadow-glow-soft" : "text-faint hover:text-muted",
-      )}
-    >
-      {icon}
-      {label}
-    </button>
   );
 }

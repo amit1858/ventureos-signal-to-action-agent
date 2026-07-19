@@ -1,0 +1,118 @@
+{
+  "description": "A genuine durable idempotency collision maps to a typed idempotency_conflict service error (HTTP 409), with no executable payload and no leaked stack trace, path, or SQL.",
+  "name": "error_idempotency_conflict",
+  "request": {
+    "actor": "amit",
+    "actorRole": "manager",
+    "approval": "approved",
+    "approvalChannel": "screen",
+    "correlationId": "CORR-idempotency-conflict",
+    "idempotencyKey": "IDEMP-M-IDEMPOTENCY-CONFLICT",
+    "injectPayloadMismatch": false,
+    "injectedTimestamps": {
+      "approval_decision": "2026-07-14T10:00:35Z",
+      "approval_request": "2026-07-14T10:00:30Z",
+      "blocked": "2026-07-14T09:59:59Z",
+      "closed": "2026-07-14T10:00:50Z",
+      "default": "2026-07-14T10:00:00Z",
+      "execution": "2026-07-14T10:00:40Z",
+      "gathering": "2026-07-14T10:00:05Z",
+      "identity": "2026-07-14T09:59:50Z",
+      "intake": "2026-07-14T09:59:45Z",
+      "opened": "2026-07-14T10:00:00Z",
+      "outcome": "2026-07-14T10:00:45Z",
+      "proposed": "2026-07-14T10:00:10Z",
+      "selection": "2026-07-14T09:59:55Z",
+      "verification": "2026-07-14T10:00:20Z",
+      "verified": "2026-07-14T10:00:25Z",
+      "verifying": "2026-07-14T10:00:15Z"
+    },
+    "missionId": "M-IDEMPOTENCY-CONFLICT",
+    "missionVersion": "v1",
+    "outputMode": "full",
+    "protectedDecisionRef": null,
+    "replayExecution": false,
+    "requestId": "REQ-idempotency-conflict",
+    "requestRevisionAfterBlock": false,
+    "scenarioId": "support-escalation-happy-path",
+    "schemaVersion": "1.0",
+    "signals": {
+      "mission_type": "support_escalation",
+      "severity": "critical",
+      "signal_id": "SIG-SUP-1",
+      "signal_type": "support_escalation"
+    },
+    "sourceRecords": null,
+    "verificationOutcome": "verified"
+  },
+  "response": {
+    "correlationId": "CORR-idempotency-conflict",
+    "executionEligible": false,
+    "ledgerReference": {
+      "chainValid": true,
+      "latestLedgerRecordId": "LR-c82ec3fabfe6fe20",
+      "missionId": "M-IDEMPOTENCY-CONFLICT",
+      "recordCount": 19
+    },
+    "missionEvaluationResult": {
+      "approvalDecision": null,
+      "approvalRequest": null,
+      "auditBundle": null,
+      "auditChainValid": true,
+      "canonicalAccount": null,
+      "executionEligible": false,
+      "failureCode": "idempotency_conflict",
+      "finalStatus": "failed",
+      "identityResolutionStatus": "blocked",
+      "lifecycleEvents": [],
+      "lifecycleStatus": null,
+      "missionId": "M-IDEMPOTENCY-CONFLICT",
+      "missionPlan": null,
+      "missionVersion": "v1",
+      "outcomeVerification": null,
+      "policyValidation": null,
+      "replayed": false,
+      "resultHash": "sha256:0b33768ee7e5681e74aa577456879c41ebfb30b556e8efcee504a2fc42d46382",
+      "scenarioId": "support-escalation-happy-path",
+      "schemaVersion": "1.0",
+      "scorecard": {
+        "approvalRequired": false,
+        "approvalValid": false,
+        "auditChainValid": true,
+        "auditComplete": false,
+        "deterministicOutput": true,
+        "evidencePresent": false,
+        "identityResolved": false,
+        "lifecycleValid": false,
+        "noExternalAction": true,
+        "payloadBindingValid": false,
+        "policyPassed": false,
+        "provenancePresent": false,
+        "simulatedOnly": true,
+        "templateSelected": false,
+        "verificationPassed": false
+      },
+      "selectedTemplateId": null,
+      "selectorExplanation": "",
+      "simulatedActionReceipt": null,
+      "verificationSummary": {}
+    },
+    "missionExecutionPayload": null,
+    "requestId": "REQ-idempotency-conflict",
+    "resultHash": "sha256:7c53ed3af471a2850c2580a704da10fe3c605c7f0fc0f4f13ba779c44e590b07",
+    "schemaVersion": "1.0",
+    "serviceErrors": [
+      {
+        "code": "idempotency_conflict",
+        "details": {
+          "failureCode": "idempotency_conflict"
+        },
+        "message": "A durable idempotency conflict was detected; the idempotency key was reused with a different action payload and no new receipt was created.",
+        "retryable": false,
+        "stage": "audit"
+      }
+    ],
+    "status": "failed",
+    "warnings": []
+  }
+}

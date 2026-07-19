@@ -84,6 +84,23 @@ class Settings:
     log_level: str = "INFO"
     db_path: str = field(default_factory=lambda: os.path.join(_API_DIR, "signal_to_action.db"))
 
+    # -- Adaptive Mission Harness host mount (Release 2.2) -----------------
+    # The governed Adaptive Mission Harness is exposed to the host FastAPI app
+    # as an isolated, transport-only sub-application only when explicitly
+    # enabled. It is OFF by default so existing behaviour is unchanged. When
+    # mounted it uses a DEDICATED SQLite audit ledger -- never the decision
+    # ledger (``db_path``) -- and performs SIMULATED execution only.
+    harness_mount_enabled: bool = False
+    harness_ledger_path: str = field(
+        default_factory=lambda: os.path.join(_API_DIR, "harness_audit.db")
+    )
+    # Shared secret the Next.js BFF presents as ``X-Harness-Service-Token`` when
+    # calling the mounted harness. Server-only; never a NEXT_PUBLIC_ value. When
+    # the mount is enabled the token is REQUIRED unless the explicit local
+    # insecure mode is set. It is never logged, echoed, or placed in diagnostics.
+    harness_service_token: str = ""
+    harness_allow_insecure_local: bool = False
+
     # -- model provider ----------------------------------------------------
     model_provider: str = "mock"
     nvidia_api_key: str = ""
@@ -135,6 +152,11 @@ class Settings:
             cors_origins=_str("CORS_ORIGINS", "*") or "*",
             log_level=_str("LOG_LEVEL", "INFO") or "INFO",
             db_path=os.getenv("DB_PATH") or os.path.join(_API_DIR, "signal_to_action.db"),
+            harness_mount_enabled=_flag("HARNESS_MOUNT_ENABLED", False),
+            harness_ledger_path=os.getenv("HARNESS_LEDGER_PATH")
+            or os.path.join(_API_DIR, "harness_audit.db"),
+            harness_service_token=_str("HARNESS_SERVICE_TOKEN"),
+            harness_allow_insecure_local=_flag("HARNESS_ALLOW_INSECURE_LOCAL", False),
             model_provider=(_str("MODEL_PROVIDER", "mock") or "mock").lower(),
             nvidia_api_key=_str("NVIDIA_API_KEY"),
             nvidia_base_url=(_str("NVIDIA_BASE_URL") or _str("NVIDIA_NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")).rstrip("/"),
@@ -170,6 +192,24 @@ class Settings:
     def hubspot_configured(self) -> bool:
         """A token is present (the connector can attempt live calls)."""
         return bool(self.hubspot_token)
+
+    @property
+    def harness_ledger_is_isolated(self) -> bool:
+        """The Harness audit ledger must never share the decision ledger file."""
+        return os.path.abspath(self.harness_ledger_path) != os.path.abspath(self.db_path)
+
+    @property
+    def harness_mount_authorised(self) -> bool:
+        """Whether the mount may proceed under the fail-closed security policy.
+
+        A service token is required; an explicit local insecure mode is the only
+        sanctioned way to run the mount without one. Does not reveal the token.
+        """
+        if not self.harness_mount_enabled:
+            return False
+        if not self.harness_ledger_is_isolated:
+            return False
+        return bool(self.harness_service_token) or self.harness_allow_insecure_local
 
     @property
     def hubspot_ready(self) -> bool:
@@ -278,7 +318,22 @@ class Settings:
 
         if self.cors_origins.strip() == "*":
             w.append("CORS_ORIGINS=* allows any browser origin (fine for the demo; set your Vercel domain for production).")
-
+        if self.harness_mount_enabled and not self.harness_ledger_is_isolated:
+            w.append(
+                "HARNESS_LEDGER_PATH points at the decision ledger (DB_PATH); the Harness mount "
+                "requires a dedicated audit ledger. Set a distinct HARNESS_LEDGER_PATH."
+            )
+        if self.harness_mount_enabled and not self.harness_service_token:
+            if self.harness_allow_insecure_local:
+                w.append(
+                    "HARNESS_MOUNT_ENABLED=true with no HARNESS_SERVICE_TOKEN; running in insecure "
+                    "local mode (HARNESS_ALLOW_INSECURE_LOCAL=true). Do not use outside local testing."
+                )
+            else:
+                w.append(
+                    "HARNESS_MOUNT_ENABLED=true but HARNESS_SERVICE_TOKEN is empty; the mount will be "
+                    "refused (fail closed). Set HARNESS_SERVICE_TOKEN, or HARNESS_ALLOW_INSECURE_LOCAL=true for local testing."
+                )
         dp = self.decision_provider
         if dp not in DECISION_PROVIDERS:
             w.append(f"Unknown DECISION_PROVIDER '{dp}'; the deterministic baseline will be used.")
@@ -296,6 +351,9 @@ class Settings:
             "log_level": self.log_level,
             "cors_origins": self.cors_origins,
             "db_path": os.path.basename(self.db_path),
+            "harness_mount_enabled": self.harness_mount_enabled,
+            "harness_ledger_path": os.path.basename(self.harness_ledger_path),
+            "harness_ledger_isolated": self.harness_ledger_is_isolated,
             "model_provider": self.model_provider,
             "provider_implemented": self.provider_implemented,
             "nvidia_configured": bool(self.nvidia_api_key),

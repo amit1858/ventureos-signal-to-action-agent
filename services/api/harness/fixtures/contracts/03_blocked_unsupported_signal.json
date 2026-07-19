@@ -1,0 +1,448 @@
+{
+  "description": "An unsupported signal is blocked at template selection (no_matching_template); no plan, agents, tools, approval, or payload.",
+  "name": "blocked_unsupported_signal",
+  "request": {
+    "actor": "amit",
+    "actorRole": "manager",
+    "approval": "approved",
+    "approvalChannel": "screen",
+    "correlationId": "CORR-blocked_unsupported_signal",
+    "idempotencyKey": "IDEMP-M-UNSUPPORTED-1",
+    "injectPayloadMismatch": false,
+    "injectedTimestamps": {
+      "approval_decision": "2026-07-14T10:00:35Z",
+      "approval_request": "2026-07-14T10:00:30Z",
+      "blocked": "2026-07-14T09:59:59Z",
+      "closed": "2026-07-14T10:00:50Z",
+      "default": "2026-07-14T10:00:00Z",
+      "execution": "2026-07-14T10:00:40Z",
+      "gathering": "2026-07-14T10:00:05Z",
+      "identity": "2026-07-14T09:59:50Z",
+      "intake": "2026-07-14T09:59:45Z",
+      "opened": "2026-07-14T10:00:00Z",
+      "outcome": "2026-07-14T10:00:45Z",
+      "proposed": "2026-07-14T10:00:10Z",
+      "selection": "2026-07-14T09:59:55Z",
+      "verification": "2026-07-14T10:00:20Z",
+      "verified": "2026-07-14T10:00:25Z",
+      "verifying": "2026-07-14T10:00:15Z"
+    },
+    "missionId": "M-UNSUPPORTED-1",
+    "missionVersion": "v1",
+    "outputMode": "full",
+    "protectedDecisionRef": null,
+    "replayExecution": false,
+    "requestId": "REQ-blocked_unsupported_signal",
+    "requestRevisionAfterBlock": false,
+    "scenarioId": "unsupported-signal-blocked",
+    "schemaVersion": "1.0",
+    "signals": {
+      "mission_type": "billing_dispute",
+      "signal_id": "SIG-UNK-1",
+      "signal_type": "invoice_query"
+    },
+    "sourceRecords": null,
+    "verificationOutcome": "verified"
+  },
+  "response": {
+    "correlationId": "CORR-blocked_unsupported_signal",
+    "executionEligible": false,
+    "ledgerReference": {
+      "chainValid": true,
+      "latestLedgerRecordId": "LR-75e08c34187ce4b9",
+      "missionId": "M-UNSUPPORTED-1",
+      "recordCount": 4
+    },
+    "missionEvaluationResult": {
+      "approvalDecision": null,
+      "approvalRequest": null,
+      "auditBundle": {
+        "actionReceipt": null,
+        "approvalDecision": null,
+        "approvalRequest": null,
+        "blocked": {
+          "blockedReason": "No approved mission template matches the signal; the Harness fails closed and selects no template. Human triage / a new approved template is required.",
+          "failureCode": "no_matching_template",
+          "finalStatus": "blocked",
+          "stage": "template_selection"
+        },
+        "canonicalAccount": {
+          "arr": 260000.0,
+          "canonicalName": "Curefoods",
+          "domain": "curefoods.com",
+          "industry": "Foodtech",
+          "normalizedName": "curefoods",
+          "owner": "A. Rao",
+          "region": "India",
+          "sourceRecordIds": [
+            "dynamics:DY-7777",
+            "hubspot:HS-1001",
+            "salesforce:SF-5555"
+          ],
+          "ventureOsId": "VOS-CUREFOODS"
+        },
+        "chain": {
+          "brokenAtSequence": null,
+          "detail": "chain valid",
+          "length": 4,
+          "valid": true
+        },
+        "decisionLedgerRef": null,
+        "evidenceRefs": [
+          {
+            "matchedValue": "duns=8899-CF",
+            "signalType": "crosswalk",
+            "sourceRecords": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "weight": 0.5
+          },
+          {
+            "matchedValue": "curefoods.com",
+            "signalType": "domain",
+            "sourceRecords": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "weight": 0.3
+          },
+          {
+            "matchedValue": "curefoods",
+            "signalType": "name",
+            "sourceRecords": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "weight": 0.2
+          }
+        ],
+        "failureCode": "no_matching_template",
+        "identityResolution": {
+          "blockReason": null,
+          "blocked": false,
+          "canonicalAccount": {
+            "arr": 260000.0,
+            "canonicalName": "Curefoods",
+            "domain": "curefoods.com",
+            "industry": "Foodtech",
+            "normalizedName": "curefoods",
+            "owner": "A. Rao",
+            "region": "India",
+            "sourceRecordIds": [
+              "dynamics:DY-7777",
+              "hubspot:HS-1001",
+              "salesforce:SF-5555"
+            ],
+            "ventureOsId": "VOS-CUREFOODS"
+          },
+          "clustersFound": 1,
+          "confidence": 1.0,
+          "conflicts": [
+            {
+              "field": "industry",
+              "values": [
+                {
+                  "sourceRecordId": "DY-7777",
+                  "sourceSystem": "dynamics",
+                  "value": "Food & Beverage"
+                },
+                {
+                  "sourceRecordId": "HS-1001",
+                  "sourceSystem": "hubspot",
+                  "value": "Food & Beverage"
+                },
+                {
+                  "sourceRecordId": "SF-5555",
+                  "sourceSystem": "salesforce",
+                  "value": "Foodtech"
+                }
+              ]
+            },
+            {
+              "field": "region",
+              "values": [
+                {
+                  "sourceRecordId": "HS-1001",
+                  "sourceSystem": "hubspot",
+                  "value": "APAC"
+                },
+                {
+                  "sourceRecordId": "SF-5555",
+                  "sourceSystem": "salesforce",
+                  "value": "India"
+                }
+              ]
+            },
+            {
+              "field": "arr",
+              "values": [
+                {
+                  "sourceRecordId": "DY-7777",
+                  "sourceSystem": "dynamics",
+                  "value": "250000.0"
+                },
+                {
+                  "sourceRecordId": "HS-1001",
+                  "sourceSystem": "hubspot",
+                  "value": "250000.0"
+                },
+                {
+                  "sourceRecordId": "SF-5555",
+                  "sourceSystem": "salesforce",
+                  "value": "260000.0"
+                }
+              ]
+            }
+          ],
+          "evidence": [
+            {
+              "matchedValue": "duns=8899-CF",
+              "signalType": "crosswalk",
+              "sourceRecords": [
+                "dynamics:DY-7777",
+                "hubspot:HS-1001",
+                "salesforce:SF-5555"
+              ],
+              "weight": 0.5
+            },
+            {
+              "matchedValue": "curefoods.com",
+              "signalType": "domain",
+              "sourceRecords": [
+                "dynamics:DY-7777",
+                "hubspot:HS-1001",
+                "salesforce:SF-5555"
+              ],
+              "weight": 0.3
+            },
+            {
+              "matchedValue": "curefoods",
+              "signalType": "name",
+              "sourceRecords": [
+                "dynamics:DY-7777",
+                "hubspot:HS-1001",
+                "salesforce:SF-5555"
+              ],
+              "weight": 0.2
+            }
+          ],
+          "provenance": [
+            {
+              "field": "canonical_name",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "Curefoods"
+            },
+            {
+              "field": "domain",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "curefoods.com"
+            },
+            {
+              "field": "industry",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "Foodtech"
+            },
+            {
+              "field": "region",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "India"
+            },
+            {
+              "field": "arr",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "260000.0"
+            },
+            {
+              "field": "owner",
+              "sourceRecordId": "SF-5555",
+              "sourceSystem": "salesforce",
+              "value": "A. Rao"
+            }
+          ],
+          "resolved": true,
+          "sourceRecordRefs": [
+            "hubspot:HS-1001",
+            "salesforce:SF-5555",
+            "dynamics:DY-7777"
+          ]
+        },
+        "intake": {
+          "scenarioId": "unsupported-signal-blocked",
+          "signals": {
+            "mission_type": "billing_dispute",
+            "signal_id": "SIG-UNK-1",
+            "signal_type": "invoice_query"
+          }
+        },
+        "lifecycleEvents": [],
+        "missionId": "M-UNSUPPORTED-1",
+        "missionVersion": "v1",
+        "outcomeVerification": null,
+        "records": [
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"scenarioId\":\"unsupported-signal-blocked\",\"signals\":{\"mission_type\":\"billing_dispute\",\"signal_id\":\"SIG-UNK-1\",\"signal_type\":\"invoice_query\"}}",
+            "correlationId": "CORR-blocked_unsupported_signal",
+            "createdAt": "2026-07-14T09:59:45Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-70d86b3d6e4070bf",
+            "missionId": "M-UNSUPPORTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:45Z",
+            "payloadHash": "sha256:b8ce7d4371ffec3635fd90491abe17e3c0f9182981ea6163e47ca1eae09e96f6",
+            "previousRecordHash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "recordHash": "92a8b5ebcddb81e64b0259f83a123c92910e79a75ad8930ffe7c92090efec2b7",
+            "recordType": "mission_intake",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 1
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"blockReason\":null,\"blocked\":false,\"canonicalAccount\":{\"arr\":260000.0,\"canonicalName\":\"Curefoods\",\"domain\":\"curefoods.com\",\"industry\":\"Foodtech\",\"normalizedName\":\"curefoods\",\"owner\":\"A. Rao\",\"region\":\"India\",\"sourceRecordIds\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"ventureOsId\":\"VOS-CUREFOODS\"},\"clustersFound\":1,\"confidence\":1.0,\"conflicts\":[{\"field\":\"industry\",\"values\":[{\"sourceRecordId\":\"DY-7777\",\"sourceSystem\":\"dynamics\",\"value\":\"Food & Beverage\"},{\"sourceRecordId\":\"HS-1001\",\"sourceSystem\":\"hubspot\",\"value\":\"Food & Beverage\"},{\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"Foodtech\"}]},{\"field\":\"region\",\"values\":[{\"sourceRecordId\":\"HS-1001\",\"sourceSystem\":\"hubspot\",\"value\":\"APAC\"},{\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"India\"}]},{\"field\":\"arr\",\"values\":[{\"sourceRecordId\":\"DY-7777\",\"sourceSystem\":\"dynamics\",\"value\":\"250000.0\"},{\"sourceRecordId\":\"HS-1001\",\"sourceSystem\":\"hubspot\",\"value\":\"250000.0\"},{\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"260000.0\"}]}],\"evidence\":[{\"matchedValue\":\"duns=8899-CF\",\"signalType\":\"crosswalk\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.5},{\"matchedValue\":\"curefoods.com\",\"signalType\":\"domain\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.3},{\"matchedValue\":\"curefoods\",\"signalType\":\"name\",\"sourceRecords\":[\"dynamics:DY-7777\",\"hubspot:HS-1001\",\"salesforce:SF-5555\"],\"weight\":0.2}],\"provenance\":[{\"field\":\"canonical_name\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"Curefoods\"},{\"field\":\"domain\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"curefoods.com\"},{\"field\":\"industry\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"Foodtech\"},{\"field\":\"region\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"India\"},{\"field\":\"arr\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"260000.0\"},{\"field\":\"owner\",\"sourceRecordId\":\"SF-5555\",\"sourceSystem\":\"salesforce\",\"value\":\"A. Rao\"}],\"resolved\":true,\"sourceRecordRefs\":[\"hubspot:HS-1001\",\"salesforce:SF-5555\",\"dynamics:DY-7777\"]}",
+            "correlationId": "CORR-blocked_unsupported_signal",
+            "createdAt": "2026-07-14T09:59:50Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-5da1bf4784e5bf04",
+            "missionId": "M-UNSUPPORTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:50Z",
+            "payloadHash": "sha256:e0a80b18630d079ced207fab0f2cb314d9c6d73c258da6e7f45ac934afc6f275",
+            "previousRecordHash": "92a8b5ebcddb81e64b0259f83a123c92910e79a75ad8930ffe7c92090efec2b7",
+            "recordHash": "4fc64820e72b27a653badd425af8a536a173fdca267805a2afb17e25ee12b7a2",
+            "recordType": "identity_resolution_result",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 2
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"agents\":[],\"blocked\":true,\"isFallback\":true,\"matchedRuleId\":\"R_no_matching_template\",\"matchedRules\":[\"R_no_matching_template\"],\"permittedActions\":[],\"rationale\":\"No approved mission template matches the signal; the Harness fails closed and selects no template. Human triage / a new approved template is required.\",\"selectedTemplateId\":null,\"tools\":[]}",
+            "correlationId": "CORR-blocked_unsupported_signal",
+            "createdAt": "2026-07-14T09:59:55Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-623a70bcc4022ff5",
+            "missionId": "M-UNSUPPORTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:55Z",
+            "payloadHash": "sha256:3d9bf4101b21cc8aa69219c7023e0f6d54e00cf936d988684847e389c7fc8812",
+            "previousRecordHash": "4fc64820e72b27a653badd425af8a536a173fdca267805a2afb17e25ee12b7a2",
+            "recordHash": "d941838f99c4f63446dafea315c523b693601ad12df7170fd14856c574d75b3c",
+            "recordType": "template_selection_result",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 3
+          },
+          {
+            "actor": "system",
+            "canonicalPayload": "{\"blockedReason\":\"No approved mission template matches the signal; the Harness fails closed and selects no template. Human triage / a new approved template is required.\",\"failureCode\":\"no_matching_template\",\"finalStatus\":\"blocked\",\"stage\":\"template_selection\"}",
+            "correlationId": "CORR-blocked_unsupported_signal",
+            "createdAt": "2026-07-14T09:59:59Z",
+            "decisionRef": null,
+            "ledgerRecordId": "LR-75e08c34187ce4b9",
+            "missionId": "M-UNSUPPORTED-1",
+            "missionVersion": "v1",
+            "occurredAt": "2026-07-14T09:59:59Z",
+            "payloadHash": "sha256:ce58be392c60e4c0632d722141fbb14b1f042a72f1b8ad0be8743b341a663b13",
+            "previousRecordHash": "d941838f99c4f63446dafea315c523b693601ad12df7170fd14856c574d75b3c",
+            "recordHash": "68dfe5fde7068650ded1f182db2d666fcf738f00fa88f5da0bcff1a712c7e922",
+            "recordType": "mission_blocked",
+            "schemaVersion": "1.0",
+            "sequenceNumber": 4
+          }
+        ],
+        "schemaVersion": "1.0",
+        "selectedTemplateId": null,
+        "templateSelection": {
+          "agents": [],
+          "blocked": true,
+          "isFallback": true,
+          "matchedRuleId": "R_no_matching_template",
+          "matchedRules": [
+            "R_no_matching_template"
+          ],
+          "permittedActions": [],
+          "rationale": "No approved mission template matches the signal; the Harness fails closed and selects no template. Human triage / a new approved template is required.",
+          "selectedTemplateId": null,
+          "tools": []
+        },
+        "verificationResults": []
+      },
+      "auditChainValid": true,
+      "canonicalAccount": {
+        "arr": 260000.0,
+        "canonicalName": "Curefoods",
+        "domain": "curefoods.com",
+        "industry": "Foodtech",
+        "normalizedName": "curefoods",
+        "owner": "A. Rao",
+        "region": "India",
+        "sourceRecordIds": [
+          "dynamics:DY-7777",
+          "hubspot:HS-1001",
+          "salesforce:SF-5555"
+        ],
+        "ventureOsId": "VOS-CUREFOODS"
+      },
+      "executionEligible": false,
+      "failureCode": "no_matching_template",
+      "finalStatus": "blocked",
+      "identityResolutionStatus": "resolved",
+      "lifecycleEvents": [],
+      "lifecycleStatus": null,
+      "missionId": "M-UNSUPPORTED-1",
+      "missionPlan": null,
+      "missionVersion": "v1",
+      "outcomeVerification": null,
+      "policyValidation": null,
+      "replayed": false,
+      "resultHash": "sha256:87f39a7a51348288cbf56da1075700bc9a585b68f1fe8e2fb9ec5165e0713fb6",
+      "scenarioId": "unsupported-signal-blocked",
+      "schemaVersion": "1.0",
+      "scorecard": {
+        "approvalRequired": false,
+        "approvalValid": false,
+        "auditChainValid": true,
+        "auditComplete": true,
+        "deterministicOutput": true,
+        "evidencePresent": true,
+        "identityResolved": true,
+        "lifecycleValid": true,
+        "noExternalAction": true,
+        "payloadBindingValid": false,
+        "policyPassed": false,
+        "provenancePresent": true,
+        "simulatedOnly": true,
+        "templateSelected": false,
+        "verificationPassed": false
+      },
+      "selectedTemplateId": null,
+      "selectorExplanation": "No approved mission template matches the signal; the Harness fails closed and selects no template. Human triage / a new approved template is required.",
+      "simulatedActionReceipt": null,
+      "verificationSummary": {}
+    },
+    "missionExecutionPayload": null,
+    "requestId": "REQ-blocked_unsupported_signal",
+    "resultHash": "sha256:fb7d5864f14c2dd260c4bafb4a232afb862f535ee2b613f9b15a3b9c17041192",
+    "schemaVersion": "1.0",
+    "serviceErrors": [
+      {
+        "code": "no_matching_template",
+        "details": {
+          "failureCode": "no_matching_template"
+        },
+        "message": "No approved mission template matched the supplied signals.",
+        "retryable": false,
+        "stage": "template_selection"
+      }
+    ],
+    "status": "blocked",
+    "warnings": []
+  }
+}

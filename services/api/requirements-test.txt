@@ -1,0 +1,16 @@
+# Signal-to-Action Agent -- backend TEST-ONLY dependencies.
+#
+# These packages are required only to run the harness test suite and are NOT
+# imported by any runtime code, so they are kept out of requirements.txt and the
+# production Docker/runtime dependency surface.
+#
+# httpx backs Starlette/FastAPI's TestClient, which the self-contained Mission
+# Harness HTTP adapter tests use to exercise the sub-app in-process (no bound
+# socket). Pinned to the range compatible with the installed FastAPI/Starlette.
+#
+# Clean-install + test:
+#   python -m pip install -r services/api/requirements.txt
+#   python -m pip install -r services/api/requirements-test.txt
+#   (then run the harness test suite and evals)
+
+httpx>=0.27,<1.0
