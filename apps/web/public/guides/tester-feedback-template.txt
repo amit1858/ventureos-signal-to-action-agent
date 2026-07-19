@@ -1,0 +1,71 @@
+================================================================================
+VentureOS Signal-to-Action Agent — Tester Feedback Template
+================================================================================
+
+TESTER INFORMATION
+------------------
+Tester Name: 
+Date: 
+Browser & Device: 
+
+OVERALL RATINGS (1–5)
+---------------------
+Overall Impression (1=Poor, 5=Excellent): 
+Product Story Clarity (1=Unclear, 5=Crystal clear): 
+Trust & Governance Clarity (1=Unclear, 5=Crystal clear): 
+Ease of Navigation (1=Very difficult, 5=Very easy): 
+Understanding of NVIDIA's Role (1=Unclear, 5=Crystal clear): 
+Understanding of Human Approval (1=Unclear, 5=Crystal clear): 
+Understanding of Simulation Boundaries (1=Unclear, 5=Crystal clear): 
+
+DETAILED FEEDBACK
+-----------------
+Defects Found:
+
+
+Unclear Terms:
+
+
+Missing Information:
+
+
+Suggested Improvement:
+
+
+DEFECT DETAILS (copy this block for each defect)
+-------------------------------------------------
+Highest Defect Severity (None / P0 / P1 / P2): 
+Screenshot Filename: 
+Route: 
+Reproduction Steps:
+
+
+Expected Result:
+
+
+Actual Result:
+
+
+CHECKLIST (mark [x] when complete)
+-----------------------------------
+[ ] Product story understood
+[ ] Curefoods mission found
+[ ] Mission continuity confirmed
+[ ] Evidence reviewed
+[ ] NVIDIA role understood
+[ ] Approval completed
+[ ] Three simulated actions verified
+[ ] Governed outcome understood
+[ ] Persona projections reviewed
+[ ] Manager scenario tested
+[ ] Guardrails scenarios tested
+[ ] Live NVIDIA tested
+[ ] Forced fallback tested
+[ ] Audit chain validated
+[ ] No secrets observed
+[ ] No real action observed
+[ ] Feedback submitted
+
+================================================================================
+Submit this completed template to the VentureOS team.
+================================================================================
