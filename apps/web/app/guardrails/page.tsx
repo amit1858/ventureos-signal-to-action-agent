@@ -1,8 +1,8 @@
-// Guardrails Lab (Feature Branch) — `/guardrails` route
+// Guardrails Lab — `/guardrails` route
 // =====================================================
-// Isolated, protected-Preview-only route. It is NOT added to Production
-// navigation and intercepts no Production traffic. A slim self-contained header
-// keeps it visually coherent with the shell while flagging the Feature Branch.
+// Isolated, protected route. It is NOT added to Production navigation and
+// intercepts no Production traffic. A slim self-contained header keeps it
+// visually coherent with the shell while showing the Guardrails Lab label.
 
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
@@ -12,7 +12,7 @@ import { GuardrailsLab } from "@/components/guardrails/GuardrailsLab";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Guardrails Lab · Curefoods (Feature Branch)",
+  title: "Guardrails Lab · Curefoods",
 };
 
 export default function GuardrailsPage() {
@@ -28,7 +28,7 @@ export default function GuardrailsPage() {
               <div className="flex items-center gap-2">
                 <h1 className="text-[15px] font-semibold leading-tight text-ink">Guardrails Lab</h1>
                 <span className="rounded border border-gov/40 bg-gov/10 px-1.5 py-[1px] text-[9px] font-medium uppercase tracking-wider text-gov-bright">
-                  Feature Branch
+                  Guardrails Lab
                 </span>
               </div>
               <p className="text-[11px] leading-tight text-muted">

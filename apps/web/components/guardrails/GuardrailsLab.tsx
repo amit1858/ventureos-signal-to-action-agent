@@ -75,14 +75,13 @@ function Panel({ title, icon, children, accent }: { title: string; icon: React.R
 }
 
 // ---------------------------------------------------------------------------
-// Feature-branch status + briefing (static, honest labels)
+// Guardrails Lab status + briefing (static, honest labels)
 // ---------------------------------------------------------------------------
 
 function FeatureBranchStatus() {
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gov/30 bg-gov/5 px-4 py-3">
-      <Chip tone="gov"><FlaskConical size={11} /> Feature Branch</Chip>
-      <Chip tone="brand">Guardrails Lab</Chip>
+      <Chip tone="gov"><FlaskConical size={11} /> Guardrails Lab</Chip>
       <Chip tone="edge">Deterministic policy authoritative</Chip>
       <Chip tone="edge">NVIDIA NemoGuard classification</Chip>
       <Chip tone="edge">No Production traffic intercepted</Chip>
@@ -439,7 +438,7 @@ export function GuardrailsLab() {
       </div>
 
       <footer className="mt-8 border-t border-edge pt-4 text-center text-[11px] text-faint">
-        Guardrails Lab · Feature Branch · references {CUREFOODS_AUDIT_REF} read-only ·{" "}
+        Guardrails Lab · references {CUREFOODS_AUDIT_REF} read-only ·{" "}
         <Link href="/" className="text-brand-dim hover:text-brand-bright">
           return to Signal-to-Action Agent
         </Link>
