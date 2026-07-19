@@ -31,6 +31,12 @@ import {
   COACHING_RECOMMENDATION_TITLE,
 } from "../coachingRecommendation";
 import { projectMissionForManager } from "../managerProjection";
+import { deriveMissionView } from "../../missions/missionView";
+import {
+  MANAGER_SCENARIO_LABEL,
+  MANAGER_SCENARIO_DISCLAIMER,
+  MANAGER_CONTINUITY_LABEL,
+} from "../managerScenarioCopy";
 import {
   MANAGER_COACHING_STORAGE_KEY,
   loadManagerCoachingState,
@@ -214,6 +220,62 @@ const governedUnchanged =
   ctxAssigned.auditRef === ctx.auditRef &&
   ctxAssigned.governedSystemOutcome === ctx.governedSystemOutcome;
 check("27. local review state does not mutate MissionTurn or audit state", governedUnchanged && turn.auditRef === second.turn.auditRef);
+
+// ---------------------------------------------------------------------------
+console.log("\n[J] Manager/Mission Control state continuity (bounded scenario)");
+// ---------------------------------------------------------------------------
+// The Manager surface must never present its deterministic COMPLETED snapshot as
+// the live Mission Control state, which is session-local and may still be
+// awaiting approval. These tests enforce the truthful bounded-scenario design.
+
+// The canonical PRE-approval projection (no approval captured, no proposals) —
+// exactly what Mission Control shows before a human approves in-session.
+const preApprovalView = deriveMissionView(turn, null, []);
+
+check(
+  "28. canonical pre-approval projection is 'Awaiting approval' (distinct lifecycle point)",
+  preApprovalView.missionStateLabel === "Awaiting approval" && preApprovalView.phase === "awaiting_approval",
+  `${preApprovalView.missionStateLabel} / ${preApprovalView.phase}`,
+);
+check(
+  "29. Manager must not claim Complete over the awaiting canonical state (labels differ)",
+  view.missionStateLabel === "Complete" &&
+    ctx.missionState === "Complete" &&
+    view.missionStateLabel !== preApprovalView.missionStateLabel,
+  `${ctx.missionState} vs ${preApprovalView.missionStateLabel}`,
+);
+check(
+  "30. Manager is labelled a Post-mission Guided Scenario (not live-state equivalence)",
+  MANAGER_SCENARIO_LABEL === "Post-mission Guided Scenario",
+  MANAGER_SCENARIO_LABEL,
+);
+check(
+  "31. Manager explicitly discloses it is not reading the current browser mission state",
+  MANAGER_SCENARIO_DISCLAIMER.toLowerCase().includes("not reading the current browser mission state") &&
+    MANAGER_SCENARIO_DISCLAIMER.toLowerCase().includes("after a completed simulated mission"),
+);
+check(
+  "32. Manager continuity label asserts canonical identity WITHOUT 'same mission as Mission Control' live equivalence",
+  MANAGER_CONTINUITY_LABEL.toLowerCase().includes("same canonical mission") &&
+    MANAGER_CONTINUITY_LABEL.toLowerCase().includes("post-completion snapshot") &&
+    !MANAGER_CONTINUITY_LABEL.toLowerCase().includes("as mission control"),
+  MANAGER_CONTINUITY_LABEL,
+);
+check(
+  "33. Manager completed projection matches the canonical completed outcome exactly",
+  ctx.governedSystemOutcome === "Governed work prepared successfully." &&
+    ctx.governedBusinessOutcome === "Awaiting external response." &&
+    ctx.simulatedActionCount === 3 &&
+    view.simulatedCount === 3,
+  `${ctx.simulatedActionCount} sim / ${ctx.governedSystemOutcome}`,
+);
+check(
+  "34. Manager review/assign actions never modify mission state (Complete stays Complete, audit stable)",
+  buildManagerMissionContext(turn, view, "reviewed").missionState === "Complete" &&
+    buildManagerMissionContext(turn, view, "simulated_intervention_assigned").missionState === "Complete" &&
+    buildManagerMissionContext(turn, view, "reviewed").auditRef === turn.auditRef &&
+    buildManagerMissionContext(turn, view, "simulated_intervention_assigned").auditRef === turn.auditRef,
+);
 
 // ---------------------------------------------------------------------------
 console.log("\n" + "=".repeat(70));

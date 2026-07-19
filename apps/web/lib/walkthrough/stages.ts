@@ -264,8 +264,8 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
     whatRemainsUnknown: "The customer's actual response — separated in the governed outcome, next.",
     visual: {
       src: "/walkthrough-assets/stage-07-simulated-execution.png",
-      alt: "Mission Control simulated execution panel stating actions run only after approval and every action is simulated — nothing leaves the controlled sandbox.",
-      caption: "After approval, actions run only in a controlled sandbox — nothing is sent.",
+      alt: "Mission Control completed simulated execution showing all three approved actions simulated in the controlled sandbox with receipts — email drafted not sent, CRM task proposed not created, risk update proposed not written.",
+      caption: "After approval, all three actions are simulated in a controlled sandbox — receipts produced, nothing sent.",
       width: 900,
       height: 148,
     },
@@ -290,8 +290,8 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
     whatRemainsUnknown: "Whether the customer renews — genuinely unknown, and not asserted.",
     visual: {
       src: "/walkthrough-assets/stage-08-governed-outcome.png",
-      alt: "Mission Control outcome panel separating the system outcome, governed work verified and ready, from the pending business outcome, awaiting approval, with mission M-RENEWAL-1 and its audit reference.",
-      caption: "System completion is separated from the still-pending business outcome.",
+      alt: "Mission Control completed governed outcome separating the system outcome, governed work prepared successfully, from the business outcome, awaiting external response, with mission M-RENEWAL-1 and its audit reference.",
+      caption: "Completed: system outcome \"Governed work prepared successfully\" is separated from business \"Awaiting external response\".",
       width: 900,
       height: 296,
     },
@@ -302,15 +302,15 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
     status: "Guided Demo",
     headline: "Manager Coaching: where should I intervene?",
     narrative:
-      "A manager-lens Guided Demo reads the same Curefoods mission and recommends one focused, 15-minute coaching intervention — read-only, with no authority to act.",
+      "A manager-lens Guided Demo reads a deterministic post-completion snapshot of the same Curefoods mission and recommends one focused, 15-minute coaching intervention — read-only, with no authority to act.",
     whatHappened:
       "One seller needs attention; the deterministic recommendation is to coach the Curefoods renewal conversation.",
     whyItMatters: "Coaching answers a different question — where to intervene — without creating a second source of truth.",
     whatAiDid: "Frames the coaching recommendation from the same mission evidence.",
-    whatPolicyDid: "Keeps Manager read-only: same mission, recommendation, and audit reference; no mutation of mission state.",
+    whatPolicyDid: "Keeps Manager read-only: same canonical mission, recommendation, and audit reference; no mutation of mission state.",
     whatHumanControlled: "The manager reviews and assigns a simulated intervention; nothing is notified or written.",
     evidence: [
-      "Same mission continuity as Mission Control",
+      "Same canonical mission — post-completion snapshot, not the live Mission Control session state",
       "15-minute coaching intervention",
       "Simulated manager action · no notification · no CRM mutation",
       "Not an enterprise-persistent workflow.",
@@ -319,8 +319,8 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
     link: WALKTHROUGH_LINKS.managerCoaching,
     visual: {
       src: "/walkthrough-assets/stage-09-manager-coaching.png",
-      alt: "Manager Coaching Guided Demo hero stating one seller needs attention today on the Curefoods renewal, with presentation-only assigned-seller context.",
-      caption: "Manager Coaching reads the same mission to recommend one 15-minute intervention.",
+      alt: "Manager Coaching Post-mission Guided Scenario hero stating one seller needs attention on the Curefoods renewal, labelled as a completed-mission snapshot that does not read the live browser mission state.",
+      caption: "Manager Coaching reads a post-completion snapshot of the same mission to recommend one 15-minute intervention.",
       width: 900,
       height: 168,
     },

@@ -47,6 +47,11 @@ import {
   subscribeManagerCoaching,
   type ManagerCoachingStatus,
 } from "@/lib/manager/coachingReviewState";
+import {
+  MANAGER_SCENARIO_LABEL,
+  MANAGER_SCENARIO_DISCLAIMER,
+  MANAGER_CONTINUITY_LABEL,
+} from "@/lib/manager/managerScenarioCopy";
 
 // ---------------------------------------------------------------------------
 // Small building blocks
@@ -111,13 +116,20 @@ function BulletList({ items }: { items: readonly string[] }) {
 
 function FeatureBranchStatus() {
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3">
-      <GitBranch size={15} className="text-amber-300" />
-      <span className="text-[13px] font-semibold text-amber-200">Guided Demo</span>
-      <span className="text-[13px] text-muted">
-        Manager Coaching Curefoods slice — not part of the Production persona navigation.
-      </span>
-      <Chip tone="brand">Deterministic governed demo</Chip>
+    <div className="flex flex-col gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <GitBranch size={15} className="text-amber-300" />
+        <span className="text-[13px] font-semibold text-amber-200">{MANAGER_SCENARIO_LABEL}</span>
+        <span className="text-[13px] text-muted">
+          Manager Coaching Curefoods slice — not part of the Production persona navigation.
+        </span>
+        <Chip tone="brand">Deterministic governed demo</Chip>
+      </div>
+      <p className="flex items-start gap-1.5 text-[12px] leading-relaxed text-amber-100/80">
+        <Info size={13} className="mt-[2px] shrink-0 text-amber-300" />
+        {MANAGER_SCENARIO_DISCLAIMER} Mission Control holds the live, session-local mission and may still be
+        awaiting approval.
+      </p>
     </div>
   );
 }
@@ -234,7 +246,7 @@ function MissionContinuityStrip({ ctx }: { ctx: ManagerMissionContext }) {
     <Card
       icon={<Link2 size={16} />}
       title="Mission continuity"
-      label={<Chip tone="brand">Same mission as Mission Control</Chip>}
+      label={<Chip tone="muted">{MANAGER_CONTINUITY_LABEL}</Chip>}
     >
       <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
         {rows.map(([k, v]) => (
@@ -245,8 +257,9 @@ function MissionContinuityStrip({ ctx }: { ctx: ManagerMissionContext }) {
         ))}
       </dl>
       <p className="mt-3 text-[11px] text-faint">
-        Read-only — this manager view reads the seller-completed governed mission and changes none of
-        these governed facts.
+        Read-only — this manager view reads a deterministic post-completion snapshot of the same canonical
+        Curefoods mission (identical account, mission, recommendation, template and audit reference) and changes
+        none of these governed facts. It is not the live Mission Control session state.
       </p>
     </Card>
   );

@@ -26,7 +26,7 @@ import {
   CUREFOODS_RECOMMENDATION_ID,
   CUREFOODS_MISSION_ID,
 } from "../../guardrails/scenarios";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
@@ -349,6 +349,66 @@ check(
     const srcs = WALKTHROUGH_STAGES.filter((s) => s.visual).map((s) => s.visual!.src);
     return new Set(srcs).size === srcs.length;
   })(),
+);
+
+// ---------------------------------------------------------------------------
+console.log("\n[8] Completed-mission evidence + hosted asset provenance");
+// ---------------------------------------------------------------------------
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../..");
+const MANIFEST_PATH = resolve(REPO_ROOT, "docs/private-review/walkthrough-asset-source.md");
+const REPORT_PATH = resolve(REPO_ROOT, "docs/private-review/hosted-acceptance-20260719.md");
+const readSafe = (p: string): string => (existsSync(p) ? readFileSync(p, "utf8") : "");
+const manifest = readSafe(MANIFEST_PATH);
+const report = readSafe(REPORT_PATH);
+const ASSET_FILES = [
+  "stage-02-todays-mission.png",
+  "stage-03-mission-continuity.png",
+  "stage-05-nvidia-grounded.png",
+  "stage-06-human-approval.png",
+  "stage-07-simulated-execution.png",
+  "stage-08-governed-outcome.png",
+  "stage-09-manager-coaching.png",
+  "stage-10-guardrails.png",
+];
+
+check(
+  "45. walkthrough completion stages use COMPLETED mission evidence (stages 7 & 8)",
+  (() => {
+    const s7 = WALKTHROUGH_STAGES.find((s) => s.number === 7)?.visual;
+    const s8 = WALKTHROUGH_STAGES.find((s) => s.number === 8)?.visual;
+    if (!s7 || !s8) return false;
+    const b7 = (s7.alt + " " + s7.caption).toLowerCase();
+    const b8 = (s8.alt + " " + s8.caption).toLowerCase();
+    return (
+      b7.includes("three") &&
+      b7.includes("simulated") &&
+      b8.includes("governed work prepared successfully") &&
+      b8.includes("awaiting external response") &&
+      !b8.includes("awaiting approval")
+    );
+  })(),
+);
+check(
+  "46. every one of the eight walkthrough assets has hosted provenance in the source manifest",
+  manifest.length > 0 &&
+    /dpl_[A-Za-z0-9]+/.test(manifest) &&
+    /\b[0-9a-f]{7,40}\b/.test(manifest) &&
+    /2026-/.test(manifest) &&
+    /mission state/i.test(manifest) &&
+    ASSET_FILES.every((f) => manifest.includes(f)),
+  manifest.length === 0 ? "manifest missing" : "missing hosted provenance fields",
+);
+check(
+  "47. no TEMPORARY asset remains (source manifest no longer marks assets temporary)",
+  manifest.length > 0 && !/temporary/i.test(manifest),
+);
+check(
+  "48. hosted-acceptance report distinguishes pre-approval vs completed evidence (no overclaim)",
+  report.length > 0 &&
+    /pre-approval/i.test(report) &&
+    /completed/i.test(report) &&
+    /manager state model/i.test(report),
+  report.length === 0 ? "report missing" : "report does not separate evidence classes",
 );
 
 // ===========================================================================
