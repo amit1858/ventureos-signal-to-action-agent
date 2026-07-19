@@ -8,9 +8,13 @@
 
 import type { GuardrailCategory, GuardrailScenario } from "./types";
 
-/** Read-only reference to the canonical Curefoods audit ref (never mutated). */
-export const CUREFOODS_AUDIT_REF = "REC-M-RENEWAL-1";
+/** Read-only references to the canonical Curefoods mission identifiers (never
+ * mutated). Values mirror lib/missions/demo.ts exactly — the Lab only reads them.
+ * `REC-M-RENEWAL-1` is the recommendationId; the auditRef is the full canonical
+ * `audit://<missionId>/<recommendationId>` value, not the recommendationId. */
+export const CUREFOODS_RECOMMENDATION_ID = "REC-M-RENEWAL-1";
 export const CUREFOODS_MISSION_ID = "M-RENEWAL-1";
+export const CUREFOODS_AUDIT_REF = "audit://M-RENEWAL-1/REC-M-RENEWAL-1";
 
 export const GUARDRAIL_SCENARIOS: readonly GuardrailScenario[] = Object.freeze([
   {

@@ -132,6 +132,8 @@ export interface GuardrailAuditProjection {
   readonly nvidiaBooleanResult: boolean | null;
   readonly nvidiaRawScore: number | null;
   readonly fallbackUsed: boolean;
+  /** Read-only reference to the canonical Curefoods recommendationId (never mutated). */
+  readonly referencedRecommendationId: string;
   /** Read-only reference to the canonical Curefoods audit ref (never mutated). */
   readonly referencedAuditRef: string;
   readonly missionUnchanged: true;

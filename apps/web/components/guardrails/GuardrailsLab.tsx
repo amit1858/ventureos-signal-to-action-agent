@@ -252,6 +252,7 @@ function AuditProjection({ audit }: { audit: GuardrailAuditProjection | null }) 
     ["NVIDIA boolean result", String(audit.nvidiaBooleanResult)],
     ["NVIDIA raw score", String(audit.nvidiaRawScore)],
     ["Fallback used", String(audit.fallbackUsed)],
+    ["Referenced recommendation", audit.referencedRecommendationId],
     ["Referenced audit ref (read-only)", audit.referencedAuditRef],
     ["missionUnchanged", String(audit.missionUnchanged)],
     ["auditRefUnchanged", String(audit.auditRefUnchanged)],

@@ -10,7 +10,7 @@ import {
   evaluateRails,
   RAIL_CATEGORIES,
 } from "./rails";
-import { CUREFOODS_AUDIT_REF } from "./scenarios";
+import { CUREFOODS_AUDIT_REF, CUREFOODS_RECOMMENDATION_ID } from "./scenarios";
 import type {
   GuardrailActionBoundary,
   GuardrailAuditProjection,
@@ -91,10 +91,17 @@ export function fallbackNvidiaResult(
 }
 
 function isAmbiguous(nvidia: NvidiaJailbreakResult): boolean {
-  // Ambiguous = a live classification exists but its raw score sits close to the
-  // safe reference (no clear separation). Never authoritative.
+  // Ambiguous = a live classification whose raw score sits ABOVE the safe
+  // reference (trending adversarial) but has not clearly separated. A score at or
+  // below the safe reference is UNAMBIGUOUSLY SAFE and never triggers guardrail
+  // review — a safe request must not be flagged merely because NVIDIA is present.
+  // (This is guardrail review only; it is distinct from mission approval, which
+  // remains mandatory before any action regardless of this flag.)
   if (!nvidia.available || nvidia.rawScore === null) return false;
-  return Math.abs(nvidia.rawScore - SAFE_REFERENCE_SCORE) < 0.05;
+  return (
+    nvidia.rawScore > SAFE_REFERENCE_SCORE &&
+    nvidia.rawScore - SAFE_REFERENCE_SCORE < 0.05
+  );
 }
 
 /** Compose the authoritative deterministic decision with additional NVIDIA
@@ -149,6 +156,7 @@ export function projectGuardrailAudit(evaluation: GuardrailEvaluation): Guardrai
     nvidiaBooleanResult: evaluation.nvidia.booleanResult,
     nvidiaRawScore: evaluation.nvidia.rawScore,
     fallbackUsed: evaluation.nvidia.fallbackUsed,
+    referencedRecommendationId: CUREFOODS_RECOMMENDATION_ID,
     referencedAuditRef: CUREFOODS_AUDIT_REF,
     missionUnchanged: true,
     auditRefUnchanged: true,
