@@ -20,6 +20,7 @@ import {
   UserCheck,
   RefreshCw,
   Sparkles,
+  Compass,
   Check,
   X,
 } from "lucide-react";
@@ -92,6 +93,11 @@ export function LandingView({
             >
               See how it works
             </button>
+            {/* Secondary entry into the guided Product Walkthrough. Intentionally
+                non-dominant — it does not replace the primary Command Center flow. */}
+            <a href="/walkthrough" className="btn btn-ghost px-5 py-3 text-sm font-semibold">
+              <Compass size={16} /> Explore VentureOS
+            </a>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[12px] text-faint">
