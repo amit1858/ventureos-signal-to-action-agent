@@ -22,6 +22,21 @@ export interface WalkthroughLink {
   readonly href: string;
 }
 
+/**
+ * Framed visual evidence for a stage. `src` is an app-relative public asset
+ * (never an internal filesystem path or external URL). `width`/`height` are the
+ * intrinsic asset dimensions so the frame reserves a responsive aspect box and
+ * avoids layout shift. TEMPORARY assets captured from the committed SHA are
+ * replaced with hosted-Preview captures before public Production promotion.
+ */
+export interface WalkthroughVisual {
+  readonly src: string;
+  readonly alt: string;
+  readonly caption: string;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface WalkthroughStage {
   readonly number: number;
   readonly id: string;
@@ -39,6 +54,7 @@ export interface WalkthroughStage {
   readonly evidence: readonly string[];
   readonly whatRemainsUnknown: string;
   readonly link?: WalkthroughLink;
+  readonly visual?: WalkthroughVisual;
 }
 
 /** Canonical governed truth shared across every integrated surface. Read-only. */
@@ -113,6 +129,13 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
     ],
     whatRemainsUnknown: "Whether the same identity carries into Mission Control — verified next.",
     link: WALKTHROUGH_LINKS.todaysMission,
+    visual: {
+      src: "/walkthrough-assets/stage-02-todays-mission.png",
+      alt: "Today's Mission screen showing Curefoods renewal protection as the canonical, deterministic governed demo mission with an Open governed mission action.",
+      caption: "Today's Mission surfaces Curefoods as the canonical governed demo mission.",
+      width: 900,
+      height: 283,
+    },
   },
   {
     number: 3,
@@ -136,6 +159,13 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
     ],
     whatRemainsUnknown: "Whether the recommendation is backed by real evidence — shown next.",
     link: WALKTHROUGH_LINKS.missionControl,
+    visual: {
+      src: "/walkthrough-assets/stage-03-mission-continuity.png",
+      alt: "Mission Control persona projections showing the same governed Curefoods mission M-RENEWAL-1 read only by Seller, Executive and Operations lenses.",
+      caption: "The same governed mission, read only by Seller, Executive and Operations.",
+      width: 900,
+      height: 272,
+    },
   },
   {
     number: 4,
@@ -178,6 +208,13 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
       "NVIDIA does not select, approve, or execute.",
     ],
     whatRemainsUnknown: "Whether the action proceeds — that requires human approval, next.",
+    visual: {
+      src: "/walkthrough-assets/stage-05-nvidia-grounded.png",
+      alt: "Mission Control What happened panel stating the explanation is grounded against 3 verified evidence sources, with a voice summary line.",
+      caption: "The grounded explanation cites 3 verified evidence sources; NVIDIA never decides.",
+      width: 900,
+      height: 247,
+    },
   },
   {
     number: 6,
@@ -198,6 +235,13 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
       "AI cannot approve its own action.",
     ],
     whatRemainsUnknown: "What execution looks like — it is intentionally simulated, next.",
+    visual: {
+      src: "/walkthrough-assets/stage-06-human-approval.png",
+      alt: "Mission Control approval gate for Curefoods showing the exact action scope, verification passed, and Approve, Request revision and Reject controls.",
+      caption: "Human approval is mandatory before any action; the AI cannot self-approve.",
+      width: 900,
+      height: 463,
+    },
   },
   {
     number: 7,
@@ -218,6 +262,13 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
       "Receipts produced.",
     ],
     whatRemainsUnknown: "The customer's actual response — separated in the governed outcome, next.",
+    visual: {
+      src: "/walkthrough-assets/stage-07-simulated-execution.png",
+      alt: "Mission Control simulated execution panel stating actions run only after approval and every action is simulated — nothing leaves the controlled sandbox.",
+      caption: "After approval, actions run only in a controlled sandbox — nothing is sent.",
+      width: 900,
+      height: 148,
+    },
   },
   {
     number: 8,
@@ -237,6 +288,13 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
       "No claimed renewal, revenue, or risk-reduction result.",
     ],
     whatRemainsUnknown: "Whether the customer renews — genuinely unknown, and not asserted.",
+    visual: {
+      src: "/walkthrough-assets/stage-08-governed-outcome.png",
+      alt: "Mission Control outcome panel separating the system outcome, governed work verified and ready, from the pending business outcome, awaiting approval, with mission M-RENEWAL-1 and its audit reference.",
+      caption: "System completion is separated from the still-pending business outcome.",
+      width: 900,
+      height: 296,
+    },
   },
   {
     number: 9,
@@ -259,6 +317,13 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
     ],
     whatRemainsUnknown: "The coaching's real-world effectiveness — not calculated or claimed.",
     link: WALKTHROUGH_LINKS.managerCoaching,
+    visual: {
+      src: "/walkthrough-assets/stage-09-manager-coaching.png",
+      alt: "Manager Coaching Guided Demo hero stating one seller needs attention today on the Curefoods renewal, with presentation-only assigned-seller context.",
+      caption: "Manager Coaching reads the same mission to recommend one 15-minute intervention.",
+      width: 900,
+      height: 168,
+    },
   },
   {
     number: 10,
@@ -281,6 +346,13 @@ export const WALKTHROUGH_STAGES: readonly WalkthroughStage[] = [
     ],
     whatRemainsUnknown: "Coverage is limited to curated scenarios; it is not a claim of total protection.",
     link: WALKTHROUGH_LINKS.guardrailsLab,
+    visual: {
+      src: "/walkthrough-assets/stage-10-guardrails.png",
+      alt: "Guardrails Lab NVIDIA NemoGuard classification panel labelled additional telemetry, not authoritative, showing a live boolean result and a raw jailbreak score that is explicitly not a probability.",
+      caption: "NVIDIA NemoGuard is additional telemetry; the raw score is not a probability.",
+      width: 688,
+      height: 626,
+    },
   },
   {
     number: 11,

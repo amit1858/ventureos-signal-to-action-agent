@@ -26,6 +26,9 @@ import {
   CUREFOODS_RECOMMENDATION_ID,
   CUREFOODS_MISSION_ID,
 } from "../../guardrails/scenarios";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 
 let passed = 0;
 let failed = 0;
@@ -264,6 +267,87 @@ check(
       .toLowerCase();
     // The AI must never be described as approving or executing.
     return !blob.includes("ai approves") && !blob.includes("ai executes");
+  })(),
+);
+
+// ---------------------------------------------------------------------------
+console.log("\n[7] Walkthrough visual-evidence treatment");
+// ---------------------------------------------------------------------------
+const REQUIRED_VISUAL_STAGES = [2, 3, 5, 6, 7, 8, 9, 10];
+const PUBLIC_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../../public");
+
+check(
+  "35. all 13 stages present (render contract)",
+  WALKTHROUGH_STAGES.length === 13 && WALKTHROUGH_STAGE_COUNT === 13,
+);
+check(
+  "36. eight required stages each carry a visual asset",
+  REQUIRED_VISUAL_STAGES.every((n) => {
+    const s = WALKTHROUGH_STAGES.find((x) => x.number === n);
+    return !!s && !!s.visual && !!s.visual.src;
+  }),
+  REQUIRED_VISUAL_STAGES.filter((n) => !WALKTHROUGH_STAGES.find((x) => x.number === n)?.visual).join(","),
+);
+check(
+  "37. no broken image source — every visual file exists on disk",
+  WALKTHROUGH_STAGES.filter((s) => s.visual).every((s) =>
+    existsSync(resolve(PUBLIC_DIR, "." + s.visual!.src)),
+  ),
+  WALKTHROUGH_STAGES.filter((s) => s.visual && !existsSync(resolve(PUBLIC_DIR, "." + s.visual!.src)))
+    .map((s) => s.visual!.src)
+    .join(", "),
+);
+check(
+  "38. every visual has non-empty alt text and caption",
+  WALKTHROUGH_STAGES.filter((s) => s.visual).every(
+    (s) => s.visual!.alt.trim().length > 0 && s.visual!.caption.trim().length > 0,
+  ),
+);
+check(
+  "39. no internal path exposed — every src is a public app-relative asset",
+  WALKTHROUGH_STAGES.filter((s) => s.visual).every(
+    (s) =>
+      s.visual!.src.startsWith("/walkthrough-assets/") &&
+      !s.visual!.src.includes("..") &&
+      !/[A-Za-z]:\\|\/Users\/|\/home\//.test(s.visual!.src),
+  ),
+);
+check(
+  "40. no obsolete SHA / deployment / localhost text in any visual metadata",
+  WALKTHROUGH_STAGES.filter((s) => s.visual).every((s) => {
+    const blob = (s.visual!.alt + " " + s.visual!.caption).toLowerCase();
+    return !FORBIDDEN_SUBSTRINGS.some((f) => blob.includes(f)) && !/\b[0-9a-f]{7,40}\b/.test(blob);
+  }),
+);
+check(
+  "41. no Feature Branch label anywhere in walkthrough public copy or captions",
+  (() => {
+    const blob = WALKTHROUGH_STAGES.map(
+      (s) =>
+        [s.headline, s.narrative, s.evidence.join(" "), s.visual?.alt ?? "", s.visual?.caption ?? ""].join(
+          " ",
+        ),
+    )
+      .join(" ")
+      .toLowerCase();
+    return !blob.includes("feature branch") && !blob.includes("feature/");
+  })(),
+);
+check(
+  "42. links route correctly (allowed real routes only)",
+  WALKTHROUGH_STAGES.filter((s) => s.link).every((s) => ALLOWED_ROUTES.has(s.link!.href)),
+);
+check(
+  "43. visuals carry intrinsic width/height (responsive aspect, no layout shift)",
+  WALKTHROUGH_STAGES.filter((s) => s.visual).every(
+    (s) => s.visual!.width > 0 && s.visual!.height > 0,
+  ),
+);
+check(
+  "44. visual sources are unique (no duplicate assets across stages)",
+  (() => {
+    const srcs = WALKTHROUGH_STAGES.filter((s) => s.visual).map((s) => s.visual!.src);
+    return new Set(srcs).size === srcs.length;
   })(),
 );
 

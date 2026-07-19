@@ -22,6 +22,7 @@ import {
   type WalkthroughStage,
   type WalkthroughStatus,
 } from "@/lib/walkthrough/stages";
+import { VisualEvidence } from "@/components/walkthrough/VisualEvidence";
 
 const STATUS_STYLE: Record<WalkthroughStatus, string> = {
   Production: "border-accent/40 bg-accent/10 text-accent-bright",
@@ -117,6 +118,8 @@ function StageCard({ stage }: { stage: WalkthroughStage }) {
           ) : null}
         </div>
       </div>
+
+      {stage.visual ? <VisualEvidence visual={stage.visual} /> : null}
     </section>
   );
 }
@@ -160,6 +163,7 @@ export function ProductWalkthrough() {
           <li>• The raw NVIDIA classifier score is not a probability or confidence value.</li>
           <li>• Manager Coaching is a Guided Demo, not an enterprise-persistent workflow.</li>
           <li>• No customer response, renewal, or revenue outcome is claimed.</li>
+          <li>• Stage visuals are captured from this governed demo build and are illustrative.</li>
         </ul>
       </section>
 
