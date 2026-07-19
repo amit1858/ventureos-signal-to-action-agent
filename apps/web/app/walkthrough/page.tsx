@@ -6,7 +6,7 @@
 // Walkthrough label.
 
 import Link from "next/link";
-import { Compass } from "lucide-react";
+import { BookOpen, Compass, Download } from "lucide-react";
 
 import { ProductWalkthrough } from "@/components/walkthrough/ProductWalkthrough";
 
@@ -41,6 +41,27 @@ export default function WalkthroughPage() {
       </header>
       <main className="flex-1">
         <ProductWalkthrough />
+
+        {/* Tester Guide entry — discoverable but non-dominant */}
+        <div className="mx-auto w-full max-w-[880px] px-5 pb-12">
+          <div className="rounded-xl border border-edge bg-surface px-6 py-5 text-center">
+            <p className="text-[13px] text-muted">
+              Ready to validate the full product experience?
+            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+              <Link href="/tester-guide" className="btn btn-outline-primary px-4 py-2 text-[13px] font-semibold">
+                <BookOpen size={14} /> Open Tester Guide
+              </Link>
+              <a
+                href="/guides/VentureOS-Signal-to-Action-Tester-Guide.pdf"
+                download
+                className="btn btn-ghost px-4 py-2 text-[13px] font-semibold"
+              >
+                <Download size={14} /> Download Tester Guide PDF
+              </a>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

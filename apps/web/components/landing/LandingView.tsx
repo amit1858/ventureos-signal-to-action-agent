@@ -23,6 +23,7 @@ import {
   Compass,
   Check,
   X,
+  FileText,
 } from "lucide-react";
 import type { MetaResponse } from "@/lib/types";
 import type { LucideIcon } from "lucide-react";
@@ -97,6 +98,9 @@ export function LandingView({
                 non-dominant — it does not replace the primary Command Center flow. */}
             <a href="/walkthrough" className="btn btn-ghost px-5 py-3 text-sm font-semibold">
               <Compass size={16} /> Explore VentureOS
+            </a>
+            <a href="/tester-guide" className="btn btn-ghost px-5 py-3 text-sm font-semibold">
+              <FileText size={16} /> Tester Guide
             </a>
           </div>
 
