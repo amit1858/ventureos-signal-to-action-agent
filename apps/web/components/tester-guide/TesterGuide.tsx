@@ -32,6 +32,7 @@ import {
   FINAL_CHECKLIST,
   GLOSSARY,
   screenshotById,
+  toPublicGuideImage,
 } from "@/lib/tester-guide/content";
 import { GuideImage } from "./GuideImage";
 import { FeedbackCopy } from "./FeedbackCopy";
@@ -101,7 +102,7 @@ export function TesterGuide() {
       {/* Sections ---------------------------------------------------------- */}
       <div className={`${WRAP} mt-4`}>
         {GUIDE_SECTIONS.map((s) => {
-          const shots = s.screenshotIds.map((id) => screenshotById(id));
+          const shots = s.screenshotIds.map((id) => toPublicGuideImage(screenshotById(id)));
           return (
             <section
               key={s.id}

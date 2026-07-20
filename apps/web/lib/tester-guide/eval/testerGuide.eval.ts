@@ -24,6 +24,7 @@ import {
   FEEDBACK_FIELDS,
   FINAL_CHECKLIST,
   GLOSSARY,
+  toPublicGuideImage,
 } from "../content";
 import { buildFeedbackTemplateMarkdown } from "../generate";
 
@@ -192,6 +193,59 @@ check("38. internal asset manifest still retains full provenance (SHA + deployme
   } catch {
     return false;
   }
+})());
+
+console.log("\n[11] Client-boundary provenance (RSC flight payload safety)");
+// The screenshot object passed to the "use client" GuideImage island is exactly
+// what Next.js serializes into the public RSC flight payload. Assert that the
+// projected boundary object carries no server-only provenance, while the server
+// model and internal manifest keep it.
+const PROVENANCE_KEYS = [
+  "deploymentId",
+  "sha",
+  "capturedAt",
+  "checksumSha256Short",
+  "sourceFile",
+  "route",
+  "missionState",
+  "nvidiaState",
+  "guardrailScenario",
+  "provenance",
+];
+const PUBLIC_KEYS = ["id", "src", "alt", "caption", "width", "height", "cropped", "redacted"];
+const publicShots = GUIDE_SCREENSHOTS.map((s) => toPublicGuideImage(s));
+const publicSerialized = JSON.stringify(publicShots);
+
+check("39. server screenshot model still retains full provenance (not deleted)",
+  GUIDE_SCREENSHOTS.every((s) =>
+    s.deploymentId === GUIDE_META.sourceDeploymentId &&
+    s.sha === GUIDE_META.sourceSha &&
+    typeof s.capturedAt === "string" && s.capturedAt.length > 0 &&
+    typeof s.checksumSha256Short === "string" && s.checksumSha256Short.length > 0));
+check("40. client-boundary object exposes only presentational keys",
+  publicShots.every((p) => {
+    const keys = Object.keys(p).sort();
+    return keys.length === PUBLIC_KEYS.length && PUBLIC_KEYS.slice().sort().every((k, i) => k === keys[i]);
+  }));
+check("41. client-boundary object drops every provenance key",
+  publicShots.every((p) => PROVENANCE_KEYS.every((k) => !(k in (p as unknown as Record<string, unknown>)))));
+check("42. serialized client payload contains no deployment ID token",
+  !publicSerialized.includes("dpl_") && !publicSerialized.includes(GUIDE_META.sourceDeploymentId));
+check("43. serialized client payload contains no runtime SHA value",
+  !publicSerialized.includes(GUIDE_META.sourceSha));
+check("44. serialized client payload contains no capturedAt value",
+  !publicSerialized.includes(GUIDE_SCREENSHOTS[0].capturedAt));
+check("45. serialized client payload contains no checksum value",
+  GUIDE_SCREENSHOTS.every((s) => !publicSerialized.includes(s.checksumSha256Short)));
+check("46. TesterGuide projects via toPublicGuideImage before the client boundary", (() => {
+  const src = readFileSync(resolve(WEB_ROOT, "components/tester-guide/TesterGuide.tsx"), "utf8");
+  return /toPublicGuideImage\(/.test(src) && /<GuideImage[^>]*shot=\{/.test(src) && !/shot=\{screenshotById/.test(src);
+})());
+check("47. GuideImage client prop is PublicGuideImage and references no provenance field", (() => {
+  const src = readFileSync(resolve(WEB_ROOT, "components/tester-guide/GuideImage.tsx"), "utf8");
+  const typedNarrow = /shot: PublicGuideImage/.test(src) && !/shot: GuideScreenshot/.test(src);
+  const noProvenanceRefs = PROVENANCE_KEYS.every((k) => !new RegExp(`shot\\.${k}\\b`).test(src));
+  return typedNarrow && noProvenanceRefs;
 })());
 
 console.log("\n" + "=".repeat(70));
