@@ -21,6 +21,7 @@ import {
   RefreshCw,
   Sparkles,
   Compass,
+  BookOpenCheck,
   Check,
   X,
 } from "lucide-react";
@@ -97,6 +98,10 @@ export function LandingView({
                 non-dominant — it does not replace the primary Command Center flow. */}
             <a href="/walkthrough" className="btn btn-ghost px-5 py-3 text-sm font-semibold">
               <Compass size={16} /> Explore VentureOS
+            </a>
+            {/* Self-guided tester documentation. Also intentionally non-dominant. */}
+            <a href="/tester-guide" className="btn btn-ghost px-5 py-3 text-sm font-semibold">
+              <BookOpenCheck size={16} /> Tester Guide
             </a>
           </div>
 
