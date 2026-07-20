@@ -8,9 +8,11 @@ import Link from "next/link";
 import {
   ArrowRight,
   BadgeCheck,
+  BookOpenCheck,
   Bot,
   CheckCircle2,
   CircleHelp,
+  FileDown,
   Landmark,
   ShieldCheck,
   UserCheck,
@@ -150,6 +152,29 @@ export function ProductWalkthrough() {
           <StageCard key={stage.id} stage={stage} />
         ))}
       </div>
+
+      {/* Self-guided tester documentation — non-dominant secondary entry. */}
+      <section className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-brand/25 bg-brand/[0.05] p-6">
+        <div>
+          <h3 className="text-[14px] font-semibold text-ink">Prefer a self-guided checklist?</h3>
+          <p className="mt-1 text-[12.5px] text-muted">
+            The Tester Guide walks you through the same governed journey step by step, with expected
+            results and a feedback template.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/tester-guide" className="btn btn-outline-primary">
+            <BookOpenCheck size={16} /> Open Tester Guide
+          </Link>
+          <a
+            href="/guides/VentureOS-Signal-to-Action-Tester-Guide.pdf"
+            download
+            className="btn btn-ghost"
+          >
+            <FileDown size={16} /> Download PDF
+          </a>
+        </div>
+      </section>
 
       {/* Truthful limitations */}
       <section className="mt-8 rounded-2xl border border-edge bg-surface/60 p-6">
