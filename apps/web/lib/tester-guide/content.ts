@@ -86,6 +86,34 @@ export interface GuideScreenshot {
   readonly provenance: "production-canonical";
 }
 
+// Public, presentation-only projection of a screenshot. It deliberately omits
+// every server-only provenance field (deploymentId, sha, capturedAt,
+// checksumSha256Short, sourceFile, route, missionState, nvidiaState,
+// guardrailScenario, provenance) so that nothing internal is serialized into the
+// public RSC flight payload when passed to the "use client" GuideImage island.
+export interface PublicGuideImage {
+  readonly id: string;
+  readonly src: string;
+  readonly alt: string;
+  readonly caption: string;
+  readonly width: number;
+  readonly height: number;
+  readonly cropped: boolean;
+  readonly redacted: boolean;
+}
+
+// Construct the narrow public object at the server/client boundary.
+export const toPublicGuideImage = (s: GuideScreenshot): PublicGuideImage => ({
+  id: s.id,
+  src: s.src,
+  alt: s.alt,
+  caption: s.caption,
+  width: s.width,
+  height: s.height,
+  cropped: s.cropped,
+  redacted: s.redacted,
+});
+
 const CAPTURED_AT = "2026-07-19T23:09:00+05:30";
 const DEP = GUIDE_META.sourceDeploymentId;
 const SHA = GUIDE_META.sourceSha;

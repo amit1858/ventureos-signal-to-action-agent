@@ -10,9 +10,9 @@
 
 import * as React from "react";
 import { Expand, X } from "lucide-react";
-import type { GuideScreenshot } from "@/lib/tester-guide/content";
+import type { PublicGuideImage } from "@/lib/tester-guide/content";
 
-export function GuideImage({ shot }: { shot: GuideScreenshot }) {
+export function GuideImage({ shot }: { shot: PublicGuideImage }) {
   const [open, setOpen] = React.useState(false);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const closeRef = React.useRef<HTMLButtonElement>(null);
