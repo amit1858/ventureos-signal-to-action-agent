@@ -100,4 +100,4 @@ Copy this template, fill it in, and share it with the VentureOS team. No backend
 - [ ] No real action observed
 - [ ] Feedback submitted
 
-_Source: Signal-to-Action Tester Guide. Screenshots captured from the canonical production application (SHA 7601844)._
+_Source: Signal-to-Action Tester Guide. Screenshots captured from the canonical production application._

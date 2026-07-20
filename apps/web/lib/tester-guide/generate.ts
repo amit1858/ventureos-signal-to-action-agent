@@ -89,7 +89,7 @@ export function buildFeedbackTemplateMarkdown(): string {
   for (const c of FINAL_CHECKLIST) lines.push(`- [ ] ${c}`);
   lines.push("");
   lines.push(
-    `_Source: ${GUIDE_META.title}. Screenshots captured from the canonical production application (SHA ${GUIDE_META.sourceSha})._`,
+    `_Source: ${GUIDE_META.title}. Screenshots captured from the canonical production application._`,
   );
   lines.push("");
   return lines.join("\n");

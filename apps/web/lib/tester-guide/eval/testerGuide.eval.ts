@@ -25,6 +25,7 @@ import {
   FINAL_CHECKLIST,
   GLOSSARY,
 } from "../content";
+import { buildFeedbackTemplateMarkdown } from "../generate";
 
 let passed = 0;
 let failed = 0;
@@ -168,6 +169,29 @@ check("29. content model imports no protected engine internals", (() => {
 check("30. no secret literal in content model", (() => {
   const src = readFileSync(resolve(HERE, "../content.ts"), "utf8");
   return !/nvapi-[A-Za-z0-9]{6,}/.test(src) && !/Bearer\s+[A-Za-z0-9]/.test(src);
+})());
+
+console.log("\n[10] Lightbox accessibility + public provenance polish");
+const guideImageSrc = readFileSync(resolve(WEB_ROOT, "components/tester-guide/GuideImage.tsx"), "utf8");
+check("31. lightbox moves focus into the dialog on open", /ref=\{closeRef\}/.test(guideImageSrc) && /closeRef\.current\?\.focus\(\)/.test(guideImageSrc));
+check("32. lightbox restores focus to the triggering button on close/unmount", /ref=\{triggerRef\}/.test(guideImageSrc) && /trigger\?\.focus\(\)/.test(guideImageSrc));
+check("33. lightbox closes on Escape", /e\.key === "Escape"/.test(guideImageSrc));
+check("34. lightbox exposes a close control", /aria-label="Close expanded image"/.test(guideImageSrc));
+check("35. lightbox locks background scroll while open", /body\.style\.overflow = "hidden"/.test(guideImageSrc));
+check("   lightbox restores background scroll on close/unmount", /body\.style\.overflow = prevOverflow/.test(guideImageSrc) && /body\.style\.paddingRight = prevPaddingRight/.test(guideImageSrc));
+
+const feedbackMd = buildFeedbackTemplateMarkdown();
+check("36. public feedback template contains no commit SHA", !feedbackMd.includes(GUIDE_META.sourceSha));
+check("37. public feedback template contains no deployment ID", !feedbackMd.includes("dpl_") && !feedbackMd.includes(GUIDE_META.sourceDeploymentId));
+check("   public feedback template contains no Preview URL or filesystem path", !/[a-z0-9-]+-[a-z0-9]{9,}-[a-z0-9-]+\.vercel\.app/i.test(feedbackMd) && !/localhost/.test(feedbackMd) && !/[A-Za-z]:\\/.test(feedbackMd) && !/\/Users\//.test(feedbackMd));
+check("38. internal asset manifest still retains full provenance (SHA + deployment ID)", (() => {
+  if (!existsSync(assetManifest)) return false;
+  try {
+    const s = JSON.stringify(JSON.parse(readFileSync(assetManifest, "utf8")));
+    return s.includes(GUIDE_META.sourceSha) && s.includes(GUIDE_META.sourceDeploymentId);
+  } catch {
+    return false;
+  }
 })());
 
 console.log("\n" + "=".repeat(70));

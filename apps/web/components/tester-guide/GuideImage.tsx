@@ -14,19 +14,43 @@ import type { GuideScreenshot } from "@/lib/tester-guide/content";
 
 export function GuideImage({ shot }: { shot: GuideScreenshot }) {
   const [open, setOpen] = React.useState(false);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const closeRef = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     if (!open) return;
+    // Focus management: remember the triggering button, then move focus into
+    // the dialog (the close control) so keyboard users land inside the modal.
+    const trigger = triggerRef.current;
+    closeRef.current?.focus();
+    // Background scroll lock: freeze the body while the lightbox is open and
+    // compensate for the removed scrollbar so the page does not jump. Scroll
+    // position is preserved because we only toggle overflow, not position.
+    const { body } = document;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const prevOverflow = body.style.overflow;
+    const prevPaddingRight = body.style.paddingRight;
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) body.style.paddingRight = `${scrollbarWidth}px`;
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      // Restore scrolling (also correct on unmount) ...
+      body.style.overflow = prevOverflow;
+      body.style.paddingRight = prevPaddingRight;
+      // ... and return focus to the exact screenshot button that opened it.
+      trigger?.focus();
+    };
   }, [open]);
 
   return (
     <figure className="mt-4">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
         className="group relative block w-full overflow-hidden rounded-xl border border-edge bg-base/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
@@ -60,6 +84,7 @@ export function GuideImage({ shot }: { shot: GuideScreenshot }) {
         >
           <div className="relative max-h-[92vh] max-w-[1200px]" onClick={(e) => e.stopPropagation()}>
             <button
+              ref={closeRef}
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close expanded image"
