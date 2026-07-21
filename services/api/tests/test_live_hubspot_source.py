@@ -18,6 +18,7 @@ Run directly:  python services/api/tests/test_live_hubspot_source.py
 
 from __future__ import annotations
 
+import ast
 import inspect
 import os
 import shutil
@@ -38,7 +39,14 @@ from live_signals.hubspot_source import (  # noqa: E402
     observe_renewal,
 )
 from live_signals.repository import SignalRepositoryError, SignalSnapshotRepository  # noqa: E402
-from live_signals.settings import LiveSignalSettings  # noqa: E402
+from live_signals.settings import DEFAULT_MONITORED_PROPERTY, LiveSignalSettings  # noqa: E402
+import live_signals.observation as observation_module  # noqa: E402
+from live_signals.observation import (  # noqa: E402
+    MonitoredFieldSource,
+    RawObservation,
+    observe_monitored_field,
+)
+from live_signals.hubspot_source import HubSpotCompanySource  # noqa: E402
 
 # Renewal horizon dates: BASE ~44d out (as of ~2026-07-21), EARLIER ~20d
 # (adverse), LATER ~86d (positive).
@@ -67,7 +75,7 @@ def _settings(**over) -> LiveSignalSettings:
         portal_allowlist=frozenset({PORTAL}),
         account_allowlist=frozenset({ACCOUNT}),
         db_path=":memory:",
-        renewal_property="s2a_renewal_date",
+        monitored_property="s2a_renewal_date",
     )
     base.update(over)
     return LiveSignalSettings(**base)
@@ -89,7 +97,25 @@ class FakeReader:
             raise self._raises
         if self._payload is not None:
             return self._payload
-        return {"id": company_id, "properties": {"s2a_renewal_date": self._value}}
+        # Echo whatever property was requested so a configured monitored property
+        # (LIVE_SIGNAL_MONITORED_PROPERTY) is honoured end to end.
+        props = {p: self._value for p in (properties or [])}
+        return {"id": company_id, "properties": props}
+
+
+class FakeCRMSource:
+    """A NON-HubSpot MonitoredFieldSource, proving the observation core is
+    provider-neutral: it reaches the frozen detector with no HubSpot involvement."""
+
+    provider = "acme_crm"
+
+    def __init__(self, value=None) -> None:
+        self._value = value
+        self.calls: list[tuple] = []
+
+    def fetch(self, *, account_id, monitored_property):
+        self.calls.append((account_id, monitored_property))
+        return RawObservation(raw_value=self._value, record_id="R-ACME-9", record_type="account")
 
 
 class FailingRepo:
@@ -403,6 +429,78 @@ def test_adapter_depends_on_narrow_reader_protocol() -> None:
     _check("fake reader is a CompanyReader", isinstance(FakeReader(BASE), CompanyReader))
 
 
+# -- configurable monitored property ----------------------------------------
+
+
+def test_monitored_property_is_configurable() -> None:
+    repo = SignalSnapshotRepository()
+    reader = FakeReader(value=BASE)
+    st = _settings(monitored_property="s2a_renewal_date_v2")
+    result = _observe(reader, st, repository=repo)
+    _check("configurable: baseline established with custom property",
+           result.status is DetectionStatus.baseline_established, result.detail)
+    _check("configurable: provider was asked for the CONFIGURED property",
+           reader.ops and reader.ops[0][2] == ("s2a_renewal_date_v2",))
+
+
+def test_env_reads_monitored_property_with_default() -> None:
+    st = LiveSignalSettings.from_env({
+        "LIVE_SIGNALS_ENABLED": "true",
+        "LIVE_SIGNAL_MONITORED_PROPERTY": "custom_renewal_field",
+    })
+    _check("env: LIVE_SIGNAL_MONITORED_PROPERTY honoured",
+           st.monitored_property == "custom_renewal_field")
+    st_default = LiveSignalSettings.from_env({"LIVE_SIGNALS_ENABLED": "true"})
+    _check("env: default monitored property is s2a_renewal_date",
+           st_default.monitored_property == DEFAULT_MONITORED_PROPERTY)
+
+
+# -- provider neutrality (no HubSpot needed to reach the detector) -----------
+
+
+def test_provider_neutral_source_reaches_detector() -> None:
+    repo = SignalSnapshotRepository()
+    src = FakeCRMSource(value=BASE)
+    res1 = observe_monitored_field(
+        source=src, settings=_settings(), portal_id=PORTAL, account_id=ACCOUNT,
+        account_ref=ACCOUNT_REF, detected_at=T0, repository=repo,
+    )
+    _check("neutral: baseline via non-HubSpot provider",
+           res1.status is DetectionStatus.baseline_established, res1.detail)
+    src._value = EARLIER
+    res2 = observe_monitored_field(
+        source=src, settings=_settings(), portal_id=PORTAL, account_id=ACCOUNT,
+        account_ref=ACCOUNT_REF, detected_at=T1, repository=repo,
+    )
+    _check("neutral: change detected via non-HubSpot provider",
+           res2.status is DetectionStatus.change_detected, res2.detail)
+    _check("neutral: direction adverse via non-HubSpot provider",
+           res2.event and res2.event.direction is SignalDirection.adverse)
+    _check("neutral: record_type propagated from source",
+           res2.event and res2.event.source_record_type == "account")
+    _check("neutral: FakeCRMSource is a MonitoredFieldSource",
+           isinstance(src, MonitoredFieldSource))
+    _check("neutral: HubSpotCompanySource is a MonitoredFieldSource",
+           isinstance(HubSpotCompanySource(FakeReader(BASE)), MonitoredFieldSource))
+
+
+def test_observation_core_is_provider_neutral() -> None:
+    # Provider neutrality is a coupling property, not a prose property: the neutral
+    # core must not IMPORT any CRM-specific module. (The module docstring may name
+    # HubSpot as the first example provider; that is documentation, not a dependency.)
+    tree = ast.parse(inspect.getsource(observation_module))
+    imported: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            imported.append(node.module)
+        elif isinstance(node, ast.Import):
+            imported.extend(alias.name for alias in node.names)
+    joined = " ".join(imported).lower()
+    _check("neutral core imports nothing from crm_connectors", "crm_connectors" not in joined)
+    _check("neutral core imports nothing from hubspot_source", "hubspot_source" not in joined)
+    _check("neutral core imports no hubspot module", "hubspot" not in joined)
+
+
 _TESTS = [
     test_disabled_flag_refuses_and_reads_nothing,
     test_empty_portal_allowlist_denies,
@@ -427,6 +525,10 @@ _TESTS = [
     test_adapter_source_has_no_write_verbs,
     test_connector_get_company_is_get_only,
     test_adapter_depends_on_narrow_reader_protocol,
+    test_monitored_property_is_configurable,
+    test_env_reads_monitored_property_with_default,
+    test_provider_neutral_source_reaches_detector,
+    test_observation_core_is_provider_neutral,
 ]
 
 

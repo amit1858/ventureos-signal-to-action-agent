@@ -25,10 +25,12 @@ import os
 from dataclasses import dataclass
 from typing import Mapping, Optional
 
-#: Default monitored HubSpot Company property (an absolute ISO ``date``). Chosen
-#: because it maps 1:1 to the frozen detector's ``renewal_date`` normalization and
-#: is clock-independent (unlike a relative "days from now" integer).
-DEFAULT_RENEWAL_PROPERTY = "s2a_renewal_date"
+#: Default monitored CRM property (an absolute ISO ``date``). Chosen because it
+#: maps 1:1 to the frozen detector's ``renewal_date`` normalization and is
+#: clock-independent (unlike a relative "days from now" integer). The property is
+#: configurable via ``LIVE_SIGNAL_MONITORED_PROPERTY`` so other CRM providers can
+#: monitor a differently-named field without any detector change.
+DEFAULT_MONITORED_PROPERTY = "s2a_renewal_date"
 
 _TRUE = {"1", "true", "yes", "on"}
 #: Tokens that must never be treated as an allow-list grant. ``*`` is explicitly
@@ -84,18 +86,18 @@ class LiveSignalSettings:
     portal_allowlist: frozenset = frozenset()
     account_allowlist: frozenset = frozenset()
     db_path: str = ""
-    renewal_property: str = DEFAULT_RENEWAL_PROPERTY
+    monitored_property: str = DEFAULT_MONITORED_PROPERTY
 
     @classmethod
     def from_env(cls, env: Optional[Mapping[str, str]] = None) -> "LiveSignalSettings":
         env = os.environ if env is None else env
-        prop = _str(env, "LIVE_SIGNAL_RENEWAL_PROPERTY") or DEFAULT_RENEWAL_PROPERTY
+        prop = _str(env, "LIVE_SIGNAL_MONITORED_PROPERTY") or DEFAULT_MONITORED_PROPERTY
         return cls(
             enabled=_flag(env, "LIVE_SIGNALS_ENABLED", False),
             portal_allowlist=_parse_allowlist(env.get("LIVE_SIGNAL_PORTAL_ALLOWLIST")),
             account_allowlist=_parse_allowlist(env.get("LIVE_SIGNAL_ACCOUNT_ALLOWLIST")),
             db_path=_str(env, "LIVE_SIGNALS_DB_PATH"),
-            renewal_property=prop,
+            monitored_property=prop,
         )
 
     # -- fail-closed predicates ------------------------------------------
@@ -136,12 +138,12 @@ class LiveSignalSettings:
             raise LiveSignalConfigError(
                 "LIVE_SIGNALS_DB_PATH is not set; a durable snapshot store is required."
             )
-        if not self.renewal_property:
-            raise LiveSignalConfigError("no monitored renewal property is configured.")
+        if not self.monitored_property:
+            raise LiveSignalConfigError("no monitored property is configured.")
 
 
 __all__ = [
-    "DEFAULT_RENEWAL_PROPERTY",
+    "DEFAULT_MONITORED_PROPERTY",
     "LiveSignalConfigError",
     "LiveSignalSettings",
 ]
