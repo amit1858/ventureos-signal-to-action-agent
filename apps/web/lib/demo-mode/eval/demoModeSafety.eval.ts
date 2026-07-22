@@ -16,7 +16,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, join } from "node:path";
 
-import { isDemoModeEnabled } from "../featureFlag";
+import { isDemoModeValueEnabled, DEMO_MODE_ENV_VAR } from "../featureFlag";
 
 let passed = 0;
 let failed = 0;
@@ -65,20 +65,20 @@ function read(file: string): string {
 }
 
 // ===========================================================================
-console.log("\n[1] Feature flag disabled by default (cases 1, 2, 18)");
+console.log("\n[1] Feature-flag predicate is server-only + fails closed (cases 1, 2, 18)");
 // ===========================================================================
 {
-  check("disabled when flag absent", isDemoModeEnabled({}) === false);
-  check("disabled when flag empty",
-    isDemoModeEnabled({ NEXT_PUBLIC_VENTUREOS_DEMO_MODE: "" }) === false);
-  check("disabled when flag 'false'",
-    isDemoModeEnabled({ NEXT_PUBLIC_VENTUREOS_DEMO_MODE: "false" }) === false);
-  check("disabled when flag '1' (only exact 'true' enables)",
-    isDemoModeEnabled({ NEXT_PUBLIC_VENTUREOS_DEMO_MODE: "1" }) === false);
-  check("disabled when flag 'TRUE' (case-sensitive)",
-    isDemoModeEnabled({ NEXT_PUBLIC_VENTUREOS_DEMO_MODE: "TRUE" }) === false);
-  check("enabled only when flag exactly 'true'",
-    isDemoModeEnabled({ NEXT_PUBLIC_VENTUREOS_DEMO_MODE: "true" }) === true);
+  check("env var is the server-only VENTUREOS_DEMO_MODE (no NEXT_PUBLIC_)",
+    DEMO_MODE_ENV_VAR === "VENTUREOS_DEMO_MODE" && !DEMO_MODE_ENV_VAR.startsWith("NEXT_PUBLIC_"));
+  check("disabled when value absent", isDemoModeValueEnabled(undefined) === false);
+  check("disabled when value empty", isDemoModeValueEnabled("") === false);
+  check("disabled when value 'false'", isDemoModeValueEnabled("false") === false);
+  check("disabled when value '1' (only exact 'true' enables)",
+    isDemoModeValueEnabled("1") === false);
+  check("disabled when value 'TRUE' (case-sensitive)",
+    isDemoModeValueEnabled("TRUE") === false);
+  check("enabled only when value exactly 'true'",
+    isDemoModeValueEnabled("true") === true);
 }
 
 // ===========================================================================
@@ -131,17 +131,53 @@ console.log("\n[3] Fixtures are not duplicated into the frontend (case 31)");
 }
 
 // ===========================================================================
-console.log("\n[4] Route isolation + not-found gate (case 34)");
+console.log("\n[4] Route isolation + server-only gate (case 34)");
 // ===========================================================================
 {
   const page = read(join(ROUTE_DIR, "page.tsx"));
-  check("route gates on isDemoModeEnabled", page.includes("isDemoModeEnabled"));
+  check("route gates on the server-only access module",
+    page.includes("isDemoModeAccessible") && page.includes("access.server"));
   check("route returns notFound when disabled", page.includes("notFound()"));
   check("route opts out of indexing", page.includes("index: false"));
+  check("route does not read a NEXT_PUBLIC demo flag",
+    !page.includes("NEXT_PUBLIC_VENTUREOS_DEMO_MODE"));
   // The demo path must not be wired into any shared navigation/layout.
   const layout = read(resolve(WEB_ROOT, "app/layout.tsx"));
   check("root layout does not link the demo route",
     !layout.includes("/demo/signal-to-action"));
+}
+
+// ===========================================================================
+console.log("\n[4b] Server-only flag is never imported/read by client code");
+// ===========================================================================
+{
+  // Any file that opts into the client bundle must not touch the flag modules
+  // or process.env — the flag is decided only on the server.
+  for (const file of SOURCES) {
+    const src = read(file);
+    const base = file.slice(WEB_ROOT.length + 1);
+    const isClient = /^["']use client["'];?/m.test(src) || src.includes('"use client"');
+    if (isClient) {
+      check(`${base}: client component does not import access.server`,
+        !src.includes("access.server"));
+      check(`${base}: client component does not import featureFlag`,
+        !/from\s+["'].*demo-mode\/featureFlag["']/.test(src));
+      check(`${base}: client component does not read process.env`,
+        !src.includes("process.env"));
+      check(`${base}: client component does not name the demo flag`,
+        !src.includes("VENTUREOS_DEMO_MODE"));
+    }
+  }
+  // Only the server route reads the environment; the pure predicate never does.
+  const flag = read(join(LIB_DIR, "featureFlag.ts"));
+  check("featureFlag.ts is pure (no process.env read)", !flag.includes("process.env"));
+  const access = read(join(LIB_DIR, "access.server.ts"));
+  check("access.server.ts guards against browser evaluation",
+    access.includes('typeof window !== "undefined"'));
+  check("access.server.ts reads only the server-only var",
+    access.includes("DEMO_MODE_ENV_VAR") &&
+    !access.includes("process.env.NEXT_PUBLIC") &&
+    !access.includes("NEXT_PUBLIC_VENTUREOS_DEMO_MODE"));
 }
 
 // ===========================================================================

@@ -1,8 +1,11 @@
 // Governed Signal-to-Action Demo — `/demo/signal-to-action` route
 // ===============================================================
 // Isolated, feature-flagged Demo Mode. It is DISABLED by default and is NOT
-// added to Production navigation. When the public flag is absent or not exactly
-// "true", the route returns not-found — it never silently enables.
+// added to Production navigation. Access is decided ONLY on the server, by the
+// server-only `VENTUREOS_DEMO_MODE` flag (never bundled into browser JS); when
+// it is absent or not exactly "true", the route returns not-found — it never
+// silently enables. The deployment layer supplies hosting-level preview
+// protection as the second access factor (see the readiness report).
 //
 // The page is a pure consumer: it loads a build-time-generated, contract-
 // validated projection of the two committed governed journeys and renders it
@@ -13,7 +16,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Sparkles } from "lucide-react";
 
-import { isDemoModeEnabled } from "@/lib/demo-mode/featureFlag";
+import { isDemoModeAccessible } from "@/lib/demo-mode/access.server";
 import { loadDemoJourneys } from "@/lib/demo-mode/loadDemoJourney";
 import { DemoModeShell } from "@/components/demo-mode/DemoModeShell";
 
@@ -25,7 +28,9 @@ export const metadata = {
 };
 
 export default function SignalToActionDemoPage() {
-  if (!isDemoModeEnabled({ NEXT_PUBLIC_VENTUREOS_DEMO_MODE: process.env.NEXT_PUBLIC_VENTUREOS_DEMO_MODE })) {
+  // Server-only gate. Demo Mode is disabled unless the server-only flag is
+  // exactly "true"; any other state fails closed to the safe not-found.
+  if (!isDemoModeAccessible()) {
     notFound();
   }
 
