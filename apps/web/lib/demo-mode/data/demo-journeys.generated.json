@@ -1,0 +1,177 @@
+{
+  "schemaVersion": "1.0",
+  "generatedBy": "services/api/live_signals/presentation_web_export.py",
+  "generatedFrom": [
+    "demo_journey_live_single_source.json",
+    "demo_journey_controlled_execution.json"
+  ],
+  "defaultJourneyKey": "a",
+  "journeys": [
+    {
+      "key": "a",
+      "title": "Journey A \u2014 Governed Stop",
+      "subtitle": "Live single-source governed stop",
+      "supportsReplayEvidenceToggle": false,
+      "view": {
+        "schemaVersion": "1.0",
+        "headline": "curefoods-test: high-priority renewal-risk mission stopped at identity.",
+        "primaryNarrative": "curefoods-test's renewal date moved 62 days earlier (from 2026-08-31 to 2026-06-30), creating a high-priority renewal-risk mission. VentureOS stopped before execution because the account identity was supported by only one trusted source. No action was taken.",
+        "recommendation": "Corroborate this account through a second governed source, then re-run the governed mission.",
+        "journeyLabel": "Live single-source governed stop",
+        "governanceLabel": "Governed stop -- identity not corroborated",
+        "approvalLabel": "Not reached -- the journey stopped at identity verification",
+        "executionLabel": "No execution -- no receipt was produced",
+        "evidenceItems": [
+          "Account: curefoods-test (hubspot:246820626:335064019691)",
+          "Signal: renewal_date 2026-08-31 -> 2026-06-30 (adverse)",
+          "Mission: renewal_risk (priority high)",
+          "Change event: SCE-e85ee65385e06647",
+          "Evidence fingerprint linked: True"
+        ],
+        "auditLabel": "Not applicable -- no execution occurred",
+        "replayLabel": "Not applicable -- nothing was executed.",
+        "providerLabel": "NVIDIA unconfigured",
+        "safetyDisclosures": [
+          "Live signal",
+          "Single-source identity",
+          "Governed stop",
+          "No CRM write-back",
+          "NVIDIA unconfigured"
+        ],
+        "statusTone": "success",
+        "technicalDetails": [
+          "journey_id: demo-MSN-81690a7c4a50e237",
+          "journey_mode: live_single_source",
+          "execution_mode: governance_stop_only",
+          "mission_id: MSN-81690a7c4a50e237",
+          "rule: R-RENEWAL-ADVERSE v1",
+          "template: renewal_risk v1",
+          "governance_status: blocked",
+          "failure_code: ambiguous_identity",
+          "identity_status: unverified",
+          "provenance_mode: live_single_source",
+          "source_event_id: SCE-e85ee65385e06647",
+          "change_fingerprint: sig1:716f86dcaf33cc3c80930e16ae196e2725f6cb7aa2422ff285e1e23ff5931b21",
+          "ledger_reference: LR-29ac61cf7d96c414",
+          "provider_status: unconfigured (used=False, fallback=False)",
+          "validation_status: not_applicable",
+          "journey_validation: evidence=True, provenance=True, approval=True, execution=True, receipt=True, audit=True, grounded=True, writeback_absent=True",
+          "verdict: pass"
+        ],
+        "sourceResultReference": "demo-MSN-81690a7c4a50e237 (schema 1.0)"
+      },
+      "replayValidatedView": null
+    },
+    {
+      "key": "b",
+      "title": "Journey B \u2014 Governed Simulated Execution",
+      "subtitle": "Controlled governed simulated execution",
+      "supportsReplayEvidenceToggle": true,
+      "view": {
+        "schemaVersion": "1.0",
+        "headline": "curefoods-test: renewal-risk mission -- simulated execution complete.",
+        "primaryNarrative": "curefoods-test's renewal date moved 62 days earlier (from 2026-08-31 to 2026-06-30) created a high-priority renewal-risk mission. After explicit human approval, VentureOS ran the simulated action exactly once and recorded a receipt. No CRM write-back has occurred.",
+        "recommendation": "Confirm the simulated receipt in the audit ledger; no live CRM change has been made.",
+        "journeyLabel": "Controlled governed execution (offline corroboration)",
+        "governanceLabel": "Proceeded -- governance cleared after explicit human approval",
+        "approvalLabel": "Human approved (explicitly supplied)",
+        "executionLabel": "Simulated execution -- one receipt recorded (no CRM write-back)",
+        "evidenceItems": [
+          "Account: curefoods-test (hubspot:246820626:335064019691)",
+          "Signal: renewal_date 2026-08-31 -> 2026-06-30 (adverse)",
+          "Mission: renewal_risk (priority high)",
+          "Change event: SCE-e85ee65385e06647",
+          "Evidence fingerprint linked: True",
+          "Corroboration: controlled offline source (salesforce) -- not a live multi-source integration"
+        ],
+        "auditLabel": "Audit chain verified",
+        "replayLabel": "Not observed in this journey result.",
+        "providerLabel": "NVIDIA unconfigured",
+        "safetyDisclosures": [
+          "Live signal",
+          "Controlled offline corroboration",
+          "Not live multi-source execution",
+          "Human approved",
+          "Simulated execution",
+          "Audit verified",
+          "No CRM write-back",
+          "NVIDIA unconfigured"
+        ],
+        "statusTone": "success",
+        "technicalDetails": [
+          "journey_id: demo-MSN-81690a7c4a50e237",
+          "journey_mode: controlled_governed_execution",
+          "execution_mode: simulation_only",
+          "mission_id: MSN-81690a7c4a50e237",
+          "rule: R-RENEWAL-ADVERSE v1",
+          "template: renewal_risk v1",
+          "governance_status: completed",
+          "failure_code: None",
+          "identity_status: corroborated",
+          "provenance_mode: controlled_offline_corroborated",
+          "source_event_id: SCE-e85ee65385e06647",
+          "change_fingerprint: sig1:716f86dcaf33cc3c80930e16ae196e2725f6cb7aa2422ff285e1e23ff5931b21",
+          "ledger_reference: LR-4c5b724c97f5ab7d",
+          "provider_status: unconfigured (used=False, fallback=False)",
+          "validation_status: not_applicable",
+          "journey_validation: evidence=True, provenance=True, approval=True, execution=True, receipt=True, audit=True, grounded=True, writeback_absent=True",
+          "verdict: pass"
+        ],
+        "sourceResultReference": "demo-MSN-81690a7c4a50e237 (schema 1.0)"
+      },
+      "replayValidatedView": {
+        "schemaVersion": "1.0",
+        "headline": "curefoods-test: renewal-risk mission -- simulated execution complete.",
+        "primaryNarrative": "curefoods-test's renewal date moved 62 days earlier (from 2026-08-31 to 2026-06-30) created a high-priority renewal-risk mission. After explicit human approval, VentureOS ran the simulated action exactly once and recorded a receipt. No CRM write-back has occurred.",
+        "recommendation": "Confirm the simulated receipt in the audit ledger; no live CRM change has been made.",
+        "journeyLabel": "Controlled governed execution (offline corroboration)",
+        "governanceLabel": "Proceeded -- governance cleared after explicit human approval",
+        "approvalLabel": "Human approved (explicitly supplied)",
+        "executionLabel": "Simulated execution -- one receipt recorded (no CRM write-back)",
+        "evidenceItems": [
+          "Account: curefoods-test (hubspot:246820626:335064019691)",
+          "Signal: renewal_date 2026-08-31 -> 2026-06-30 (adverse)",
+          "Mission: renewal_risk (priority high)",
+          "Change event: SCE-e85ee65385e06647",
+          "Evidence fingerprint linked: True",
+          "Corroboration: controlled offline source (salesforce) -- not a live multi-source integration"
+        ],
+        "auditLabel": "Audit chain verified",
+        "replayLabel": "Validated separately -- the same receipt was reused and no duplicate action was created.",
+        "providerLabel": "NVIDIA unconfigured",
+        "safetyDisclosures": [
+          "Live signal",
+          "Controlled offline corroboration",
+          "Not live multi-source execution",
+          "Human approved",
+          "Simulated execution",
+          "Audit verified",
+          "Replay -- no duplicate action",
+          "No CRM write-back",
+          "NVIDIA unconfigured"
+        ],
+        "statusTone": "success",
+        "technicalDetails": [
+          "journey_id: demo-MSN-81690a7c4a50e237",
+          "journey_mode: controlled_governed_execution",
+          "execution_mode: simulation_only",
+          "mission_id: MSN-81690a7c4a50e237",
+          "rule: R-RENEWAL-ADVERSE v1",
+          "template: renewal_risk v1",
+          "governance_status: completed",
+          "failure_code: None",
+          "identity_status: corroborated",
+          "provenance_mode: controlled_offline_corroborated",
+          "source_event_id: SCE-e85ee65385e06647",
+          "change_fingerprint: sig1:716f86dcaf33cc3c80930e16ae196e2725f6cb7aa2422ff285e1e23ff5931b21",
+          "ledger_reference: LR-4c5b724c97f5ab7d",
+          "provider_status: unconfigured (used=False, fallback=False)",
+          "validation_status: not_applicable",
+          "journey_validation: evidence=True, provenance=True, approval=True, execution=True, receipt=True, audit=True, grounded=True, writeback_absent=True",
+          "verdict: pass"
+        ],
+        "sourceResultReference": "demo-MSN-81690a7c4a50e237 (schema 1.0)"
+      }
+    }
+  ]
+}
