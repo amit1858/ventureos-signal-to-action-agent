@@ -87,6 +87,16 @@ export function LandingView({
             <button type="button" onClick={onEnter} className="btn btn-primary px-5 py-3 text-sm font-semibold">
               Enter Command Center <ArrowRight size={16} />
             </button>
+            {/* Interactive Demo — a first-class product action. Uses the brand
+                outline treatment so it reads with slightly more weight than the
+                ghost secondaries, without competing with the solid primary.
+                Navigates to the existing read-only governed demo route. */}
+            <a
+              href="/demo/signal-to-action"
+              className="btn btn-outline-primary px-5 py-3 text-sm font-semibold"
+            >
+              <Sparkles size={16} aria-hidden="true" /> Try Interactive Demo
+            </a>
             <button
               type="button"
               onClick={() => scrollTo("how-it-works")}

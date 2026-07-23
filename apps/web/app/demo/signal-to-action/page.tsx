@@ -48,7 +48,7 @@ export default function SignalToActionDemoPage() {
               <div className="flex items-center gap-2">
                 <span className="text-[15px] font-semibold leading-tight text-ink">Signal-to-Action</span>
                 <span className="rounded border border-gov/40 bg-gov/10 px-1.5 py-[1px] text-[9px] font-medium uppercase tracking-wider text-gov-bright">
-                  Internal Demo
+                  Interactive Demo
                 </span>
               </div>
               <p className="text-[11px] leading-tight text-muted">

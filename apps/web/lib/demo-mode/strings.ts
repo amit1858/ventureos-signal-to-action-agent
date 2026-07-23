@@ -8,8 +8,8 @@ export const DEMO_STRINGS = {
   eyebrow: "VentureOS · Signal-to-Action",
   title: "Governed Signal-to-Action Demo",
   intro:
-    "One signal, one mission, one governed outcome. This is an internal demo of two validated governed journeys, rendered read-only from committed results. No live CRM change is made.",
-  bannerLabel: "Internal demo — read-only presentation of governed results",
+    "One signal, one mission, one governed outcome. Experience VentureOS using deterministic demo data — two validated governed journeys, rendered read-only from committed results. This walkthrough demonstrates governed AI decision-making. No customer data is used. No CRM actions are performed. No live systems are modified.",
+  bannerLabel: "Interactive Product Demonstration — read-only presentation of governed results",
   selectorLabel: "Journey",
   sections: {
     narrative: "What the AI says",
