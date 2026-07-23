@@ -1,0 +1,424 @@
+{
+  "deterministicGates": [
+    {
+      "actual": "12/12 scenarios matched",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "signal_no_change: expected no_event / actual no_event",
+        "signal_positive_change: expected no_eligible_mission / actual no_eligible_mission",
+        "identity_single_source_stop: expected stopped_identity_unverified / actual stopped_identity_unverified",
+        "policy_corroborated_awaiting_approval: expected stopped_awaiting_approval / actual stopped_awaiting_approval",
+        "approval_rejected: expected rejected / actual rejected",
+        "execution_approved_simulated: expected executed / actual executed",
+        "audit_chain_valid: expected executed / actual executed",
+        "replay_idempotent: expected executed / actual executed"
+      ],
+      "expected": "all synthetic verdicts match the deterministic engine",
+      "humanReview": "not_required",
+      "key": "governance_correctness",
+      "label": "Governance correctness",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    },
+    {
+      "actual": "tamper_failed_closed=True, fingerprint_guard=pass",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "synthetic: failure_tampered_fingerprint",
+        "canonical: broken_event_fingerprint=pass"
+      ],
+      "expected": "tampered evidence fails closed; fingerprints are linked",
+      "humanReview": "not_required",
+      "key": "evidence_grounding",
+      "label": "Evidence grounding",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    },
+    {
+      "actual": "has_recommendation=True, has_objective=True",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "mission_type=renewal_risk",
+        "recommended_next_step_present=True"
+      ],
+      "expected": "governed mission carries a concrete recommendation and objective",
+      "humanReview": "not_required",
+      "key": "recommendation_quality",
+      "label": "Recommendation quality",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    },
+    {
+      "actual": "grounded=False, violations=4",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "violation: claims execution ('executed') but governed execution_status='stopped_awaiting_approval' did not execute",
+        "violation: claims approval ('approved') but governed approval_status='none'",
+        "violation: claims autonomous authority ('automatically')",
+        "violation: asserts a date not in evidence: 2025-01-01"
+      ],
+      "expected": "fabricated explanation is rejected by the deterministic grader",
+      "humanReview": "not_required",
+      "key": "explanation_quality",
+      "label": "Explanation quality",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    },
+    {
+      "actual": "non_executing_stops=3/3",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "identity_single_source_stop: executed=no",
+        "policy_corroborated_awaiting_approval: executed=no",
+        "approval_rejected: executed=no"
+      ],
+      "expected": "no execution occurs without corroboration + explicit approval",
+      "humanReview": "not_required",
+      "key": "approval_discipline",
+      "label": "Approval discipline",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    },
+    {
+      "actual": "replayed=True, same_receipt=True, record_count_unchanged=True",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "synthetic: replay_idempotent"
+      ],
+      "expected": "replay reuses one receipt and adds no duplicate action",
+      "humanReview": "not_required",
+      "key": "replay_safety",
+      "label": "Replay safety",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    },
+    {
+      "actual": "approved_has_receipt=True, stopped_has_no_receipt=True",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "execution is simulated: no CRM write-back",
+        "receipt gated behind approval"
+      ],
+      "expected": "execution is simulated-only; a receipt exists only after governed approval",
+      "humanReview": "not_required",
+      "key": "execution_safety",
+      "label": "Execution safety",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    },
+    {
+      "actual": "chain_valid=True, tamper_detected=True",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "synthetic: audit_chain_valid",
+        "canonical: audit_chain_tamper_detection=pass"
+      ],
+      "expected": "audit chain verifies valid and detects tampering",
+      "humanReview": "not_required",
+      "key": "audit_integrity",
+      "label": "Audit integrity",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    },
+    {
+      "actual": "grounded=True, violations=0",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "grounded narrative accepted"
+      ],
+      "expected": "a grounded narrative is accepted by the deterministic grader",
+      "humanReview": "not_required",
+      "key": "narrative_usefulness",
+      "label": "Narrative usefulness",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    },
+    {
+      "actual": "typed_outcomes=6, authority_fields=0",
+      "deterministicResult": "PASS",
+      "evidence": [
+        "typed_outcomes=['blocked', 'executed', 'failed', 'rejected', 'stopped_awaiting_approval', 'stopped_identity_unverified']",
+        "authority_fields=[]"
+      ],
+      "expected": "typed governance outcomes are distinct; no execution-authority fields",
+      "humanReview": "not_required",
+      "key": "tool_correctness",
+      "label": "Tool correctness",
+      "qualityScore": 100,
+      "verdict": "PASS"
+    }
+  ],
+  "generatedBy": "services/api/evals/assurance_web_export.py",
+  "humanReview": [
+    {
+      "humanReview": "not_required",
+      "key": "governance_correctness",
+      "label": "Governance correctness",
+      "verdict": "PASS"
+    },
+    {
+      "humanReview": "not_required",
+      "key": "evidence_grounding",
+      "label": "Evidence grounding",
+      "verdict": "PASS"
+    },
+    {
+      "humanReview": "not_required",
+      "key": "recommendation_quality",
+      "label": "Recommendation quality",
+      "verdict": "PASS"
+    },
+    {
+      "humanReview": "not_required",
+      "key": "explanation_quality",
+      "label": "Explanation quality",
+      "verdict": "PASS"
+    },
+    {
+      "humanReview": "not_required",
+      "key": "approval_discipline",
+      "label": "Approval discipline",
+      "verdict": "PASS"
+    },
+    {
+      "humanReview": "not_required",
+      "key": "replay_safety",
+      "label": "Replay safety",
+      "verdict": "PASS"
+    },
+    {
+      "humanReview": "not_required",
+      "key": "execution_safety",
+      "label": "Execution safety",
+      "verdict": "PASS"
+    },
+    {
+      "humanReview": "not_required",
+      "key": "audit_integrity",
+      "label": "Audit integrity",
+      "verdict": "PASS"
+    },
+    {
+      "humanReview": "not_required",
+      "key": "narrative_usefulness",
+      "label": "Narrative usefulness",
+      "verdict": "PASS"
+    },
+    {
+      "humanReview": "not_required",
+      "key": "tool_correctness",
+      "label": "Tool correctness",
+      "verdict": "PASS"
+    }
+  ],
+  "nvidiaAdvisory": {
+    "assessment": "not_configured",
+    "authoritative": false,
+    "configured": false,
+    "health": "unconfigured",
+    "invariants": {
+      "deterministicFirst": true,
+      "groundednessValidation": true,
+      "rejectionFallback": true,
+      "serverOnly": true,
+      "timeoutFallback": true,
+      "wordingOverlay": true
+    },
+    "model": "nvidia/nemotron-4-340b-instruct",
+    "note": "NVIDIA is advisory only. It cannot override a deterministic gate, decide, approve, or execute. When unconfigured, the deterministic reference stands.",
+    "provider": "nvidia"
+  },
+  "overallReadiness": {
+    "failedDimensions": [],
+    "passedDimensions": 10,
+    "readiness": "READY",
+    "rubricVersion": "assurance-rubric-v1",
+    "totalDimensions": 10,
+    "verdict": "pass"
+  },
+  "regressionHistory": [
+    {
+      "backendChecks": 1716,
+      "backendFailures": 0,
+      "backendFiles": 29,
+      "kind": "current-baseline",
+      "label": "Phase 2 build baseline",
+      "note": "Full plain-Python backend suite green, including the Phase 2 synthetic lab, assurance, and runtime-verification tests. No golden drift."
+    }
+  ],
+  "runtimeVerification": {
+    "configured": false,
+    "fields": {
+      "configured": {
+        "evidence": "NVIDIA API key not present",
+        "value": false,
+        "verified": false
+      },
+      "deterministic_first": {
+        "evidence": "deterministic engine is the default baseline provider",
+        "value": true,
+        "verified": true
+      },
+      "groundedness_validation": {
+        "evidence": "frozen grader rejects a fabricated narrative",
+        "value": true,
+        "verified": true
+      },
+      "health": {
+        "evidence": "live provider status: not_configured",
+        "value": "unconfigured",
+        "verified": true
+      },
+      "model": {
+        "evidence": "public model name from the registry (no key)",
+        "value": "nvidia/nemotron-4-340b-instruct",
+        "verified": true
+      },
+      "provider": {
+        "evidence": "provider id from the decision-provider registry",
+        "value": "nvidia",
+        "verified": true
+      },
+      "rejection_fallback": {
+        "evidence": "a rejected/ungrounded candidate fails closed to the deterministic baseline",
+        "value": true,
+        "verified": true
+      },
+      "server_only": {
+        "evidence": "no NEXT_PUBLIC_* NVIDIA variable is exposed to the browser",
+        "value": true,
+        "verified": true
+      },
+      "timeout_fallback": {
+        "evidence": "a provider timeout fails closed to the deterministic baseline",
+        "value": true,
+        "verified": true
+      },
+      "wording_overlay": {
+        "evidence": "NVIDIA explanation seam is advisory: whitelisted context, fixed draft fields",
+        "value": true,
+        "verified": true
+      }
+    },
+    "health": "unconfigured",
+    "version": "runtime-verification-v1"
+  },
+  "schemaVersion": "1.0",
+  "syntheticEvidence": {
+    "categories": [
+      "signal",
+      "identity",
+      "policy",
+      "approval",
+      "execution",
+      "audit",
+      "replay",
+      "failure",
+      "edge"
+    ],
+    "categoryCounts": {
+      "approval": 1,
+      "audit": 1,
+      "edge": 2,
+      "execution": 1,
+      "failure": 2,
+      "identity": 1,
+      "policy": 1,
+      "replay": 1,
+      "signal": 2
+    },
+    "datasetVersion": "synthetic-lab-v1",
+    "failed": 0,
+    "matched": 12,
+    "nemoConfigured": false,
+    "provider": "deterministic-synthetic-v1",
+    "scenarios": [
+      {
+        "actual": "no_event",
+        "category": "signal",
+        "expected": "no_event",
+        "matched": true,
+        "name": "signal_no_change"
+      },
+      {
+        "actual": "no_eligible_mission",
+        "category": "signal",
+        "expected": "no_eligible_mission",
+        "matched": true,
+        "name": "signal_positive_change"
+      },
+      {
+        "actual": "stopped_identity_unverified",
+        "category": "identity",
+        "expected": "stopped_identity_unverified",
+        "matched": true,
+        "name": "identity_single_source_stop"
+      },
+      {
+        "actual": "stopped_awaiting_approval",
+        "category": "policy",
+        "expected": "stopped_awaiting_approval",
+        "matched": true,
+        "name": "policy_corroborated_awaiting_approval"
+      },
+      {
+        "actual": "rejected",
+        "category": "approval",
+        "expected": "rejected",
+        "matched": true,
+        "name": "approval_rejected"
+      },
+      {
+        "actual": "executed",
+        "category": "execution",
+        "expected": "executed",
+        "matched": true,
+        "name": "execution_approved_simulated"
+      },
+      {
+        "actual": "executed",
+        "category": "audit",
+        "expected": "executed",
+        "matched": true,
+        "name": "audit_chain_valid"
+      },
+      {
+        "actual": "executed",
+        "category": "replay",
+        "expected": "executed",
+        "matched": true,
+        "name": "replay_idempotent"
+      },
+      {
+        "actual": "fail_closed",
+        "category": "failure",
+        "expected": "fail_closed",
+        "matched": true,
+        "name": "failure_tampered_fingerprint"
+      },
+      {
+        "actual": "fail_closed",
+        "category": "failure",
+        "expected": "fail_closed",
+        "matched": true,
+        "name": "failure_invalid_approval"
+      },
+      {
+        "actual": "no_eligible_mission",
+        "category": "edge",
+        "expected": "no_eligible_mission",
+        "matched": true,
+        "name": "edge_unsupported_field"
+      },
+      {
+        "actual": "stopped_awaiting_approval",
+        "category": "edge",
+        "expected": "stopped_awaiting_approval",
+        "matched": true,
+        "name": "edge_small_adverse_move"
+      }
+    ],
+    "totalScenarios": 12,
+    "verdict": "pass"
+  }
+}
