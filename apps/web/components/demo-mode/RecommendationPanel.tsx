@@ -8,7 +8,7 @@ import { DemoSection } from "./DemoSection";
 // copy itself never claims an action was taken.
 export function RecommendationPanel({ view }: { view: DemoPresentationView }) {
   return (
-    <DemoSection index={2} title="Recommended next step" headingId="demo-recommendation-heading">
+    <DemoSection title="Recommended next step" headingId="demo-recommendation-heading">
       <div className="flex items-start gap-3 rounded-lg border border-brand/30 bg-brand/5 px-4 py-3">
         <ArrowRight size={16} className="mt-0.5 shrink-0 text-brand-bright" aria-hidden="true" />
         <div>

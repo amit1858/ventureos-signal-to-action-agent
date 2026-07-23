@@ -9,7 +9,7 @@ import { statusToneChipClass, statusToneWord } from "./tone";
 // successful product outcome, not a failure.
 export function GovernanceOutcome({ view }: { view: DemoPresentationView }) {
   return (
-    <DemoSection index={3} title="Governance outcome" headingId="demo-governance-heading">
+    <DemoSection title="Governance outcome" headingId="demo-governance-heading">
       <div className="flex items-start gap-3">
         <ShieldCheck size={18} className="mt-0.5 shrink-0 text-gov-bright" aria-hidden="true" />
         <div className="flex-1">
