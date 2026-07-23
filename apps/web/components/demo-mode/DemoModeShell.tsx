@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  Flag,
   Play,
   RotateCcw,
 } from "lucide-react";
@@ -283,14 +282,16 @@ function FlowControls({
           <ArrowRight size={15} aria-hidden="true" />
         </button>
       )}
-      <button
-        type="button"
-        onClick={onRestart}
-        className="btn btn-ghost ml-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
-      >
-        <Flag size={14} aria-hidden="true" />
-        {g.restart}
-      </button>
+      {last ? null : (
+        <button
+          type="button"
+          onClick={onRestart}
+          className="btn btn-ghost ml-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+        >
+          <RotateCcw size={14} aria-hidden="true" />
+          {g.restart}
+        </button>
+      )}
     </div>
   );
 }
