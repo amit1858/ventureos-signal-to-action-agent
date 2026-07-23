@@ -1,0 +1,56 @@
+{
+  "adverse_renewal_change": {
+    "mission_id_deterministic": true,
+    "mission_type": "renewal_risk",
+    "priority": "high"
+  },
+  "audit_chain_tamper_detection": {
+    "valid_after_tamper": false,
+    "valid_before_tamper": true
+  },
+  "broken_event_fingerprint": {
+    "failed_closed_before_harness": true
+  },
+  "corroborated_approved": {
+    "chain_valid": true,
+    "executed": true,
+    "has_receipt": true,
+    "status": "executed"
+  },
+  "corroborated_no_approval": {
+    "executed": false,
+    "has_receipt": false,
+    "status": "stopped_awaiting_approval"
+  },
+  "corroborated_rejected": {
+    "executed": false,
+    "has_receipt": false,
+    "status": "rejected"
+  },
+  "hallucinated_narrative_claim": {
+    "fabricated_rejected": true,
+    "grounded_accepted": true
+  },
+  "no_change": {
+    "detection_status": "unchanged",
+    "event_emitted": false
+  },
+  "positive_change": {
+    "direction": "positive",
+    "selection_status": "no_eligible_mission"
+  },
+  "replay_idempotency": {
+    "record_count_unchanged": true,
+    "replayed": true,
+    "same_receipt": true
+  },
+  "single_source_identity": {
+    "executed": false,
+    "failure_code": "ambiguous_identity",
+    "has_receipt": false,
+    "status": "stopped_identity_unverified"
+  },
+  "unsupported_signal": {
+    "selection_status": "no_eligible_mission"
+  }
+}

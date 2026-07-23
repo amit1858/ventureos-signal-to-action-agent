@@ -313,6 +313,24 @@ class HubSpotConnector(CRMConnector):
             "companies", self.sync_limit, properties=["name", mapper.prop("account_id")]
         )
 
+    def get_company(self, company_id: str, properties: Optional[List[str]] = None) -> dict:
+        """Read a single Company by id -- GET only, read-only, never writes.
+
+        Requires the read gate (``HUBSPOT_ENABLED`` + token); it deliberately does
+        NOT require the write-back gate, and it issues exactly one GET. Only the
+        requested ``properties`` are fetched (or the minimal identity ``name``), so
+        no more data than needed is read. Returns the raw HubSpot object dict; it
+        never seeds, updates, or otherwise mutates the CRM. This is the sole read
+        entry point the Phase 2A live-signal adapter is permitted to use."""
+        self._require_configured()
+        cid = (company_id or "").strip()
+        if not cid:
+            raise CRMRequestError("A company id is required to read a HubSpot company.")
+        props = properties or ["name"]
+        params: Dict[str, object] = {"properties": ",".join(props)}
+        path = f"/crm/v3/objects/companies/{urllib.parse.quote(cid, safe='')}"
+        return self._checked("GET", path, params=params)
+
     # -- seeding (write) --------------------------------------------------
 
     def seed_demo_data(
