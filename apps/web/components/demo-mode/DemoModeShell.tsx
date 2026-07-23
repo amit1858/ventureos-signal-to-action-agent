@@ -44,6 +44,8 @@ import { AuditReplayPanel } from "./AuditReplayPanel";
 import { ProviderStatus } from "./ProviderStatus";
 import { SafetyDisclosures } from "./SafetyDisclosures";
 import { TechnicalDisclosure } from "./TechnicalDisclosure";
+import { RevenueCompanionPanel } from "../revenue-companion/RevenueCompanionPanel";
+import type { RevenueCompanionViewModel } from "@/lib/revenue-companion/companionContract";
 
 // Orchestrates the demo experience as a GUIDED walkthrough. It owns only
 // presentation state: which journey is shown, whether separately-validated
@@ -51,7 +53,20 @@ import { TechnicalDisclosure } from "./TechnicalDisclosure";
 // It never mutates the loaded document and never derives governed facts
 // client-side — every fact comes from the pre-validated view model, and the
 // guided stages are just an ordered lens over that same immutable view.
-export function DemoModeShell({ doc }: { doc: DemoJourneysDoc }) {
+//
+// `companions` is an OPTIONAL, server-built map of groundedness-validated Revenue
+// Companion view models (one per journey key). It is supplied only when the
+// server-only `VENTUREOS_REVENUE_COMPANION` flag is on; when it is absent, this
+// component renders exactly as before (byte-identical). The companion is a
+// presentation-only restatement of the same immutable view — it adds no state,
+// no facts, and no authority, and its actions only open the existing walkthrough.
+export function DemoModeShell({
+  doc,
+  companions,
+}: {
+  doc: DemoJourneysDoc;
+  companions?: Record<string, RevenueCompanionViewModel>;
+}) {
   const [selectedKey, setSelectedKey] = React.useState(doc.defaultJourneyKey);
   const [showReplayValidated, setShowReplayValidated] = React.useState(false);
   const [flow, setFlow] = React.useState<GuidedState>(INITIAL_GUIDED_STATE);
@@ -59,6 +74,7 @@ export function DemoModeShell({ doc }: { doc: DemoJourneysDoc }) {
   const journey =
     doc.journeys.find((j) => j.key === selectedKey) ?? doc.journeys[0];
   const view = selectView(journey, showReplayValidated);
+  const companion = companions ? companions[journey.key] : undefined;
 
   function handleSelect(key: string) {
     if (key === selectedKey) return;
@@ -94,7 +110,18 @@ export function DemoModeShell({ doc }: { doc: DemoJourneysDoc }) {
       </div>
 
       {!flow.started ? (
-        <OpeningCard onStart={() => setFlow(startFlow())} />
+        <>
+          {companion ? (
+            <div className="mt-6">
+              <RevenueCompanionPanel
+                vm={companion}
+                onPrimary={() => setFlow(startFlow())}
+                onSecondary={() => setFlow(nextStage(startFlow()))}
+              />
+            </div>
+          ) : null}
+          <OpeningCard onStart={() => setFlow(startFlow())} />
+        </>
       ) : (
         <div className="mt-6 space-y-5">
           <ProgressRail flow={flow} onJump={(i) => setFlow(goToStage(flow, i))} />

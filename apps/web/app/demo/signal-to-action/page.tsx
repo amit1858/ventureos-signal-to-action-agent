@@ -19,6 +19,8 @@ import { Sparkles } from "lucide-react";
 import { isDemoModeAccessible } from "@/lib/demo-mode/access.server";
 import { loadDemoJourneys } from "@/lib/demo-mode/loadDemoJourney";
 import { DemoModeShell } from "@/components/demo-mode/DemoModeShell";
+import { isRevenueCompanionAccessible } from "@/lib/revenue-companion/access.server";
+import { buildCompanionsForDoc } from "@/lib/revenue-companion/buildCompanions.server";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,14 @@ export default function SignalToActionDemoPage() {
   }
 
   const doc = loadDemoJourneys();
+
+  // Additive, server-only: when the Revenue Companion flag is on, build the
+  // groundedness-validated companion view models and hand them to the shell. When
+  // the flag is off (the default, including Production), `companions` is undefined
+  // and the shell renders exactly as before.
+  const companions = isRevenueCompanionAccessible()
+    ? buildCompanionsForDoc(doc)
+    : undefined;
 
   return (
     <div className="flex min-h-screen flex-col bg-base">
@@ -59,7 +69,7 @@ export default function SignalToActionDemoPage() {
         </div>
       </header>
       <main className="flex-1">
-        <DemoModeShell doc={doc} />
+        <DemoModeShell doc={doc} companions={companions} />
       </main>
     </div>
   );
