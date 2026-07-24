@@ -203,6 +203,25 @@ body {
   animation: sceneIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Revenue Companion (Phase 3.2) — transient focus ring the embedded overlay
+   places on an EXISTING Action Center panel to guide the seller's eye. Purely
+   presentational; it changes no data and fades on its own. */
+@keyframes companionFocusPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(56 189 248 / 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 6px rgb(56 189 248 / 0);
+  }
+}
+.companion-focus-ring {
+  border-radius: 0.75rem;
+  outline: 2px solid rgb(56 189 248 / 0.7);
+  outline-offset: 3px;
+  animation: companionFocusPulse 1.2s ease-out 2;
+  scroll-margin-top: 84px;
+}
+
 /* Honour reduced-motion: disable counters, lifts and looping animations. */
 @media (prefers-reduced-motion: reduce) {
   *,

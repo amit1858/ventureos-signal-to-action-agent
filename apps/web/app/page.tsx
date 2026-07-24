@@ -61,6 +61,8 @@ import { SellerMissionControl, type NextMissionPreview } from "@/components/comm
 import { WhyThisAccount } from "@/components/WhyThisAccount";
 import { buildAccountSelectionContext, type AccountSelectionContext } from "@/lib/accountSelectionContext";
 import { LandingView } from "@/components/landing/LandingView";
+import { RevenueCompanionOverlay } from "@/components/revenue-companion/RevenueCompanionOverlay";
+import type { VoiceStatusProp } from "@/components/revenue-companion/VoicePlaybackControl";
 import { EvaluationView } from "@/components/evaluation/EvaluationView";
 import { WorkspaceQuery } from "@/components/WorkspaceQuery";
 import { ThinkingSequence } from "@/components/ThinkingSequence";
@@ -194,6 +196,7 @@ export default function Page() {
   // is a monotonic signal the homepage uses to ask the workspace to open the
   // embedded companion; it never carries data and never mutates governed state.
   const [companionAvailable, setCompanionAvailable] = React.useState(false);
+  const [companionVoice, setCompanionVoice] = React.useState<VoiceStatusProp | undefined>(undefined);
   const [companionAutoOpen, setCompanionAutoOpen] = React.useState(0);
 
   React.useEffect(() => {
@@ -201,7 +204,11 @@ export default function Page() {
     fetch("/api/revenue-companion/availability", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { available: false }))
       .then((d) => {
-        if (!cancelled) setCompanionAvailable(Boolean(d?.available));
+        if (cancelled) return;
+        setCompanionAvailable(Boolean(d?.available));
+        setCompanionVoice(
+          d?.voice && typeof d.voice === "object" ? (d.voice as VoiceStatusProp) : undefined,
+        );
       })
       .catch(() => {
         if (!cancelled) setCompanionAvailable(false);
@@ -213,7 +220,7 @@ export default function Page() {
 
   const openCompanionInWorkspace = React.useCallback(() => {
     setCompanionAutoOpen((n) => n + 1);
-    setView("workspace");
+    setView("command");
   }, []);
 
   const refreshHubStatus = React.useCallback(async (probe = false) => {
@@ -1264,6 +1271,12 @@ export default function Page() {
               <AlertTriangle size={16} />
               {runError}
             </div>
+          ) : null}
+          {companionAvailable ? (
+            <RevenueCompanionOverlay
+              voiceStatus={companionVoice}
+              autoOpenSignal={companionAutoOpen}
+            />
           ) : null}
           <CommandCenter
             meta={meta}

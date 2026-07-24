@@ -67,6 +67,10 @@ const read = (f: string): string => readFileSync(f, "utf8");
 //  - the client playback control may call ONLY the same-origin voice route.
 const VOICE_PROVIDER = join("revenue-companion", "voice", "gnaniProvider.server.ts");
 const VOICE_CONTROL = join("revenue-companion", "VoicePlaybackControl.tsx");
+// The embedded Action Center overlay is the third permitted network caller. Like
+// the voice control it is a same-origin-only client component: it may call ONLY
+// the governed answer route and never an external host.
+const OVERLAY_CONTROL = join("revenue-companion", "RevenueCompanionOverlay.tsx");
 
 // ===========================================================================
 console.log("\n[1] Feature-flag predicate is server-only + fails closed");
@@ -100,6 +104,7 @@ console.log("\n[2] No network / CRM write-back / NVIDIA transport / ledger / mut
     const isGuardOwner = base.endsWith(join("revenue-companion", "companionContract.ts"));
     const isVoiceProvider = base.endsWith(VOICE_PROVIDER);
     const isVoiceControl = base.endsWith(VOICE_CONTROL);
+    const isOverlayControl = base.endsWith(OVERLAY_CONTROL);
 
     if (isVoiceProvider) {
       // Server-only provider: exactly one fetch, targeting ONLY the Gnani
@@ -114,6 +119,12 @@ console.log("\n[2] No network / CRM write-back / NVIDIA transport / ledger / mut
       const fetchCount = (src.match(/\bfetch\s*\(/g) ?? []).length;
       check(`${base}: has exactly one network call`, fetchCount === 1);
       check(`${base}: only calls the same-origin voice route`, src.includes('fetch("/api/revenue-companion/voice"'));
+      check(`${base}: contacts no external host`, !/fetch\(\s*["'`]https?:/i.test(src));
+    } else if (isOverlayControl) {
+      // Embedded overlay: fetch ONLY the same-origin answer route; no external host.
+      const fetchCount = (src.match(/\bfetch\s*\(/g) ?? []).length;
+      check(`${base}: has exactly one network call`, fetchCount === 1);
+      check(`${base}: only calls the same-origin answer route`, src.includes('fetch("/api/revenue-companion/answer"'));
       check(`${base}: contacts no external host`, !/fetch\(\s*["'`]https?:/i.test(src));
     } else {
       check(`${base}: no network primitive`, !networkRe.test(src));

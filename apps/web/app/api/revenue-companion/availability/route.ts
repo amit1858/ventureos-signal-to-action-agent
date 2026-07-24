@@ -12,6 +12,7 @@
 import { NextResponse } from "next/server";
 
 import { isRevenueCompanionAccessible } from "../../../../lib/revenue-companion/access.server";
+import { resolveVoicePresentationStatus } from "../../../../lib/revenue-companion/voice/access.server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -19,8 +20,13 @@ export const runtime = "nodejs";
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
 export function GET(): Response {
+  const available = isRevenueCompanionAccessible();
+  // Voice status is a truthful booleans-only projection (offered/configured/
+  // classification) — never a key, endpoint, or fragment. Only surfaced when the
+  // companion itself is available; otherwise the client gets no voice affordance.
+  const voice = available ? resolveVoicePresentationStatus() : null;
   return NextResponse.json(
-    { available: isRevenueCompanionAccessible() },
+    { available, voice: voice && voice.offered ? voice : null },
     { status: 200, headers: NO_STORE },
   );
 }
