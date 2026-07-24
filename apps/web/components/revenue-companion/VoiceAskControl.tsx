@@ -48,12 +48,18 @@ function pickMimeType(): string | null {
   ) {
     return null;
   }
+  // Gnani STT v3 accepts m4a/mp3/wav/flac/aac/ogg but NOT webm. Prefer the
+  // browser-native containers Gnani accepts (mp4/AAC on Chromium/Safari,
+  // ogg/opus on Firefox); keep webm only as a last-resort fallback so a
+  // browser that supports nothing else still records something.
   const candidates = [
-    "audio/webm;codecs=opus",
-    "audio/webm",
+    "audio/mp4;codecs=mp4a.40.2",
+    "audio/mp4",
     "audio/ogg;codecs=opus",
     "audio/ogg",
-    "audio/mp4",
+    "audio/wav",
+    "audio/webm;codecs=opus",
+    "audio/webm",
   ];
   const MR = window.MediaRecorder;
   for (const c of candidates) {
@@ -138,7 +144,14 @@ export function VoiceAskControl({
       setState("transcribing");
       try {
         const form = new FormData();
-        form.append("audio_file", blob, "question.webm");
+        const ext = blob.type.includes("mp4")
+          ? "m4a"
+          : blob.type.includes("ogg")
+            ? "ogg"
+            : blob.type.includes("wav")
+              ? "wav"
+              : "webm";
+        form.append("audio_file", blob, `question.${ext}`);
         form.append("language_code", "en-IN");
         form.append("duration_ms", String(Math.round(durationMs)));
         const res = await fetch("/api/revenue-companion/transcribe", {
