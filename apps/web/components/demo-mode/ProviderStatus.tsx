@@ -9,7 +9,7 @@ import { DEMO_STRINGS } from "@/lib/demo-mode/strings";
 // authority. NVIDIA is secondary to the product story.
 export function ProviderStatus({ view }: { view: DemoPresentationView }) {
   return (
-    <DemoSection index={7} title="Explanation provider" headingId="demo-provider-heading">
+    <DemoSection title="Explanation provider" headingId="demo-provider-heading">
       <div className="flex items-start gap-3">
         <Cpu size={16} className="mt-0.5 shrink-0 text-faint" aria-hidden="true" />
         <div>

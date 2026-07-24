@@ -5,9 +5,10 @@
 // visually coherent with the shell while showing the Guardrails Lab label.
 
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Gauge } from "lucide-react";
 
 import { GuardrailsLab } from "@/components/guardrails/GuardrailsLab";
+import { isAssuranceAccessible } from "@/lib/assurance/access.server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,10 @@ export const metadata = {
 };
 
 export default function GuardrailsPage() {
+  // Conditional nav entry only. When the server-only assurance flag is off (the
+  // Production default), this renders nothing and the page is byte-identical to
+  // the frozen Production surface.
+  const assuranceEnabled = isAssuranceAccessible();
   return (
     <div className="flex min-h-screen flex-col bg-base">
       <header className="sticky top-0 z-30 border-b border-edge bg-base/85 backdrop-blur">
@@ -36,6 +41,15 @@ export default function GuardrailsPage() {
               </p>
             </div>
           </Link>
+          {assuranceEnabled ? (
+            <Link
+              href="/assurance"
+              className="btn btn-outline-primary inline-flex items-center gap-1.5 text-[13px]"
+            >
+              <Gauge size={15} aria-hidden="true" />
+              AI Assurance
+            </Link>
+          ) : null}
         </div>
       </header>
       <main className="flex-1">

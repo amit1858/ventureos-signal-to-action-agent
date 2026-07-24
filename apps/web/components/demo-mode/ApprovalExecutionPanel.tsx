@@ -8,7 +8,7 @@ import { DemoSection } from "./DemoSection";
 // is always labelled exactly as what happened (simulated, or none).
 export function ApprovalExecutionPanel({ view }: { view: DemoPresentationView }) {
   return (
-    <DemoSection index={5} title="Approval & execution" headingId="demo-approval-heading">
+    <DemoSection title="Approval & execution" headingId="demo-approval-heading">
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-edge bg-surface2/60 p-4">
           <div className="flex items-center gap-2">

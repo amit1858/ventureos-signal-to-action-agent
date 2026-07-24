@@ -1,0 +1,110 @@
+{
+  "approval_rejected": {
+    "actual_verdict": "rejected",
+    "chain_valid": true,
+    "executed": false,
+    "expected_verdict": "rejected",
+    "failure_code": "approval_rejected",
+    "has_receipt": false,
+    "match": true,
+    "priority": "high",
+    "status": "rejected"
+  },
+  "audit_chain_valid": {
+    "actual_verdict": "executed",
+    "chain_valid": true,
+    "executed": true,
+    "expected_verdict": "executed",
+    "failure_code": null,
+    "has_receipt": true,
+    "match": true,
+    "priority": "critical",
+    "status": "executed"
+  },
+  "edge_small_adverse_move": {
+    "actual_verdict": "stopped_awaiting_approval",
+    "chain_valid": true,
+    "executed": false,
+    "expected_verdict": "stopped_awaiting_approval",
+    "failure_code": "approval_rejected",
+    "has_receipt": false,
+    "match": true,
+    "priority": "medium",
+    "status": "stopped_awaiting_approval"
+  },
+  "edge_unsupported_field": {
+    "actual_verdict": "no_eligible_mission",
+    "detection_status": "invalid_input",
+    "event_emitted": false,
+    "expected_verdict": "no_eligible_mission",
+    "match": true
+  },
+  "execution_approved_simulated": {
+    "actual_verdict": "executed",
+    "chain_valid": true,
+    "executed": true,
+    "expected_verdict": "executed",
+    "failure_code": null,
+    "has_receipt": true,
+    "match": true,
+    "priority": "high",
+    "status": "executed"
+  },
+  "failure_invalid_approval": {
+    "actual_verdict": "fail_closed",
+    "expected_verdict": "fail_closed",
+    "invalid_approval_failed_closed": true,
+    "match": true
+  },
+  "failure_tampered_fingerprint": {
+    "actual_verdict": "fail_closed",
+    "expected_verdict": "fail_closed",
+    "failed_closed_before_harness": true,
+    "match": true
+  },
+  "identity_single_source_stop": {
+    "actual_verdict": "stopped_identity_unverified",
+    "chain_valid": true,
+    "executed": false,
+    "expected_verdict": "stopped_identity_unverified",
+    "failure_code": "ambiguous_identity",
+    "has_receipt": false,
+    "match": true,
+    "priority": "high",
+    "status": "stopped_identity_unverified"
+  },
+  "policy_corroborated_awaiting_approval": {
+    "actual_verdict": "stopped_awaiting_approval",
+    "chain_valid": true,
+    "executed": false,
+    "expected_verdict": "stopped_awaiting_approval",
+    "failure_code": "approval_rejected",
+    "has_receipt": false,
+    "match": true,
+    "priority": "high",
+    "status": "stopped_awaiting_approval"
+  },
+  "replay_idempotent": {
+    "actual_verdict": "executed",
+    "expected_verdict": "executed",
+    "match": true,
+    "record_count_unchanged": true,
+    "replayed": true,
+    "same_receipt": true,
+    "status": "executed"
+  },
+  "signal_no_change": {
+    "actual_verdict": "no_event",
+    "detection_status": "unchanged",
+    "event_emitted": false,
+    "expected_verdict": "no_event",
+    "match": true
+  },
+  "signal_positive_change": {
+    "actual_verdict": "no_eligible_mission",
+    "direction": "positive",
+    "expected_verdict": "no_eligible_mission",
+    "match": true,
+    "selection_status": "no_eligible_mission"
+  }
+}
