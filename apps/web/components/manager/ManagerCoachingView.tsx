@@ -63,7 +63,7 @@ function Chip({ children, tone = "muted" }: { children: React.ReactNode; tone?: 
       className={cx(
         "inline-flex items-center gap-1 rounded border px-1.5 py-[2px] text-[10px] font-medium uppercase tracking-wider",
         tone === "brand" && "border-brand/40 bg-brand/10 text-brand-bright",
-        tone === "sim" && "border-amber-500/40 bg-amber-500/10 text-amber-300",
+        tone === "sim" && "border-amber/40 bg-amber/10 text-amber-700",
         tone === "muted" && "border-edge bg-surface2 text-faint",
       )}
     >
@@ -116,17 +116,17 @@ function BulletList({ items }: { items: readonly string[] }) {
 
 function FeatureBranchStatus() {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3">
+    <div className="flex flex-col gap-2 rounded-xl border border-amber/30 bg-amber/[0.06] px-4 py-3">
       <div className="flex flex-wrap items-center gap-2">
-        <GitBranch size={15} className="text-amber-300" />
-        <span className="text-[13px] font-semibold text-amber-200">{MANAGER_SCENARIO_LABEL}</span>
+        <GitBranch size={15} className="text-amber-700" />
+        <span className="text-[13px] font-semibold text-amber-700">{MANAGER_SCENARIO_LABEL}</span>
         <span className="text-[13px] text-muted">
           Manager Coaching Curefoods slice — not part of the Production persona navigation.
         </span>
         <Chip tone="brand">Deterministic governed demo</Chip>
       </div>
       <p className="flex items-start gap-1.5 text-[12px] leading-relaxed text-amber-100/80">
-        <Info size={13} className="mt-[2px] shrink-0 text-amber-300" />
+        <Info size={13} className="mt-[2px] shrink-0 text-amber-700" />
         {MANAGER_SCENARIO_DISCLAIMER} Mission Control holds the live, session-local mission and may still be
         awaiting approval.
       </p>
@@ -341,7 +341,7 @@ function ManagerActionBar({
           className={cx(
             "rounded-lg border px-3 py-1.5 text-[13px] font-medium transition-colors",
             assigned
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+              ? "border-amber/40 bg-amber/10 text-amber-700"
               : "border-brand/50 bg-brand/10 text-brand-bright hover:border-brand",
           )}
         >

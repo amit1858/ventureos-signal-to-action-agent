@@ -29,7 +29,7 @@ import { VisualEvidence } from "@/components/walkthrough/VisualEvidence";
 const STATUS_STYLE: Record<WalkthroughStatus, string> = {
   Production: "border-accent/40 bg-accent/10 text-accent-bright",
   "Production — Partial": "border-brand/40 bg-brand/10 text-brand-bright",
-  "Guided Demo": "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  "Guided Demo": "border-amber/40 bg-amber/10 text-amber-700",
   "Guardrails Lab": "border-gov/40 bg-gov/10 text-gov-bright",
   "Product context": "border-edge bg-surface2 text-muted",
   Roadmap: "border-edge bg-surface2 text-faint",

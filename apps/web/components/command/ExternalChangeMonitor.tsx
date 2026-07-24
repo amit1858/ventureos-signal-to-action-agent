@@ -59,7 +59,7 @@ function relativeTime(iso: string | null): string {
 
 const MAG_STYLE: Record<ExternalMagnitude, string> = {
   minor:    "border-edge bg-bg/40 text-muted",
-  moderate: "border-yellow-400/30 bg-yellow-400/10 text-yellow-400",
+  moderate: "border-amber/30 bg-amber/10 text-amber-700",
   major:    "border-risk/40 bg-risk/10 text-risk",
 };
 
@@ -252,7 +252,7 @@ function StatTile({
 }) {
   const toneCls =
     tone === "risk"  ? "text-risk" :
-    tone === "warn"  ? "text-yellow-400" :
+    tone === "warn"  ? "text-amber-700" :
     tone === "ok"    ? "text-accent" :
     tone === "brand" ? "text-brand-bright" :
                        "text-muted";

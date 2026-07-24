@@ -86,8 +86,8 @@ export function RecommendationDeltaCompact({ deltas, onJumpToFullLog }: CompactP
       </span>
       <span className="text-faint">·</span>
       <span className="inline-flex items-center gap-1 text-muted">
-        <Compass size={10} className="text-yellow-400" />
-        <span className="font-semibold text-yellow-400">{summary.priorityJumps}</span> priority jumps
+        <Compass size={10} className="text-amber-700" />
+        <span className="font-semibold text-amber-700">{summary.priorityJumps}</span> priority jumps
       </span>
       <span className="text-faint">·</span>
       <span className="inline-flex items-center gap-1 text-muted">
@@ -232,7 +232,7 @@ function KindChip({ kind }: { kind: RecommendationDelta["kind"] }) {
     first_seen:     { label: "Entered queue",  cls: "border-accent/40 bg-accent/10 text-accent",        icon: <UserPlus size={9} /> },
     left_queue:     { label: "Left queue",     cls: "border-risk/40 bg-risk/10 text-risk",              icon: <UserMinus size={9} /> },
     action_changed: { label: "Action revised", cls: "border-brand/40 bg-brand/10 text-brand-bright",    icon: <Sparkles size={9} /> },
-    priority_jump:  { label: "Priority jump",  cls: "border-yellow-400/40 bg-yellow-400/10 text-yellow-400", icon: <Compass size={9} /> },
+    priority_jump:  { label: "Priority jump",  cls: "border-amber/40 bg-amber/10 text-amber-700", icon: <Compass size={9} /> },
     refined:        { label: "Rank refined",   cls: "border-edge bg-bg/40 text-muted",                  icon: <ArrowRight size={9} /> },
   };
   const cfg = map[kind];

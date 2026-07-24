@@ -39,7 +39,7 @@ interface Props {
 
 const URGENCY_BADGE: Record<BriefingUrgency, { label: string; cls: string; icon: React.ReactNode }> = {
   calm: { label: "Steady",   cls: "border-accent/40 bg-accent/10 text-accent",          icon: <CheckCheck size={11} /> },
-  watch: { label: "Watch",    cls: "border-yellow-400/40 bg-yellow-400/10 text-yellow-400", icon: <CircleAlert size={11} /> },
+  watch: { label: "Watch",    cls: "border-amber/40 bg-amber/10 text-amber-700", icon: <CircleAlert size={11} /> },
   act:   { label: "Act now",  cls: "border-risk/40 bg-risk/10 text-risk",               icon: <CircleAlert size={11} /> },
 };
 
@@ -202,7 +202,7 @@ function Pillar({
 }) {
   const toneCls =
     tone === "risk"  ? "text-risk" :
-    tone === "warn"  ? "text-yellow-400" :
+    tone === "warn"  ? "text-amber-700" :
                        "text-accent";
   return (
     <div className="rounded-lg border border-edge bg-surface2/40 p-2.5">

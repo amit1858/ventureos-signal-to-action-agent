@@ -64,7 +64,7 @@ export function PortfolioHealthCard({
   const readinessLabel =
     readiness >= 75 ? "Healthy" : readiness >= 55 ? "Stable" : readiness >= 40 ? "Needs attention" : "At risk";
   const readinessTone = readiness >= 55 ? "text-accent" : readiness >= 40 ? "text-amber" : "text-risk";
-  const readinessStroke = readiness >= 55 ? "#76B900" : readiness >= 40 ? "#F5B84B" : "#EF6B73";
+  const readinessStroke = readiness >= 55 ? "#2E844A" : readiness >= 40 ? "#F5B84B" : "#EF6B73";
 
   // Money that matters — shown as an inline labelled stat row inside the hero.
   const money: MoneyStat[] = [
@@ -181,13 +181,13 @@ function ReadinessRing({
   return (
     <div className="relative flex h-[150px] w-[150px] items-center justify-center sm:h-[172px] sm:w-[172px]">
       <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
-        <circle cx="70" cy="70" r={radius} fill="none" stroke="#1B2127" strokeWidth="9" />
+        <circle cx="70" cy="70" r={radius} fill="none" stroke="#E5E5E5" strokeWidth="9" />
         <circle
           cx="70"
           cy="70"
           r={radius}
           fill="none"
-          stroke={hasData ? stroke : "#2A2F35"}
+          stroke={hasData ? stroke : "#EEEEEE"}
           strokeWidth="9"
           strokeLinecap="round"
           strokeDasharray={`${dash} ${circ}`}

@@ -44,7 +44,7 @@ import {
 function Dot({ tone }: { tone: "brand" | "accent" | "faint" }) {
   const cls =
     tone === "accent"
-      ? "bg-accent shadow-[0_0_6px_rgba(80,220,160,0.6)]"
+      ? "bg-accent shadow-[0_0_6px_rgba(46,132,74,0.5)]"
       : tone === "brand"
       ? "bg-brand shadow-glow"
       : "bg-faint/50";

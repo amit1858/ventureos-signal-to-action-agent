@@ -9,37 +9,39 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Phase 13.5 — Executive Visual System.
-        // Charcoal stack (replaces the old blue-leaning #0B0F0E → #1B2228 set):
-        base: "#0A0B0D",
-        panel: "#111317",
-        surface: "#171A1F",
-        surface2: "#1B1F25",
-        elevated: "#1F242B",
-        edge: "rgba(255,255,255,0.06)",
-        "edge-soft": "rgba(255,255,255,0.04)",
-        // Warm typography (off-white → taupe ladder):
-        ink: "#F5F1E8",
-        muted: "#B5B0A5",
-        faint: "#8A857B",
-        // Revenue green — desaturated, executive (was neon #76B900):
-        accent: "#76B65D",
-        "accent-dim": "#5C9447",
-        "accent-bright": "#8CCB72",
-        // Primary action accent is now AMBER (was lavender #8B7CF6).
+        // Salesforce Lightning — light theme.
+        // Blue-grey app background → pure-white cards (SLDS neutral stack):
+        base: "#F3F3F3",
+        panel: "#FAFAFB",
+        surface: "#FFFFFF",
+        surface2: "#F3F3F3",
+        elevated: "#FFFFFF",
+        // Solid grey borders (were translucent-white, invisible on light):
+        edge: "#E5E5E5",
+        "edge-soft": "#EEEEEE",
+        // Cool neutral typography ladder (near-black → grey):
+        ink: "#181818",
+        muted: "#444444",
+        faint: "#747474",
+        // Success green — SLDS, AA on white (was neon #76B900):
+        accent: "#2E844A",
+        "accent-dim": "#256A3B",
+        "accent-bright": "#45C65A",
+        // Primary action is now SALESFORCE BLUE (was amber #D89A3D).
         // `brand` keeps its name so every existing CTA / active tab /
         // lifecycle "current" chip retones in one change.
-        brand: "#D89A3D",
-        "brand-bright": "#E5AE55",
-        "brand-dim": "#B4802C",
-        // Governance lavender — reserved for audit / approval history.
-        gov: "#8B7CC8",
-        "gov-bright": "#A498D6",
+        brand: "#0176D3",
+        "brand-bright": "#1B96FF",
+        "brand-dim": "#014486",
+        // Governance indigo — reserved for audit / approval history.
+        gov: "#5867E8",
+        "gov-bright": "#7B87F5",
         // Secondary slate (unchanged role).
-        cyan: "#7E8BA3",
-        slate: "#7E8BA3",
-        amber: "#D89A3D",
-        risk: "#D96A5F",
+        cyan: "#5E6B82",
+        slate: "#5E6B82",
+        // Warning orange (SLDS).
+        amber: "#FE9339",
+        risk: "#EA001E",
       },
       fontFamily: {
         sans: [
@@ -63,13 +65,13 @@ const config: Config = {
         ],
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(216,154,61,0.22), 0 0 26px -10px rgba(216,154,61,0.30)",
-        "glow-soft": "0 0 0 1px rgba(216,154,61,0.14), 0 0 44px -14px rgba(216,154,61,0.18)",
-        "glow-gov": "0 0 0 1px rgba(139,124,200,0.20), 0 0 30px -12px rgba(139,124,200,0.25)",
-        panel: "0 1px 0 0 rgba(255,255,255,0.025) inset, 0 12px 30px -18px rgba(0,0,0,0.65)",
-        elevated: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 22px 50px -24px rgba(0,0,0,0.78)",
+        glow: "0 0 0 1px rgba(1,118,211,0.35), 0 0 20px -8px rgba(1,118,211,0.28)",
+        "glow-soft": "0 0 0 1px rgba(1,118,211,0.22), 0 0 32px -12px rgba(1,118,211,0.18)",
+        "glow-gov": "0 0 0 1px rgba(88,103,232,0.30), 0 0 24px -10px rgba(88,103,232,0.22)",
+        panel: "0 0 0 1px rgba(0,0,0,0.03), 0 2px 6px -2px rgba(0,0,0,0.08)",
+        elevated: "0 0 0 1px rgba(0,0,0,0.04), 0 8px 20px -8px rgba(0,0,0,0.12)",
         executive:
-          "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 30px 60px -28px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)",
+          "0 0 0 1px rgba(0,0,0,0.05), 0 12px 28px -10px rgba(0,0,0,0.14)",
       },
       keyframes: {
         "fade-in": {

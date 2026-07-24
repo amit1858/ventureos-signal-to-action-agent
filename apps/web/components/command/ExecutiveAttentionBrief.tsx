@@ -97,7 +97,7 @@ export function ExecutiveAttentionBrief({
     <section
       className={cx(
         "relative overflow-hidden rounded-xl border bg-gradient-to-br from-surface2/70 via-surface2/50 to-surface2/30 transition-colors",
-        open ? "border-accent/40 shadow-[0_0_0_1px_rgba(216,154,61,0.18)]" : "border-edge hover:border-accent/30",
+        open ? "border-accent/40 shadow-[0_0_0_1px_rgba(1,118,211,0.18)]" : "border-edge hover:border-accent/30",
       )}
     >
       <span className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-accent via-accent/60 to-transparent" aria-hidden />

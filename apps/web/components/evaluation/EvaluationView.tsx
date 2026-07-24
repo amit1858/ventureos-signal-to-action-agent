@@ -1747,11 +1747,11 @@ function MetricCell({ label, value, tone }: { label: string; value: string; tone
     <div
       className={cx(
         "rounded-lg border p-3",
-        tone === "ok" ? "border-accent/25 bg-accent/[0.05]" : "border-amber-400/25 bg-amber-400/[0.05]",
+        tone === "ok" ? "border-accent/25 bg-accent/[0.05]" : "border-amber/25 bg-amber/[0.05]",
       )}
     >
       <div className="text-[10px] uppercase tracking-wide text-faint">{label}</div>
-      <div className={cx("mt-1 text-xl font-semibold", tone === "ok" ? "text-accent" : "text-amber-300")}>
+      <div className={cx("mt-1 text-xl font-semibold", tone === "ok" ? "text-accent" : "text-amber-700")}>
         {value}
       </div>
     </div>

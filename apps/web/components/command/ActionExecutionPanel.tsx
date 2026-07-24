@@ -39,9 +39,9 @@ function ProgressStrip({ phase }: { phase: string }) {
               className={cn(
                 "w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-semibold transition-all",
                 isCurrent
-                  ? "bg-brand text-[#1a1206] border-brand shadow-glow-amber"
+                  ? "bg-brand text-white border-brand shadow-glow"
                   : isCompleted
-                    ? "bg-accent text-[#f5f1e8] border-accent"
+                    ? "bg-accent text-white border-accent"
                     : "bg-surface2 text-muted border-edge-soft"
               )}
             >
@@ -262,7 +262,7 @@ export function ActionExecutionPanel({ recommendation, reasoning, lifecycle }: A
         {!isBlocked && !isCompleted && (
           <>
             <button
-              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded bg-brand text-[#1a1206] hover:bg-brand/90 transition disabled:opacity-50"
+              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded bg-brand text-white hover:bg-brand/90 transition disabled:opacity-50"
               onClick={onAdvance}
               disabled={isBlocked}
             >

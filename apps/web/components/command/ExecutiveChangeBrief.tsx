@@ -56,13 +56,13 @@ function relativeTime(iso: string): string {
 
 const IMPACT_STYLE: Record<ImpactLevel, { cls: string; label: string }> = {
   low:    { cls: "border-edge bg-bg/40 text-muted",                       label: "LOW" },
-  medium: { cls: "border-yellow-400/30 bg-yellow-400/10 text-yellow-400", label: "MEDIUM" },
+  medium: { cls: "border-amber/30 bg-amber/10 text-amber-700", label: "MEDIUM" },
   high:   { cls: "border-risk/40 bg-risk/10 text-risk",                   label: "HIGH" },
 };
 
 const SEV_DOT: Record<"low" | "medium" | "high", string> = {
   low:    "bg-muted/50",
-  medium: "bg-yellow-400",
+  medium: "bg-amber",
   high:   "bg-risk",
 };
 
@@ -335,7 +335,7 @@ function MovementRow({
   const arrow = direction === "up" ? <ArrowUp size={10} /> : <ArrowDown size={10} />;
   const magCls =
     magnitude === "major"    ? (tone === "risk" ? "text-risk"  : "text-accent") :
-    magnitude === "moderate" ? "text-yellow-400" : "text-muted";
+    magnitude === "moderate" ? "text-amber-700" : "text-muted";
   return (
     <button
       type="button"

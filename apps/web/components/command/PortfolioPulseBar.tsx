@@ -203,7 +203,7 @@ export function PortfolioPulseBar({ accounts, recs, onOpenAccount, onJumpToFullF
           tone="opp"
         />
         <PulseTile
-          icon={<AlertTriangle size={13} className="text-yellow-400" />}
+          icon={<AlertTriangle size={13} className="text-amber-700" />}
           label="New attention items"
           value={String(summary.newAttentionAccounts)}
           subtext={
@@ -308,7 +308,7 @@ function PulseTile({ icon, label, value, subtext, tone }: TileProps) {
       : tone === "opp"
         ? "text-accent"
         : tone === "attention"
-          ? "text-yellow-400"
+          ? "text-amber-700"
           : "text-ink";
   const borderClass =
     tone === "risk"
@@ -316,7 +316,7 @@ function PulseTile({ icon, label, value, subtext, tone }: TileProps) {
       : tone === "opp"
         ? "border-accent/30"
         : tone === "attention"
-          ? "border-yellow-400/30"
+          ? "border-amber/30"
           : "border-edge";
   return (
     <div className={cx("rounded-lg border bg-surface2/40 px-3 py-2", borderClass)}>
@@ -514,7 +514,7 @@ function ImpactCard({ tone, icon, eyebrow, headline, line, meta, cta, onClick, a
       : tone === "opp"
         ? "border-accent/30"
         : tone === "attention"
-          ? "border-yellow-400/30"
+          ? "border-amber/30"
           : "border-brand/30";
   const toneText =
     tone === "risk"
@@ -522,7 +522,7 @@ function ImpactCard({ tone, icon, eyebrow, headline, line, meta, cta, onClick, a
       : tone === "opp"
         ? "text-accent"
         : tone === "attention"
-          ? "text-yellow-400"
+          ? "text-amber-700"
           : "text-brand-bright";
   const interactive = !!onClick;
   return (
@@ -640,7 +640,7 @@ export function DriftAcknowledgementLine({ accounts }: AckProps) {
       </span>
       <span className="text-faint">·</span>
       <span>
-        <span className="font-semibold text-yellow-400">{summary.newAttentionAccounts}</span> new attention items
+        <span className="font-semibold text-amber-700">{summary.newAttentionAccounts}</span> new attention items
       </span>
       <span className="text-faint">·</span>
       <span>

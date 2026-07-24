@@ -1094,7 +1094,7 @@ function WorkQueuePanel({
                           row.risk === "High"
                             ? "text-risk"
                             : row.risk === "Medium"
-                              ? "text-yellow-400"
+                              ? "text-amber-700"
                               : "text-accent",
                         )}
                       >
@@ -1229,7 +1229,7 @@ function UrgencyBucket({
   items: QueueRow[];
   tone: "risk" | "warn" | "neutral";
 }) {
-  const toneClass = tone === "risk" ? "border-risk/30 bg-risk/[0.04]" : tone === "warn" ? "border-yellow-400/25 bg-yellow-500/[0.04]" : "border-edge bg-surface2/35";
+  const toneClass = tone === "risk" ? "border-risk/30 bg-risk/[0.04]" : tone === "warn" ? "border-amber/25 bg-amber/[0.04]" : "border-edge bg-surface2/35";
   return (
     <div className={cx("rounded-lg border p-2", toneClass)}>
       <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-faint">{title}</div>
@@ -2307,7 +2307,7 @@ function ApprovalDrawer({
       role="dialog"
       aria-modal="true"
       aria-label="Mark for approval"
-      className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/40"
+      className="fixed inset-0 z-50 flex items-stretch justify-end bg-slate-900/30"
       onClick={onClose}
     >
       <div
@@ -2363,8 +2363,8 @@ function ApprovalDrawer({
         </section>
 
         {recommendation.governance_caveats.length ? (
-          <section className="rounded-lg border border-yellow-400/30 bg-yellow-400/5 p-2.5">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-yellow-400">Governance caveat</div>
+          <section className="rounded-lg border border-amber/30 bg-amber/5 p-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-700">Governance caveat</div>
             <ul className="mt-1 space-y-0.5 text-[11px] text-muted">
               {recommendation.governance_caveats.map((c, i) => (
                 <li key={`gc-${i}`}>â€¢ {c}</li>
@@ -2479,7 +2479,7 @@ function ApprovalDrawer({
                           ? "bg-accent/15 text-accent"
                           : entry.decision_type === "rejected"
                             ? "bg-risk/15 text-risk"
-                            : "bg-yellow-400/15 text-yellow-400",
+                            : "bg-amber/15 text-amber-700",
                       )}
                     >
                       {entry.decision_type.replace("_", " ")}
@@ -2527,7 +2527,7 @@ function LifecycleRibbon({ state, compact }: { state: LifecycleState; compact?: 
               className={cx(
                 "flex flex-1 items-center gap-1 rounded-md px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wide transition-colors",
                 active
-                  ? "bg-brand/15 text-brand-bright shadow-[inset_0_0_0_1px_rgba(216,154,61,0.45)]"
+                  ? "bg-brand/15 text-brand-bright shadow-[inset_0_0_0_1px_rgba(1,118,211,0.45)]"
                   : done
                     ? "text-accent"
                     : "text-faint",
@@ -2538,7 +2538,7 @@ function LifecycleRibbon({ state, compact }: { state: LifecycleState; compact?: 
                 className={cx(
                   "inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border text-[8px] font-bold",
                   active
-                    ? "border-brand-bright bg-brand text-[#1a1206]"
+                    ? "border-brand-bright bg-brand text-white"
                     : done
                       ? "border-accent/60 bg-accent/25 text-accent"
                       : "border-edge-soft text-faint",
@@ -2581,7 +2581,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 function ApprovalBadge({ status }: { status: string }) {
   const s = String(status || "pending").toLowerCase();
   const tone =
-    s.includes("approve") ? "bg-accent/15 text-accent" : s.includes("reject") ? "bg-risk/15 text-risk" : "bg-yellow-400/15 text-yellow-400";
+    s.includes("approve") ? "bg-accent/15 text-accent" : s.includes("reject") ? "bg-risk/15 text-risk" : "bg-amber/15 text-amber-700";
   return <span className={cx("rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase", tone)}>{titleCase(s.replace(/_/g, " "))}</span>;
 }
 
@@ -2861,7 +2861,7 @@ function DemoModeOverlay({ ready }: { ready: boolean }) {
 
   if (!ready || !active) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 sm:items-center" onClick={() => dismiss(false)}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/25 sm:items-center" onClick={() => dismiss(false)}>
           <div
             role="dialog"
             aria-modal="true"
@@ -3057,7 +3057,7 @@ function RailRow({
       : tone === "opp"
         ? "text-accent"
         : tone === "warn"
-          ? "text-yellow-400"
+          ? "text-amber-700"
           : "text-brand-bright";
   return (
     <div className="flex items-center justify-between gap-2 rounded-md border border-edge/60 bg-bg/30 px-2.5 py-1.5">
@@ -3116,7 +3116,7 @@ function Badge({ label, tone }: { label: string; tone: "brand" | "risk" | "warn"
       : tone === "risk"
         ? "border-risk/35 bg-risk/10 text-risk"
         : tone === "warn"
-          ? "border-yellow-400/30 bg-yellow-500/[0.08] text-yellow-300"
+          ? "border-amber/30 bg-amber/[0.08] text-amber-700"
           : tone === "ok"
             ? "border-accent/35 bg-accent/10 text-accent"
             : "border-edge bg-surface2 text-faint";
@@ -3202,7 +3202,7 @@ function ManagerSummaryPanel({ recs, accounts }: { recs: Recommendation[]; accou
 
 function ManagerStat({ label, value, tone }: { label: string; value: string; tone?: "ok" | "warn" | "risk" }) {
   const cls =
-    tone === "ok" ? "text-accent" : tone === "warn" ? "text-yellow-400" : tone === "risk" ? "text-risk" : "text-ink";
+    tone === "ok" ? "text-accent" : tone === "warn" ? "text-amber-700" : tone === "risk" ? "text-risk" : "text-ink";
   return (
     <div className="rounded border border-edge-soft bg-bg/35 p-2">
       <div className="text-[9px] uppercase tracking-wider text-faint">{label}</div>
@@ -3271,7 +3271,7 @@ function DecisionLedgerPanel({ recs }: { recs: Recommendation[] }) {
                       ? "bg-accent/15 text-accent"
                       : e.decision_type === "rejected"
                         ? "bg-risk/15 text-risk"
-                        : "bg-yellow-400/15 text-yellow-400",
+                        : "bg-amber/15 text-amber-700",
                   )}
                 >
                   {e.decision_type.replace("_", " ")}
@@ -3294,7 +3294,7 @@ function DecisionLedgerPanel({ recs }: { recs: Recommendation[] }) {
 
 function LedgerCount({ label, value, tone }: { label: string; value: number; tone?: "ok" | "warn" | "risk" }) {
   const cls =
-    tone === "ok" ? "text-accent" : tone === "warn" ? "text-yellow-400" : tone === "risk" ? "text-risk" : "text-ink";
+    tone === "ok" ? "text-accent" : tone === "warn" ? "text-amber-700" : tone === "risk" ? "text-risk" : "text-ink";
   return (
     <div className="rounded border border-edge-soft bg-bg/35 p-2">
       <div className="text-[9px] uppercase tracking-wider text-faint">{label}</div>

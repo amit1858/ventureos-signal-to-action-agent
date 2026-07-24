@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -19,14 +19,14 @@ html {
 }
 
 body {
-  background-color: #0a0b0d;
+  background-color: #f3f3f3;
   background-image:
-    radial-gradient(1200px 640px at 8% -14%, rgba(216, 154, 61, 0.07), transparent 62%),
-    radial-gradient(960px 580px at 100% -6%, rgba(216, 154, 61, 0.035), transparent 60%),
-    radial-gradient(900px 700px at 60% 110%, rgba(139, 124, 200, 0.04), transparent 65%),
-    linear-gradient(180deg, #0a0b0d 0%, #08090b 100%);
+    radial-gradient(1200px 640px at 8% -14%, rgba(1, 118, 211, 0.04), transparent 62%),
+    radial-gradient(960px 580px at 100% -6%, rgba(1, 118, 211, 0.025), transparent 60%),
+    radial-gradient(900px 700px at 60% 110%, rgba(88, 103, 232, 0.03), transparent 65%),
+    linear-gradient(180deg, #f3f3f3 0%, #ececec 100%);
   background-attachment: fixed;
-  color: #f5f1e8;
+  color: #181818;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -67,7 +67,7 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply border-brand/60 bg-brand text-[#1a1206] hover:bg-brand-bright hover:border-brand-bright shadow-[0_1px_0_0_rgba(255,255,255,0.18)_inset,_0_8px_22px_-10px_rgba(216,154,61,0.55)];
+    @apply border-brand/60 bg-brand text-white hover:bg-brand-bright hover:border-brand-bright shadow-[0_1px_2px_0_rgba(1,118,211,0.30)];
   }
   .btn-outline-primary {
     @apply border-brand/55 bg-brand/10 text-brand-bright hover:bg-brand/20 hover:border-brand/75;
@@ -91,7 +91,7 @@ body {
 
 /* Faint dotted "cockpit" grid overlay used behind the center column. */
 .grid-dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
   background-size: 22px 22px;
 }
 
@@ -104,7 +104,7 @@ body {
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: #151a1e;
+  background: #e9e9ec;
 }
 .skeleton::after {
   content: "";
@@ -114,7 +114,7 @@ body {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.6),
     transparent
   );
   animation: shimmer 1.8s infinite;
@@ -123,20 +123,20 @@ body {
 /* Thin gradient accent rule used under panel headers. */
 .rule-accent {
   height: 1px;
-  background: linear-gradient(90deg, rgba(216, 154, 61, 0.55), rgba(216, 154, 61, 0) 72%);
+  background: linear-gradient(90deg, rgba(1, 118, 211, 0.45), rgba(1, 118, 211, 0) 72%);
 }
 
 /* Phase 13.5 — executive surface utilities. */
 .surface-warm {
   background:
-    linear-gradient(180deg, rgba(216, 154, 61, 0.045), transparent 60%),
-    linear-gradient(180deg, #1b1f25 0%, #171a1f 100%);
+    linear-gradient(180deg, rgba(1, 118, 211, 0.03), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #fafafb 100%);
 }
 .rail-selected {
   background:
-    linear-gradient(90deg, rgba(216, 154, 61, 0.12), transparent 65%),
-    rgba(216, 154, 61, 0.04);
-  border-left: 2px solid #d89a3d;
+    linear-gradient(90deg, rgba(1, 118, 211, 0.1), transparent 65%),
+    rgba(1, 118, 211, 0.04);
+  border-left: 2px solid #0176d3;
 }
 .ambient-glow {
   position: relative;
@@ -148,7 +148,7 @@ body {
   border-radius: inherit;
   background: radial-gradient(
     600px 220px at 0% 0%,
-    rgba(216, 154, 61, 0.10),
+    rgba(1, 118, 211, 0.06),
     transparent 60%
   );
   pointer-events: none;
@@ -168,8 +168,8 @@ body {
 }
 .hover-lift:hover {
   transform: translateY(-2px);
-  border-color: rgba(216, 154, 61, 0.32);
-  box-shadow: 0 22px 48px -24px rgba(0, 0, 0, 0.85);
+  border-color: rgba(1, 118, 211, 0.35);
+  box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.15);
 }
 
 /* Reveal-on-scroll for the executive story sections (gentle rise + fade). */
@@ -227,16 +227,16 @@ body {
 /* Scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a2f35 transparent;
+  scrollbar-color: #c4c4c4 transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #2a2f35;
+  background: #c4c4c4;
   border-radius: 8px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: #3a414a;
+  background: #a0a0a0;
 }

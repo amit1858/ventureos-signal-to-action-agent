@@ -305,7 +305,7 @@ export function SellerMissionControl({
       className={cx(
         isPage
           ? "scene flex min-h-[calc(100vh-58px)] w-full justify-center px-4 py-5"
-          : "fixed inset-0 z-50 flex items-stretch justify-end bg-black/50 backdrop-blur-[1px]",
+          : "fixed inset-0 z-50 flex items-stretch justify-end bg-slate-900/30 backdrop-blur-[1px]",
       )}
       onClick={isPage ? undefined : onClose}
     >
@@ -473,7 +473,7 @@ function HudStat({ label, value, tone }: { label: string; value: string; tone?: 
   return (
     <div className="rounded-md border border-edge-soft bg-bg/40 px-1.5 py-1 text-center">
       <div className="text-[8.5px] uppercase tracking-wider text-faint">{label}</div>
-      <div className={cx("text-[12px] font-semibold", tone === "warn" ? "text-yellow-400" : "text-ink")}>{value}</div>
+      <div className={cx("text-[12px] font-semibold", tone === "warn" ? "text-amber-700" : "text-ink")}>{value}</div>
     </div>
   );
 }
@@ -513,7 +513,7 @@ function Stepper({
                   className={cx(
                     "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[9px] font-bold transition-colors",
                     isCurrent
-                      ? "border-brand-bright bg-brand text-[#1a1206] shadow-glow-amber"
+                      ? "border-brand-bright bg-brand text-white shadow-glow"
                       : isDone
                         ? "border-accent/60 bg-accent/20 text-accent"
                         : "border-edge-soft text-faint",
