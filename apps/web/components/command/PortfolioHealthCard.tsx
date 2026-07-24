@@ -181,13 +181,13 @@ function ReadinessRing({
   return (
     <div className="relative flex h-[150px] w-[150px] items-center justify-center sm:h-[172px] sm:w-[172px]">
       <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
-        <circle cx="70" cy="70" r={radius} fill="none" stroke="#E5E5E5" strokeWidth="9" />
+        <circle cx="70" cy="70" r={radius} fill="none" stroke="rgb(var(--chart-track))" strokeWidth="9" />
         <circle
           cx="70"
           cy="70"
           r={radius}
           fill="none"
-          stroke={hasData ? stroke : "#EEEEEE"}
+          stroke={hasData ? stroke : "rgb(var(--chart-track-empty))"}
           strokeWidth="9"
           strokeLinecap="round"
           strokeDasharray={`${dash} ${circ}`}

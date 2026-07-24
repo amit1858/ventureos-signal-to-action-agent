@@ -19,9 +19,9 @@ import {
   ScrollText,
   UserCheck,
   RefreshCw,
-  Sparkles,
   Compass,
   BookOpenCheck,
+  Sparkles,
   Check,
   X,
 } from "lucide-react";
@@ -66,10 +66,6 @@ export function LandingView({
           aria-hidden
         />
         <div className="relative animate-fade-in">
-          <span className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-bright">
-            <Sparkles size={12} /> Sovereign Agentic AI · Track A
-          </span>
-
           <h1 className="mx-auto mt-6 max-w-3xl text-balance text-4xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-[56px]">
             Turn customer signals into{" "}
             <span className="bg-gradient-to-r from-brand-bright to-brand bg-clip-text text-transparent">

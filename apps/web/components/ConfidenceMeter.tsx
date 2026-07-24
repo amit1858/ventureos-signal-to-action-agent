@@ -41,7 +41,7 @@ export function ConfidenceRing({ value, caption }: { value: number; caption?: st
     <div className="flex items-center gap-3 rounded-lg border border-edge bg-surface2/40 p-3">
       <div className="relative h-[68px] w-[68px] shrink-0">
         <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90">
-          <circle cx="32" cy="32" r={r} fill="none" stroke="#E5E5E5" strokeWidth="6" />
+          <circle cx="32" cy="32" r={r} fill="none" stroke="rgb(var(--chart-track))" strokeWidth="6" />
           <circle
             cx="32"
             cy="32"

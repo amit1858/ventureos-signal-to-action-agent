@@ -11,9 +11,13 @@
 import * as React from "react";
 import { Expand, X } from "lucide-react";
 import type { PublicGuideImage } from "@/lib/tester-guide/content";
+import { useTheme } from "@/lib/theme";
 
 export function GuideImage({ shot }: { shot: PublicGuideImage }) {
   const [open, setOpen] = React.useState(false);
+  const { theme } = useTheme();
+  // Dark theme serves the `-dark.png` sibling captured for each screenshot.
+  const themedSrc = theme === "dark" ? shot.src.replace(/\.png$/, "-dark.png") : shot.src;
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const closeRef = React.useRef<HTMLButtonElement>(null);
 
@@ -59,7 +63,7 @@ export function GuideImage({ shot }: { shot: PublicGuideImage }) {
         <span className="block w-full" style={{ aspectRatio: `${shot.width} / ${shot.height}` }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={shot.src}
+            src={themedSrc}
             alt={shot.alt}
             width={shot.width}
             height={shot.height}
@@ -94,7 +98,7 @@ export function GuideImage({ shot }: { shot: PublicGuideImage }) {
             </button>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={shot.src}
+              src={themedSrc}
               alt={shot.alt}
               width={shot.width}
               height={shot.height}

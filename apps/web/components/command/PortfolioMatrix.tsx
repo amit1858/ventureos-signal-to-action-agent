@@ -31,7 +31,7 @@ const QUADRANT_ORDER: Quadrant[] = ["act_now", "escalate", "nurture", "monitor"]
 // not cyan). These mirror QUADRANT_META but keep the plot free of the legacy
 // hex while leaving the frozen portfolio lib untouched.
 const QCOLOR: Record<Quadrant, string> = {
-  act_now: "#2E844A",
+  act_now: "rgb(var(--c-accent))",
   escalate: "#EF6B73",
   nurture: "#7E8BA3",
   monitor: "#5E6B82",
@@ -100,14 +100,14 @@ export function PortfolioMatrix({
           className="h-auto w-full select-none"
           onMouseLeave={() => setHover(null)}
         >
-          <rect x={pad} y={pad} width={plotW} height={plotH} fill="#FFFFFF" stroke="#E5E5E5" rx="10" />
+          <rect x={pad} y={pad} width={plotW} height={plotH} fill="rgb(var(--chart-plot))" stroke="rgb(var(--chart-grid))" rx="10" />
           {/* quadrant tints — meaning-only, no neon */}
           <rect x={midX} y={pad} width={plotW / 2} height={plotH / 2} fill={QCOLOR.act_now} fillOpacity={0.06} />
           <rect x={pad} y={pad} width={plotW / 2} height={plotH / 2} fill={QCOLOR.escalate} fillOpacity={0.06} />
           <rect x={midX} y={midY} width={plotW / 2} height={plotH / 2} fill={QCOLOR.nurture} fillOpacity={0.05} />
 
-          <line x1={midX} y1={pad} x2={midX} y2={pad + plotH} stroke="#E5E5E5" strokeDasharray="3 4" />
-          <line x1={pad} y1={midY} x2={pad + plotW} y2={midY} stroke="#E5E5E5" strokeDasharray="3 4" />
+          <line x1={midX} y1={pad} x2={midX} y2={pad + plotH} stroke="rgb(var(--chart-grid))" strokeDasharray="3 4" />
+          <line x1={pad} y1={midY} x2={pad + plotW} y2={midY} stroke="rgb(var(--chart-grid))" strokeDasharray="3 4" />
 
           <text x={pad + plotW - 8} y={pad + 15} textAnchor="end" fill={QCOLOR.act_now} fontSize="9" fontWeight="700" letterSpacing="0.08em">
             ACT NOW
@@ -115,7 +115,7 @@ export function PortfolioMatrix({
           <text x={pad + 8} y={pad + 15} textAnchor="start" fill={QCOLOR.escalate} fontSize="9" fontWeight="700" letterSpacing="0.08em">
             ESCALATE
           </text>
-          <text x={pad + 8} y={pad + plotH - 8} textAnchor="start" fill="#5E6B82" fontSize="9" fontWeight="700" letterSpacing="0.08em">
+          <text x={pad + 8} y={pad + plotH - 8} textAnchor="start" fill="rgb(var(--chart-axis))" fontSize="9" fontWeight="700" letterSpacing="0.08em">
             MONITOR
           </text>
           <text x={pad + plotW - 8} y={pad + plotH - 8} textAnchor="end" fill={QCOLOR.nurture} fontSize="9" fontWeight="700" letterSpacing="0.08em">
@@ -152,7 +152,7 @@ export function PortfolioMatrix({
                   r={r}
                   fill={c}
                   fillOpacity={isSel ? 1 : dim ? 0.3 : isRec ? 0.95 : 0.6}
-                  stroke={isSel ? "#181818" : "none"}
+                  stroke={isSel ? "rgb(var(--chart-dot-stroke))" : "none"}
                   strokeWidth={isSel ? 1.25 : 0}
                   style={{ transition: "fill-opacity 0.18s ease" }}
                 />
@@ -160,14 +160,14 @@ export function PortfolioMatrix({
             );
           })}
 
-          <text x={pad + plotW / 2} y={H - 8} textAnchor="middle" fill="#5E6B82" fontSize="10">
+          <text x={pad + plotW / 2} y={H - 8} textAnchor="middle" fill="rgb(var(--chart-axis))" fontSize="10">
             Opportunity →
           </text>
           <text
             x={14}
             y={pad + plotH / 2}
             textAnchor="middle"
-            fill="#5E6B82"
+            fill="rgb(var(--chart-axis))"
             fontSize="10"
             transform={`rotate(-90 14 ${pad + plotH / 2})`}
           >

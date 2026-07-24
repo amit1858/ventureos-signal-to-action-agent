@@ -9,39 +9,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Salesforce Lightning — light theme.
-        // Blue-grey app background → pure-white cards (SLDS neutral stack):
-        base: "#F3F3F3",
-        panel: "#FAFAFB",
-        surface: "#FFFFFF",
-        surface2: "#F3F3F3",
-        elevated: "#FFFFFF",
-        // Solid grey borders (were translucent-white, invisible on light):
-        edge: "#E5E5E5",
-        "edge-soft": "#EEEEEE",
-        // Cool neutral typography ladder (near-black → grey):
-        ink: "#181818",
-        muted: "#444444",
-        faint: "#747474",
-        // Success green — SLDS, AA on white (was neon #76B900):
-        accent: "#2E844A",
-        "accent-dim": "#256A3B",
-        "accent-bright": "#45C65A",
-        // Primary action is now SALESFORCE BLUE (was amber #D89A3D).
-        // `brand` keeps its name so every existing CTA / active tab /
-        // lifecycle "current" chip retones in one change.
-        brand: "#0176D3",
-        "brand-bright": "#1B96FF",
-        "brand-dim": "#014486",
-        // Governance indigo — reserved for audit / approval history.
-        gov: "#5867E8",
-        "gov-bright": "#7B87F5",
-        // Secondary slate (unchanged role).
-        cyan: "#5E6B82",
-        slate: "#5E6B82",
-        // Warning orange (SLDS).
-        amber: "#FE9339",
-        risk: "#EA001E",
+        // Theme tokens are CSS variables (rgb triples) so a `data-theme`
+        // attribute on <html> switches Light ↔ Dark for all usages at once.
+        // Triple form (`rgb(var(--c-*) / <alpha-value>)`) is required so the
+        // Tailwind opacity modifier keeps working (e.g. `border-edge/60`).
+        // Light + Dark triple values live in app/globals.css.
+        base: "rgb(var(--c-base) / <alpha-value>)",
+        panel: "rgb(var(--c-panel) / <alpha-value>)",
+        surface: "rgb(var(--c-surface) / <alpha-value>)",
+        surface2: "rgb(var(--c-surface2) / <alpha-value>)",
+        elevated: "rgb(var(--c-elevated) / <alpha-value>)",
+        edge: "rgb(var(--c-edge) / <alpha-value>)",
+        "edge-soft": "rgb(var(--c-edge-soft) / <alpha-value>)",
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        muted: "rgb(var(--c-muted) / <alpha-value>)",
+        faint: "rgb(var(--c-faint) / <alpha-value>)",
+        accent: "rgb(var(--c-accent) / <alpha-value>)",
+        "accent-dim": "rgb(var(--c-accent-dim) / <alpha-value>)",
+        "accent-bright": "rgb(var(--c-accent-bright) / <alpha-value>)",
+        brand: "rgb(var(--c-brand) / <alpha-value>)",
+        "brand-bright": "rgb(var(--c-brand-bright) / <alpha-value>)",
+        "brand-dim": "rgb(var(--c-brand-dim) / <alpha-value>)",
+        gov: "rgb(var(--c-gov) / <alpha-value>)",
+        "gov-bright": "rgb(var(--c-gov-bright) / <alpha-value>)",
+        cyan: "rgb(var(--c-cyan) / <alpha-value>)",
+        slate: "rgb(var(--c-slate) / <alpha-value>)",
+        amber: "rgb(var(--c-amber) / <alpha-value>)",
+        risk: "rgb(var(--c-risk) / <alpha-value>)",
       },
       fontFamily: {
         sans: [
