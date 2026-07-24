@@ -51,6 +51,10 @@ type AnswerState =
       kind: "answer";
       answer: RevenueCompanionAnswer;
       snapshot: ActionCenterPresentationSnapshot | null;
+      // When true, the voice briefing plays automatically as soon as this answer
+      // renders — so pressing Ask (including after a voice transcript) is a single
+      // step, not Ask-then-Play. Set only for explicit Ask submissions.
+      autoPlayVoice: boolean;
     }
   | { kind: "loading" }
   | { kind: "unsupported"; answer: RevenueCompanionAnswer | null }
@@ -174,9 +178,13 @@ export function RevenueCompanionOverlay({
   }, [autoOpenSignal]);
 
   const ask = React.useCallback(
-    async (body: { intent: GuidedIntent } | { question: string }) => {
+    async (
+      body: { intent: GuidedIntent } | { question: string },
+      opts?: { autoPlayVoice?: boolean },
+    ) => {
       const seq = ++requestSeq.current;
       const sentSnapshot = snapshot;
+      const autoPlayVoice = opts?.autoPlayVoice ?? false;
       setState({ kind: "loading" });
       try {
         const res = await fetch("/api/revenue-companion/answer", {
@@ -195,7 +203,7 @@ export function RevenueCompanionOverlay({
           if (answer.intent === "UNSUPPORTED") {
             setState({ kind: "unsupported", answer });
           } else {
-            setState({ kind: "answer", answer, snapshot: sentSnapshot });
+            setState({ kind: "answer", answer, snapshot: sentSnapshot, autoPlayVoice });
           }
         } else if (res.status === 400) {
           setState({ kind: "unsupported", answer: null });
@@ -213,7 +221,9 @@ export function RevenueCompanionOverlay({
   const onSubmitText = React.useCallback(() => {
     const q = question.trim();
     if (!q) return;
-    void ask({ question: q });
+    // An explicit Ask press speaks the briefing automatically — the voice flow
+    // (mic → reviewed transcript → Ask) becomes a single step.
+    void ask({ question: q }, { autoPlayVoice: true });
   }, [question, ask]);
 
   const answer =
@@ -343,6 +353,7 @@ export function RevenueCompanionOverlay({
                   answer={answer}
                   voiceStatus={voiceStatus}
                   voiceRequest={voiceRequest}
+                  autoPlayVoice={state.autoPlayVoice}
                   focusHref={focusHref}
                   onDismiss={() => {
                     setState({ kind: "idle" });
@@ -368,12 +379,14 @@ function AnswerCard({
   answer,
   voiceStatus,
   voiceRequest,
+  autoPlayVoice = false,
   focusHref,
   onDismiss,
 }: {
   answer: RevenueCompanionAnswer;
   voiceStatus?: VoiceStatusProp;
   voiceRequest: ReturnType<typeof buildAnswerVoiceRequest>;
+  autoPlayVoice?: boolean;
   focusHref?: string;
   onDismiss: () => void;
 }) {
@@ -429,7 +442,11 @@ function AnswerCard({
           </button>
         ) : null}
         {voiceStatus?.offered && voiceRequest ? (
-          <VoicePlaybackControl status={voiceStatus} request={voiceRequest} />
+          <VoicePlaybackControl
+            status={voiceStatus}
+            request={voiceRequest}
+            autoPlay={autoPlayVoice}
+          />
         ) : null}
       </div>
     </div>

@@ -30,9 +30,16 @@ export interface VoiceStatusProp {
 export function VoicePlaybackControl({
   status,
   request,
+  autoPlay = false,
 }: {
   status: VoiceStatusProp;
   request: VoiceBriefingRequest;
+  // When true, playback starts automatically as this control mounts (i.e. the
+  // moment the answer renders after an explicit Ask). It still speaks the exact
+  // same deterministic briefing and mutates no governed state. The seller keeps
+  // full Pause/Replay control. Autoplay is best-effort: if the browser blocks it
+  // (no user activation), the control simply falls back to the manual Play state.
+  autoPlay?: boolean;
 }) {
   const v = COMPANION_STRINGS.voice;
   const [state, setState] = React.useState<VoicePlaybackState>(() =>
@@ -113,6 +120,19 @@ export function VoicePlaybackControl({
       return next;
     });
   }, [fetchAndPlay]);
+
+  // Single-step voice: when asked to autoplay, start speaking as soon as the
+  // control mounts with the new answer. Guarded so it fires at most once and
+  // only when live audio is actually configured; otherwise the manual Play
+  // affordance stays. Browser autoplay policy permits this because it follows
+  // the seller's Ask press (a user gesture).
+  const didAutoPlayRef = React.useRef(false);
+  React.useEffect(() => {
+    if (autoPlay && status.configured && !didAutoPlayRef.current) {
+      didAutoPlayRef.current = true;
+      onPlay();
+    }
+  }, [autoPlay, status.configured, onPlay]);
 
   const onReplay = React.useCallback(() => {
     setState((s) => {
