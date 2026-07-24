@@ -8,35 +8,42 @@ import {
   ShieldCheck,
   CheckCircle2,
   Circle,
+  ChevronDown,
 } from "lucide-react";
 
+import { buildVoiceBriefingRequest } from "@/lib/revenue-companion/voice/voiceRequest";
 import type {
   RevenueCompanionViewModel,
   CompanionAction,
 } from "@/lib/revenue-companion/companionContract";
 import { COMPANION_STRINGS } from "@/lib/revenue-companion/strings";
 import { cx } from "@/lib/format";
+import {
+  VoicePlaybackControl,
+  type VoiceStatusProp,
+} from "./VoicePlaybackControl";
 
-// Presentational, read-only Revenue Companion panel. It renders a governed,
-// pre-validated view model in a narrative-first order — AI speaks first, one
-// recommendation, evidence, then status. It owns no state and performs no I/O;
-// the two actions only navigate to (or, in the guided demo, open) the existing
-// governed surface. There is no execute or approve control here.
+// Presentational, read-only Revenue Companion panel, in an executive-brief
+// order: AI speaks first with a natural-language headline, then one governed
+// recommendation and an optional spoken briefing, then a compact governed
+// status. Supporting evidence, how-generated, and technical provenance are
+// available on demand (progressive disclosure) so the first read stays calm and
+// decision-first. The panel owns no governed state and performs no mutation; its
+// actions only open the existing governed surface.
 export function RevenueCompanionPanel({
   vm,
+  voiceStatus,
   onPrimary,
   onSecondary,
 }: {
   vm: RevenueCompanionViewModel;
+  voiceStatus?: VoiceStatusProp;
   onPrimary?: () => void;
   onSecondary?: () => void;
 }) {
   const s = COMPANION_STRINGS;
   return (
-    <section
-      className="card-elevated p-6"
-      aria-labelledby="companion-heading"
-    >
+    <section className="card-elevated p-6" aria-labelledby="companion-heading">
       {/* Header: AI speaks first, with an urgency chip (never colour alone). */}
       <div className="flex items-center gap-2">
         <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-brand/40 bg-brand/10">
@@ -53,6 +60,7 @@ export function RevenueCompanionPanel({
         </span>
       </div>
 
+      {/* Executive headline + narrative — the natural-language briefing. */}
       <h2
         id="companion-heading"
         className="mt-3 text-xl font-semibold leading-snug text-ink"
@@ -63,26 +71,12 @@ export function RevenueCompanionPanel({
         {vm.narrativeBody}
       </p>
 
-      {/* What changed. */}
-      <div className="mt-5">
-        <p className="section-label mb-1">{s.sections.whatChanged}</p>
-        <p className="text-sm text-ink">
-          <span className="font-medium">{vm.signalLabel}</span>
-          {vm.accountName ? (
-            <span className="text-muted"> · {vm.accountName}</span>
-          ) : null}
-        </p>
-        {vm.signalSummary ? (
-          <p className="mt-1 font-mono text-xs leading-relaxed text-faint">
-            {vm.signalSummary}
-          </p>
-        ) : null}
-      </div>
-
-      {/* Why it matters. */}
-      <div className="mt-4">
-        <p className="section-label mb-1">{s.sections.whyItMatters}</p>
-        <p className="text-sm leading-relaxed text-muted">{vm.businessImpact}</p>
+      {/* Compact identity + account line. */}
+      <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+        <span className="text-faint">{s.sections.identity}:</span>
+        <span className="font-medium text-ink">{vm.accountDisplayName}</span>
+        <span className="text-faint">·</span>
+        <span className="text-muted">{vm.identityStatus}</span>
       </div>
 
       {/* Recommended next step — one recommendation, then actions. */}
@@ -108,22 +102,49 @@ export function RevenueCompanionPanel({
             onClick={onSecondary}
           />
         </div>
+
+        {/* Optional spoken briefing sits with the recommendation. */}
+        {voiceStatus ? (
+          <VoicePlaybackControl
+            status={voiceStatus}
+            request={buildVoiceBriefingRequest(vm)}
+          />
+        ) : null}
       </div>
 
-      {/* Where it stands. */}
+      {/* Compact governed status: one plain line + detail on demand. */}
       <div className="mt-5">
-        <p className="section-label mb-2">{s.sections.status}</p>
-        <ul className="space-y-1.5">
-          <StatusLine label="Governance" value={vm.governanceStatus} />
-          <StatusLine label="Approval" value={vm.approvalStatus} />
-          <StatusLine label="Execution" value={vm.executionStatus} />
-        </ul>
+        <p className="section-label mb-1">{s.sections.status}</p>
+        <p className="text-sm text-ink">{s.statusHeadline}</p>
+        <Disclosure summary={s.disclosures.governedStatus}>
+          <ul className="space-y-1.5">
+            <StatusLine label="Governance" value={vm.governanceStatus} />
+            <StatusLine label="Approval" value={vm.approvalStatus} />
+            <StatusLine label="Execution" value={vm.executionStatus} />
+          </ul>
+        </Disclosure>
       </div>
 
-      {/* Evidence. */}
-      <div className="mt-5">
-        <p className="section-label mb-2">{s.sections.evidence}</p>
-        <ul className="space-y-1">
+      {/* Supporting evidence — collapsed by default. */}
+      <Disclosure summary={s.disclosures.supportingEvidence} className="mt-4">
+        <div>
+          <p className="section-label mb-1">{s.sections.whatChanged}</p>
+          <p className="text-sm text-ink">
+            <span className="font-medium">{vm.signalLabel}</span>
+            {vm.accountDisplayName ? (
+              <span className="text-muted"> · {vm.accountDisplayName}</span>
+            ) : null}
+          </p>
+          {vm.signalSummary ? (
+            <p className="mt-1 font-mono text-xs leading-relaxed text-faint">
+              {vm.signalSummary}
+            </p>
+          ) : null}
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-muted">
+          {vm.businessImpact}
+        </p>
+        <ul className="mt-3 space-y-1">
           {vm.evidenceItems.map((item, i) => (
             <li key={i} className="flex items-start gap-2 text-xs text-muted">
               <CheckCircle2
@@ -135,14 +156,13 @@ export function RevenueCompanionPanel({
             </li>
           ))}
         </ul>
-      </div>
+      </Disclosure>
 
-      {/* Narrative provider truth. */}
-      <div className="mt-5 rounded-lg border border-edge bg-surface2/40 p-4">
-        <p className="section-label mb-1">{s.sections.provider}</p>
+      {/* How this briefing was generated — provider truth, collapsed. */}
+      <Disclosure summary={s.disclosures.howGenerated} className="mt-3">
         <p className="text-xs leading-relaxed text-muted">
-          <span className="font-medium text-ink">{vm.narrativeProvider}</span>{" "}
-          · narrative mode: {vm.narrativeMode}
+          <span className="font-medium text-ink">{vm.narrativeProvider}</span> ·
+          narrative mode: {vm.narrativeMode}
         </p>
         <p className="mt-1 text-xs leading-relaxed text-faint">
           {vm.fallbackStatus}
@@ -150,11 +170,10 @@ export function RevenueCompanionPanel({
         <p className="mt-2 text-[11px] leading-relaxed text-faint">
           {s.providerHeading}
         </p>
-      </div>
+      </Disclosure>
 
-      {/* Safety labels. */}
-      <div className="mt-5">
-        <p className="section-label mb-2">{s.sections.safety}</p>
+      {/* Technical provenance — safety labels + provenance, collapsed. */}
+      <Disclosure summary={s.disclosures.technicalProvenance} className="mt-3">
         <ul className="flex flex-wrap gap-1.5">
           {vm.safety.map((label, i) => (
             <li
@@ -166,12 +185,36 @@ export function RevenueCompanionPanel({
             </li>
           ))}
         </ul>
-      </div>
-
-      <p className="mt-5 text-[11px] leading-relaxed text-faint">
-        {vm.provenance} · {COMPANION_STRINGS.footerNote}
-      </p>
+        <p className="mt-3 text-[11px] leading-relaxed text-faint">
+          {vm.provenance} · {s.footerNote}
+        </p>
+      </Disclosure>
     </section>
+  );
+}
+
+// A lightweight native disclosure (keyboard-accessible, no extra JS state).
+function Disclosure({
+  summary,
+  children,
+  className,
+}: {
+  summary: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <details className={cx("group mt-2", className)}>
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md py-1 text-xs font-medium text-faint transition-colors hover:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60">
+        <ChevronDown
+          size={13}
+          aria-hidden="true"
+          className="transition-transform group-open:rotate-180"
+        />
+        {summary}
+      </summary>
+      <div className="mt-2">{children}</div>
+    </details>
   );
 }
 

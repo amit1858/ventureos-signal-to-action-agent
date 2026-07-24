@@ -20,6 +20,13 @@ import {
   buildCompanionViewModel,
   buildValidatedCompanion,
   validateCompanion,
+  buildExecutiveHeadline,
+  buildVoiceScript,
+  reverseDisplayName,
+  deriveAccountDisplayName,
+  computeScriptFingerprint,
+  scanVoiceScript,
+  VOICE_SCRIPT_MAX_CHARS,
   COMPANION_SCHEMA_VERSION,
   COMPANION_STABLE_TIMESTAMP,
   type RevenueCompanionViewModel,
@@ -80,21 +87,50 @@ for (const journey of doc.journeys) {
   check(`journey ${journey.key}: recommendation reason verbatim`, vm.recommendationReason === journey.view.recommendation);
   check(`journey ${journey.key}: evidence verbatim`, vm.evidenceItems.join("|") === journey.view.evidenceItems.join("|"));
   check(`journey ${journey.key}: safety verbatim`, vm.safety.join("|") === journey.view.safetyDisclosures.join("|"));
-  check(`journey ${journey.key}: headline verbatim`, vm.narrativeHeadline === journey.view.headline);
-  check(`journey ${journey.key}: body verbatim`, vm.narrativeBody === journey.view.primaryNarrative);
+
+  // Executive headline is composed (natural language, display name), and the
+  // body is the governed narrative with ONLY the approved display name applied.
+  const display = deriveAccountDisplayName("curefoods-test");
+  check(
+    `journey ${journey.key}: headline is composed executive headline`,
+    vm.narrativeHeadline === buildExecutiveHeadline(journey.view, display),
+  );
+  check(
+    `journey ${journey.key}: body is source narrative with display name substituted`,
+    reverseDisplayName(vm.narrativeBody, "curefoods-test", display) ===
+      journey.view.primaryNarrative,
+  );
 
   // Parsed identity + mission.
   check(`journey ${journey.key}: account name parsed`, vm.accountName === "curefoods-test");
+  check(`journey ${journey.key}: account display name is the approved label`, vm.accountDisplayName === "Curefoods");
+  check(`journey ${journey.key}: identity status present`, vm.identityStatus.length > 0);
+  check(`journey ${journey.key}: narrative id equals journey key`, vm.narrativeId === journey.key);
+  check(`journey ${journey.key}: presentation version pinned`, vm.presentationVersion === COMPANION_SCHEMA_VERSION);
   check(`journey ${journey.key}: account ref parsed`, vm.accountRef === "hubspot:246820626:335064019691");
   check(`journey ${journey.key}: mission id parsed`, vm.recommendedMissionId === "MSN-81690a7c4a50e237");
   check(`journey ${journey.key}: mission title allowlisted`, vm.recommendedMissionTitle === "Renewal-risk recovery mission");
   check(`journey ${journey.key}: signal label allowlisted`, vm.signalLabel === "Renewal date change");
   check(`journey ${journey.key}: urgency high`, vm.urgency === "high");
 
-  // Business impact is grounded (a substring of the source narrative).
+  // Business impact is grounded (source narrative, modulo the display name).
   check(
     `journey ${journey.key}: business impact grounded in narrative`,
-    journey.view.primaryNarrative.includes(vm.businessImpact) && vm.businessImpact.length > 0,
+    journey.view.primaryNarrative.includes(
+      reverseDisplayName(vm.businessImpact, "curefoods-test", display),
+    ) && vm.businessImpact.length > 0,
+  );
+
+  // Voice script is deterministic, bounded, identifier-free, fingerprint-locked.
+  check(
+    `journey ${journey.key}: voice script recomputes deterministically`,
+    vm.voiceScript === buildVoiceScript(journey.view, display),
+  );
+  check(`journey ${journey.key}: voice script within length bound`, vm.voiceScript.length <= VOICE_SCRIPT_MAX_CHARS);
+  check(`journey ${journey.key}: voice script carries no forbidden/identifier token`, scanVoiceScript(vm.voiceScript) === null);
+  check(
+    `journey ${journey.key}: approved fingerprint matches the script`,
+    vm.approvedTextFingerprint === computeScriptFingerprint(vm.voiceScript),
   );
 
   // Actions stay on the governed surface — no execute/approve endpoint.
@@ -139,6 +175,12 @@ console.log("\n[3] Groundedness validator rejects tampered companions");
   check("rejects an off-surface action href", !tamper((vm) => { vm.primaryAction = { ...vm.primaryAction, href: "https://evil.example/execute" }; }));
   check("rejects a fabricated mission id", !tamper((vm) => { vm.recommendedMissionId = "MSN-deadbeefdeadbeef"; }));
   check("rejects tampered evidence", !tamper((vm) => { vm.evidenceItems = [...vm.evidenceItems, "Action executed in HubSpot"]; }));
+  check("rejects a spoofed display name", !tamper((vm) => { vm.accountDisplayName = "MegaCorp"; }));
+  check("rejects a changed identity status", !tamper((vm) => { vm.identityStatus = "Corroborated"; }));
+  check("rejects a tampered voice script", !tamper((vm) => { vm.voiceScript = vm.voiceScript + " Execute the action now."; }));
+  check("rejects a stale fingerprint after script edit", !tamper((vm) => { vm.voiceScript = vm.voiceScript.replace("Curefoods", "Acme"); }));
+  check("rejects a mismatched fingerprint", !tamper((vm) => { vm.approvedTextFingerprint = "vcs1:00000000"; }));
+  check("rejects a narrative id that is not the journey key", !tamper((vm) => { vm.narrativeId = "z"; }));
   check("accepts the untampered baseline", validateCompanion(base, j.view).ok);
 }
 

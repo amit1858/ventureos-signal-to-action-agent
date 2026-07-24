@@ -25,6 +25,9 @@ import {
   buildDeterministicNarrative,
   buildCompanionViewModel,
   validateCompanion,
+  buildExecutiveHeadline,
+  reverseDisplayName,
+  deriveAccountDisplayName,
 } from "../companionContract";
 import {
   resolveCompanionNarrative,
@@ -55,6 +58,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA = resolve(HERE, "../../demo-mode/data/demo-journeys.generated.json");
 const doc = JSON.parse(readFileSync(DATA, "utf8")) as unknown as DemoJourneysDoc;
 const viewA: DemoPresentationView = doc.journeys.find((j) => j.key === "a")!.view;
+// The governed source account slug for both committed journeys.
+const rawA = "curefoods-test";
+const displayA = deriveAccountDisplayName(rawA);
 
 function fakeProvider(
   configured: boolean,
@@ -70,8 +76,16 @@ console.log("\n[1] Unconfigured NVIDIA → deterministic (default shipped state)
   __setCompanionProviderForTest(null);
   const r = resolveCompanionNarrative(viewA);
   check("mode is deterministic", r.mode === "deterministic");
-  check("headline is the verbatim governed headline", r.headline === viewA.headline);
-  check("body is the verbatim governed narrative", r.body === viewA.primaryNarrative);
+  check(
+    "headline is the composed executive headline (display name, natural language)",
+    r.headline === buildExecutiveHeadline(viewA, displayA),
+  );
+  check("headline uses the approved display name", r.headline.includes(displayA));
+  check("headline drops the internal account slug", !r.headline.includes(rawA));
+  check(
+    "body is the governed narrative with only the display name substituted",
+    reverseDisplayName(r.body, rawA, displayA) === viewA.primaryNarrative,
+  );
   check("provider labelled from source (NVIDIA unconfigured)", r.provider === viewA.providerLabel);
   check("fallback status states NVIDIA is not configured", /not configured/i.test(r.fallbackStatus));
 }
@@ -112,7 +126,10 @@ console.log("\n[3] Provider that overstates → rejected → deterministic fallb
   );
   const forbidden = resolveCompanionNarrative(viewA);
   check("forbidden-claim draft falls back to deterministic", forbidden.mode === "deterministic");
-  check("fallback body is the governed narrative", forbidden.body === viewA.primaryNarrative);
+  check(
+    "fallback body is the governed narrative (display name substituted)",
+    reverseDisplayName(forbidden.body, rawA, displayA) === viewA.primaryNarrative,
+  );
   check("fallback status notes groundedness failure", /groundedness/i.test(forbidden.fallbackStatus));
 
   // Unearned authority token not present in the Journey A governed stop.
@@ -137,7 +154,10 @@ console.log("\n[4] Provider that throws or declines → error → deterministic"
   );
   const thrown = resolveCompanionNarrative(viewA);
   check("provider throw falls back to deterministic", thrown.mode === "deterministic");
-  check("provider throw is not fabricated as NVIDIA output", thrown.headline === viewA.headline);
+  check(
+    "provider throw is not fabricated as NVIDIA output",
+    thrown.headline === buildExecutiveHeadline(viewA, displayA),
+  );
 
   __setCompanionProviderForTest(fakeProvider(true, () => null));
   const declined = resolveCompanionNarrative(viewA);
