@@ -10,9 +10,13 @@
 import * as React from "react";
 import { Expand, X } from "lucide-react";
 import type { WalkthroughVisual } from "@/lib/walkthrough/stages";
+import { useTheme } from "@/lib/theme";
 
 export function VisualEvidence({ visual }: { visual: WalkthroughVisual }) {
   const [open, setOpen] = React.useState(false);
+  const { theme } = useTheme();
+  // Dark theme serves the `-dark.png` sibling captured for each visual.
+  const themedSrc = theme === "dark" ? visual.src.replace(/\.png$/, "-dark.png") : visual.src;
 
   React.useEffect(() => {
     if (!open) return;
@@ -38,7 +42,7 @@ export function VisualEvidence({ visual }: { visual: WalkthroughVisual }) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={visual.src}
+            src={themedSrc}
             alt={visual.alt}
             width={visual.width}
             height={visual.height}
@@ -74,7 +78,7 @@ export function VisualEvidence({ visual }: { visual: WalkthroughVisual }) {
             </button>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={visual.src}
+              src={themedSrc}
               alt={visual.alt}
               width={visual.width}
               height={visual.height}

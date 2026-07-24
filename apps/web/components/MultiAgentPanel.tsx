@@ -24,8 +24,8 @@ const TONE: Record<Tone, { ring: string; chip: string; iconBg: string }> = {
   risk: { ring: "border-risk/30", chip: "bg-risk/10 text-risk", iconBg: "bg-risk/15 text-risk" },
   growth: { ring: "border-accent/30", chip: "bg-accent/10 text-accent", iconBg: "bg-accent/15 text-accent" },
   research: { ring: "border-brand/30", chip: "bg-brand/10 text-brand", iconBg: "bg-brand/15 text-brand" },
-  engagement: { ring: "border-cyan-400/30", chip: "bg-cyan-400/10 text-cyan-300", iconBg: "bg-cyan-400/15 text-cyan-300" },
-  governance: { ring: "border-amber-400/30", chip: "bg-amber-400/10 text-amber-300", iconBg: "bg-amber-400/15 text-amber-300" },
+  engagement: { ring: "border-cyan/30", chip: "bg-cyan/10 text-cyan", iconBg: "bg-cyan/15 text-cyan" },
+  governance: { ring: "border-amber/30", chip: "bg-amber/10 text-amber-700", iconBg: "bg-amber/15 text-amber-700" },
 };
 
 function LevelChip({ level, tone }: { level: string; tone: Tone }) {
@@ -163,7 +163,7 @@ export function MultiAgentPanel({ accountId }: { accountId: string | null }) {
                   report.consensus_label === "high"
                     ? "bg-accent/10 text-accent"
                     : report.consensus_label === "medium"
-                    ? "bg-amber-400/10 text-amber-300"
+                    ? "bg-amber/10 text-amber-700"
                     : "bg-risk/10 text-risk",
                 )}
               >
@@ -259,9 +259,9 @@ export function MultiAgentPanel({ accountId }: { accountId: string | null }) {
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <div className="rounded-2xl border border-cyan-400/30 bg-cyan-400/5 p-4">
+            <div className="rounded-2xl border border-cyan/30 bg-cyan/5 p-4">
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-text">
-                <ClipboardList className="h-4 w-4 text-cyan-300" />
+                <ClipboardList className="h-4 w-4 text-cyan" />
                 Guided playbook
               </div>
               <p className="text-[12px] text-text/85">{report.engagement.action_selected_why}</p>
@@ -315,11 +315,11 @@ export function MultiAgentPanel({ accountId }: { accountId: string | null }) {
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4">
+          <div className="mt-4 rounded-2xl border border-amber/30 bg-amber/5 p-4">
             <div className="mb-2 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-amber-300" />
+              <ShieldCheck className="h-4 w-4 text-amber-700" />
               <div className="text-sm font-semibold text-text">Governance Agent</div>
-              <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300">
+              <span className="rounded-full bg-amber/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
                 Critic
               </span>
             </div>
@@ -338,7 +338,7 @@ export function MultiAgentPanel({ accountId }: { accountId: string | null }) {
           </div>
 
           {report.contradictions.length > 0 ? (
-            <div className="mt-3 rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-[12px] text-amber-200">
+            <div className="mt-3 rounded-lg border border-amber/30 bg-amber/10 p-3 text-[12px] text-amber-700">
               <div className="mb-1 flex items-center gap-2 font-semibold">
                 <Activity className="h-3 w-3" /> Cross-agent contradictions
               </div>

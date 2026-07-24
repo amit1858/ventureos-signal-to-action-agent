@@ -9,37 +9,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Phase 13.5 — Executive Visual System.
-        // Charcoal stack (replaces the old blue-leaning #0B0F0E → #1B2228 set):
-        base: "#0A0B0D",
-        panel: "#111317",
-        surface: "#171A1F",
-        surface2: "#1B1F25",
-        elevated: "#1F242B",
-        edge: "rgba(255,255,255,0.06)",
-        "edge-soft": "rgba(255,255,255,0.04)",
-        // Warm typography (off-white → taupe ladder):
-        ink: "#F5F1E8",
-        muted: "#B5B0A5",
-        faint: "#8A857B",
-        // Revenue green — desaturated, executive (was neon #76B900):
-        accent: "#76B65D",
-        "accent-dim": "#5C9447",
-        "accent-bright": "#8CCB72",
-        // Primary action accent is now AMBER (was lavender #8B7CF6).
-        // `brand` keeps its name so every existing CTA / active tab /
-        // lifecycle "current" chip retones in one change.
-        brand: "#D89A3D",
-        "brand-bright": "#E5AE55",
-        "brand-dim": "#B4802C",
-        // Governance lavender — reserved for audit / approval history.
-        gov: "#8B7CC8",
-        "gov-bright": "#A498D6",
-        // Secondary slate (unchanged role).
-        cyan: "#7E8BA3",
-        slate: "#7E8BA3",
-        amber: "#D89A3D",
-        risk: "#D96A5F",
+        // Theme tokens are CSS variables (rgb triples) so a `data-theme`
+        // attribute on <html> switches Light ↔ Dark for all usages at once.
+        // Triple form (`rgb(var(--c-*) / <alpha-value>)`) is required so the
+        // Tailwind opacity modifier keeps working (e.g. `border-edge/60`).
+        // Light + Dark triple values live in app/globals.css.
+        base: "rgb(var(--c-base) / <alpha-value>)",
+        panel: "rgb(var(--c-panel) / <alpha-value>)",
+        surface: "rgb(var(--c-surface) / <alpha-value>)",
+        surface2: "rgb(var(--c-surface2) / <alpha-value>)",
+        elevated: "rgb(var(--c-elevated) / <alpha-value>)",
+        edge: "rgb(var(--c-edge) / <alpha-value>)",
+        "edge-soft": "rgb(var(--c-edge-soft) / <alpha-value>)",
+        ink: "rgb(var(--c-ink) / <alpha-value>)",
+        muted: "rgb(var(--c-muted) / <alpha-value>)",
+        faint: "rgb(var(--c-faint) / <alpha-value>)",
+        accent: "rgb(var(--c-accent) / <alpha-value>)",
+        "accent-dim": "rgb(var(--c-accent-dim) / <alpha-value>)",
+        "accent-bright": "rgb(var(--c-accent-bright) / <alpha-value>)",
+        brand: "rgb(var(--c-brand) / <alpha-value>)",
+        "brand-bright": "rgb(var(--c-brand-bright) / <alpha-value>)",
+        "brand-dim": "rgb(var(--c-brand-dim) / <alpha-value>)",
+        gov: "rgb(var(--c-gov) / <alpha-value>)",
+        "gov-bright": "rgb(var(--c-gov-bright) / <alpha-value>)",
+        cyan: "rgb(var(--c-cyan) / <alpha-value>)",
+        slate: "rgb(var(--c-slate) / <alpha-value>)",
+        amber: "rgb(var(--c-amber) / <alpha-value>)",
+        risk: "rgb(var(--c-risk) / <alpha-value>)",
       },
       fontFamily: {
         sans: [
@@ -63,13 +59,13 @@ const config: Config = {
         ],
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(216,154,61,0.22), 0 0 26px -10px rgba(216,154,61,0.30)",
-        "glow-soft": "0 0 0 1px rgba(216,154,61,0.14), 0 0 44px -14px rgba(216,154,61,0.18)",
-        "glow-gov": "0 0 0 1px rgba(139,124,200,0.20), 0 0 30px -12px rgba(139,124,200,0.25)",
-        panel: "0 1px 0 0 rgba(255,255,255,0.025) inset, 0 12px 30px -18px rgba(0,0,0,0.65)",
-        elevated: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 22px 50px -24px rgba(0,0,0,0.78)",
+        glow: "0 0 0 1px rgba(1,118,211,0.35), 0 0 20px -8px rgba(1,118,211,0.28)",
+        "glow-soft": "0 0 0 1px rgba(1,118,211,0.22), 0 0 32px -12px rgba(1,118,211,0.18)",
+        "glow-gov": "0 0 0 1px rgba(88,103,232,0.30), 0 0 24px -10px rgba(88,103,232,0.22)",
+        panel: "0 0 0 1px rgba(0,0,0,0.03), 0 2px 6px -2px rgba(0,0,0,0.08)",
+        elevated: "0 0 0 1px rgba(0,0,0,0.04), 0 8px 20px -8px rgba(0,0,0,0.12)",
         executive:
-          "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 30px 60px -28px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)",
+          "0 0 0 1px rgba(0,0,0,0.05), 0 12px 28px -10px rgba(0,0,0,0.14)",
       },
       keyframes: {
         "fade-in": {

@@ -39,30 +39,30 @@ export function RiskOpportunityMatrix({
 
   function tone(risk: number, opp: number): string {
     if (risk >= 50) return "#EF6B73"; // elevated risk → attention
-    if (opp >= 50) return "#76B900"; // growth-ready
-    return "#6B7480"; // monitor
+    if (opp >= 50) return "rgb(var(--c-accent))"; // growth-ready
+    return "rgb(var(--chart-axis))"; // monitor
   }
 
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full">
         {/* plot frame */}
-        <rect x={pad} y={pad} width={plotW} height={plotH} fill="#0E1117" stroke="#2A2F35" rx="6" />
+        <rect x={pad} y={pad} width={plotW} height={plotH} fill="rgb(var(--chart-plot))" stroke="rgb(var(--chart-grid))" rx="6" />
         {/* quadrant dividers */}
-        <line x1={midX} y1={pad} x2={midX} y2={pad + plotH} stroke="#2A2F35" strokeDasharray="3 3" />
-        <line x1={pad} y1={midY} x2={pad + plotW} y2={midY} stroke="#2A2F35" strokeDasharray="3 3" />
+        <line x1={midX} y1={pad} x2={midX} y2={pad + plotH} stroke="rgb(var(--chart-grid))" strokeDasharray="3 3" />
+        <line x1={pad} y1={midY} x2={pad + plotW} y2={midY} stroke="rgb(var(--chart-grid))" strokeDasharray="3 3" />
 
         {/* quadrant labels */}
-        <text x={pad + plotW - 6} y={pad + 12} textAnchor="end" className="fill-[#76B900]" fontSize="8" fontWeight="600">
+        <text x={pad + plotW - 6} y={pad + 12} textAnchor="end" fill="rgb(var(--c-accent))" fontSize="8" fontWeight="600">
           ACT NOW
         </text>
-        <text x={pad + 6} y={pad + 12} textAnchor="start" className="fill-[#EF6B73]" fontSize="8" fontWeight="600">
+        <text x={pad + 6} y={pad + 12} textAnchor="start" fill="#EF6B73" fontSize="8" fontWeight="600">
           ESCALATE
         </text>
-        <text x={pad + 6} y={pad + plotH - 5} textAnchor="start" className="fill-[#6B7480]" fontSize="8" fontWeight="600">
+        <text x={pad + 6} y={pad + plotH - 5} textAnchor="start" fill="rgb(var(--chart-axis))" fontSize="8" fontWeight="600">
           MONITOR
         </text>
-        <text x={pad + plotW - 6} y={pad + plotH - 5} textAnchor="end" className="fill-[#AAB2BD]" fontSize="8" fontWeight="600">
+        <text x={pad + plotW - 6} y={pad + plotH - 5} textAnchor="end" fill="rgb(var(--chart-axis))" fontSize="8" fontWeight="600">
           NURTURE
         </text>
 
@@ -79,7 +79,7 @@ export function RiskOpportunityMatrix({
                 r={hot ? 4 : 3}
                 fill={c}
                 fillOpacity={hot ? 1 : 0.65}
-                stroke={hot ? "#F4F6F8" : "none"}
+                stroke={hot ? "rgb(var(--chart-dot-stroke))" : "none"}
                 strokeWidth={hot ? 1 : 0}
               >
                 <title>{`${p.id} · risk ${Math.round(p.risk)} · opportunity ${Math.round(p.opp)}`}</title>
@@ -89,14 +89,14 @@ export function RiskOpportunityMatrix({
         })}
 
         {/* axes labels */}
-        <text x={pad + plotW / 2} y={H - 6} textAnchor="middle" className="fill-[#6B7480]" fontSize="9">
+        <text x={pad + plotW / 2} y={H - 6} textAnchor="middle" fill="rgb(var(--chart-axis))" fontSize="9">
           Opportunity →
         </text>
         <text
           x={12}
           y={pad + plotH / 2}
           textAnchor="middle"
-          className="fill-[#6B7480]"
+          fill="rgb(var(--chart-axis))"
           fontSize="9"
           transform={`rotate(-90 12 ${pad + plotH / 2})`}
         >
@@ -106,8 +106,8 @@ export function RiskOpportunityMatrix({
 
       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-faint">
         <Legend color="#EF6B73" label="Elevated risk" />
-        <Legend color="#76B900" label="Growth-ready" />
-        <Legend color="#6B7480" label="Monitor" />
+        <Legend color="rgb(var(--c-accent))" label="Growth-ready" />
+        <Legend color="rgb(var(--chart-axis))" label="Monitor" />
       </div>
     </div>
   );

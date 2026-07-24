@@ -46,7 +46,7 @@ export function ExperienceModeSwitch({ value, onChange }: Props) {
               className={cx(
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
                 active
-                  ? "bg-accent/15 text-accent shadow-[0_0_0_1px_rgba(216,154,61,0.35)]"
+                  ? "bg-accent/15 text-accent shadow-[0_0_0_1px_rgba(1,118,211,0.35)]"
                   : "text-muted hover:text-ink",
               )}
             >

@@ -36,12 +36,12 @@ export function ConfidenceRing({ value, caption }: { value: number; caption?: st
   const r = 26;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - v);
-  const stroke = v >= 0.75 ? "#76B900" : v >= 0.5 ? "#F5B84B" : "#EF6B73";
+  const stroke = v >= 0.75 ? "#2E844A" : v >= 0.5 ? "#F5B84B" : "#EF6B73";
   return (
     <div className="flex items-center gap-3 rounded-lg border border-edge bg-surface2/40 p-3">
       <div className="relative h-[68px] w-[68px] shrink-0">
         <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90">
-          <circle cx="32" cy="32" r={r} fill="none" stroke="#1B2127" strokeWidth="6" />
+          <circle cx="32" cy="32" r={r} fill="none" stroke="rgb(var(--chart-track))" strokeWidth="6" />
           <circle
             cx="32"
             cy="32"

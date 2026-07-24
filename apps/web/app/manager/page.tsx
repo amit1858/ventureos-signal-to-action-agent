@@ -35,7 +35,7 @@ function ManagerHeader() {
             <p className="text-[11px] leading-tight text-muted">Manager coaching · Curefoods renewal</p>
           </div>
         </Link>
-        <span className="inline-flex items-center gap-1.5 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-amber-300">
+        <span className="inline-flex items-center gap-1.5 rounded border border-amber/40 bg-amber/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-amber-700">
           <GitBranch size={11} /> Guided Demo
         </span>
       </div>

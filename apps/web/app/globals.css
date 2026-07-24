@@ -3,10 +3,85 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ---- LIGHT theme (Salesforce Lightning) — rgb triples ---- */
+  --c-base: 243 243 243;
+  --c-panel: 250 250 251;
+  --c-surface: 255 255 255;
+  --c-surface2: 243 243 243;
+  --c-elevated: 255 255 255;
+  --c-edge: 229 229 229;
+  --c-edge-soft: 238 238 238;
+  --c-ink: 24 24 24;
+  --c-muted: 68 68 68;
+  --c-faint: 116 116 116;
+  --c-accent: 46 132 74;
+  --c-accent-dim: 37 106 59;
+  --c-accent-bright: 69 198 90;
+  --c-brand: 1 118 211;
+  --c-brand-bright: 27 150 255;
+  --c-brand-dim: 1 68 134;
+  --c-gov: 88 103 232;
+  --c-gov-bright: 123 135 245;
+  --c-cyan: 94 107 130;
+  --c-slate: 94 107 130;
+  --c-amber: 254 147 57;
+  --c-risk: 234 0 30;
+
+  /* chart tokens (inline SVG fills/strokes) */
+  --chart-plot: 255 255 255;
+  --chart-track: 229 229 229;
+  --chart-grid: 229 229 229;
+  --chart-track-empty: 238 238 238;
+  --chart-dot-stroke: 24 24 24;
+  --chart-axis: 94 107 130;
+
+  /* header background (blue in light) */
+  --header-bg: 1 118 211;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* ---- DARK theme (original executive charcoal + amber) — rgb triples ---- */
+  --c-base: 10 11 13;
+  --c-panel: 17 19 23;
+  --c-surface: 23 26 31;
+  --c-surface2: 27 31 37;
+  --c-elevated: 31 36 43;
+  /* edge/edge-soft: pre-dimmed SOLID greys equal to the old translucent-white
+     over the dark surface, so bare `border-edge` is a hairline (not solid white)
+     while `border-edge/NN` modifiers still work. */
+  --c-edge: 38 43 49;
+  --c-edge-soft: 30 34 39;
+  --c-ink: 245 241 232;
+  --c-muted: 181 176 165;
+  --c-faint: 138 133 123;
+  --c-accent: 118 182 93;
+  --c-accent-dim: 92 148 71;
+  --c-accent-bright: 140 203 114;
+  --c-brand: 216 154 61;
+  --c-brand-bright: 229 174 85;
+  --c-brand-dim: 180 128 44;
+  --c-gov: 139 124 200;
+  --c-gov-bright: 164 152 214;
+  --c-cyan: 126 139 163;
+  --c-slate: 126 139 163;
+  --c-amber: 216 154 61;
+  --c-risk: 217 106 95;
+
+  --chart-plot: 11 15 14;
+  --chart-track: 27 33 39;
+  --chart-grid: 42 47 53;
+  --chart-track-empty: 36 42 48;
+  --chart-dot-stroke: 245 241 232;
+  --chart-axis: 126 139 163;
+
+  --header-bg: 10 11 13;
 }
 
 html,
@@ -19,18 +94,31 @@ html {
 }
 
 body {
+  background-attachment: fixed;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.005em;
+}
+
+/* Body background + text — theme-specific ambient wash. */
+:root body {
+  background-color: #f3f3f3;
+  background-image:
+    radial-gradient(1200px 640px at 8% -14%, rgba(1, 118, 211, 0.04), transparent 62%),
+    radial-gradient(960px 580px at 100% -6%, rgba(1, 118, 211, 0.025), transparent 60%),
+    radial-gradient(900px 700px at 60% 110%, rgba(88, 103, 232, 0.03), transparent 65%),
+    linear-gradient(180deg, #f3f3f3 0%, #ececec 100%);
+  color: #181818;
+}
+:root[data-theme="dark"] body {
   background-color: #0a0b0d;
   background-image:
     radial-gradient(1200px 640px at 8% -14%, rgba(216, 154, 61, 0.07), transparent 62%),
     radial-gradient(960px 580px at 100% -6%, rgba(216, 154, 61, 0.035), transparent 60%),
     radial-gradient(900px 700px at 60% 110%, rgba(139, 124, 200, 0.04), transparent 65%),
     linear-gradient(180deg, #0a0b0d 0%, #08090b 100%);
-  background-attachment: fixed;
   color: #f5f1e8;
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  letter-spacing: -0.005em;
 }
 
 @layer components {
@@ -67,7 +155,7 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply border-brand/60 bg-brand text-[#1a1206] hover:bg-brand-bright hover:border-brand-bright shadow-[0_1px_0_0_rgba(255,255,255,0.18)_inset,_0_8px_22px_-10px_rgba(216,154,61,0.55)];
+    @apply border-brand/60 bg-brand text-white hover:bg-brand-bright hover:border-brand-bright shadow-[0_1px_2px_0_rgba(1,118,211,0.30)];
   }
   .btn-outline-primary {
     @apply border-brand/55 bg-brand/10 text-brand-bright hover:bg-brand/20 hover:border-brand/75;
@@ -91,8 +179,78 @@ body {
 
 /* Faint dotted "cockpit" grid overlay used behind the center column. */
 .grid-dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+:root .grid-dots {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+}
+:root[data-theme="dark"] .grid-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+}
+
+/* Global header. Light = solid Salesforce blue with white nav/chips; Dark =
+   dark surface with normal token-driven text. Background is var-driven so the
+   header JSX carries no hardcoded bg. */
+.header-blue {
+  background-color: rgb(var(--header-bg));
+}
+:root:not([data-theme="dark"]) .header-blue {
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.12) inset,
+    0 6px 20px -10px rgba(1, 118, 211, 0.6);
+}
+
+/* --- LIGHT: retint nav + status chips to white-on-blue --- */
+:root:not([data-theme="dark"]) .header-blue nav {
+  border-color: rgba(255, 255, 255, 0.22);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+:root:not([data-theme="dark"]) .header-blue nav a,
+:root:not([data-theme="dark"]) .header-blue nav button {
+  color: rgba(255, 255, 255, 0.85);
+}
+:root:not([data-theme="dark"]) .header-blue nav a:hover,
+:root:not([data-theme="dark"]) .header-blue nav button:hover {
+  color: #ffffff;
+}
+:root:not([data-theme="dark"]) .header-blue nav [aria-current="page"],
+:root:not([data-theme="dark"]) .header-blue nav [aria-pressed="true"] {
+  background-color: #ffffff !important;
+  color: #0176d3 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.15) !important;
+}
+:root:not([data-theme="dark"]) .header-blue .inline-flex[title] {
+  border-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+:root:not([data-theme="dark"]) .header-blue .inline-flex[title] span,
+:root:not([data-theme="dark"]) .header-blue .inline-flex[title] svg {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+:root:not([data-theme="dark"]) .header-blue .inline-flex[title] > span:first-child {
+  background-color: #ffffff !important;
+}
+
+/* --- DARK: header is a dark surface; retint the hardcoded white utilities in
+   the header JSX back to tokens. --- */
+:root[data-theme="dark"] .header-blue {
+  border-bottom: 1px solid rgb(var(--c-edge));
+  box-shadow: none;
+}
+:root[data-theme="dark"] .header-blue [class*="text-white"] {
+  color: rgb(var(--c-ink)) !important;
+}
+:root[data-theme="dark"] .header-blue [class*="border-white"] {
+  border-color: rgb(var(--c-edge)) !important;
+}
+:root[data-theme="dark"] .header-blue [class*="bg-white"] {
+  background-color: rgb(var(--c-surface2)) !important;
+}
+:root[data-theme="dark"] .header-blue nav [aria-current="page"],
+:root[data-theme="dark"] .header-blue nav [aria-pressed="true"] {
+  background-color: rgb(var(--c-brand) / 0.15) !important;
+  color: rgb(var(--c-brand-bright)) !important;
 }
 
 /* Premium skeleton shimmer for loading states. */
@@ -104,6 +262,11 @@ body {
 .skeleton {
   position: relative;
   overflow: hidden;
+}
+:root .skeleton {
+  background: #e9e9ec;
+}
+:root[data-theme="dark"] .skeleton {
   background: #151a1e;
 }
 .skeleton::after {
@@ -111,28 +274,44 @@ body {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.04),
-    transparent
-  );
   animation: shimmer 1.8s infinite;
+}
+:root .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+}
+:root[data-theme="dark"] .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
 }
 
 /* Thin gradient accent rule used under panel headers. */
 .rule-accent {
   height: 1px;
+}
+:root .rule-accent {
+  background: linear-gradient(90deg, rgba(1, 118, 211, 0.45), rgba(1, 118, 211, 0) 72%);
+}
+:root[data-theme="dark"] .rule-accent {
   background: linear-gradient(90deg, rgba(216, 154, 61, 0.55), rgba(216, 154, 61, 0) 72%);
 }
 
 /* Phase 13.5 — executive surface utilities. */
-.surface-warm {
+:root .surface-warm {
+  background:
+    linear-gradient(180deg, rgba(1, 118, 211, 0.03), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #fafafb 100%);
+}
+:root[data-theme="dark"] .surface-warm {
   background:
     linear-gradient(180deg, rgba(216, 154, 61, 0.045), transparent 60%),
     linear-gradient(180deg, #1b1f25 0%, #171a1f 100%);
 }
-.rail-selected {
+:root .rail-selected {
+  background:
+    linear-gradient(90deg, rgba(1, 118, 211, 0.1), transparent 65%),
+    rgba(1, 118, 211, 0.04);
+  border-left: 2px solid #0176d3;
+}
+:root[data-theme="dark"] .rail-selected {
   background:
     linear-gradient(90deg, rgba(216, 154, 61, 0.12), transparent 65%),
     rgba(216, 154, 61, 0.04);
@@ -146,13 +325,14 @@ body {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: radial-gradient(
-    600px 220px at 0% 0%,
-    rgba(216, 154, 61, 0.10),
-    transparent 60%
-  );
   pointer-events: none;
   z-index: 0;
+}
+:root .ambient-glow::before {
+  background: radial-gradient(600px 220px at 0% 0%, rgba(1, 118, 211, 0.06), transparent 60%);
+}
+:root[data-theme="dark"] .ambient-glow::before {
+  background: radial-gradient(600px 220px at 0% 0%, rgba(216, 154, 61, 0.1), transparent 60%);
 }
 .ambient-glow > * {
   position: relative;
@@ -168,6 +348,12 @@ body {
 }
 .hover-lift:hover {
   transform: translateY(-2px);
+}
+:root .hover-lift:hover {
+  border-color: rgba(1, 118, 211, 0.35);
+  box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.15);
+}
+:root[data-theme="dark"] .hover-lift:hover {
   border-color: rgba(216, 154, 61, 0.32);
   box-shadow: 0 22px 48px -24px rgba(0, 0, 0, 0.85);
 }
@@ -227,16 +413,28 @@ body {
 /* Scrollbars */
 * {
   scrollbar-width: thin;
+}
+:root * {
+  scrollbar-color: #c4c4c4 transparent;
+}
+:root[data-theme="dark"] * {
   scrollbar-color: #2a2f35 transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-*::-webkit-scrollbar-thumb {
+:root *::-webkit-scrollbar-thumb {
+  background: #c4c4c4;
+  border-radius: 8px;
+}
+:root *::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}
+:root[data-theme="dark"] *::-webkit-scrollbar-thumb {
   background: #2a2f35;
   border-radius: 8px;
 }
-*::-webkit-scrollbar-thumb:hover {
+:root[data-theme="dark"] *::-webkit-scrollbar-thumb:hover {
   background: #3a414a;
 }

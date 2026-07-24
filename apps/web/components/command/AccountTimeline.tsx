@@ -53,7 +53,7 @@ function relativeTime(iso: string): string {
 
 const SEV_STYLE: Record<Severity, { cls: string; label: string }> = {
   low:      { cls: "border-edge bg-bg/40 text-muted",                          label: "LOW" },
-  medium:   { cls: "border-yellow-400/30 bg-yellow-400/10 text-yellow-400",    label: "MEDIUM" },
+  medium:   { cls: "border-amber/30 bg-amber/10 text-amber-700",    label: "MEDIUM" },
   high:     { cls: "border-accent/40 bg-accent/10 text-accent",                label: "HIGH" },
   critical: { cls: "border-risk/40 bg-risk/10 text-risk",                      label: "CRITICAL" },
 };
@@ -78,7 +78,7 @@ function kindIcon(kind: TimelineKind) {
     case "rec_first_seen":     return <UserPlus className={cx(c, "text-accent")} />;
     case "rec_left_queue":     return <UserMinus className={cx(c, "text-risk")} />;
     case "rec_action_changed": return <Sparkles className={cx(c, "text-brand-bright")} />;
-    case "rec_priority_jump":  return <Compass className={cx(c, "text-yellow-400")} />;
+    case "rec_priority_jump":  return <Compass className={cx(c, "text-amber-700")} />;
     case "rec_refined":        return <ChevronRight className={cx(c, "text-muted")} />;
     case "approval":           return <CheckCircle2 className={cx(c, "text-gov")} />;
     case "outcome":            return <Target className={cx(c, "text-accent")} />;
