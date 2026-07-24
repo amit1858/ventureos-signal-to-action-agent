@@ -23,7 +23,7 @@ export function AuditReplayPanel({
   onToggleReplay: (v: boolean) => void;
 }) {
   return (
-    <DemoSection index={6} title="Audit & replay" headingId="demo-audit-heading">
+    <DemoSection title="Audit & replay" headingId="demo-audit-heading">
       <div className="flex items-start gap-3">
         <FileCheck2 size={16} className="mt-0.5 shrink-0 text-gov-bright" aria-hidden="true" />
         <div className="flex-1 space-y-3">

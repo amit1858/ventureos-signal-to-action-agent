@@ -1,0 +1,72 @@
+{
+  "approval_discipline": {
+    "deterministic_result": "PASS",
+    "expected": "no execution occurs without corroboration + explicit approval",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  },
+  "audit_integrity": {
+    "deterministic_result": "PASS",
+    "expected": "audit chain verifies valid and detects tampering",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  },
+  "evidence_grounding": {
+    "deterministic_result": "PASS",
+    "expected": "tampered evidence fails closed; fingerprints are linked",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  },
+  "execution_safety": {
+    "deterministic_result": "PASS",
+    "expected": "execution is simulated-only; a receipt exists only after governed approval",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  },
+  "explanation_quality": {
+    "deterministic_result": "PASS",
+    "expected": "fabricated explanation is rejected by the deterministic grader",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  },
+  "governance_correctness": {
+    "deterministic_result": "PASS",
+    "expected": "all synthetic verdicts match the deterministic engine",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  },
+  "narrative_usefulness": {
+    "deterministic_result": "PASS",
+    "expected": "a grounded narrative is accepted by the deterministic grader",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  },
+  "recommendation_quality": {
+    "deterministic_result": "PASS",
+    "expected": "governed mission carries a concrete recommendation and objective",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  },
+  "replay_safety": {
+    "deterministic_result": "PASS",
+    "expected": "replay reuses one receipt and adds no duplicate action",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  },
+  "tool_correctness": {
+    "deterministic_result": "PASS",
+    "expected": "typed governance outcomes are distinct; no execution-authority fields",
+    "human_review": "not_required",
+    "overall": "PASS",
+    "quality_score": 100
+  }
+}

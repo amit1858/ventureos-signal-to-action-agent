@@ -7,7 +7,7 @@ import { DemoSection } from "./DemoSection";
 // Evidence builds trust: the ordered evidence chain that supports the outcome.
 export function EvidenceChain({ view }: { view: DemoPresentationView }) {
   return (
-    <DemoSection index={4} title="Evidence chain" headingId="demo-evidence-heading">
+    <DemoSection title="Evidence chain" headingId="demo-evidence-heading">
       <ul className="space-y-2">
         {view.evidenceItems.map((item, i) => (
           <li key={i} className="flex items-start gap-2.5 text-sm text-muted">
