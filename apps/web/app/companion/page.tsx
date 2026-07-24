@@ -18,6 +18,7 @@ import { notFound } from "next/navigation";
 import { Sparkles } from "lucide-react";
 
 import { isRevenueCompanionAccessible } from "@/lib/revenue-companion/access.server";
+import { resolveVoicePresentationStatus } from "@/lib/revenue-companion/voice/access.server";
 import { buildDefaultCompanion } from "@/lib/revenue-companion/buildCompanions.server";
 import { loadDemoJourneys } from "@/lib/demo-mode/loadDemoJourney";
 import { COMPANION_STRINGS } from "@/lib/revenue-companion/strings";
@@ -39,6 +40,7 @@ export default function RevenueCompanionPage() {
 
   const doc = loadDemoJourneys();
   const vm = buildDefaultCompanion(doc);
+  const voiceStatus = resolveVoicePresentationStatus();
 
   return (
     <div className="flex min-h-screen flex-col bg-base">
@@ -79,7 +81,10 @@ export default function RevenueCompanionPage() {
           </div>
 
           <div className="mt-6">
-            <RevenueCompanionPanel vm={vm} />
+            <RevenueCompanionPanel
+              vm={vm}
+              voiceStatus={voiceStatus.offered ? voiceStatus : undefined}
+            />
           </div>
 
           <div className="mt-6">

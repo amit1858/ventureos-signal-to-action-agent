@@ -20,6 +20,7 @@ import { isDemoModeAccessible } from "@/lib/demo-mode/access.server";
 import { loadDemoJourneys } from "@/lib/demo-mode/loadDemoJourney";
 import { DemoModeShell } from "@/components/demo-mode/DemoModeShell";
 import { isRevenueCompanionAccessible } from "@/lib/revenue-companion/access.server";
+import { resolveVoicePresentationStatus } from "@/lib/revenue-companion/voice/access.server";
 import { buildCompanionsForDoc } from "@/lib/revenue-companion/buildCompanions.server";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +47,16 @@ export default function SignalToActionDemoPage() {
     ? buildCompanionsForDoc(doc)
     : undefined;
 
+  // Server-only voice presentation truth. Undefined (control hidden) unless the
+  // companion is on AND the voice flag is on; still truthful about Gnani config.
+  const voiceStatusResolved = companions
+    ? resolveVoicePresentationStatus()
+    : undefined;
+  const voiceStatus =
+    voiceStatusResolved && voiceStatusResolved.offered
+      ? voiceStatusResolved
+      : undefined;
+
   return (
     <div className="flex min-h-screen flex-col bg-base">
       <header className="sticky top-0 z-30 border-b border-edge bg-base/85 backdrop-blur">
@@ -69,7 +80,7 @@ export default function SignalToActionDemoPage() {
         </div>
       </header>
       <main className="flex-1">
-        <DemoModeShell doc={doc} companions={companions} />
+        <DemoModeShell doc={doc} companions={companions} voiceStatus={voiceStatus} />
       </main>
     </div>
   );

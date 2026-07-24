@@ -45,6 +45,7 @@ import { ProviderStatus } from "./ProviderStatus";
 import { SafetyDisclosures } from "./SafetyDisclosures";
 import { TechnicalDisclosure } from "./TechnicalDisclosure";
 import { RevenueCompanionPanel } from "../revenue-companion/RevenueCompanionPanel";
+import type { VoiceStatusProp } from "../revenue-companion/VoicePlaybackControl";
 import type { RevenueCompanionViewModel } from "@/lib/revenue-companion/companionContract";
 
 // Orchestrates the demo experience as a GUIDED walkthrough. It owns only
@@ -63,9 +64,11 @@ import type { RevenueCompanionViewModel } from "@/lib/revenue-companion/companio
 export function DemoModeShell({
   doc,
   companions,
+  voiceStatus,
 }: {
   doc: DemoJourneysDoc;
   companions?: Record<string, RevenueCompanionViewModel>;
+  voiceStatus?: VoiceStatusProp;
 }) {
   const [selectedKey, setSelectedKey] = React.useState(doc.defaultJourneyKey);
   const [showReplayValidated, setShowReplayValidated] = React.useState(false);
@@ -115,6 +118,7 @@ export function DemoModeShell({
             <div className="mt-6">
               <RevenueCompanionPanel
                 vm={companion}
+                voiceStatus={voiceStatus}
                 onPrimary={() => setFlow(startFlow())}
                 onSecondary={() => setFlow(nextStage(startFlow()))}
               />
