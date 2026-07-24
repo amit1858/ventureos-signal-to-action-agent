@@ -35,6 +35,12 @@ export interface VoiceBriefingRequest {
   // (Phase 3.2) rather than the whole-briefing script. The server recomposes the
   // answer for this intent and verifies its fingerprint. Absent → whole briefing.
   intent?: GuidedIntent;
+  // Optional (Phase 3.2A): the live, fingerprinted Action Center presentation
+  // snapshot the answer was bound to. When present, the server recomposes the
+  // spoken text FROM THIS SNAPSHOT (not the canonical journey) and re-verifies
+  // the fingerprint — so Gnani reads exactly what is on the seller's screen and
+  // a stale / re-ranked / re-selected snapshot fails closed.
+  presentationSnapshot?: unknown;
 }
 
 // A minimal trusted reference the server derives by rebuilding + validating the
@@ -57,6 +63,7 @@ const ALLOWED_REQUEST_KEYS: ReadonlySet<string> = new Set([
   "language",
   "outputFormat",
   "intent",
+  "presentationSnapshot",
 ]);
 
 export function buildVoiceBriefingRequest(
@@ -164,16 +171,24 @@ export function validateVoiceBriefingRequest(
       language,
       outputFormat,
       ...(intent ? { intent } : {}),
+      ...(obj.presentationSnapshot !== undefined
+        ? { presentationSnapshot: obj.presentationSnapshot }
+        : {}),
     },
   };
 }
 
 // Build a voice request that references a specific guided answer (per intent).
-// Returns null for the UNSUPPORTED fallback, which has no spoken briefing.
+// Returns null for the UNSUPPORTED fallback, which has no spoken briefing. When
+// the answer is bound to a live Action Center snapshot, pass that snapshot so the
+// server can recompose the spoken text from it and re-verify the fingerprint.
 export function buildAnswerVoiceRequest(
   answer: RevenueCompanionAnswer,
+  snapshot?: unknown,
 ): VoiceBriefingRequest | null {
   if (answer.intent === "UNSUPPORTED") return null;
+  const boundToSnapshot =
+    answer.generatedFrom.source === "action-center-snapshot" && snapshot !== undefined;
   return {
     narrativeId: answer.generatedFrom.narrativeId,
     presentationVersion: answer.presentationVersion,
@@ -182,5 +197,6 @@ export function buildAnswerVoiceRequest(
     language: GNANI_DEFAULT_LANGUAGE,
     outputFormat: "wav",
     intent: answer.intent,
+    ...(boundToSnapshot ? { presentationSnapshot: snapshot } : {}),
   };
 }

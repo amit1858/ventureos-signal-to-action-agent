@@ -13,6 +13,13 @@ import {
 
 import { buildAnswerVoiceRequest } from "@/lib/revenue-companion/voice/voiceRequest";
 import type { RevenueCompanionAnswer } from "@/lib/revenue-companion/answerContract";
+import {
+  buildActionCenterSnapshot,
+  type ActionCenterPresentationSnapshot,
+  type RankedAccountInput,
+  type SelectedAccountInput,
+} from "@/lib/revenue-companion/actionCenterSnapshot";
+import { COMPANION_STABLE_TIMESTAMP } from "@/lib/revenue-companion/companionContract";
 import { GUIDED_INTENTS, type GuidedIntent } from "@/lib/revenue-companion/guided/intentRouter";
 import { cx } from "@/lib/format";
 import { VoicePlaybackControl, type VoiceStatusProp } from "./VoicePlaybackControl";
@@ -39,21 +46,53 @@ const INTENT_LABELS: Record<GuidedIntent, string> = {
 
 type AnswerState =
   | { kind: "idle" }
+  | {
+      kind: "answer";
+      answer: RevenueCompanionAnswer;
+      snapshot: ActionCenterPresentationSnapshot | null;
+    }
   | { kind: "loading" }
-  | { kind: "answer"; answer: RevenueCompanionAnswer }
   | { kind: "unsupported"; answer: RevenueCompanionAnswer | null }
   | { kind: "error"; message: string };
 
 // Briefly ring an existing panel so the seller's eye lands where the answer
 // points. Presentation-only: it reads no state and mutates nothing but a
-// transient CSS class on an element that already exists in the DOM.
-function focusPanel(anchorId: string) {
+// transient CSS class on an element that already exists in the DOM. It prefers
+// the most specific target that is actually present, then falls back to the
+// panel anchor — an absent candidate is silently skipped (never an error).
+function focusPanel(anchorId: string, candidateIds: string[] = []) {
   if (typeof document === "undefined") return;
-  const el = document.getElementById(anchorId);
+  let el: HTMLElement | null = null;
+  for (const id of candidateIds) {
+    if (!id) continue;
+    const found = document.getElementById(id);
+    if (found) {
+      el = found;
+      break;
+    }
+  }
+  if (!el) el = document.getElementById(anchorId);
   if (!el) return;
   el.scrollIntoView({ behavior: "smooth", block: "start" });
   el.classList.add("companion-focus-ring");
-  window.setTimeout(() => el.classList.remove("companion-focus-ring"), 2400);
+  window.setTimeout(() => el?.classList.remove("companion-focus-ring"), 2400);
+}
+
+// Derive candidate DOM element ids for the specific target an answer points at.
+// The Action Center component is frozen; we do not know its row-level id scheme,
+// so we try a small set of reasonable conventions and gracefully fall back to
+// the panel anchor when none are present. Presentation-only.
+function focusCandidateIds(focus: RevenueCompanionAnswer["workspaceFocus"]): string[] {
+  if (!focus) return [];
+  const ids: string[] = [];
+  const push = (prefix: string, value?: string | null) => {
+    if (value) ids.push(`${prefix}${value}`, value);
+  };
+  push("account-", focus.targetAccountId);
+  push("recommendation-", focus.targetRecommendationId);
+  push("signal-", focus.targetSignalId);
+  push("mission-", focus.targetMissionId);
+  return ids;
 }
 
 export function RevenueCompanionOverlay({
@@ -61,6 +100,9 @@ export function RevenueCompanionOverlay({
   autoOpenSignal = 0,
   focusHref,
   startOpen = false,
+  recommendations = null,
+  selectedAccount = null,
+  dataSourceLabel,
 }: {
   voiceStatus?: VoiceStatusProp;
   autoOpenSignal?: number;
@@ -69,12 +111,39 @@ export function RevenueCompanionOverlay({
   // which has no Action Center panels to scroll to.
   focusHref?: string;
   startOpen?: boolean;
+  // Live Action Center presentation (Phase 3.2A). When present, the Companion
+  // binds its answers to what the seller currently sees — the ranked portfolio,
+  // the selected account, and its signals — instead of the canonical demo
+  // journey. These are already-displayed, presentation-only projections; the
+  // server re-validates every field and treats them as presentation state only.
+  recommendations?: RankedAccountInput[] | null;
+  selectedAccount?: SelectedAccountInput | null;
+  dataSourceLabel?: string;
 }) {
   const [open, setOpen] = React.useState(startOpen);
   const [question, setQuestion] = React.useState("");
   const [state, setState] = React.useState<AnswerState>({ kind: "idle" });
   const sectionRef = React.useRef<HTMLElement | null>(null);
   const requestSeq = React.useRef(0);
+
+  // Compose the immutable, fingerprinted presentation snapshot from the live
+  // Action Center props. Content-addressed: any change to displayed rank order,
+  // selection, or signals yields a new identity, so a stale snapshot can never
+  // masquerade as the current view. Null when there is no live portfolio (the
+  // homepage teaser and /companion fall back to the canonical journey).
+  const snapshot = React.useMemo<ActionCenterPresentationSnapshot | null>(() => {
+    if (!recommendations || recommendations.length === 0) return null;
+    try {
+      return buildActionCenterSnapshot({
+        recommendations,
+        selected: selectedAccount ?? null,
+        dataSourceLabel,
+        generatedAt: COMPANION_STABLE_TIMESTAMP,
+      });
+    } catch {
+      return null;
+    }
+  }, [recommendations, selectedAccount, dataSourceLabel]);
 
   // The homepage teaser raises a monotonic signal to open + reveal the overlay.
   React.useEffect(() => {
@@ -89,12 +158,15 @@ export function RevenueCompanionOverlay({
   const ask = React.useCallback(
     async (body: { intent: GuidedIntent } | { question: string }) => {
       const seq = ++requestSeq.current;
+      const sentSnapshot = snapshot;
       setState({ kind: "loading" });
       try {
         const res = await fetch("/api/revenue-companion/answer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify(
+            sentSnapshot ? { ...body, presentationSnapshot: sentSnapshot } : body,
+          ),
           cache: "no-store",
         });
         if (seq !== requestSeq.current) return; // superseded
@@ -105,7 +177,7 @@ export function RevenueCompanionOverlay({
           if (answer.intent === "UNSUPPORTED") {
             setState({ kind: "unsupported", answer });
           } else {
-            setState({ kind: "answer", answer });
+            setState({ kind: "answer", answer, snapshot: sentSnapshot });
           }
         } else if (res.status === 400) {
           setState({ kind: "unsupported", answer: null });
@@ -117,7 +189,7 @@ export function RevenueCompanionOverlay({
         setState({ kind: "error", message: "The Companion could not be reached." });
       }
     },
-    [],
+    [snapshot],
   );
 
   const onSubmitText = React.useCallback(() => {
@@ -128,7 +200,14 @@ export function RevenueCompanionOverlay({
 
   const answer =
     state.kind === "answer" || state.kind === "unsupported" ? state.answer : null;
-  const voiceRequest = answer ? buildAnswerVoiceRequest(answer) : null;
+  // Voice reads the SAME answer the seller sees. When that answer is snapshot-
+  // bound, carry the exact snapshot it was composed from so the server recomposes
+  // and re-verifies against it — a later selection change fails closed, never
+  // narrates the wrong account.
+  const answerSnapshot = state.kind === "answer" ? state.snapshot : null;
+  const voiceRequest = answer
+    ? buildAnswerVoiceRequest(answer, answerSnapshot ?? undefined)
+    : null;
 
   return (
     <section
@@ -317,7 +396,7 @@ function AnswerCard({
         ) : focus ? (
           <button
             type="button"
-            onClick={() => focusPanel(focus.anchorId)}
+            onClick={() => focusPanel(focus.anchorId, focusCandidateIds(focus))}
             className="btn btn-ghost px-3.5 py-2 text-[12px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
           >
             <ArrowDownToLine size={14} /> {focus.label}

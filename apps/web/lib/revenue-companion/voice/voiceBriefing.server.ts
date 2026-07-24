@@ -26,6 +26,11 @@ import {
 import { synthesizeVoice } from "./gnaniProvider.server";
 import { isGuidedIntent, type GuidedIntent } from "../guided/intentRouter";
 import { composeAnswerForIntent } from "../answerComposer";
+import { composeSnapshotAnswerForIntent } from "../snapshotComposer";
+import {
+  snapshotHasPresentation,
+  validateSnapshot,
+} from "../actionCenterSnapshot";
 import { computeAnswerFingerprint } from "../answerContract";
 
 if (typeof window !== "undefined") {
@@ -68,28 +73,19 @@ export async function handleVoiceBriefing(
     return { status: "forbidden" };
   }
 
-  // 2. We must know the requested journey before we can build the trusted
-  //    reference, so peek narrativeId defensively.
+  // 2. Peek the body defensively.
   if (
     typeof rawBody !== "object" ||
     rawBody === null ||
-    Array.isArray(rawBody) ||
-    typeof (rawBody as Record<string, unknown>).narrativeId !== "string"
+    Array.isArray(rawBody)
   ) {
-    return { status: "bad_request", reason: "narrativeId_invalid" };
+    return { status: "bad_request", reason: "body_not_object" };
   }
-  const narrativeId = (rawBody as Record<string, unknown>).narrativeId as string;
+  const body = rawBody as Record<string, unknown>;
 
-  const vm = rebuildCompanion(narrativeId);
-  if (!vm) {
-    return { status: "bad_request", reason: "unknown_narrative" };
-  }
-
-  // 2b. Optional per-intent mode (Phase 3.2): when the request names a bounded
-  //     intent, the spoken text is the guided answer's `spokenText`, not the
-  //     whole briefing. The server recomposes it from immutable data; the
-  //     browser can never dictate the words.
-  const intentRaw = (rawBody as Record<string, unknown>).intent;
+  // 2a. Parse the optional per-intent mode (Phase 3.2). Both modes recompose the
+  //     spoken text server-side; the browser can never dictate the words.
+  const intentRaw = body.intent;
   let intent: GuidedIntent | undefined;
   if (intentRaw !== undefined) {
     if (!isGuidedIntent(intentRaw)) {
@@ -100,35 +96,80 @@ export async function handleVoiceBriefing(
 
   let script: string;
   let approvedFingerprint: string;
-  if (intent) {
+  let trusted: TrustedVoiceReference;
+
+  if (body.presentationSnapshot !== undefined) {
+    // 2b. Snapshot-bound voice (Phase 3.2A): recompose the spoken text FROM the
+    //     live Action Center snapshot, so Gnani reads exactly what is on screen.
+    if (!intent) {
+      return { status: "bad_request", reason: "snapshot_requires_intent" };
+    }
+    const validated = validateSnapshot(body.presentationSnapshot);
+    if (!validated.ok) {
+      return { status: "bad_request", reason: `snapshot_${validated.reason}` };
+    }
+    const snapshot = validated.snapshot;
+    if (!snapshotHasPresentation(snapshot)) {
+      return { status: "bad_request", reason: "snapshot_empty" };
+    }
     let expected: string;
     try {
-      const answer = composeAnswerForIntent(vm, intent);
+      const answer = composeSnapshotAnswerForIntent(snapshot, intent);
       script = answer.spokenText;
       approvedFingerprint = answer.fingerprint;
       expected = computeAnswerFingerprint(answer);
     } catch {
       return { status: "bad_request", reason: "answer_composition_failed" };
     }
-    // Defense in depth: the recomposed answer's fingerprint must be self-consistent.
     if (expected !== approvedFingerprint) {
       return { status: "bad_request", reason: "fingerprint_recompute_mismatch" };
     }
+    trusted = {
+      narrativeId: snapshot.snapshotId,
+      presentationVersion: snapshot.presentationVersion,
+      approvedTextFingerprint: approvedFingerprint,
+      intent,
+    };
   } else {
-    script = vm.voiceScript;
-    approvedFingerprint = vm.approvedTextFingerprint;
-    if (computeScriptFingerprint(script) !== approvedFingerprint) {
-      return { status: "bad_request", reason: "fingerprint_recompute_mismatch" };
+    // 2c. Canonical journey mode — the whole briefing, or a per-intent answer
+    //     composed from the immutable generated data.
+    if (typeof body.narrativeId !== "string") {
+      return { status: "bad_request", reason: "narrativeId_invalid" };
     }
+    const narrativeId = body.narrativeId;
+    const vm = rebuildCompanion(narrativeId);
+    if (!vm) {
+      return { status: "bad_request", reason: "unknown_narrative" };
+    }
+    if (intent) {
+      let expected: string;
+      try {
+        const answer = composeAnswerForIntent(vm, intent);
+        script = answer.spokenText;
+        approvedFingerprint = answer.fingerprint;
+        expected = computeAnswerFingerprint(answer);
+      } catch {
+        return { status: "bad_request", reason: "answer_composition_failed" };
+      }
+      if (expected !== approvedFingerprint) {
+        return { status: "bad_request", reason: "fingerprint_recompute_mismatch" };
+      }
+    } else {
+      script = vm.voiceScript;
+      approvedFingerprint = vm.approvedTextFingerprint;
+      if (computeScriptFingerprint(script) !== approvedFingerprint) {
+        return { status: "bad_request", reason: "fingerprint_recompute_mismatch" };
+      }
+    }
+    trusted = {
+      narrativeId: vm.narrativeId,
+      presentationVersion: vm.presentationVersion,
+      approvedTextFingerprint: approvedFingerprint,
+      ...(intent ? { intent } : {}),
+    };
   }
 
   // 3. Validate the request against the trusted, server-rebuilt reference.
-  const trusted: TrustedVoiceReference = {
-    narrativeId: vm.narrativeId,
-    presentationVersion: vm.presentationVersion,
-    approvedTextFingerprint: approvedFingerprint,
-    ...(intent ? { intent } : {}),
-  };
   const validation = validateVoiceBriefingRequest(rawBody, trusted);
   if (!validation.ok) {
     return { status: "bad_request", reason: validation.reason };

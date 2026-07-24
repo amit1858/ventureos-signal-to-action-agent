@@ -21,6 +21,10 @@ import {
 } from "./companionContract";
 import type { GuidedIntent } from "./guided/intentRouter";
 import { isGuidedIntent } from "./guided/intentRouter";
+import {
+  SNAPSHOT_SOURCE_CLASSIFICATIONS,
+  type SnapshotSourceClassification,
+} from "./actionCenterSnapshot";
 
 export const ANSWER_SCHEMA_VERSION = "1.0" as const;
 
@@ -46,7 +50,10 @@ export interface AnswerSection {
 
 // Presentation-only pointer to an EXISTING Action Center panel to highlight and
 // scroll into view. It carries no data and never changes ranking or state — it
-// only tells a surface where the seller should look next.
+// only tells a surface where the seller should look next. Phase 3.2A adds
+// OPTIONAL specific targets (account / recommendation / signal / mission) so a
+// live-bound answer can point at the exact row when the DOM exposes it; the
+// generic `anchorId` remains the guaranteed fallback.
 export interface WorkspaceFocus {
   focusKey:
     | "top-mission"
@@ -56,11 +63,16 @@ export interface WorkspaceFocus {
     | "account-detail";
   anchorId: string; // an id that already exists in the Action Center DOM
   label: string;
+  targetAccountId?: string;
+  targetRecommendationId?: string;
+  targetSignalId?: string;
+  targetMissionId?: string;
 }
 
-// Provenance of the answer — always the immutable governed journey view.
+// Provenance of the answer — either the immutable canonical journey view, or the
+// live, fingerprinted Action Center presentation snapshot (Phase 3.2A).
 export interface AnswerProvenance {
-  source: "governed-journey-view";
+  source: "governed-journey-view" | "action-center-snapshot";
   journeyKey: string;
   narrativeId: string;
   presentationVersion: string;
@@ -90,6 +102,18 @@ export interface RevenueCompanionAnswer {
   governanceStatus: string;
   approvalStatus: string;
   recommendedAction: string;
+
+  // Phase 3.2A traceability — WHERE the facts came from. Reference IDs live here
+  // (never in rendered copy). `sourceClassification` names the source-hierarchy
+  // rung this answer used; `snapshotId`/`sourceFingerprint` bind it to the exact
+  // Action Center presentation the seller saw (null on the canonical fallback).
+  snapshotId: string | null;
+  sourceClassification: SnapshotSourceClassification;
+  sourceAccountIds: string[];
+  sourceRecommendationIds: string[];
+  sourceMissionId: string | null;
+  sourceSignalIds: string[];
+  sourceFingerprint: string | null;
 
   // Where to look + how this was produced.
   workspaceFocus: WorkspaceFocus | null;
@@ -217,8 +241,44 @@ export function validateAnswer(
     errors.push(`fingerprint mismatch (expected ${expected})`);
   }
 
-  if (a.generatedFrom.source !== "governed-journey-view") {
-    errors.push("generatedFrom.source must be the governed journey view");
+  if (
+    a.generatedFrom.source !== "governed-journey-view" &&
+    a.generatedFrom.source !== "action-center-snapshot"
+  ) {
+    errors.push("generatedFrom.source must be a supported provenance");
+  }
+
+  // Traceability coherence (Phase 3.2A).
+  if (!SNAPSHOT_SOURCE_CLASSIFICATIONS.includes(a.sourceClassification)) {
+    errors.push(`sourceClassification is not supported (${String(a.sourceClassification)})`);
+  }
+  if (a.generatedFrom.source === "governed-journey-view") {
+    if (a.sourceClassification !== "canonical_demo_fallback") {
+      errors.push("journey-view provenance must classify as canonical_demo_fallback");
+    }
+    if (a.snapshotId !== null || a.sourceFingerprint !== null) {
+      errors.push("journey-view provenance must not carry a snapshot identity");
+    }
+  }
+  if (a.generatedFrom.source === "action-center-snapshot") {
+    if (
+      a.sourceClassification !== "action_center_live_presentation" &&
+      a.sourceClassification !== "selected_account_context"
+    ) {
+      errors.push("snapshot provenance must classify as a live-presentation source");
+    }
+    if (!a.snapshotId || !a.sourceFingerprint) {
+      errors.push("snapshot provenance must carry snapshotId + sourceFingerprint");
+    }
+  }
+  for (const [field, arr] of [
+    ["sourceAccountIds", a.sourceAccountIds],
+    ["sourceRecommendationIds", a.sourceRecommendationIds],
+    ["sourceSignalIds", a.sourceSignalIds],
+  ] as const) {
+    if (!Array.isArray(arr) || !arr.every((x) => typeof x === "string")) {
+      errors.push(`${field} must be a string array`);
+    }
   }
 
   return { ok: errors.length === 0, errors };

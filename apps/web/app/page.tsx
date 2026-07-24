@@ -62,6 +62,10 @@ import { WhyThisAccount } from "@/components/WhyThisAccount";
 import { buildAccountSelectionContext, type AccountSelectionContext } from "@/lib/accountSelectionContext";
 import { LandingView } from "@/components/landing/LandingView";
 import { RevenueCompanionOverlay } from "@/components/revenue-companion/RevenueCompanionOverlay";
+import type {
+  RankedAccountInput as CompanionRankedInput,
+  SelectedAccountInput as CompanionSelectedInput,
+} from "@/lib/revenue-companion/actionCenterSnapshot";
 import type { VoiceStatusProp } from "@/components/revenue-companion/VoicePlaybackControl";
 import { EvaluationView } from "@/components/evaluation/EvaluationView";
 import { WorkspaceQuery } from "@/components/WorkspaceQuery";
@@ -1141,6 +1145,42 @@ export default function Page() {
     "Synthetic local dataset";
   const isHubspotSource = dataSourceLabel.includes("HubSpot");
 
+  // Live presentation projection for the Revenue Companion (Phase 3.2A). These
+  // are already-displayed, presentation-only values — the ranked portfolio, the
+  // selected account, and its signals — so the Companion answers about what the
+  // seller currently sees. Referentially stable so the overlay's snapshot memo
+  // only recomputes when the displayed view actually changes.
+  const companionRecommendations = React.useMemo<CompanionRankedInput[] | null>(() => {
+    const recs = result?.recommendations;
+    if (!recs || recs.length === 0) return null;
+    return recs.map((r) => ({
+      priority_rank: r.priority_rank,
+      account_id: r.account_id,
+      account_name: r.account_name,
+      recommendation_id: r.recommendation_id,
+      priority_reason: r.priority_reason,
+      governance_status: r.governance_status,
+      approval_status: r.approval_status,
+      recommended_action: r.recommended_action,
+    }));
+  }, [result?.recommendations]);
+
+  const companionSelectedAccount = React.useMemo<CompanionSelectedInput | null>(() => {
+    if (!selectedRec) return null;
+    const sigs = details[selectedRec.account_id]?.signals ?? [];
+    return {
+      account_id: selectedRec.account_id,
+      account_name: selectedRec.account_name,
+      recommendation_id: selectedRec.recommendation_id,
+      signals: sigs.map((s) => ({
+        signal_id: s.signal_id,
+        signal_type: s.signal_type,
+        signal_description: s.signal_description,
+        positive_or_negative: s.positive_or_negative,
+      })),
+    };
+  }, [selectedRec, details]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header
@@ -1276,6 +1316,9 @@ export default function Page() {
             <RevenueCompanionOverlay
               voiceStatus={companionVoice}
               autoOpenSignal={companionAutoOpen}
+              recommendations={companionRecommendations}
+              selectedAccount={companionSelectedAccount}
+              dataSourceLabel={dataSourceLabel}
             />
           ) : null}
           <CommandCenter

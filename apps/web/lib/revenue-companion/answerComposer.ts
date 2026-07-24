@@ -267,6 +267,14 @@ function finalize(
     governanceStatus: supported ? v.governanceStatus : "",
     approvalStatus: supported ? v.approvalStatus : "",
     recommendedAction: supported ? v.recommendationReason : "",
+    // Canonical journey provenance — no live snapshot bound.
+    snapshotId: null,
+    sourceClassification: "canonical_demo_fallback",
+    sourceAccountIds: supported && v.accountRef ? [v.accountRef] : [],
+    sourceRecommendationIds: [],
+    sourceMissionId: supported && v.recommendedMissionId ? v.recommendedMissionId : null,
+    sourceSignalIds: [],
+    sourceFingerprint: null,
     workspaceFocus,
     generatedFrom: {
       source: "governed-journey-view",
