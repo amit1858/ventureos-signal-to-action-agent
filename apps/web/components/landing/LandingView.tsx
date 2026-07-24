@@ -25,6 +25,7 @@ import {
   Check,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import type { MetaResponse } from "@/lib/types";
 import type { LucideIcon } from "lucide-react";
 import { Counter } from "@/components/Counter";
@@ -41,6 +42,8 @@ export function LandingView({
   dataSourceLabel,
   onEnter,
   onOpenWorkspace,
+  companionAvailable = false,
+  onOpenCompanion,
 }: {
   meta: MetaResponse | null;
   recommendationCount: number;
@@ -48,6 +51,8 @@ export function LandingView({
   dataSourceLabel: string;
   onEnter: () => void;
   onOpenWorkspace: () => void;
+  companionAvailable?: boolean;
+  onOpenCompanion?: () => void;
 }) {
   const accounts = meta?.dataset.accounts ?? 40;
   const signals = meta?.dataset.signals ?? 132;
@@ -267,6 +272,75 @@ export function LandingView({
           />
         </div>
       </section>
+
+      {/* --------------------------------------------------- REVENUE COMPANION */}
+      {companionAvailable ? (
+        <section className="mt-28" aria-labelledby="companion-teaser-heading">
+          <div className="card-premium relative overflow-hidden">
+            <div className="grid-dots pointer-events-none absolute inset-0 opacity-[0.08]" aria-hidden />
+            <div className="relative grid gap-8 p-8 sm:p-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-bright">
+                  <Sparkles size={12} /> Revenue Companion · Preview
+                </span>
+                <h2
+                  id="companion-teaser-heading"
+                  className="mt-4 text-3xl font-semibold tracking-tight text-ink sm:text-4xl"
+                >
+                  Meet your Revenue Companion
+                </h2>
+                <p className="mt-3 max-w-xl text-base leading-relaxed text-muted">
+                  Ask in plain language and get one governed read of your portfolio — what
+                  changed, why it matters, and the single next step. It restates already-decided
+                  results in a calm briefing. It creates nothing, approves nothing, and executes
+                  nothing — deterministic governance stays in charge.
+                </p>
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={onOpenCompanion}
+                    className="btn btn-primary px-5 py-3 text-sm font-semibold"
+                  >
+                    Meet your Revenue Companion <ArrowRight size={16} />
+                  </button>
+                  <Link
+                    href="/companion"
+                    className="btn btn-ghost px-5 py-3 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                  >
+                    Open the standalone view
+                  </Link>
+                </div>
+                <p className="mt-5 text-[11px] text-faint">
+                  Narrative view of governed results · read-only · no CRM change
+                </p>
+              </div>
+              <ul className="grid gap-3 text-sm">
+                {[
+                  { icon: Bot, label: "Speaks first", hint: "A plain-language briefing before any metric." },
+                  { icon: Compass, label: "One next step", hint: "The single governed move, not a wall of options." },
+                  { icon: ShieldCheck, label: "Governed and honest", hint: "Restates decisions; never overrides them." },
+                ].map((f) => {
+                  const Icon = f.icon;
+                  return (
+                    <li
+                      key={f.label}
+                      className="flex items-start gap-3 rounded-xl border border-edge bg-surface px-4 py-3"
+                    >
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-brand/30 bg-brand/10 text-brand-bright">
+                        <Icon size={15} />
+                      </span>
+                      <div>
+                        <div className="text-[13px] font-semibold text-ink">{f.label}</div>
+                        <div className="text-[12px] leading-snug text-faint">{f.hint}</div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* ------------------------------------------------------------- FINAL CTA */}
       <section className="mt-28">

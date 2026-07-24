@@ -188,6 +188,34 @@ export default function Page() {
   // re-ranks, never persists. Fetched after each workflow run.
   const [portfolio, setPortfolio] = React.useState<PortfolioAgentReport | null>(null);
 
+  // Phase 3.2 · Revenue Companion (preview). Availability is decided by the
+  // SERVER (the browser never reads the flag): we probe a gated route and only
+  // then surface the homepage teaser and the Action Center overlay. `autoOpen`
+  // is a monotonic signal the homepage uses to ask the workspace to open the
+  // embedded companion; it never carries data and never mutates governed state.
+  const [companionAvailable, setCompanionAvailable] = React.useState(false);
+  const [companionAutoOpen, setCompanionAutoOpen] = React.useState(0);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/api/revenue-companion/availability", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { available: false }))
+      .then((d) => {
+        if (!cancelled) setCompanionAvailable(Boolean(d?.available));
+      })
+      .catch(() => {
+        if (!cancelled) setCompanionAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const openCompanionInWorkspace = React.useCallback(() => {
+    setCompanionAutoOpen((n) => n + 1);
+    setView("workspace");
+  }, []);
+
   const refreshHubStatus = React.useCallback(async (probe = false) => {
     try {
       const s = await api.hubspotStatus(probe);
@@ -1136,6 +1164,8 @@ export default function Page() {
             dataSourceLabel={dataSourceLabel}
             onEnter={() => setView("brief")}
             onOpenWorkspace={() => setView("workspace")}
+            companionAvailable={companionAvailable}
+            onOpenCompanion={openCompanionInWorkspace}
           />
         </div>
       ) : null}
