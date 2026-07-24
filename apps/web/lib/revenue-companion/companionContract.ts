@@ -260,27 +260,46 @@ function parseSignalChange(
 // the verbatim source narrative with only the approved display-name substituted.
 // ---------------------------------------------------------------------------
 
+// Grammatically correct possessive for business copy. A display name that
+// already ends in "s" (e.g. "Curefoods") takes a bare typographic apostrophe
+// ("Curefoods’"); otherwise it takes "’s". Uses the typographic right single
+// quote (U+2019) for polished copy, consistently across headline, body, and
+// spoken script.
+export const TYPOGRAPHIC_APOSTROPHE = "\u2019" as const;
+
+export function possessiveDisplayName(name: string): string {
+  if (!name) return "";
+  return /s$/i.test(name)
+    ? `${name}${TYPOGRAPHIC_APOSTROPHE}`
+    : `${name}${TYPOGRAPHIC_APOSTROPHE}s`;
+}
+
 export function buildExecutiveHeadline(
   view: DemoPresentationView,
   displayName: string,
 ): string {
-  const owner = displayName ? `${displayName}'s` : "The";
+  const owner = displayName ? possessiveDisplayName(displayName) : "The";
   if (isGovernedStop(view)) {
     return `${owner} renewal-risk mission was stopped because the account identity could not be corroborated.`;
   }
   return `${owner} renewal-risk mission ran once under governance after explicit human approval.`;
 }
 
-// Substitute the approved display name into governed copy: the possessive
-// "raw's" becomes "Display's", and any remaining bare "raw" becomes "Display".
-// Order matters (possessive first). Reversible via `reverseDisplayName`.
+// Substitute the approved display name into governed copy: the source
+// possessive "raw's" becomes the grammatical display possessive (e.g.
+// "Curefoods’"), and any remaining bare "raw" becomes "Display". Order matters
+// (possessive first). Reversible via `reverseDisplayName`.
 export function applyDisplayName(
   text: string,
   raw: string,
   display: string,
 ): string {
   if (!raw || raw === display) return text;
-  return text.split(`${raw}'s`).join(`${display}'s`).split(raw).join(display);
+  return text
+    .split(`${raw}'s`)
+    .join(possessiveDisplayName(display))
+    .split(raw)
+    .join(display);
 }
 
 export function reverseDisplayName(
@@ -289,7 +308,11 @@ export function reverseDisplayName(
   display: string,
 ): string {
   if (!raw || raw === display) return text;
-  return text.split(`${display}'s`).join(`${raw}'s`).split(display).join(raw);
+  return text
+    .split(possessiveDisplayName(display))
+    .join(`${raw}'s`)
+    .split(display)
+    .join(raw);
 }
 
 // ---------------------------------------------------------------------------
@@ -306,7 +329,7 @@ export function buildVoiceScript(
   view: DemoPresentationView,
   displayName: string,
 ): string {
-  const owner = displayName ? `${displayName}'s` : "The account's";
+  const owner = displayName ? possessiveDisplayName(displayName) : "The account\u2019s";
   const change = parseSignalChange(view);
   const changeSentence = change
     ? `${owner} renewal date moved ${change.days} days ${change.direction}, creating a high-priority renewal-risk mission.`
