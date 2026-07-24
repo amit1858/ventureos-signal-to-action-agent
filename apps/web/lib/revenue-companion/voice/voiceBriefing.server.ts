@@ -24,6 +24,9 @@ import {
   type TrustedVoiceReference,
 } from "./voiceRequest";
 import { synthesizeVoice } from "./gnaniProvider.server";
+import { isGuidedIntent, type GuidedIntent } from "../guided/intentRouter";
+import { composeAnswerForIntent } from "../answerComposer";
+import { computeAnswerFingerprint } from "../answerContract";
 
 if (typeof window !== "undefined") {
   throw new Error(
@@ -82,11 +85,49 @@ export async function handleVoiceBriefing(
     return { status: "bad_request", reason: "unknown_narrative" };
   }
 
+  // 2b. Optional per-intent mode (Phase 3.2): when the request names a bounded
+  //     intent, the spoken text is the guided answer's `spokenText`, not the
+  //     whole briefing. The server recomposes it from immutable data; the
+  //     browser can never dictate the words.
+  const intentRaw = (rawBody as Record<string, unknown>).intent;
+  let intent: GuidedIntent | undefined;
+  if (intentRaw !== undefined) {
+    if (!isGuidedIntent(intentRaw)) {
+      return { status: "bad_request", reason: "intent_not_allowed" };
+    }
+    intent = intentRaw;
+  }
+
+  let script: string;
+  let approvedFingerprint: string;
+  if (intent) {
+    let expected: string;
+    try {
+      const answer = composeAnswerForIntent(vm, intent);
+      script = answer.spokenText;
+      approvedFingerprint = answer.fingerprint;
+      expected = computeAnswerFingerprint(answer);
+    } catch {
+      return { status: "bad_request", reason: "answer_composition_failed" };
+    }
+    // Defense in depth: the recomposed answer's fingerprint must be self-consistent.
+    if (expected !== approvedFingerprint) {
+      return { status: "bad_request", reason: "fingerprint_recompute_mismatch" };
+    }
+  } else {
+    script = vm.voiceScript;
+    approvedFingerprint = vm.approvedTextFingerprint;
+    if (computeScriptFingerprint(script) !== approvedFingerprint) {
+      return { status: "bad_request", reason: "fingerprint_recompute_mismatch" };
+    }
+  }
+
   // 3. Validate the request against the trusted, server-rebuilt reference.
   const trusted: TrustedVoiceReference = {
     narrativeId: vm.narrativeId,
     presentationVersion: vm.presentationVersion,
-    approvedTextFingerprint: vm.approvedTextFingerprint,
+    approvedTextFingerprint: approvedFingerprint,
+    ...(intent ? { intent } : {}),
   };
   const validation = validateVoiceBriefingRequest(rawBody, trusted);
   if (!validation.ok) {
@@ -94,11 +135,7 @@ export async function handleVoiceBriefing(
   }
 
   // 4. Defense in depth: the script is the SERVER's, never the browser's. Verify
-  //    fingerprint, length bound, and forbidden-token scan one more time.
-  const script = vm.voiceScript;
-  if (computeScriptFingerprint(script) !== vm.approvedTextFingerprint) {
-    return { status: "bad_request", reason: "fingerprint_recompute_mismatch" };
-  }
+  //    length bound and forbidden-token scan one more time.
   if (script.length === 0 || script.length > VOICE_SCRIPT_MAX_CHARS) {
     return { status: "bad_request", reason: "script_length" };
   }

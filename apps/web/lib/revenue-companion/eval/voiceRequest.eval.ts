@@ -18,9 +18,11 @@ import { dirname, resolve } from "node:path";
 import { buildValidatedCompanion } from "../companionContract";
 import {
   buildVoiceBriefingRequest,
+  buildAnswerVoiceRequest,
   validateVoiceBriefingRequest,
   type TrustedVoiceReference,
 } from "../voice/voiceRequest";
+import { composeAnswerForIntent } from "../answerComposer";
 import type { DemoJourneysDoc } from "../../demo-mode/presentationContract";
 
 let passed = 0;
@@ -113,6 +115,39 @@ console.log("\n[5] Structural guards");
   check("string body rejected", validateVoiceBriefingRequest("x", trusted).ok === false);
   check("missing narrativeId rejected",
     validateVoiceBriefingRequest({ presentationVersion: "1.0", approvedTextFingerprint: trusted.approvedTextFingerprint }, trusted).ok === false);
+}
+
+// ===========================================================================
+console.log("\n[6] Per-intent voice requests (Phase 3.2) select, never dictate");
+// ===========================================================================
+{
+  const answer = composeAnswerForIntent(vm, "MISSION_TODAY");
+  const intentReq = buildAnswerVoiceRequest(answer)!;
+  const intentTrusted: TrustedVoiceReference = {
+    narrativeId: vm.narrativeId,
+    presentationVersion: vm.presentationVersion,
+    approvedTextFingerprint: answer.fingerprint,
+    intent: "MISSION_TODAY",
+  };
+  check("per-intent request carries the intent", intentReq.intent === "MISSION_TODAY");
+  check("per-intent request carries no free text", !("text" in (intentReq as object)) && !("spokenText" in (intentReq as object)));
+  check("per-intent request validates against its trusted reference", validateVoiceBriefingRequest(intentReq, intentTrusted).ok === true);
+
+  // Mode crossing is rejected both ways.
+  check("intent request rejected against whole-briefing reference",
+    validateVoiceBriefingRequest(intentReq, trusted).ok === false);
+  check("whole-briefing request rejected against intent reference",
+    validateVoiceBriefingRequest(good, intentTrusted).ok === false);
+
+  // Wrong intent value fails closed.
+  check("junk intent rejected",
+    validateVoiceBriefingRequest({ ...intentReq, intent: "EXECUTE_NOW" }, intentTrusted).ok === false);
+  check("mismatched (valid) intent rejected",
+    validateVoiceBriefingRequest({ ...intentReq, intent: "NEXT_ACTION" }, intentTrusted).ok === false);
+
+  // The UNSUPPORTED fallback has no spoken briefing.
+  const unsupportedAnswer = { ...answer, intent: "UNSUPPORTED" as const };
+  check("UNSUPPORTED answer yields no voice request", buildAnswerVoiceRequest(unsupportedAnswer) === null);
 }
 
 // ---------------------------------------------------------------------------

@@ -21,6 +21,8 @@ import {
 } from "./gnaniConfig";
 import type { RevenueCompanionViewModel } from "../companionContract";
 import { SCRIPT_FINGERPRINT_PREFIX } from "../companionContract";
+import { isGuidedIntent, type GuidedIntent } from "../guided/intentRouter";
+import type { RevenueCompanionAnswer } from "../answerContract";
 
 export interface VoiceBriefingRequest {
   narrativeId: string;
@@ -29,14 +31,20 @@ export interface VoiceBriefingRequest {
   voiceId: string;
   language: string;
   outputFormat: string;
+  // Optional: when present, the request references a PER-INTENT guided answer
+  // (Phase 3.2) rather than the whole-briefing script. The server recomposes the
+  // answer for this intent and verifies its fingerprint. Absent → whole briefing.
+  intent?: GuidedIntent;
 }
 
 // A minimal trusted reference the server derives by rebuilding + validating the
-// companion for the requested journey. The request must match it exactly.
+// companion (whole briefing) or recomposing the guided answer (per intent). The
+// request must match it exactly, including the intent mode.
 export interface TrustedVoiceReference {
   narrativeId: string;
   presentationVersion: string;
   approvedTextFingerprint: string;
+  intent?: GuidedIntent;
 }
 
 // The ONLY keys a well-formed request may carry. Anything else (notably a
@@ -48,6 +56,7 @@ const ALLOWED_REQUEST_KEYS: ReadonlySet<string> = new Set([
   "voiceId",
   "language",
   "outputFormat",
+  "intent",
 ]);
 
 export function buildVoiceBriefingRequest(
@@ -91,6 +100,15 @@ export function validateVoiceBriefingRequest(
   const voiceId = obj.voiceId ?? GNANI_DEFAULT_VOICE;
   const language = obj.language ?? GNANI_DEFAULT_LANGUAGE;
   const outputFormat = obj.outputFormat ?? "wav";
+  const intentRaw = obj.intent;
+
+  let intent: GuidedIntent | undefined;
+  if (intentRaw !== undefined) {
+    if (!isGuidedIntent(intentRaw)) {
+      return { ok: false, reason: "intent_not_allowed" };
+    }
+    intent = intentRaw;
+  }
 
   if (typeof narrativeId !== "string" || narrativeId.length === 0) {
     return { ok: false, reason: "narrativeId_invalid" };
@@ -130,6 +148,11 @@ export function validateVoiceBriefingRequest(
   if (approvedTextFingerprint !== trusted.approvedTextFingerprint) {
     return { ok: false, reason: "fingerprint_mismatch" };
   }
+  // The request's intent mode must match the trusted reference exactly (both a
+  // per-intent answer, or both the whole briefing) — no crossing modes.
+  if ((trusted.intent ?? undefined) !== (intent ?? undefined)) {
+    return { ok: false, reason: "intent_mismatch" };
+  }
 
   return {
     ok: true,
@@ -140,6 +163,24 @@ export function validateVoiceBriefingRequest(
       voiceId,
       language,
       outputFormat,
+      ...(intent ? { intent } : {}),
     },
+  };
+}
+
+// Build a voice request that references a specific guided answer (per intent).
+// Returns null for the UNSUPPORTED fallback, which has no spoken briefing.
+export function buildAnswerVoiceRequest(
+  answer: RevenueCompanionAnswer,
+): VoiceBriefingRequest | null {
+  if (answer.intent === "UNSUPPORTED") return null;
+  return {
+    narrativeId: answer.generatedFrom.narrativeId,
+    presentationVersion: answer.presentationVersion,
+    approvedTextFingerprint: answer.fingerprint,
+    voiceId: GNANI_DEFAULT_VOICE,
+    language: GNANI_DEFAULT_LANGUAGE,
+    outputFormat: "wav",
+    intent: answer.intent,
   };
 }
