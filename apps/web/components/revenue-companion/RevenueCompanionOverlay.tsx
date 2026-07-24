@@ -59,11 +59,18 @@ function focusPanel(anchorId: string) {
 export function RevenueCompanionOverlay({
   voiceStatus,
   autoOpenSignal = 0,
+  focusHref,
+  startOpen = false,
 }: {
   voiceStatus?: VoiceStatusProp;
   autoOpenSignal?: number;
+  // When set, the "show me" affordance becomes a link to this href instead of
+  // scrolling to an in-page anchor. Used by the standalone /companion route,
+  // which has no Action Center panels to scroll to.
+  focusHref?: string;
+  startOpen?: boolean;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(startOpen);
   const [question, setQuestion] = React.useState("");
   const [state, setState] = React.useState<AnswerState>({ kind: "idle" });
   const sectionRef = React.useRef<HTMLElement | null>(null);
@@ -231,6 +238,7 @@ export function RevenueCompanionOverlay({
                   answer={answer}
                   voiceStatus={voiceStatus}
                   voiceRequest={voiceRequest}
+                  focusHref={focusHref}
                   onDismiss={() => {
                     setState({ kind: "idle" });
                     setQuestion("");
@@ -255,11 +263,13 @@ function AnswerCard({
   answer,
   voiceStatus,
   voiceRequest,
+  focusHref,
   onDismiss,
 }: {
   answer: RevenueCompanionAnswer;
   voiceStatus?: VoiceStatusProp;
   voiceRequest: ReturnType<typeof buildAnswerVoiceRequest>;
+  focusHref?: string;
   onDismiss: () => void;
 }) {
   const focus = answer.workspaceFocus;
@@ -297,7 +307,14 @@ function AnswerCard({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        {focus ? (
+        {focus && focusHref ? (
+          <a
+            href={focusHref}
+            className="btn btn-ghost px-3.5 py-2 text-[12px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+          >
+            <ArrowDownToLine size={14} /> {focus.label}
+          </a>
+        ) : focus ? (
           <button
             type="button"
             onClick={() => focusPanel(focus.anchorId)}

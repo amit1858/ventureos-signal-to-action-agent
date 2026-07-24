@@ -147,6 +147,20 @@ console.log("\n[6] Demo page gates the companion on the flag (frozen when off)")
 console.log("\n[7] The companion route is not wired into shared navigation");
 // ===========================================================================
 {
+  // The genuine invariant: the /companion route must not appear in the always-on
+  // shared navigation (the shell nav config, the header, or the root layout), so
+  // Production — where the flag is off — never exposes it. Phase 3.2 adds a
+  // homepage teaser that DOES link the route, but only inside a block gated on
+  // the server-probed `companionAvailable`, so it renders only when the companion
+  // is accessible and is absent from Production entirely.
+  const nav = read(resolve(WEB_ROOT, "lib/shell/nav.ts"));
+  check("shell nav config does not list the companion route", !nav.includes("/companion"));
+  const header = read(resolve(WEB_ROOT, "components/Header.tsx"));
+  check("shared header does not link the companion route", !header.includes("/companion"));
+  const layout = read(resolve(WEB_ROOT, "app/layout.tsx"));
+  check("root layout does not link the companion route", !layout.includes("/companion"));
+
+  // Any homepage reference to /companion must be flag-gated (never always-on).
   const landing = resolve(WEB_ROOT, "components/landing/LandingView.tsx");
   let landingText = "";
   try {
@@ -154,9 +168,9 @@ console.log("\n[7] The companion route is not wired into shared navigation");
   } catch {
     landingText = "";
   }
-  check("companion route absent from landing navigation", !landingText.includes("/companion"));
-  const layout = read(resolve(WEB_ROOT, "app/layout.tsx"));
-  check("root layout does not link the companion route", !layout.includes("/companion"));
+  const landingLinksCompanion = landingText.includes("/companion");
+  check("any homepage companion link is gated on companionAvailable",
+    !landingLinksCompanion || landingText.includes("companionAvailable"));
 }
 
 console.log(`\nRevenue Companion access control: ${passed} passed, ${failed} failed`);

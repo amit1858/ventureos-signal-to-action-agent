@@ -23,6 +23,7 @@ import { buildDefaultCompanion } from "@/lib/revenue-companion/buildCompanions.s
 import { loadDemoJourneys } from "@/lib/demo-mode/loadDemoJourney";
 import { COMPANION_STRINGS } from "@/lib/revenue-companion/strings";
 import { RevenueCompanionPanel } from "@/components/revenue-companion/RevenueCompanionPanel";
+import { RevenueCompanionOverlay } from "@/components/revenue-companion/RevenueCompanionOverlay";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,18 @@ export default function RevenueCompanionPage() {
             <RevenueCompanionPanel
               vm={vm}
               voiceStatus={voiceStatus.offered ? voiceStatus : undefined}
+            />
+          </div>
+
+          {/* Interactive parity: the same governed answer engine the homepage
+              teaser and the Action Center overlay use. On this standalone route
+              there is no portfolio to scroll to, so the "show me" affordance
+              links into the Action Center instead. */}
+          <div className="mt-6">
+            <RevenueCompanionOverlay
+              voiceStatus={voiceStatus.offered ? voiceStatus : undefined}
+              focusHref="/?view=command"
+              startOpen
             />
           </div>
 
