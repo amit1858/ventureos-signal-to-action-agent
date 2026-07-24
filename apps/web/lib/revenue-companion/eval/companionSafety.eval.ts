@@ -38,6 +38,7 @@ const WEB_ROOT = resolve(HERE, "../../..");
 const LIB_DIR = resolve(HERE, "..");
 const COMPONENTS_DIR = resolve(WEB_ROOT, "components/revenue-companion");
 const ROUTE_DIR = resolve(WEB_ROOT, "app/companion");
+const API_ROUTE_DIR = resolve(WEB_ROOT, "app/api/revenue-companion");
 
 function listSources(dir: string): string[] {
   const out: string[] = [];
@@ -57,8 +58,15 @@ const SOURCES = [
   ...listSources(LIB_DIR),
   ...listSources(COMPONENTS_DIR),
   ...listSources(ROUTE_DIR),
+  ...listSources(API_ROUTE_DIR),
 ];
 const read = (f: string): string => readFileSync(f, "utf8");
+
+// The ONLY two files permitted a network primitive, each under a strict rule:
+//  - the server-only Gnani provider may call ONLY the Gnani TTS endpoint;
+//  - the client playback control may call ONLY the same-origin voice route.
+const VOICE_PROVIDER = join("revenue-companion", "voice", "gnaniProvider.server.ts");
+const VOICE_CONTROL = join("revenue-companion", "VoicePlaybackControl.tsx");
 
 // ===========================================================================
 console.log("\n[1] Feature-flag predicate is server-only + fails closed");
@@ -90,7 +98,26 @@ console.log("\n[2] No network / CRM write-back / NVIDIA transport / ledger / mut
     // contains "writeback"/"write-back") — those are guard definitions, not CRM
     // calls, so the CRM textual scan skips it. Network/ledger/mutation still apply.
     const isGuardOwner = base.endsWith(join("revenue-companion", "companionContract.ts"));
-    check(`${base}: no network primitive`, !networkRe.test(src));
+    const isVoiceProvider = base.endsWith(VOICE_PROVIDER);
+    const isVoiceControl = base.endsWith(VOICE_CONTROL);
+
+    if (isVoiceProvider) {
+      // Server-only provider: exactly one fetch, targeting ONLY the Gnani
+      // endpoint constant; must be a `.server` file; no external URL literal.
+      check(`${base}: is a server-only module`, base.endsWith(".server.ts"));
+      const fetchCount = (src.match(/\bfetch\s*\(/g) ?? []).length;
+      check(`${base}: has exactly one network call`, fetchCount === 1);
+      check(`${base}: only calls the Gnani TTS endpoint constant`, /fetch\(\s*GNANI_TTS_ENDPOINT/.test(src));
+      check(`${base}: hard-codes no external URL literal`, !/fetch\(\s*["'`]https?:/i.test(src));
+    } else if (isVoiceControl) {
+      // Client control: fetch ONLY the same-origin voice route; no external host.
+      const fetchCount = (src.match(/\bfetch\s*\(/g) ?? []).length;
+      check(`${base}: has exactly one network call`, fetchCount === 1);
+      check(`${base}: only calls the same-origin voice route`, src.includes('fetch("/api/revenue-companion/voice"'));
+      check(`${base}: contacts no external host`, !/fetch\(\s*["'`]https?:/i.test(src));
+    } else {
+      check(`${base}: no network primitive`, !networkRe.test(src));
+    }
     if (!isGuardOwner) {
       check(`${base}: no CRM write-back reference`, !crmRe.test(src));
     }
@@ -117,9 +144,34 @@ console.log("\n[3] Client components never import the server-only modules");
   }
   const flag = read(join(LIB_DIR, "featureFlag.ts"));
   check("featureFlag.ts is pure (no process.env read)", !flag.includes("process.env"));
-  for (const serverFile of ["access.server.ts", "narrativeAdapter.server.ts", "buildCompanions.server.ts"]) {
+  const voiceFlag = read(join(LIB_DIR, "voice", "featureFlag.ts"));
+  check("voice/featureFlag.ts is pure (no process.env read)", !voiceFlag.includes("process.env"));
+  for (const serverFile of [
+    "access.server.ts",
+    "narrativeAdapter.server.ts",
+    "buildCompanions.server.ts",
+    join("voice", "access.server.ts"),
+    join("voice", "gnaniProvider.server.ts"),
+    join("voice", "voiceBriefing.server.ts"),
+  ]) {
     const s = read(join(LIB_DIR, serverFile));
     check(`${serverFile} guards against browser evaluation`, s.includes('typeof window !== "undefined"'));
+  }
+
+  // The Gnani key is SERVER-ONLY: never NEXT_PUBLIC_, and only read in .server
+  // files. No client component may name or read it.
+  for (const file of SOURCES) {
+    const src = read(file);
+    const base = file.slice(WEB_ROOT.length + 1);
+    check(`${base}: never exposes the key as NEXT_PUBLIC_`, !src.includes("NEXT_PUBLIC_GNANI"));
+    const readsKey = /process\.env\[?\s*["'`]?GNANI_API_KEY|process\.env\.GNANI_API_KEY/.test(src);
+    if (readsKey) {
+      check(`${base}: reads the Gnani key only in a server module`, base.endsWith(".server.ts"));
+    }
+    if (src.includes('"use client"')) {
+      check(`${base}: client never names the Gnani key`, !src.includes("GNANI_API_KEY"));
+      check(`${base}: client never names the voice flag`, !src.includes("VENTUREOS_VOICE_BRIEFING"));
+    }
   }
 }
 
