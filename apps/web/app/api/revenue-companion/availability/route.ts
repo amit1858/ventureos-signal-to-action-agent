@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 
 import { isRevenueCompanionAccessible } from "../../../../lib/revenue-companion/access.server";
 import { resolveVoicePresentationStatus } from "../../../../lib/revenue-companion/voice/access.server";
+import { resolveVoiceInputPresentationStatus } from "../../../../lib/revenue-companion/stt/sttConfig.server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,8 +26,14 @@ export function GET(): Response {
   // classification) — never a key, endpoint, or fragment. Only surfaced when the
   // companion itself is available; otherwise the client gets no voice affordance.
   const voice = available ? resolveVoicePresentationStatus() : null;
+  // Voice INPUT (speech-to-text) is a separate axis, gated by its own flag.
+  const voiceInput = available ? resolveVoiceInputPresentationStatus() : null;
   return NextResponse.json(
-    { available, voice: voice && voice.offered ? voice : null },
+    {
+      available,
+      voice: voice && voice.offered ? voice : null,
+      voiceInput: voiceInput && voiceInput.offered ? voiceInput : null,
+    },
     { status: 200, headers: NO_STORE },
   );
 }

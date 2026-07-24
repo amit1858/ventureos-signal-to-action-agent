@@ -19,6 +19,7 @@ import { Sparkles } from "lucide-react";
 
 import { isRevenueCompanionAccessible } from "@/lib/revenue-companion/access.server";
 import { resolveVoicePresentationStatus } from "@/lib/revenue-companion/voice/access.server";
+import { resolveVoiceInputPresentationStatus } from "@/lib/revenue-companion/stt/sttConfig.server";
 import { buildDefaultCompanion } from "@/lib/revenue-companion/buildCompanions.server";
 import { loadDemoJourneys } from "@/lib/demo-mode/loadDemoJourney";
 import { COMPANION_STRINGS } from "@/lib/revenue-companion/strings";
@@ -42,6 +43,7 @@ export default function RevenueCompanionPage() {
   const doc = loadDemoJourneys();
   const vm = buildDefaultCompanion(doc);
   const voiceStatus = resolveVoicePresentationStatus();
+  const voiceInputStatus = resolveVoiceInputPresentationStatus();
 
   return (
     <div className="flex min-h-screen flex-col bg-base">
@@ -95,6 +97,7 @@ export default function RevenueCompanionPage() {
           <div className="mt-6">
             <RevenueCompanionOverlay
               voiceStatus={voiceStatus.offered ? voiceStatus : undefined}
+              voiceInputStatus={voiceInputStatus.offered ? voiceInputStatus : undefined}
               focusHref="/?view=command"
               startOpen
             />

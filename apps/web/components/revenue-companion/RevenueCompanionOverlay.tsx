@@ -23,6 +23,7 @@ import { COMPANION_STABLE_TIMESTAMP } from "@/lib/revenue-companion/companionCon
 import { GUIDED_INTENTS, type GuidedIntent } from "@/lib/revenue-companion/guided/intentRouter";
 import { cx } from "@/lib/format";
 import { VoicePlaybackControl, type VoiceStatusProp } from "./VoicePlaybackControl";
+import { VoiceAskControl, type VoiceInputStatusProp } from "./VoiceAskControl";
 
 // Embedded Action Center Revenue Companion overlay (Phase 3.2).
 // ============================================================
@@ -97,6 +98,7 @@ function focusCandidateIds(focus: RevenueCompanionAnswer["workspaceFocus"]): str
 
 export function RevenueCompanionOverlay({
   voiceStatus,
+  voiceInputStatus,
   autoOpenSignal = 0,
   focusHref,
   startOpen = false,
@@ -105,6 +107,7 @@ export function RevenueCompanionOverlay({
   dataSourceLabel,
 }: {
   voiceStatus?: VoiceStatusProp;
+  voiceInputStatus?: VoiceInputStatusProp;
   autoOpenSignal?: number;
   // When set, the "show me" affordance becomes a link to this href instead of
   // scrolling to an in-page anchor. Used by the standalone /companion route,
@@ -124,7 +127,22 @@ export function RevenueCompanionOverlay({
   const [question, setQuestion] = React.useState("");
   const [state, setState] = React.useState<AnswerState>({ kind: "idle" });
   const sectionRef = React.useRef<HTMLElement | null>(null);
+  const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const requestSeq = React.useRef(0);
+
+  // Voice input hands back a reviewed transcript. It is placed in the question
+  // box for the seller to read/edit — it is NEVER auto-submitted. Submission is a
+  // separate, explicit Ask press.
+  const onTranscript = React.useCallback((text: string) => {
+    setQuestion(text);
+    window.setTimeout(() => {
+      const el = textareaRef.current;
+      if (el) {
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+      }
+    }, 30);
+  }, []);
 
   // Compose the immutable, fingerprinted presentation snapshot from the live
   // Action Center props. Content-addressed: any change to displayed rank order,
@@ -263,7 +281,15 @@ export function RevenueCompanionOverlay({
 
             {/* Optional free-text — bounded, routed deterministically server-side. */}
             <div className="mt-3 flex items-start gap-2">
+              {voiceInputStatus && voiceInputStatus.offered ? (
+                <VoiceAskControl
+                  status={voiceInputStatus}
+                  onTranscript={onTranscript}
+                  disabled={state.kind === "loading"}
+                />
+              ) : null}
               <textarea
+                ref={textareaRef}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => {

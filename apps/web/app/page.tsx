@@ -67,6 +67,7 @@ import type {
   SelectedAccountInput as CompanionSelectedInput,
 } from "@/lib/revenue-companion/actionCenterSnapshot";
 import type { VoiceStatusProp } from "@/components/revenue-companion/VoicePlaybackControl";
+import type { VoiceInputStatusProp } from "@/components/revenue-companion/VoiceAskControl";
 import { EvaluationView } from "@/components/evaluation/EvaluationView";
 import { WorkspaceQuery } from "@/components/WorkspaceQuery";
 import { ThinkingSequence } from "@/components/ThinkingSequence";
@@ -201,6 +202,7 @@ export default function Page() {
   // embedded companion; it never carries data and never mutates governed state.
   const [companionAvailable, setCompanionAvailable] = React.useState(false);
   const [companionVoice, setCompanionVoice] = React.useState<VoiceStatusProp | undefined>(undefined);
+  const [companionVoiceInput, setCompanionVoiceInput] = React.useState<VoiceInputStatusProp | undefined>(undefined);
   const [companionAutoOpen, setCompanionAutoOpen] = React.useState(0);
 
   React.useEffect(() => {
@@ -212,6 +214,11 @@ export default function Page() {
         setCompanionAvailable(Boolean(d?.available));
         setCompanionVoice(
           d?.voice && typeof d.voice === "object" ? (d.voice as VoiceStatusProp) : undefined,
+        );
+        setCompanionVoiceInput(
+          d?.voiceInput && typeof d.voiceInput === "object"
+            ? (d.voiceInput as VoiceInputStatusProp)
+            : undefined,
         );
       })
       .catch(() => {
@@ -1315,6 +1322,7 @@ export default function Page() {
           {companionAvailable ? (
             <RevenueCompanionOverlay
               voiceStatus={companionVoice}
+              voiceInputStatus={companionVoiceInput}
               autoOpenSignal={companionAutoOpen}
               recommendations={companionRecommendations}
               selectedAccount={companionSelectedAccount}

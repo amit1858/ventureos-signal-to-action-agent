@@ -71,6 +71,12 @@ const VOICE_CONTROL = join("revenue-companion", "VoicePlaybackControl.tsx");
 // the voice control it is a same-origin-only client component: it may call ONLY
 // the governed answer route and never an external host.
 const OVERLAY_CONTROL = join("revenue-companion", "RevenueCompanionOverlay.tsx");
+// The STT (voice-input) subsystem adds a fourth + fifth permitted network caller,
+// mirroring the TTS pair exactly:
+//  - the server-only Gnani STT provider may call ONLY the Gnani STT endpoint;
+//  - the client mic control may call ONLY the same-origin transcribe route.
+const STT_PROVIDER = join("revenue-companion", "stt", "sttProvider.server.ts");
+const STT_CONTROL = join("revenue-companion", "VoiceAskControl.tsx");
 
 // ===========================================================================
 console.log("\n[1] Feature-flag predicate is server-only + fails closed");
@@ -105,6 +111,8 @@ console.log("\n[2] No network / CRM write-back / NVIDIA transport / ledger / mut
     const isVoiceProvider = base.endsWith(VOICE_PROVIDER);
     const isVoiceControl = base.endsWith(VOICE_CONTROL);
     const isOverlayControl = base.endsWith(OVERLAY_CONTROL);
+    const isSttProvider = base.endsWith(STT_PROVIDER);
+    const isSttControl = base.endsWith(STT_CONTROL);
 
     if (isVoiceProvider) {
       // Server-only provider: exactly one fetch, targeting ONLY the Gnani
@@ -125,6 +133,20 @@ console.log("\n[2] No network / CRM write-back / NVIDIA transport / ledger / mut
       const fetchCount = (src.match(/\bfetch\s*\(/g) ?? []).length;
       check(`${base}: has exactly one network call`, fetchCount === 1);
       check(`${base}: only calls the same-origin answer route`, src.includes('fetch("/api/revenue-companion/answer"'));
+      check(`${base}: contacts no external host`, !/fetch\(\s*["'`]https?:/i.test(src));
+    } else if (isSttProvider) {
+      // Server-only STT provider: exactly one fetch, targeting ONLY the Gnani STT
+      // endpoint constant; must be a `.server` file; no external URL literal.
+      check(`${base}: is a server-only module`, base.endsWith(".server.ts"));
+      const fetchCount = (src.match(/\bfetch\s*\(/g) ?? []).length;
+      check(`${base}: has exactly one network call`, fetchCount === 1);
+      check(`${base}: only calls the Gnani STT endpoint constant`, /fetch\(\s*GNANI_STT_ENDPOINT/.test(src));
+      check(`${base}: hard-codes no external URL literal`, !/fetch\(\s*["'`]https?:/i.test(src));
+    } else if (isSttControl) {
+      // Client mic control: fetch ONLY the same-origin transcribe route; no external host.
+      const fetchCount = (src.match(/\bfetch\s*\(/g) ?? []).length;
+      check(`${base}: has exactly one network call`, fetchCount === 1);
+      check(`${base}: only calls the same-origin transcribe route`, src.includes('fetch("/api/revenue-companion/transcribe"'));
       check(`${base}: contacts no external host`, !/fetch\(\s*["'`]https?:/i.test(src));
     } else {
       check(`${base}: no network primitive`, !networkRe.test(src));
@@ -164,6 +186,9 @@ console.log("\n[3] Client components never import the server-only modules");
     join("voice", "access.server.ts"),
     join("voice", "gnaniProvider.server.ts"),
     join("voice", "voiceBriefing.server.ts"),
+    join("stt", "sttConfig.server.ts"),
+    join("stt", "sttProvider.server.ts"),
+    join("stt", "sttService.server.ts"),
   ]) {
     const s = read(join(LIB_DIR, serverFile));
     check(`${serverFile} guards against browser evaluation`, s.includes('typeof window !== "undefined"'));
