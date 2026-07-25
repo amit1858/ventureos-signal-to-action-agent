@@ -188,9 +188,15 @@ export function IndependentAiEvaluation({ doc }: { doc: AiAssuranceCenterDoc }) 
             result stands on its own.
           </div>
         )}
-        <p className="mt-3 text-[11px] leading-relaxed text-faint">
-          {reference.note}
-        </p>
+        {liveProof ? (
+          <p className="mt-3 text-[11px] leading-relaxed text-faint">
+            Redacted snapshot of the attended live NVIDIA evaluation. Real provider scores and
+            verdicts; advisory only — the deterministic result remains authoritative and is never
+            overridden.
+          </p>
+        ) : (
+          <p className="mt-3 text-[11px] leading-relaxed text-faint">{reference.note}</p>
+        )}
       </Card>
 
       {/* Seven advisory dimensions */}
@@ -238,6 +244,9 @@ export function IndependentAiEvaluation({ doc }: { doc: AiAssuranceCenterDoc }) 
                   </div>
                 </div>
                 <p className="mt-2 text-[12px] leading-relaxed text-muted">{outcomeNote(d)}</p>
+                {d.source === "reference_offline" ? (
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-faint">{reference.note}</p>
+                ) : null}
                 {d.agreement === "disagreement" ? (
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-amber/40 bg-amber/10 px-2 py-0.5 text-[10px] font-medium text-amber">
                     <AlertTriangle size={11} /> Advisory disagrees · human review
