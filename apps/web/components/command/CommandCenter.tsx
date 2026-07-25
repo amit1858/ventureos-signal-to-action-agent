@@ -60,6 +60,7 @@ import {
 } from "@/lib/accountNavigation";
 import { ExperienceModeSwitch } from "@/components/command/ExperienceModeSwitch";
 import { ManagerAICoach } from "@/components/command/ManagerAICoach";
+import { ManagerCoachPocEntry } from "@/components/manager-coach/ManagerCoachPocEntry";
 import { DisclosurePanel } from "@/components/command/DisclosurePanel";
 import { ExecutiveAttentionBrief } from "@/components/command/ExecutiveAttentionBrief";
 import { ActionExecutionPanel } from "@/components/command/ActionExecutionPanel";
@@ -527,7 +528,10 @@ export function CommandCenter({
           ) : null}
 
           {isSectionVisible(experienceMode, "managerCoach") ? (
-            <ManagerAICoach accounts={accounts} />
+            <>
+              <ManagerCoachPocEntry />
+              <ManagerAICoach accounts={accounts} />
+            </>
           ) : null}
 
           {isSectionVisible(experienceMode, "attentionBrief") && hasResult ? (
