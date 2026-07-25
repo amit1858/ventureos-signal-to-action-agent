@@ -6,12 +6,21 @@
 // the ranking, recommendation, governance, approval, memory, mission or CRM
 // layers, and it exposes no way to influence them.
 //
-// Fail-closed by default: unless NEXT_PUBLIC_ENABLE_SOUL_MACHINES_POC is the
-// exact string "true", the POC is disabled — the entry does not render, the
-// route returns notFound(), and no Soul Machines resources load.
+// This feature ships ALWAYS-ON with a built-in default assistant URL, so it
+// requires no environment variables or Vercel configuration to appear. An
+// optional NEXT_PUBLIC_SOUL_MACHINES_ASSISTANT_URL override is still honored if
+// present, but is not needed.
 
 export const POC_FLAG_ENV = "NEXT_PUBLIC_ENABLE_SOUL_MACHINES_POC" as const;
 export const ASSISTANT_URL_ENV = "NEXT_PUBLIC_SOUL_MACHINES_ASSISTANT_URL" as const;
+
+// Built-in default assistant URL. Presentation-layer only. This is a public
+// Soul Machines assistant share link (the `t=` token is the shareable session
+// identifier, not a long-lived API credential); as a NEXT_PUBLIC_ value it was
+// always destined for the client bundle, so shipping it here is no broader an
+// exposure than the env var was. Hardcoding removes any deploy-time config.
+const DEFAULT_ASSISTANT_URL =
+  "https://workforce.soulmachines.com/assistant?t=3a1d49c8-81e4-406b-967f-cd2138a8bab7" as const;
 
 // Dedicated, isolated route for the POC. Not added to the platform shell nav.
 export const POC_ROUTE = "/manager-coach/avatar-poc" as const;
@@ -28,11 +37,11 @@ export const READY_MESSAGE =
 const ALLOWED_ASSISTANT_HOSTS = ["soulmachines.com"] as const;
 
 /**
- * Whether the Manager Coach POC is enabled. Reads the build-time public flag
- * and fails closed on anything other than the exact string "true".
+ * Whether the Manager Coach experience is enabled. This feature is always-on:
+ * it no longer depends on any environment variable or Vercel configuration.
  */
 export function isSoulMachinesPocEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_SOUL_MACHINES_POC === "true";
+  return true;
 }
 
 function isAllowedAssistantHost(hostname: string): boolean {
@@ -43,24 +52,24 @@ function isAllowedAssistantHost(hostname: string): boolean {
 }
 
 /**
- * The configured Soul Machines assistant URL, validated. Returns null (fail
- * closed) when unset, malformed, non-https, or pointing at a host outside the
- * Soul Machines allow-list. A null result drives the "configuration missing"
- * state — never a blank or arbitrary embed.
+ * The Soul Machines assistant URL, validated. Falls back to the built-in
+ * default when no override env var is set, so the experience always has a valid
+ * URL without any configuration. An override is honored only if it is https and
+ * points at a Soul Machines host; otherwise the built-in default is used.
  */
 export function getAssistantUrl(): string | null {
   const raw = process.env.NEXT_PUBLIC_SOUL_MACHINES_ASSISTANT_URL;
-  if (!raw || raw.trim().length === 0) return null;
+  const candidate = raw && raw.trim().length > 0 ? raw.trim() : DEFAULT_ASSISTANT_URL;
 
   let parsed: URL;
   try {
-    parsed = new URL(raw.trim());
+    parsed = new URL(candidate);
   } catch {
-    return null;
+    return DEFAULT_ASSISTANT_URL;
   }
 
-  if (parsed.protocol !== "https:") return null;
-  if (!isAllowedAssistantHost(parsed.hostname)) return null;
+  if (parsed.protocol !== "https:") return DEFAULT_ASSISTANT_URL;
+  if (!isAllowedAssistantHost(parsed.hostname)) return DEFAULT_ASSISTANT_URL;
 
   return parsed.toString();
 }
