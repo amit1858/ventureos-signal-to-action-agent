@@ -81,6 +81,8 @@ import { api } from "@/lib/api";
 import { Card } from "@/components/ui";
 import { AIReasoningPanel } from "@/components/AIReasoningStatus";
 import type { AIOverlayMap } from "@/lib/aiOverlay";
+import { loadAiAssurance } from "@/lib/assurance/loadAiAssuranceCenter";
+import { AiAssuranceBand, IndependentAiEvaluation } from "@/components/evaluation/AiAssuranceCenter";
 
 // -- shared tone language (semantic, never decorative) --------------------
 
@@ -215,6 +217,9 @@ export function EvaluationView({
     [hubActive, hubConfigured],
   );
 
+  // Build-time-generated, contract-validated AI Assurance projection (read-only).
+  const aiAssurance = React.useMemo(() => loadAiAssurance(), []);
+
   const { summary } = report;
 
   return (
@@ -263,6 +268,7 @@ export function EvaluationView({
         title="How every decision is measured."
         sub="Twelve dimensions across output quality, governance and runtime. Capability checks reflect how the system is built; data-derived checks are measured from the latest workflow run."
       >
+        <AiAssuranceBand doc={aiAssurance} />
         <div className="flex flex-wrap items-center gap-3">
           <SummaryStat tone="good" value={summary.passed} label="passing" />
           {summary.review > 0 ? (
@@ -319,6 +325,15 @@ export function EvaluationView({
             );
           })}
         </div>
+      </Section>
+
+      {/* INDEPENDENT AI EVALUATION */}
+      <Section
+        eyebrow="Independent AI Evaluation"
+        title="A second, independent opinion — advisory only."
+        sub="NVIDIA Nemotron independently assesses the same governed answers against a versioned rubric. It can raise a human-review signal, but never sets or overrides a verdict. The deterministic engine remains authoritative."
+      >
+        <IndependentAiEvaluation doc={aiAssurance} />
       </Section>
 
       {/* AI REASONING ENGINES */}
