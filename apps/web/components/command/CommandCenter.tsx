@@ -63,6 +63,7 @@ import { DisclosurePanel } from "@/components/command/DisclosurePanel";
 import { ExecutiveAttentionBrief } from "@/components/command/ExecutiveAttentionBrief";
 import { ActionExecutionPanel } from "@/components/command/ActionExecutionPanel";
 import { SellerMissionControl } from "@/components/command/SellerMissionControl";
+import { ManagerCoachPocEntry } from "@/components/manager-coach/ManagerCoachPocEntry";
 import { consumeMissionRequest, requestMission, subscribeMissionRequests } from "@/lib/missionState";
 import { loadDriftSnapshot } from "@/lib/driftEngine";
 import { type AccountSelectionContext } from "@/lib/accountSelectionContext";
@@ -510,6 +511,8 @@ export function CommandCenter({
             <ExperienceModeSwitch value={experienceMode} onChange={setExperienceMode} />
             <span className="text-[10.5px] uppercase tracking-[0.14em] text-faint">{dataSourceLabel}</span>
           </div>
+
+          {experienceMode === "seller" ? <ManagerCoachPocEntry /> : null}
 
           {isSectionVisible(experienceMode, "chiefOfStaff") ? (
             <ChiefOfStaffNarrativeCard
