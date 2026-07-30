@@ -1,0 +1,1249 @@
+{
+  "ledger": {
+    "ledger_id": "LDG-646a4d85",
+    "timestamp": "2026-07-22T10:41:44.502558+00:00",
+    "user_query": "Which SMB accounts need attention this week and why?",
+    "model_provider": "nvidia-nim",
+    "confidence_score": 0.9062,
+    "approval_status": "pending_human_approval",
+    "latency_ms": 168150,
+    "payload_json": {
+      "ledger_id": "LDG-646a4d85",
+      "timestamp": "2026-07-22T10:41:44.502558Z",
+      "user_query": "Which SMB accounts need attention this week and why?",
+      "agents_invoked": [
+        "Signal Ingestion Agent",
+        "Account Health Agent",
+        "Opportunity Agent",
+        "Governance Agent",
+        "Action Agent",
+        "Communication Agent"
+      ],
+      "evidence_used": 77,
+      "reasoning_summary": "Ranked 150 accounts with a deterministic priority score (support risk, spend movement, growth potential, renewal urgency, engagement and contact recency). Interpreted the query and surfaced the top 10. The nvidia-nim model adapter generated explanations and seller-ready drafts. Every action is pending human approval.",
+      "confidence_score": 0.9062,
+      "caveats": [
+        "All recommendations require explicit human approval before any action is executed.",
+        "Recommendations are generated from synthetic demonstration data."
+      ],
+      "final_recommendation": "Top action: Escalate the open support issue and align on a concrete resolution plan. for Tessera DocOnline (rank #1).",
+      "approval_status": "pending_human_approval",
+      "steps": [
+        {
+          "agent_name": "Signal Ingestion Agent",
+          "status": "completed",
+          "summary": "Ingested 150 accounts and normalized 456 signals.",
+          "evidence_count": 456,
+          "duration_ms": 50
+        },
+        {
+          "agent_name": "Account Health Agent",
+          "status": "completed",
+          "summary": "Assessed risk across 150 accounts; 15 flagged at elevated risk.",
+          "evidence_count": 77,
+          "duration_ms": 2
+        },
+        {
+          "agent_name": "Opportunity Agent",
+          "status": "completed",
+          "summary": "Scored growth potential; 63 accounts show clear upside.",
+          "evidence_count": 0,
+          "duration_ms": 3
+        },
+        {
+          "agent_name": "Governance Agent",
+          "status": "completed",
+          "summary": "Checked evidence and confidence; 34 accounts require review. Human approval enforced.",
+          "evidence_count": 0,
+          "duration_ms": 0
+        },
+        {
+          "agent_name": "Action Agent",
+          "status": "completed",
+          "summary": "Proposed a typed next-best action for the top 10 accounts.",
+          "evidence_count": 0,
+          "duration_ms": 0
+        },
+        {
+          "agent_name": "Communication Agent",
+          "status": "completed",
+          "summary": "Drafted seller-ready comms for top 10 accounts via the nvidia-nim adapter.",
+          "evidence_count": 0,
+          "duration_ms": 168090
+        }
+      ],
+      "model_provider": "nvidia-nim",
+      "latency_ms": 168150,
+      "data_source": "Synthetic local dataset"
+    },
+    "created_at": "2026-07-22T10:41:44.503558+00:00"
+  },
+  "recommendations": [
+    {
+      "recommendation_id": "REC-0eb490dd",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0119",
+      "account_name": "Tessera DocOnline",
+      "priority_rank": 1,
+      "priority_score": 0.553,
+      "action_type": "support_escalation",
+      "confidence_score": 0.9187,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-0eb490dd",
+        "account_id": "ACC-0119",
+        "account_name": "Tessera DocOnline",
+        "priority_rank": 1,
+        "priority_score": 0.553,
+        "priority_reason": "Here are 2 sentences explaining why the Tessera DocOnline account is prioritized, based solely on the provided facts:\n\nTessera DocOnline is prioritized (rank 1) due to a combination of factors, notably its strong growth potential which suggests a promising upside. The account's elevated support risk and declining spend, however, necessitate immediate attention to mitigate potential losses and capitalize on the growth opportunity.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk based solely on the provided risk factors:\n\nTessera DocOnline's account is at high risk due to declining spend (40% month-over-month) and lack of recent interaction (no contact in 34 days). Additionally, elevated support needs and low engagement further exacerbate the account's vulnerability.",
+        "opportunity_summary": "Here is a 1-2 plain sentence summary of the expansion opportunity based solely on the provided opportunity factors:\n\nTessera DocOnline has a promising expansion opportunity due to its **High growth potential**. This growth can be particularly leveraged within the **High-fit Mid-Market segment**, where the product/service is especially well-suited.",
+        "recommended_action": "Escalate the open support issue and align on a concrete resolution plan.",
+        "action_type": "support_escalation",
+        "confidence_score": 0.9187,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 40%",
+            "detail": "Spend fell from 20,173 to 12,103 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6000000000000001
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Support risk 72/100",
+            "detail": "Support risk score is above the attention threshold.",
+            "source_system": "Support",
+            "polarity": "negative",
+            "strength": 0.7240000000000001
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Engagement 29/100",
+            "detail": "Engagement is low, indicating weakening stakeholder attention.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.7010000000000001
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "34d since contact",
+            "detail": "The account has gone without a seller touch for over a month.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.5666666666666667
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Active seats fell sharply month over month",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.8
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Payment Delay",
+            "detail": "Invoice paid 12 days late",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Login Drop",
+            "detail": "Weekly logins down ~40%",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.7
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Competitor Mention",
+            "detail": "Mentioned evaluating a competitor on last call",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Opportunity Agent",
+            "label": "Growth potential 64/100",
+            "detail": "Modeled growth potential is strong for this account.",
+            "source_system": "derived",
+            "polarity": "positive",
+            "strength": 0.648
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based on the provided facts:\n\n**Subject: Collaborative Resolution for Recent Support Issues & Future Growth**\n\nDear [Tessera DocOnline Team/Decision Maker's Name],\n\nHope this email finds you well. I wanted to personally reach out to ensure we promptly resolve the recent support issues you've encountered with our services. Your satisfaction is our top priority, and I apologize for any inconvenience these issues may have caused.\n\n**Urgent Collaboration Needed**:\nTo address the current challenges efficiently, I recommend we escalate the open support issue and work together to establish a concrete resolution plan at your earliest convenience. This proactive step will help prevent further disruption.\n\n**Looking Ahead**:\nDespite the current challenges, we believe Tessera DocOnline has **high growth potential** with our partnership. However, we've noticed a **40% month-over-month decline in spend**, which could impact the realization of this potential if not addressed. By resolving the immediate issues, we can refocus on strategies to reignite growth.\n\n**Next Steps**:\nWould you be available for a brief call this week or next to:\n1. Escalate and resolve the open support issue\n2. Align on a resolution plan\n3. Discuss growth revitalization strategies\n\nPlease let me know a convenient time, or suggest an alternative if needed.\n\nThank you for your prompt attention to this matter. I'm committed to getting our partnership back on track.\n\nWarm Regards,\n\n[Your Name]  \nAccount Manager  \n[Your Company]  \n[Contact Information]",
+        "call_script": "Below is a concise 5-step call script tailored to the provided grounded facts for the account Tessera DocOnline:\n\n### **5-Step Call Script**\n\n#### **1. Open**\n* **Objective**: Establish rapport and context\n* **Script**:\n\"Good [Time of Day], [Decision Maker's Name] at Tessera DocOnline. This is [Your Name] from [Your Company]. Hope you're doing well. I'm calling to personally follow up on the open support issue from your team, as it's flagged as our top priority for resolution. How have things been otherwise?\"\n\n#### **2. Reason**\n* **Objective**: Align on the urgency and reason for the call\n* **Script**:\n\"I wanted to touch base because I noticed we've seen a significant decline in spend over the last month (-40% MoM), which caught our attention. Primarily, I want to ensure we resolve the recent support issues quickly to prevent any further impact on your operations and our partnership's value.\"\n\n#### **3. Value**\n* **Objective**: Highlight the benefits of immediate action\n* **Script**:\n\"By escalating and resolving this support issue promptly, we can not only stabilize but also potentially increase your spend efficiency with us, tapping into the high growth potential we've identified together. Our team is ready to dedicate additional resources to ensure a seamless experience moving forward.\"\n\n#### **4. Ask**\n* **Objective**: Seek commitment for the recommended action\n* **Script**:\n\"Would you be open to an immediate escalation of the current support ticket, and could we schedule a quick call with our senior support team and your key stakeholders within the next 48 hours to align on a concrete resolution plan? This proactive step would greatly benefit our mutual goals.\"\n\n#### **5. Close**\n* **Objective**: Confirm next steps or outcome\n* **Script (Two Scenarios)**:\n\n##### **Positive Response**\n\"Excellent, thank you for your prompt cooperation, [Decision Maker's Name",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Tessera DocOnline:\n\n\"Tessera DocOnline is our **top priority** account due to a concerning 40% month-over-month spend decline; **next step**, we need to escalate the open support issue immediately to align on a concrete resolution plan and mitigate further decline.\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.724,
+          "spend_decline": 0.4,
+          "growth_potential": 0.648,
+          "renewal_urgency": 0.3889,
+          "campaign_response": 0.418,
+          "engagement_gap": 0.701,
+          "last_contact_gap": 0.5667,
+          "priority_score": 0.553
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    },
+    {
+      "recommendation_id": "REC-f4bb9e44",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0124",
+      "account_name": "Onyx Brandworks",
+      "priority_rank": 2,
+      "priority_score": 0.5153,
+      "action_type": "reactivation",
+      "confidence_score": 0.9187,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-f4bb9e44",
+        "account_id": "ACC-0124",
+        "account_name": "Onyx Brandworks",
+        "priority_rank": 2,
+        "priority_score": 0.5153,
+        "priority_reason": "Here are 2 sentences explaining why Onyx Brandworks is prioritized, based solely on the provided facts:\n\nOnyx Brandworks is prioritized (rank 2) due to its strong growth potential, which suggests a promising future return on investment. Additionally, the account's elevated support risk and low engagement indicate a need for immediate attention to mitigate potential downsides and capitalize on the growth opportunity.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk based on the provided risk factors:\n\nOnyx Brandworks poses a moderate to high risk due to declining spend (30% month-over-month) and low engagement, which may indicate dissatisfaction or disinvestment. Elevated support risk further complicates the account's stability.",
+        "opportunity_summary": "Here is a 1-2 sentence summary of the expansion opportunity for Onyx Brandworks using only the provided opportunity factors:\n\nOnyx Brandworks has an expansion opportunity characterized by **high growth potential**. This suggests a favorable market or business context where scaling up operations is likely to yield substantial increases in revenue, market share, or other key metrics.",
+        "recommended_action": "Send a reactivation outreach to understand the drop and re-establish value.",
+        "action_type": "reactivation",
+        "confidence_score": 0.9187,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 30%",
+            "detail": "Spend fell from 44,142 to 30,899 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.44999999999999996
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Support risk 58/100",
+            "detail": "Support risk score is above the attention threshold.",
+            "source_system": "Support",
+            "polarity": "negative",
+            "strength": 0.5820000000000001
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Engagement 16/100",
+            "detail": "Engagement is low, indicating weakening stakeholder attention.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.8360000000000001
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Active seats fell sharply month over month",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.8
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Payment Delay",
+            "detail": "Invoice paid 12 days late",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Login Drop",
+            "detail": "Weekly logins down ~40%",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.7
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Competitor Mention",
+            "detail": "Mentioned evaluating a competitor on last call",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Opportunity Agent",
+            "label": "Growth potential 65/100",
+            "detail": "Modeled growth potential is strong for this account.",
+            "source_system": "derived",
+            "polarity": "positive",
+            "strength": 0.6579999999999999
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based on the provided facts:\n\n**Subject: Checking In on Onyx Brandworks' Recent Activity**\n\nDear [Onyx Brandworks Team/Decision Maker's Name],\n\nHope this email finds you well. I've been reviewing our partnership at [Your Company Name], and I noticed that Onyx Brandworks' activity with us has dipped recently. Specifically, we've seen a 30% month-over-month decrease in spend. I wanted to reach out personally to understand the reasons behind this shift and explore ways we can help turn things around together.\n\nGiven the high growth potential we've seen in our collaboration historically, I'm eager to discuss potential adjustments or new opportunities that might reignite momentum. Your success is important to us, and I'm committed to re-establishing the value our services bring to Onyx Brandworks.\n\nCould you spare some time for a brief call at your convenience? I'd love to listen to your insights and share some strategies that might help us get back on a growth trajectory.\n\nLooking forward to hearing from you and working together to unlock Onyx Brandworks' full potential.\n\nBest Regards,\n\n[Your Name]  \nAccount Manager, [Your Company Name]  \n[Your Contact Information (Email, Phone Number, LinkedIn if appropriate)]",
+        "call_script": "Below is a concise 5-step call script (Open, Reason, Value, Ask, Close) tailored to the provided grounded facts for the account Onyx Brandworks:\n\n---\n\n### **Call Script for Onyx Brandworks Reactivation Outreach**\n\n#### **1. Open (Establish Connection & Context)**\n\n* **Script**:\n\t+ \"Hello [Decision Maker's Name], hope you're doing well. This is [Your Name] from [Your Company]. I'm reaching out because we've been proud partners with Onyx Brandworks, and I wanted to personally touch base regarding our recent collaboration.\"\n\t+ \"Could you spare about 10 minutes to discuss the current state of our partnership and how we can support your goals?\"\n\n#### **2. Reason (State the Observed Change & Concern)**\n\n* **Script**:\n\t+ \"I noticed that our activity together has dipped recently, with a 30% month-over-month decrease in spend. I'm calling because we value our relationship and want to understand the reasons behind this shift to see how we can help turn it around.\"\n\t+ \"Was there a specific factor leading to this adjustment in spend?\"\n\n#### **3. Value (Highlight Benefits of Re-engagement)**\n\n* **Script**:\n\t+ \"Given the high growth potential we've identified in our previous collaborations, I believe re-establishing our momentum could significantly impact your bottom line. Our services are designed to [Briefly mention a key benefit, e.g., 'enhance brand visibility' or 'drive targeted sales'].\"\n\t+ \"We've seen similar brands in [Industry/Niche] achieve [Desirable Outcome, e.g., '25% increase in engagement'] by maintaining consistent engagement with our support.\"\n\n#### **4. Ask (Propose a Solution & Seek Commitment)**\n\n* **Script**:\n\t+ \"To address the current dip and capitalize on the growth opportunity, I propose we schedule a strategic review session. This would allow us to align",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Onyx Brandworks:\n\n\"Onyx Brandworks (Priority Rank 2): We need to send a reactivation outreach to address the 30% month-over-month spend drop and re-establish value to tap into its high growth potential.\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.582,
+          "spend_decline": 0.3,
+          "growth_potential": 0.658,
+          "renewal_urgency": 0.4,
+          "campaign_response": 0.462,
+          "engagement_gap": 0.836,
+          "last_contact_gap": 0.35,
+          "priority_score": 0.5153
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    },
+    {
+      "recommendation_id": "REC-b191f201",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0016",
+      "account_name": "Curefoods",
+      "priority_rank": 3,
+      "priority_score": 0.5126,
+      "action_type": "support_escalation",
+      "confidence_score": 0.9187,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-b191f201",
+        "account_id": "ACC-0016",
+        "account_name": "Curefoods",
+        "priority_rank": 3,
+        "priority_score": 0.5126,
+        "priority_reason": "Here are 2 sentences explaining why the Curefoods account is prioritized, based solely on the provided facts:\n\nCurefoods is prioritized (rank 3) due to its **strong growth potential**, which suggests a promising future for revenue expansion. The account's prioritization is also driven by the need to address **elevated support risk** and **declining spend**, indicating a critical point for intervention to stabilize and potentially reverse the spend trend.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk based on the provided risk factors:\n\nCurefoods' account poses a **High Risk** due to a significant decline in spending (40% month-over-month) and low engagement, compounded by elevated support requirements. This combination suggests a potentially deteriorating relationship and immediate revenue drop.",
+        "opportunity_summary": "Here is a 1-2 sentence summary of the expansion opportunity for Curefoods in plain language, using only the provided opportunity factors:\n\nCurefoods has a promising expansion opportunity due to its alignment with a **High-fit SMB (Small to Medium Business) segment**, which offers a tailored market niche. This segment, combined with the overall **High growth potential**, positions Curefoods for significant scalable success.",
+        "recommended_action": "Escalate the open support issue and align on a concrete resolution plan.",
+        "action_type": "support_escalation",
+        "confidence_score": 0.9187,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 40%",
+            "detail": "Spend fell from 42,530 to 25,518 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6000000000000001
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Support risk 62/100",
+            "detail": "Support risk score is above the attention threshold.",
+            "source_system": "Support",
+            "polarity": "negative",
+            "strength": 0.623
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Engagement 32/100",
+            "detail": "Engagement is low, indicating weakening stakeholder attention.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.677
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Active seats fell sharply month over month",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.8
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Payment Delay",
+            "detail": "Invoice paid 12 days late",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Login Drop",
+            "detail": "Weekly logins down ~40%",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.7
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Competitor Mention",
+            "detail": "Mentioned evaluating a competitor on last call",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Opportunity Agent",
+            "label": "Growth potential 68/100",
+            "detail": "Modeled growth potential is strong for this account.",
+            "source_system": "derived",
+            "polarity": "positive",
+            "strength": 0.685
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based on the provided facts:\n\n**Subject: Collaborative Resolution for Curefoods' Recent Challenges**\n\nDear [Curefoods Team/Decision Maker's Name],\n\nHope this email finds you well. I wanted to personally reach out to ensure we swiftly resolve the recent support issues you've encountered with our services. Your satisfaction and success are our top priority, and I'm concerned that these challenges might impact our partnership's growth potential.\n\n**Key Concerns & Opportunities:**\n\n* **Immediate Resolution Needed**: To address the open support issue promptly and prevent further disruption.\n* **Mitigating Spend Decline**: Noticing a 40% month-over-month spend decrease, I'm eager to work together to reverse this trend.\n* **Unlocking High Growth Potential**: Despite current challenges, we believe in Curefoods' high growth potential and want to support you in achieving it.\n\n**Proposed Next Steps:**\n\n1. **Urgent Support Escalation**: I've flagged your open issue for immediate escalation. Expect a direct update from our support lead within the next 24 hours.\n2. **Resolution Plan Alignment**: Would you be available for a quick call this week to ensure we're aligned on the resolution plan and discuss strategies to reignite growth?\n\nPlease let me know your availability for the call at your earliest convenience. If there's anything you'd like to address before we speak, kindly reply to this email.\n\nThank you for your patience and cooperation. I'm looking forward to turning things around for Curefoods.\n\nWarm Regards,\n\n[Your Name]  \nAccount Manager  \n[Your Company Name]  \n[Contact Information]",
+        "call_script": "Below is a concise 5-step call script tailored for the account Curefoods based on the provided grounded facts:\n\n### **5-Step Call Script for Curefoods**\n\n#### **1. Open**\n* **Objective**: Establish rapport and context\n* **Script**:\n\"Good [Time of Day], [Curefoods Representative's Name]. This is [Your Name] from [Your Company]. Hope you're doing well. I'm calling to personally touch base regarding your Curefoods account, specifically to address the open support issue on your radar and ensure everything else is meeting your expectations.\"\n\n#### **2. Reason**\n* **Objective**: Align on the purpose of the call\n* **Script**:\n\"I wanted to prioritize this call because I noticed we have an unresolved support issue, and I want to make sure we resolve the recent support glitches quickly to prevent any further disruption. Can you briefly update me on the current status from your end?\"\n\n#### **3. Value**\n* **Objective**: Highlight the importance and potential outcomes\n* **Script**:\n\"I'm concerned that if we don't expedite a resolution, it could exacerbate the decline in spend we've seen (-40% MoM). However, with Curefoods' high growth potential in mind, resolving this issue promptly can not only stabilize but potentially boost your investment with us. A concrete resolution plan will ensure our service meets your growing needs seamlessly.\"\n\n#### **4. Ask**\n* **Objective**: Collaborate on a solution and commit to action\n* **Script**:\n\"Shall we escalate this issue together to our priority support channel to ensure immediate attention? Additionally, would you be available for a quick follow-up meeting [Propose Specific Dates/Times] to review the resolution's progress and discuss optimization strategies for regaining and surpassing previous spend levels?\"\n\n#### **5. Close**\n* **Objective**: Confirm actions and set expectations\n* **Script**:\n\"Excellent, I've noted the following actions:\n1. Immediate escalation",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Curefoods:\n\n\"Curefoods is a priority 3 account; next, we need to escalate the open support issue and finalize a resolution plan to address the 40% month-over-month spend decline.\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.623,
+          "spend_decline": 0.4,
+          "growth_potential": 0.685,
+          "renewal_urgency": 0.3667,
+          "campaign_response": 0.325,
+          "engagement_gap": 0.677,
+          "last_contact_gap": 0.3167,
+          "priority_score": 0.5126
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    },
+    {
+      "recommendation_id": "REC-150e46ed",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0015",
+      "account_name": "Unacademy",
+      "priority_rank": 4,
+      "priority_score": 0.5073,
+      "action_type": "support_escalation",
+      "confidence_score": 0.9187,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-150e46ed",
+        "account_id": "ACC-0015",
+        "account_name": "Unacademy",
+        "priority_rank": 4,
+        "priority_score": 0.5073,
+        "priority_reason": "Here are 2 sentences explaining why the Unacademy account is prioritized, based solely on the provided facts:\n\nUnacademy is prioritized (rank 4, score 0.5073) due to its strong growth potential, indicating a promising future for revenue expansion. Additionally, the account's elevated support risk and low engagement highlight the need for immediate attention to mitigate potential downsides and capitalize on the identified growth opportunities.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk based solely on the provided risk factors:\n\nUnacademy's account poses a moderate to high risk due to declining spend (20% month-over-month) and low engagement, which may indicate dissatisfaction or disinterest. Elevated support risk further increases the likelihood of potential account churn or reduced future investment.",
+        "opportunity_summary": "Here is a 1-2 plain sentence summary of the expansion opportunity for Unacademy based solely on the provided opportunity factors:\n\nUnacademy has a promising expansion opportunity due to its **High growth potential**, particularly within the **High-fit Mid-Market segment** where its offerings align closely with demand. This segment offers a fertile ground for accelerated growth.",
+        "recommended_action": "Escalate the open support issue and align on a concrete resolution plan.",
+        "action_type": "support_escalation",
+        "confidence_score": 0.9187,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 20%",
+            "detail": "Spend fell from 47,809 to 38,247 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.30000000000000004
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Support risk 71/100",
+            "detail": "Support risk score is above the attention threshold.",
+            "source_system": "Support",
+            "polarity": "negative",
+            "strength": 0.716
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Engagement 15/100",
+            "detail": "Engagement is low, indicating weakening stakeholder attention.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.849
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Active seats fell sharply month over month",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.8
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Payment Delay",
+            "detail": "Invoice paid 12 days late",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Login Drop",
+            "detail": "Weekly logins down ~40%",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.7
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Competitor Mention",
+            "detail": "Mentioned evaluating a competitor on last call",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Opportunity Agent",
+            "label": "Growth potential 61/100",
+            "detail": "Modeled growth potential is strong for this account.",
+            "source_system": "derived",
+            "polarity": "positive",
+            "strength": 0.614
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based on the provided facts:\n\n**Subject: Collaborative Resolution for Unacademy's Recent Support Issues**\n\nDear [Unacademy Account Owner's Name],\n\nHope this email finds you well. I wanted to personally reach out to ensure we promptly address the recent support issues you've encountered with our platform. Your satisfaction is our top priority, and I'm committed to resolving these matters swiftly.\n\n**Concern & Opportunity Alignment**\n\n* **Immediate Concern:** Quickly resolve open support issues to prevent further disruption.\n* **Shared Goal:** Leverage our platform's high growth potential for Unacademy's continued success.\n\n**Observation & Proposed Next Steps**\n\nWe've noticed a 20% month-over-month decline in spend, which we believe is directly tied to the unresolved support issues. To get back on track:\n\n1. **Escalation:** I've escalated your open support ticket to our priority queue (Priority Rank: 4).\n2. **Resolution Plan Alignment:** Let's schedule a call at your earliest convenience to outline a concrete resolution plan, ensuring all issues are addressed to your satisfaction.\n\n**Call to Action**\n\nWould you be available for a 15-20 minute call this week or early next? Please reply with your preferred date and time, or suggest an alternative that suits you better.\n\nThank you for your patience and cooperation. I look forward to resolving these issues and unlocking Unacademy's full growth potential with our platform.\n\nWarm Regards,\n\n[Your Name]  \nAccount Manager for Unacademy  \n[Your Contact Information]  \n[Company Name]",
+        "call_script": "Below is a concise 5-step call script tailored for the given account (Unacademy) based on the provided grounded facts:\n\n### **5-Step Call Script for Unacademy**\n\n#### **1. Open**\n* **Objective:** Establish Connection & Context\n* **Script:**\n```\n\"Hello [Unacademy Representative's Name], this is [Your Name] from [Your Company]. Hope you're doing well. I'm calling to personally follow up on the open support issues you've recently encountered with our services. How have things been otherwise at Unacademy?\"\n```\n\n#### **2. Reason**\n* **Objective:** Align on the Urgency\n* **Script:**\n```\n\"I wanted to touch base because our team noticed a 20% month-over-month decline in spend, which we believe is partly due to the unresolved support issues. I completely understand the importance of seamless operations, especially given Unacademy's high growth potential. Can you share your perspective on how these issues have impacted your team?\"\n```\n\n#### **3. Value**\n* **Objective:** Highlight Solution Benefits\n* **Script:**\n```\n\"To ensure we get back on track and capitalize on that growth potential, I propose we escalate these open issues to our premium support tier for immediate resolution. This will not only resolve the current problems but also provide proactive monitoring to prevent future occurrences, safeguarding your investment with us. Would this level of support align with your current priorities?\"\n```\n\n#### **4. Ask**\n* **Objective:** Gather Commitment to Next Steps\n* **Script:**\n```\n\"Shall we proceed with the escalation today? I can also schedule a follow-up meeting with our support lead for [Proposed Date/Time] to ensure everything is back on track and discuss any additional optimization strategies for your account. Which sounds preferable to you, or do you have an alternative timeline in mind?\"\n```\n\n#### **5. Close**\n* **Objective:** Confirm Agreement &",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Unacademy:\n\n\"Unacademy is a **Priority 4** account, requiring immediate attention due to a **20% month-over-month spend decline**; next step is to **escalate the open support issue and align on a concrete resolution plan** to address concerns and tap into its high growth potential.\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.716,
+          "spend_decline": 0.2,
+          "growth_potential": 0.614,
+          "renewal_urgency": 0.3667,
+          "campaign_response": 0.372,
+          "engagement_gap": 0.849,
+          "last_contact_gap": 0.4833,
+          "priority_score": 0.5073
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    },
+    {
+      "recommendation_id": "REC-0e34df17",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0129",
+      "account_name": "Cobalt Industries",
+      "priority_rank": 5,
+      "priority_score": 0.5008,
+      "action_type": "support_escalation",
+      "confidence_score": 0.9187,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-0e34df17",
+        "account_id": "ACC-0129",
+        "account_name": "Cobalt Industries",
+        "priority_rank": 5,
+        "priority_score": 0.5008,
+        "priority_reason": "Here are 2 sentences explaining why Cobalt Industries is prioritized, based solely on the provided facts:\n\nCobalt Industries is prioritized (rank 5, score 0.5008) due to a combination of factors, including its strong growth potential, which suggests a promising future return on investment. The account's prioritization is also driven by the need to address elevated support risk and low engagement, indicating a critical need for intervention to mitigate potential losses and boost participation.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk based on the provided risk factors:\n\nCobalt Industries' account poses a moderate to high risk due to declining spend (30% month-over-month) and low engagement, indicating potential disatisfaction or disinvestment. Elevated support risk further compounds this risk, suggesting operational challenges may exacerbate the financial and engagement concerns.",
+        "opportunity_summary": "Cobalt Industries shows limited near-term expansion signal.",
+        "recommended_action": "Escalate the open support issue and align on a concrete resolution plan.",
+        "action_type": "support_escalation",
+        "confidence_score": 0.9187,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 30%",
+            "detail": "Spend fell from 34,277 to 23,993 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.44999999999999996
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Support risk 74/100",
+            "detail": "Support risk score is above the attention threshold.",
+            "source_system": "Support",
+            "polarity": "negative",
+            "strength": 0.741
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Engagement 23/100",
+            "detail": "Engagement is low, indicating weakening stakeholder attention.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.77
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Active seats fell sharply month over month",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.8
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Payment Delay",
+            "detail": "Invoice paid 12 days late",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Login Drop",
+            "detail": "Weekly logins down ~40%",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.7
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Competitor Mention",
+            "detail": "Mentioned evaluating a competitor on last call",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based solely on the provided facts:\n\n**Subject: Collaborating to Resolve Issues & Unlock More Value for Cobalt Industries**\n\nDear [Cobalt Industries Decision Maker's Name],\n\nHope this email finds you well. I wanted to personally reach out to ensure we resolve the recent support issues you've encountered with us as swiftly as possible. Your satisfaction is our top priority, and I'm concerned that these challenges might impact our partnership's overall value to your business.\n\nNotably, we've observed a 30% month-over-month decrease in spend, which suggests these issues may already be influencing your investment decisions with us. I'm eager to change this trajectory.\n\nTo move forward, I recommend we escalate the open support issue to our specialized team and work together to outline a concrete resolution plan. This not only addresses the immediate concerns but also paves the way for unlocking more value from our collaboration.\n\nWould you be available for a brief call this week or next to align on the next steps? Please let me know a convenient time, or suggest an alternative if a call isn't feasible at this moment.\n\nLooking forward to hearing from you and to a swift resolution.\n\nBest Regards,\n\n[Your Name]  \nAccount Manager for Cobalt Industries  \n[Your Contact Information]  \n[Company Name]",
+        "call_script": "Below is a concise 5-step call script tailored to the provided grounded facts for the account Cobalt Industries:\n\n### **Call Script for Cobalt Industries**\n\n#### **1. Open**\n- **Objective**: Establish Connection & Context\n- **Script**:\n  ```\n  Hello [Decision Maker's Name], this is [Your Name] from [Your Company]. Hope you're doing well. I'm calling to personally follow up on the open support issue with Cobalt Industries, as it's flagged high on our priority list (Priority Rank 5). How have things been from your end since we last spoke about this issue?\n  ```\n\n#### **2. Reason**\n- **Objective**: Align on the Problem\n- **Script**:\n  ```\n  I wanted to touch base because I noticed our support team hasn't fully resolved the issue yet, and I want to make sure we resolve the recent support issues quickly to get your operations back to optimal levels. Are you experiencing any immediate challenges due to this pending resolution?\n  ```\n\n#### **3. Value**\n- **Objective**: Highlight the Benefit of Resolution\n- **Script**:\n  ```\n  I'd like to propose we escalate this issue to ensure a swift resolution. Not only will this clear the immediate hurdle, but resolving this efficiently also opens up a clear path to more value from our partnership, potentially offsetting the decline in spend we've seen (30% MoM). Would you appreciate a dedicated plan to not just fix the current problem but also explore how to increase the ROI from our services?\n  ```\n\n#### **4. Ask**\n- **Objective**: Seek Commitment to the Proposed Solution\n- **Script**:\n  ```\n  To move forward, I'd like to schedule an urgent review with our technical lead and your team to align on a concrete resolution plan within the next [Proposed Timeline, e.g., 48 hours]. Would that work for you, and would you like to nominate anyone else from your side",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Cobalt Industries:\n\n\"Cobalt Industries is our **top priority (Rank 5)** due to a concerning 30% month-over-month spend decline; next, we'll escalate the open support issue to finalize a concrete resolution plan and stem the decline.\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.741,
+          "spend_decline": 0.3,
+          "growth_potential": 0.508,
+          "renewal_urgency": 0.4111,
+          "campaign_response": 0.407,
+          "engagement_gap": 0.77,
+          "last_contact_gap": 0.2333,
+          "priority_score": 0.5008
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    },
+    {
+      "recommendation_id": "REC-4cea3820",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0146",
+      "account_name": "Vanguard Learn",
+      "priority_rank": 6,
+      "priority_score": 0.4957,
+      "action_type": "renewal_prep",
+      "confidence_score": 0.7933,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-4cea3820",
+        "account_id": "ACC-0146",
+        "account_name": "Vanguard Learn",
+        "priority_rank": 6,
+        "priority_score": 0.4957,
+        "priority_reason": "Here are 2 sentences explaining why the Vanguard Learn account is prioritized, based solely on the provided facts:\n\nVanguard Learn is prioritized (rank 6, score 0.4957) due to a combination of an approaching renewal, which likely necessitates timely engagement, and its strong growth potential, indicating a promising future revenue opportunity. Additionally, the elevated support risk associated with the account may also warrant proactive attention to mitigate potential issues and ensure renewal success.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk based on the provided risk factors:\n\nVanguard Learn's account is at moderate to high risk due to declining spend (10% month-over-month) and lack of recent engagement (no contact in 31 days), which may negatively impact the upcoming renewal in 16 days. This combination increases the likelihood of non-renewal.",
+        "opportunity_summary": "Here is a 1-2 sentence summary of the expansion opportunity using only the provided opportunity factors:\n\nVanguard Learn has an expansion opportunity in the **High-fit Mid-Market segment**, which aligns well with its existing offerings. Tapping into this segment can drive significant growth.",
+        "recommended_action": "Prepare and schedule the renewal conversation with a value recap.",
+        "action_type": "renewal_prep",
+        "confidence_score": 0.7933,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 10%",
+            "detail": "Spend fell from 21,562 to 19,405 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.15000000000000002
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "31d since contact",
+            "detail": "The account has gone without a seller touch for over a month.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.5166666666666667
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Renewal in 16d",
+            "detail": "A renewal is imminent and unmanaged renewals are a churn risk.",
+            "source_system": "CRM",
+            "polarity": "neutral",
+            "strength": 0.8222
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Slight usage softening pre-renewal",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.4
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based solely on the provided facts:\n\n**Subject: Upcoming Renewal - Let's Make it a Success!**\n\nDear [Vanguard Learn Team/Decision Maker's Name],\n\nHope this email finds you well. With your renewal approaching, I wanted to proactively reach out to ensure a seamless and valuable transition. Before we dive into the details, I'd like to briefly highlight a couple of key points to focus our conversation:\n\n* **Smooth Renewal Process**: My primary goal is to make this renewal as effortless as possible for your team.\n* **Value Recap**: I'm excited to share a summary of the value Vanguard Learn has realized with our partnership to date.\n* **Growth Opportunities**: Noted is your strong fit within our Mid-Market segment, presenting potential for further collaboration benefits.\n* **Current Spend Insight**: A brief review shows a 10% month-over-month spend decrease; I'm keen to understand your evolving needs and adjust our approach accordingly.\n\nWould you be available for a short call at your convenience over the next two weeks to discuss these points and finalize renewal details?\n\n**Proposed Call Schedule:**\n- **Dates:** [Insert 2-3 date options]\n- **Duration:** 30 minutes\n- **Alternative:** If none of these suit, please suggest a time that works for you.\n\nLooking forward to our conversation and to a successful renewal!\n\nBest Regards,\n\n[Your Name]  \nAccount Manager  \n[Your Company]  \n[Contact Information]",
+        "call_script": "Below is a concise 5-step call script (Open, Reason, Value, Ask, Close) tailored to the provided grounded facts for the account \"Vanguard Learn\":\n\n---\n\n### **Call Script for Vanguard Learn Renewal**\n\n#### **1. Open (Establish Connection & Context)**\n\n* **Duration Suggestion:** 30 seconds\n* **Script:**\n```\nHi [Decision Maker's Name], this is [Your Name] from [Your Company]. Hope you're doing well. I'm calling today as we're approaching the renewal period for your current agreement with us at Vanguard Learn. How have you found the experience with our services so far?\n```\n\n#### **2. Reason (State the Purpose & Address Concern)**\n\n* **Duration Suggestion:** 1 minute\n* **Script:**\n```\nThe reason for my call today is to ensure a seamless renewal process, but more importantly, to discuss the value we've delivered and how we can enhance it. Noticing your spend has decreased by 10% month-over-month, I want to understand the drivers behind this and see where we can align better with your current objectives.\n```\n\n#### **3. Value (Highlight Achievements & Opportunities)**\n\n* **Duration Suggestion:** 2 minutes\n* **Script:**\n```\nBefore we dive into the renewal details, I'd like to recap the value we've brought to Vanguard Learn [Briefly mention 1-2 key successes or metrics improved since the start of the agreement]. Looking forward, our analytics indicate a high-fit opportunity for expansion within the Mid-Market segment, which could potentially offset the current spend decline. Would exploring tailored strategies for this segment interest you?\n```\n\n#### **4. Ask (Proposal & Commitment Seek)**\n\n* **Duration Suggestion:** 1.5 minutes\n* **Script:**\n```\nGiven this, I propose we schedule a dedicated renewal conversation within the next [Timeframe, e.g., two weeks] to",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Vanguard Learn:\n\n\"Vanguard Learn has a priority rank of 6, so let's tackle this soon - our next step is to prepare and schedule a renewal conversation, highlighting the value we've delivered, especially given their recent 10% month-over-month spend decline.\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.482,
+          "spend_decline": 0.1,
+          "growth_potential": 0.567,
+          "renewal_urgency": 0.8222,
+          "campaign_response": 0.629,
+          "engagement_gap": 0.538,
+          "last_contact_gap": 0.5167,
+          "priority_score": 0.4957
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    },
+    {
+      "recommendation_id": "REC-ecd228c3",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0144",
+      "account_name": "Umbra Learn",
+      "priority_rank": 7,
+      "priority_score": 0.491,
+      "action_type": "support_escalation",
+      "confidence_score": 0.9187,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-ecd228c3",
+        "account_id": "ACC-0144",
+        "account_name": "Umbra Learn",
+        "priority_rank": 7,
+        "priority_score": 0.491,
+        "priority_reason": "Here are 2 sentences explaining why the Umbra Learn account is prioritized, based solely on the provided facts:\n\nUmbra Learn is prioritized (rank 7, score 0.491) due to a combination of factors, including its strong growth potential which suggests a promising future for revenue increase. The account's prioritization is also driven by the need to address elevated support risk and reverse declining spend, indicating a critical point for intervention to stabilize and optimize the relationship.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk based solely on the provided risk factors:\n\n**Risk Summary for Umbra Learn**\nUmbra Learn poses a **High Risk** due to declining spend and lack of recent contact, indicating potential churn. Elevated support needs and low engagement further exacerbate this risk.",
+        "opportunity_summary": "Here is a 1-2 sentence summary of the expansion opportunity for Umbra Learn, based solely on the provided opportunity factors:\n\nUmbra Learn has an expansion opportunity characterized by **high growth potential**. This suggests significant room for scaling up operations to capitalize on increasing demand or market trends.",
+        "recommended_action": "Escalate the open support issue and align on a concrete resolution plan.",
+        "action_type": "support_escalation",
+        "confidence_score": 0.9187,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 40%",
+            "detail": "Spend fell from 32,345 to 19,407 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6000000000000001
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Support risk 76/100",
+            "detail": "Support risk score is above the attention threshold.",
+            "source_system": "Support",
+            "polarity": "negative",
+            "strength": 0.769
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Engagement 36/100",
+            "detail": "Engagement is low, indicating weakening stakeholder attention.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6379999999999999
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "37d since contact",
+            "detail": "The account has gone without a seller touch for over a month.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6166666666666667
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Active seats fell sharply month over month",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.8
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Payment Delay",
+            "detail": "Invoice paid 12 days late",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Login Drop",
+            "detail": "Weekly logins down ~40%",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.7
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Competitor Mention",
+            "detail": "Mentioned evaluating a competitor on last call",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Opportunity Agent",
+            "label": "Growth potential 62/100",
+            "detail": "Modeled growth potential is strong for this account.",
+            "source_system": "derived",
+            "polarity": "positive",
+            "strength": 0.622
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based on the provided facts:\n\n**Subject: Let's Resolve Issues & Unlock Growth for Umbra Learn**\n\nDear [Umbra Learn Point of Contact's Name],\n\nHope this email finds you well. I wanted to personally reach out to ensure we swiftly resolve the recent support issues you've encountered with our services. Your satisfaction is our top priority, and I'm concerned that these challenges might impact your experience.\n\n**Key Concern & Opportunity:**\n- **Current Challenge:** We've noticed a 40% month-over-month decline in spend, which we believe is directly tied to the unresolved support issues.\n- **Shared Goal:** Align on a concrete resolution plan to not only revert this trend but also capitalize on the high growth potential we see for Umbra Learn with our partnership.\n\n**Next Steps for Immediate Resolution:**\n1. **Escalation:** I've flagged your open support issue for immediate escalation to our premium support team.\n2. **Joint Resolution Plan:** Would you be available for a brief call this week (or at your earliest convenience) to align on a tailored plan to resolve the current issues and discuss strategies to reignite growth?\n\nPlease let me know a convenient time, or feel free to suggest an alternative approach that works better for your team.\n\nLooking forward to turning things around for Umbra Learn.\n\nWarm Regards,\n\n[Your Name]  \nAccount Manager  \n[Your Company Name]  \n[Contact Information (Email, Phone, LinkedIn if appropriate)]",
+        "call_script": "Below is a concise 5-step call script tailored for the Umbra Learn account based on the provided grounded facts:\n\n### **Call Script for Umbra Learn**\n\n#### **1. Open**\n- **Objective**: Establish Connection & Context\n- **Script**:\n  ```\n  Hello [Decision Maker's Name], this is [Your Name] from [Your Company]. Hope you're doing well. I'm calling to follow up on our recent support interactions with Umbra Learn, ensuring we're fully addressing your needs. How have things been since our last touchpoint?\n  ```\n\n#### **2. Reason**\n- **Objective**: Align on the Purpose of the Call\n- **Script**:\n  ```\n  Specifically, I wanted to touch base because I noticed we've had some unresolved support issues lately, and I want to make sure we resolve these quickly to prevent any further disruption. Your satisfaction is our top priority.\n  ```\n\n#### **3. Value**\n- **Objective**: Highlight the Importance and Offer Solution\n- **Script**:\n  ```\n  I also reviewed our partnership metrics and noticed a 40% month-over-month decline in spend, which concerns me as it indicates potential dissatisfaction or unmet needs. However, I firmly believe Umbra Learn holds high growth potential with us. By promptly resolving the open support issue, we can not only restore your immediate satisfaction but also pave the way for exploring more opportunities to drive growth together. Can you agree on the importance of addressing this to unlock further collaboration benefits?\n  ```\n\n#### **4. Ask**\n- **Objective**: Seek Agreement on Next Steps\n- **Script**:\n  ```\n  To move forward, I recommend we escalate the current support issue to our priority queue and schedule a joint meeting within the next [Timeframe, e.g., 48 hours] to align on a concrete resolution plan. Would this approach work for you, and are you available for a quick meeting at your preferred time within the suggested timeframe?\n  ``",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Umbra Learn:\n\n\"Umbra Learn is a **Priority 7** account; our immediate next step is to **escalate the open support issue** to quickly resolve recent problems and mitigate the risk of declining spend (down 40% MoM).\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.769,
+          "spend_decline": 0.4,
+          "growth_potential": 0.622,
+          "renewal_urgency": 0.0,
+          "campaign_response": 0.382,
+          "engagement_gap": 0.638,
+          "last_contact_gap": 0.6167,
+          "priority_score": 0.491
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    },
+    {
+      "recommendation_id": "REC-83e5efb8",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0072",
+      "account_name": "Granite Vita",
+      "priority_rank": 8,
+      "priority_score": 0.4836,
+      "action_type": "support_escalation",
+      "confidence_score": 0.9187,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-83e5efb8",
+        "account_id": "ACC-0072",
+        "account_name": "Granite Vita",
+        "priority_rank": 8,
+        "priority_score": 0.4836,
+        "priority_reason": "Here are 2 sentences explaining why the Granite Vita account is prioritized, based solely on the provided facts:\n\nGranite Vita is prioritized (rank 8, score 0.4836) due to a combination of factors, including its strong growth potential which suggests opportunities for increased revenue. However, this potential is balanced by concerns over elevated support risk and declining spend, necessitating proactive attention to mitigate risks and reverse the spend trend.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk based on the provided risk factors:\n\nGranite Vita's account is at moderate to high risk due to a significant decline in spend (40% month-over-month) and low engagement, which may indicate dissatisfaction or disinvestment. Elevated support risk further compounds this concern, suggesting potential operational or service-quality issues.",
+        "opportunity_summary": "Granite Vita shows limited near-term expansion signal.",
+        "recommended_action": "Escalate the open support issue and align on a concrete resolution plan.",
+        "action_type": "support_escalation",
+        "confidence_score": 0.9187,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 40%",
+            "detail": "Spend fell from 36,981 to 22,188 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6000000000000001
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Support risk 65/100",
+            "detail": "Support risk score is above the attention threshold.",
+            "source_system": "Support",
+            "polarity": "negative",
+            "strength": 0.6579999999999999
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Engagement 25/100",
+            "detail": "Engagement is low, indicating weakening stakeholder attention.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.744
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Active seats fell sharply month over month",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.8
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Payment Delay",
+            "detail": "Invoice paid 12 days late",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Login Drop",
+            "detail": "Weekly logins down ~40%",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.7
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Competitor Mention",
+            "detail": "Mentioned evaluating a competitor on last call",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based solely on the provided facts:\n\n**Subject: Prioritizing Your Concerns at Granite Vita**\n\nDear [Decision Maker's Name at Granite Vita],\n\nHope this email finds you well. I wanted to personally reach out to ensure we resolve the recent support issues you've encountered with us as quickly as possible. Your satisfaction is our top priority, and I apologize for any inconvenience these issues have caused.\n\nI've taken note of the impact on your engagement with our services, noticing a significant adjustment in spend (-40% MoM). I'm eager to work together to reverse this trend by providing a clear path to more value from our partnership.\n\nTo move forward promptly, I recommend we escalate your open support issue and align on a concrete resolution plan in our next conversation. Would you be available for a brief call at your earliest convenience this week or next?\n\nLooking forward to hearing from you and getting Granite Vita back on track with us.\n\nBest Regards,\n\n[Your Name]  \nAccount Manager  \n[Your Company Name]  \n[Contact Information (Email, Phone, LinkedIn if appropriate)]",
+        "call_script": "Below is a concise 5-step call script (Open, Reason, Value, Ask, Close) tailored to the provided grounded facts for the account \"Granite Vita\":\n\n### **Call Script for Granite Vita**\n\n#### **1. Open (Establish Connection & Context)**\n\n* **Duration Suggestion:** 30 seconds\n* **Script:**\n```\nHi [Decision Maker's Name], this is [Your Name] from [Your Company]. Hope you're doing well. I'm calling to follow up on our recent support interactions with Granite Vita. Can you spare a few minutes to discuss the current status and how we can improve our support experience for you?\n```\n\n#### **2. Reason (State the Purpose & Concern)**\n\n* **Duration Suggestion:** 45 seconds\n* **Script:**\n```\nThe reason for my call today is to ensure we resolve the open support issues promptly, as I've noticed a significant impact on your engagement with our services, reflected in a 40% month-over-month decrease in spend. I want to address the root causes together to prevent further decline.\n```\n\n#### **3. Value (Highlight the Benefit of Action)**\n\n* **Duration Suggestion:** 1 minute\n* **Script:**\n```\nBy escalating and resolving these support issues efficiently, we not only stabilize your spend but also open up a clear path for extracting more value from our services. This alignment on a concrete resolution plan will ensure you're maximizing the benefits of our partnership, potentially leading to increased ROI and satisfaction.\n```\n\n#### **4. Ask (Specific Action Request)**\n\n* **Duration Suggestion:** 30 seconds (plus response time)\n* **Script:**\n```\nTo move forward, I propose we schedule an emergency support review meeting within the next 48 hours. Would you be available [Propose 2-3 specific dates and times]? In this meeting, we'll outline a tailored resolution plan and assign a dedicated point of contact for the duration",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Granite Vita:\n\n\"Granite Vita is a **high priority (rank 8)** account due to a concerning **40% month-over-month spend decline**; next, we need to **escalate the open support issue and align on a concrete resolution plan** to address concerns and unlock more value.\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.658,
+          "spend_decline": 0.4,
+          "growth_potential": 0.517,
+          "renewal_urgency": 0.2222,
+          "campaign_response": 0.45,
+          "engagement_gap": 0.744,
+          "last_contact_gap": 0.3167,
+          "priority_score": 0.4836
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    },
+    {
+      "recommendation_id": "REC-7be95705",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0033",
+      "account_name": "Alpine Retail",
+      "priority_rank": 9,
+      "priority_score": 0.4833,
+      "action_type": "support_escalation",
+      "confidence_score": 0.9187,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-7be95705",
+        "account_id": "ACC-0033",
+        "account_name": "Alpine Retail",
+        "priority_rank": 9,
+        "priority_score": 0.4833,
+        "priority_reason": "Here are 2 sentences explaining why Alpine Retail is prioritized, based solely on the provided facts:\n\nAlpine Retail is prioritized (rank 9) due to a combination of factors, including its strong growth potential, which suggests a promising upside for revenue. Additionally, the account's elevated support risk and low engagement levels likely necessitate proactive attention to mitigate potential downsides and capitalize on the growth opportunity.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk based on the provided risk factors:\n\nAlpine Retail's account poses a **High Risk** due to declining spend and lack of recent contact, indicating potential churn. Elevated support risk and low engagement further exacerbate this risk.",
+        "opportunity_summary": "Alpine Retail shows limited near-term expansion signal.",
+        "recommended_action": "Escalate the open support issue and align on a concrete resolution plan.",
+        "action_type": "support_escalation",
+        "confidence_score": 0.9187,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 30%",
+            "detail": "Spend fell from 5,328 to 3,729 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.45014999999999994
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Support risk 73/100",
+            "detail": "Support risk score is above the attention threshold.",
+            "source_system": "Support",
+            "polarity": "negative",
+            "strength": 0.73
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Engagement 29/100",
+            "detail": "Engagement is low, indicating weakening stakeholder attention.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.71
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "33d since contact",
+            "detail": "The account has gone without a seller touch for over a month.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.55
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Active seats fell sharply month over month",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.8
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Payment Delay",
+            "detail": "Invoice paid 12 days late",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Login Drop",
+            "detail": "Weekly logins down ~40%",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.7
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Competitor Mention",
+            "detail": "Mentioned evaluating a competitor on last call",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based on the provided facts:\n\n**Subject: Collaborative Resolution for Alpine Retail's Recent Support Issues**\n\nDear [Alpine Retail's Decision Maker's Name],\n\nHope this email finds you well. I wanted to personally reach out to ensure we swiftly resolve the recent support issues you've encountered with our services. Your satisfaction is our top priority, and I'm concerned that these challenges might impact our partnership's overall value to your business.\n\n**Key Concerns & Opportunities for Alignment:**\n\n* **Urgent Resolution Needed**: To address the open support issue promptly and prevent further disruption.\n* **Spend Adjustment**: Noted a 30% month-over-month decrease in spend, which might indicate a temporary setback in our collaboration's benefits. I'd like to understand the reasons behind this adjustment and how we can realign.\n* **Future Value Enhancement**: Once the immediate issues are resolved, I propose we schedule a strategic review to uncover a clear path for extracting more value from our partnership, tailored to Alpine Retail's evolving needs.\n\n**Next Steps for Immediate Resolution:**\n\n1. **Escalation & Resolution Plan**: I've escalated your open support issue internally (Priority Rank: 9). Would you be available for a quick call [suggest specific dates and times] to align on a concrete resolution timeline?\n2. **Strategic Review (Post-Resolution)**: Let's plan for a follow-up meeting to explore enhancement opportunities.\n\nPlease let me know your availability for the call, or suggest alternative times that suit you better. Your time and continued partnership are valued.\n\nWarm Regards,\n\n[Your Name]  \nAccount Manager for Alpine Retail  \n[Your Contact Information]  \n[Company Name]",
+        "call_script": "Below is a concise 5-step call script tailored to the provided grounded facts for the account \"Alpine Retail\":\n\n### **Call Script: Alpine Retail**\n\n#### **1. Open**\n* **Objective:** Establish Connection & Context\n* **Script:**\n```\nHello [Alpine Retail Decision Maker's Name], this is [Your Name] from [Your Company]. Hope you're doing well. I'm calling to personally touch base regarding your recent interactions with our support team at [Your Company]. How have you found our overall service lately, and are there any immediate concerns you'd like to share before we dive in?\n```\n\n#### **2. Reason**\n* **Objective:** Align on the Purpose of the Call\n* **Script:**\n```\nI wanted to follow up specifically on the open support issue [**Reference Issue # if possible**] to ensure we resolve it quickly and efficiently. Our teams have noted a recent decline in spend (-30% MoM), and I'm eager to address any underlying concerns driving this, starting with resolving the current issue at hand.\n```\n\n#### **3. Value**\n* **Objective:** Highlight the Benefit of Resolution & Future Collaboration\n* **Script:**\n```\nBy prioritizing the resolution of this issue, we not only get your operations back on track but also open up a clear path for exploring more value from our partnership. This could mean [**Briefly Mention Relevant Future Collaborations or Enhancements, e.g., \"optimizing your retail tech stack for increased efficiency\"**]. Can you see the benefit in aligning on a comprehensive plan today?\n```\n\n#### **4. Ask**\n* **Objective:** Seek Agreement on the Proposed Action\n* **Script:**\n```\nGiven the priority of this matter [**Priority Rank 9**], I recommend we escalate the issue immediately and schedule a joint meeting with our technical leads to outline a concrete resolution plan by [**Propose a Timeline, e.g., \"EOD",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Alpine Retail:\n\n\"Alpine Retail is our **top priority (rank 9)** due to a concerning 30% month-over-month spend decline; next, we must **escalate the open support issue to finalize a resolution plan** and get their investment back on track.\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.73,
+          "spend_decline": 0.3001,
+          "growth_potential": 0.485,
+          "renewal_urgency": 0.3889,
+          "campaign_response": 0.234,
+          "engagement_gap": 0.71,
+          "last_contact_gap": 0.55,
+          "priority_score": 0.4833
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    },
+    {
+      "recommendation_id": "REC-6366b10e",
+      "ledger_id": "LDG-646a4d85",
+      "account_id": "ACC-0067",
+      "account_name": "Cedar Studios",
+      "priority_rank": 10,
+      "priority_score": 0.4825,
+      "action_type": "support_escalation",
+      "confidence_score": 0.9187,
+      "governance_status": "ok",
+      "approval_status": "pending",
+      "reject_reason": null,
+      "payload_json": {
+        "recommendation_id": "REC-6366b10e",
+        "account_id": "ACC-0067",
+        "account_name": "Cedar Studios",
+        "priority_rank": 10,
+        "priority_score": 0.4825,
+        "priority_reason": "Here are 2 sentences explaining why Cedar Studios is prioritized, based solely on the provided facts:\n\nCedar Studios is prioritized (rank 10) due to a combination of its elevated support risk, indicating a need for immediate attention to prevent potential issues, and its strong growth potential, suggesting a high reward for successful management. Additionally, the account's low engagement highlights a critical area requiring focus to unlock its growth potential and mitigate support risks.",
+        "risk_summary": "Here is a 1-2 plain sentence summary of the account's risk for Cedar Studios:\n\nCedar Studios' account is at high risk due to declining spend (20% month-over-month) and lack of recent interaction (no contact in 31 days). Elevated support risk and low engagement further exacerbate the account's vulnerability.",
+        "opportunity_summary": "Here is a 1-2 plain sentence summary of the expansion opportunity for Cedar Studios based solely on the provided opportunity factors:\n\nCedar Studios has an expansion opportunity characterized by **high growth potential**. This opportunity is particularly suited for the **high-fit Mid-Market segment**.",
+        "recommended_action": "Escalate the open support issue and align on a concrete resolution plan.",
+        "action_type": "support_escalation",
+        "confidence_score": 0.9187,
+        "evidence": [
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Spend down 20%",
+            "detail": "Spend fell from 27,838 to 22,270 month over month.",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.30000000000000004
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Support risk 68/100",
+            "detail": "Support risk score is above the attention threshold.",
+            "source_system": "Support",
+            "polarity": "negative",
+            "strength": 0.685
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "Engagement 30/100",
+            "detail": "Engagement is low, indicating weakening stakeholder attention.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.696
+          },
+          {
+            "source_agent": "Account Health Agent",
+            "label": "31d since contact",
+            "detail": "The account has gone without a seller touch for over a month.",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.5166666666666667
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Usage Drop",
+            "detail": "Active seats fell sharply month over month",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.8
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Payment Delay",
+            "detail": "Invoice paid 12 days late",
+            "source_system": "Billing",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Login Drop",
+            "detail": "Weekly logins down ~40%",
+            "source_system": "Telemetry",
+            "polarity": "negative",
+            "strength": 0.7
+          },
+          {
+            "source_agent": "Signal Ingestion Agent",
+            "label": "Competitor Mention",
+            "detail": "Mentioned evaluating a competitor on last call",
+            "source_system": "CRM",
+            "polarity": "negative",
+            "strength": 0.6
+          },
+          {
+            "source_agent": "Opportunity Agent",
+            "label": "Growth potential 66/100",
+            "detail": "Modeled growth potential is strong for this account.",
+            "source_system": "derived",
+            "polarity": "positive",
+            "strength": 0.669
+          }
+        ],
+        "governance_caveats": [
+          "Human approval required before any message is sent or action is executed."
+        ],
+        "governance_status": "ok",
+        "draft_email": "Here is a short, warm, professional outreach email based solely on the provided facts:\n\n**Subject: Collaborative Resolution for Cedar Studios' Support Issues**\n\nDear Cedar Studios Team,\n\nHope this email finds you well. I wanted to personally reach out to ensure we resolve the recent support issues you've encountered with us as swiftly as possible. Your satisfaction is our top priority, and I'm concerned that these challenges might impact our partnership's growth potential, which we believe is exceptionally high.\n\nNotably, we've observed a 20% month-over-month decline in spend, which I attribute to the current support hurdles. I'd like to proactively work with you to not only resolve these issues but also reignite the momentum in our collaboration.\n\nTo move forward, I propose the following immediate steps:\n\n1. **Escalation**: I've flagged your open support issue for immediate escalation to ensure dedicated attention.\n2. **Joint Resolution Plan**: Would you be available for a brief call this week to align on a concrete plan for resolution and future prevention strategies?\n\nPlease let me know a convenient time for the call at your earliest convenience. If you have any immediate questions or concerns before then, don't hesitate to reply to this email.\n\nThank you for your patience and cooperation. I'm looking forward to getting everything back on track for Cedar Studios.\n\nWarm Regards,\n\n[Your Name]  \nAccount Manager  \n[Your Company Name]  \n[Contact Information]",
+        "call_script": "Below is a concise 5-step call script tailored for the Cedar Studios account based on the provided grounded facts:\n\n### **5-Step Call Script for Cedar Studios**\n\n#### **1. Open**\n* **Objective:** Establish rapport and context\n* **Script:**\n\"Good [Time of Day], [Decision Maker's Name] at Cedar Studios. This is [Your Name] from [Your Company]. Hope you're doing well. I'm calling to personally follow up on the open support issue from your team, ensuring we prioritize its resolution given your account's high growth potential with us.\"\n\n#### **2. Reason**\n* **Objective:** Align on the urgency and reason for the call\n* **Script:**\n\"I wanted to discuss the recent support issues promptly because I noticed a 20% month-over-month decline in spend, which caught my attention. I'm eager to ensure these technical hiccups aren't hindering your growth trajectory or satisfaction with our services.\"\n\n#### **3. Value**\n* **Objective:** Highlight the benefit of resolving the issue and potential upside\n* **Script:**\n\"Resolving this support issue efficiently is crucial for unlocking your account's full high growth potential with us. By doing so, we can not only restore but potentially increase your spend, aligning with your expansion goals. Our priority is your success, and I'd like to offer dedicated resources to expedite this resolution.\"\n\n#### **4. Ask**\n* **Objective:** Seek agreement on the proposed action\n* **Script:**\n\"Given the priority of this matter, I recommend we escalate the support issue immediately and schedule a joint call within the next 48 hours to outline a concrete resolution plan. Would this approach work for you, and are you available for a call [Propose Specific Dates/Times]?\"\n\n#### **5. Close**\n* **Objective:** Confirm next steps or finalize the agreement\n* **Script (Depending on Response):**\n\n* **If Agreed:**\n\"Excellent, thank",
+        "voice_summary": "Here is a short spoken-style sentence summarizing the account priority and next step for Cedar Studios:\n\n\"Cedar Studios is our **top priority (Rank 10)** due to a concerning 20% month-over-month spend decline; next, we must **escalate the open support issue to finalize a resolution plan** and mitigate further spend reduction.\"",
+        "approval_status": "pending",
+        "score_breakdown": {
+          "support_risk": 0.685,
+          "spend_decline": 0.2,
+          "growth_potential": 0.669,
+          "renewal_urgency": 0.3444,
+          "campaign_response": 0.246,
+          "engagement_gap": 0.696,
+          "last_contact_gap": 0.5167,
+          "priority_score": 0.4825
+        },
+        "agents_invoked": [
+          "Signal Ingestion Agent",
+          "Account Health Agent",
+          "Opportunity Agent",
+          "Governance Agent",
+          "Action Agent",
+          "Communication Agent"
+        ]
+      },
+      "created_at": "2026-07-22T10:41:44.503558+00:00"
+    }
+  ]
+}
